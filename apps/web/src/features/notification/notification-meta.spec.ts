@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { notificationBody, notificationMeta } from './notification-meta';
+import { notificationMeta, notificationText } from './notification-meta';
 import type { AppNotification } from './types';
 
 const make = (template: string, data: Record<string, unknown> = {}): AppNotification => ({
@@ -31,14 +31,22 @@ describe('notificationMeta navigation', () => {
   });
 });
 
-describe('notificationBody', () => {
-  it('turns raw order status codes into words users understand', () => {
-    const item = { ...make('order.status_changed'), body: 'Buyurtma holati: ON_THE_WAY -> ARRIVED.' };
-    expect(notificationBody(item)).toBe('Buyurtma holati «Usta yo‘lda» dan «Usta yetib keldi» ga o‘zgardi.');
+describe('notificationText', () => {
+  it('rewrites legacy raw-status notifications into what actually happened', () => {
+    const raw = { ...make('order.status_changed'), title: 'Buyurtma holati o\'zgardi', body: 'Buyurtma holati: CONFIRMED -> ON_THE_WAY.' };
+    expect(notificationText(raw, '/mijozlar')).toEqual({ title: 'Usta yo‘lga chiqdi', body: 'Usta sizning manzilingizga qarab yo‘lda.' });
+    const words = { ...make('order.status_changed'), body: 'Buyurtma holati «Tasdiqlandi» dan «Usta yetib keldi» ga o‘zgardi.' };
+    expect(notificationText(words, '/mijozlar').title).toBe('Usta yetib keldi');
   });
 
-  it('leaves other notifications untouched', () => {
-    const item = { ...make('chat.message'), body: 'Farux sizga xabar yubordi.' };
-    expect(notificationBody(item)).toBe('Farux sizga xabar yubordi.');
+  it('addresses masters as masters', () => {
+    const raw = { ...make('order.status_changed'), body: 'Buyurtma holati: WAITING_CONFIRMATION -> COMPLETED.' };
+    expect(notificationText(raw, '/ustalar').title).toBe('Mijoz ishni tasdiqladi');
+  });
+
+  it('keeps freshly written notifications as they are', () => {
+    const fresh = { ...make('order.status_changed'), title: 'Usta yetib keldi', body: 'Usta manzilingizga yetib keldi.' };
+    expect(notificationText(fresh, '/mijozlar')).toEqual({ title: 'Usta yetib keldi', body: 'Usta manzilingizga yetib keldi.' });
+    expect(notificationText({ ...make('chat.message'), body: 'Farux sizga xabar yubordi.' }, '/mijozlar').body).toBe('Farux sizga xabar yubordi.');
   });
 });

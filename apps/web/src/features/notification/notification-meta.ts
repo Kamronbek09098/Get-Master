@@ -47,11 +47,39 @@ export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/us
   }
 }
 
-/** Eski bildirishnomalarda holat kodi (ON_THE_WAY) xom holda yozilgan; foydalanuvchi tushunadigan so‘zga almashtiramiz. */
-export function notificationBody(item: AppNotification): string {
-  if (item.template !== 'order.status_changed') return item.body;
-  const words = STATUS_TEXT as Record<string, string>;
-  return item.body
-    .replace(/[A-Z]+(?:_[A-Z]+)+|\b[A-Z]{4,}\b/g, (code) => words[code] ?? code)
-    .replace(/Buyurtma holati:\s*(.+?)\s*(?:->|→)\s*(.+?)\.?$/, (_all, from: string, to: string) => `Buyurtma holati «${from}» dan «${to}» ga o‘zgardi.`);
+type Recipient = 'customer' | 'master';
+const LEGACY: Record<Recipient, Record<string, { title: string; body: string }>> = {
+  customer: {
+    CONFIRMED: { title: 'Usta buyurtmani tasdiqladi', body: 'Usta buyurtmangizni qabul qildi va tasdiqladi.' },
+    ON_THE_WAY: { title: 'Usta yo‘lga chiqdi', body: 'Usta sizning manzilingizga qarab yo‘lda.' },
+    ARRIVED: { title: 'Usta yetib keldi', body: 'Usta manzilingizga yetib keldi.' },
+    IN_PROGRESS: { title: 'Usta ishni boshladi', body: 'Buyurtmangiz bo‘yicha ish boshlandi.' },
+    WAITING_CONFIRMATION: { title: 'Usta ishni tugatdi', body: 'Ish bajarildi. Iltimos, natijani ko‘rib chiqib, tasdiqlang.' },
+    COMPLETED: { title: 'Buyurtma yakunlandi', body: 'Buyurtma yakunlandi.' },
+    CANCELLED: { title: 'Buyurtma bekor qilindi', body: 'Buyurtma bekor qilindi.' },
+    EXPIRED: { title: 'Buyurtma muddati tugadi', body: 'Usta belgilangan vaqtda tasdiqlamagani uchun buyurtma bekor bo‘ldi.' },
+    DISPUTED: { title: 'Buyurtma bo‘yicha nizo ochildi', body: 'Administrator nizoni ko‘rib chiqadi.' },
+  },
+  master: {
+    COMPLETED: { title: 'Mijoz ishni tasdiqladi', body: 'Buyurtma muvaffaqiyatli yakunlandi.' },
+    CANCELLED: { title: 'Mijoz buyurtmani bekor qildi', body: 'Mijoz buyurtmani bekor qildi.' },
+    DISPUTED: { title: 'Mijoz nizo ochdi', body: 'Buyurtma bo‘yicha nizo ochildi. Administrator ko‘rib chiqadi.' },
+  },
+};
+const STATUS_BY_LABEL = Object.fromEntries(Object.entries(STATUS_TEXT).map(([code, label]) => [label, code]));
+
+/**
+ * Bildirishnomaning ko‘rinadigan sarlavha va matni. Yangilari serverda tayyor yoziladi; eski
+ * («ON_THE_WAY -> ARRIVED», «... o‘zgardi») yozuvlar joriy holatni aytadigan jumlaga almashtiriladi.
+ */
+export function notificationText(item: AppNotification, base: '/mijozlar' | '/ustalar'): { title: string; body: string } {
+  if (item.template !== 'order.status_changed') return { title: item.title, body: item.body };
+  const legacy = /->|→|o‘zgardi|o'zgardi/.test(item.body) || /o‘zgardi|o'zgardi/.test(item.title);
+  if (!legacy) return { title: item.title, body: item.body };
+  const mentioned = [...item.body.matchAll(/[A-Z]+(?:_[A-Z]+)+|\b[A-Z]{4,}\b|«([^»]+)»/g)].map((match) => (match[1] ? STATUS_BY_LABEL[match[1]] : match[0]));
+  const newStatus = mentioned[mentioned.length - 1];
+  const known = newStatus ? LEGACY[base === '/ustalar' ? 'master' : 'customer'][newStatus] : undefined;
+  if (known) return known;
+  const label = newStatus ? (STATUS_TEXT as Record<string, string>)[newStatus] : undefined;
+  return label ? { title: 'Buyurtma yangilandi', body: `Buyurtmaning hozirgi holati: ${label}.` } : { title: item.title, body: item.body };
 }

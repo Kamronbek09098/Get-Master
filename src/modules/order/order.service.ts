@@ -432,7 +432,7 @@ export class OrderService {
       eventName: 'order.status_changed',
       aggregateType: 'Order',
       aggregateId: order.id,
-      payload: { orderId: order.id, oldStatus, newStatus, notifyUserId },
+      payload: { orderId: order.id, oldStatus, newStatus, notifyUserId, actorType: actor.type },
       createdById: actor.userId,
     });
   }

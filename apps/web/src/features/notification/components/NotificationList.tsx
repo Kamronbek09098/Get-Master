@@ -11,7 +11,7 @@ import { env } from '@/lib/env';
 import { getErrorMessage } from '@/lib/error-messages';
 import { cx, formatRelativeTime } from '@/lib/utils';
 import { useMarkAllAsRead, useMarkAsRead, useNotifications } from '../hooks/useNotifications';
-import { notificationBody, notificationMeta } from '../notification-meta';
+import { notificationMeta, notificationText } from '../notification-meta';
 import type { AppNotification } from '../types';
 import './NotificationList.css';
 
@@ -88,6 +88,7 @@ export function NotificationList() {
             <ul className="gm-notify__list">
               {group.items.map((item) => {
                 const meta = notificationMeta(item, base);
+                const text = notificationText(item, base);
                 const Icon = meta.icon;
                 const unread = item.status !== 'READ';
                 return (
@@ -97,8 +98,8 @@ export function NotificationList() {
                         <Icon size={20} strokeWidth={1.9} />
                       </span>
                       <span className="gm-notify__body">
-                        <strong>{item.title}</strong>
-                        <span>{notificationBody(item)}</span>
+                        <strong>{text.title}</strong>
+                        <span>{text.body}</span>
                         <small>{formatRelativeTime(item.createdAt)}</small>
                       </span>
                       {unread && <span className="gm-notify__dot" aria-label="O‘qilmagan" />}

@@ -1,23 +1,49 @@
 import { OutboxEvent } from '@prisma/client';
 
-/** Buyurtma holatlarining foydalanuvchi tushunadigan nomi va sarlavhasi. */
-const ORDER_STATUS: Record<string, { label: string; title: string }> = {
-  DRAFT: { label: 'Qoralama', title: 'Buyurtma qoralamaga o‘tdi' },
-  SUBMITTED: { label: 'Yuborildi', title: 'Buyurtma yuborildi' },
-  MATCHING: { label: 'Mos usta izlanmoqda', title: 'Mos usta izlanmoqda' },
-  OFFERS_RECEIVED: { label: 'Takliflar keldi', title: 'Takliflar keldi' },
-  BOOKED: { label: 'Band qilindi', title: 'Buyurtma band qilindi' },
-  CONFIRMED: { label: 'Tasdiqlandi', title: 'Buyurtma tasdiqlandi' },
-  ON_THE_WAY: { label: 'Usta yo‘lda', title: 'Usta yo‘lga chiqdi' },
-  ARRIVED: { label: 'Usta yetib keldi', title: 'Usta yetib keldi' },
-  IN_PROGRESS: { label: 'Ish jarayonida', title: 'Ish boshlandi' },
-  WAITING_CONFIRMATION: { label: 'Tasdiq kutilmoqda', title: 'Ish tugadi, tasdiqingiz kutilmoqda' },
-  COMPLETED: { label: 'Yakunlandi', title: 'Buyurtma yakunlandi' },
-  CANCELLED: { label: 'Bekor qilindi', title: 'Buyurtma bekor qilindi' },
-  EXPIRED: { label: 'Muddati tugadi', title: 'Buyurtma muddati tugadi' },
-  DISPUTED: { label: 'Nizoli', title: 'Buyurtma bo‘yicha nizo ochildi' },
-};
-const statusLabel = (status: unknown) => ORDER_STATUS[String(status)]?.label ?? String(status);
+/**
+ * Buyurtma holati o‘zgarganda kimga nima deyilishi: «kim nima qildi» ko‘rinishida, joriy holatni aytadi.
+ * Kalit: oluvchi (MIJOZ yoki USTA) + yangi holat + (kerak bo‘lsa) amalni bajargan tomon.
+ */
+type OrderMessage = { title: string; body: string };
+
+function orderMessage(newStatus: string, actorType: string, recipientIsCustomer: boolean): OrderMessage {
+  if (recipientIsCustomer) {
+    switch (newStatus) {
+      case 'CONFIRMED':
+        return { title: 'Usta buyurtmani tasdiqladi', body: 'Usta buyurtmangizni qabul qildi va tasdiqladi.' };
+      case 'ON_THE_WAY':
+        return { title: 'Usta yo‘lga chiqdi', body: 'Usta sizning manzilingizga qarab yo‘lda.' };
+      case 'ARRIVED':
+        return { title: 'Usta yetib keldi', body: 'Usta manzilingizga yetib keldi.' };
+      case 'IN_PROGRESS':
+        return { title: 'Usta ishni boshladi', body: 'Buyurtmangiz bo‘yicha ish boshlandi.' };
+      case 'WAITING_CONFIRMATION':
+        return { title: 'Usta ishni tugatdi', body: 'Ish bajarildi. Iltimos, natijani ko‘rib chiqib, tasdiqlang.' };
+      case 'COMPLETED':
+        return actorType === 'SYSTEM'
+          ? { title: 'Buyurtma avtomatik yakunlandi', body: 'Tasdiqlash muddati tugagani uchun buyurtma yakunlandi.' }
+          : { title: 'Buyurtma yakunlandi', body: 'Nizo ko‘rib chiqilib, buyurtma administrator tomonidan yakunlandi.' };
+      case 'CANCELLED':
+        return actorType === 'ADMIN'
+          ? { title: 'Buyurtma bekor qilindi', body: 'Buyurtma administrator tomonidan bekor qilindi.' }
+          : { title: 'Usta buyurtmani bekor qildi', body: 'Afsuski, usta buyurtmani bekor qildi.' };
+      case 'EXPIRED':
+        return { title: 'Buyurtma muddati tugadi', body: 'Usta belgilangan vaqtda tasdiqlamagani uchun buyurtma bekor bo‘ldi.' };
+      case 'DISPUTED':
+        return { title: 'Usta nizo ochdi', body: 'Buyurtma bo‘yicha nizo ochildi. Administrator ko‘rib chiqadi.' };
+    }
+  } else {
+    switch (newStatus) {
+      case 'COMPLETED':
+        return { title: 'Mijoz ishni tasdiqladi', body: 'Buyurtma muvaffaqiyatli yakunlandi.' };
+      case 'CANCELLED':
+        return { title: 'Mijoz buyurtmani bekor qildi', body: 'Mijoz buyurtmani bekor qildi.' };
+      case 'DISPUTED':
+        return { title: 'Mijoz nizo ochdi', body: 'Buyurtma bo‘yicha nizo ochildi. Administrator ko‘rib chiqadi.' };
+    }
+  }
+  return { title: 'Buyurtma yangilandi', body: 'Buyurtmangiz holati yangilandi. Tafsilotlarni buyurtma sahifasida ko‘ring.' };
+}
 
 export type NotificationTarget = { userId: string; title: string; body: string } | null;
 
@@ -30,12 +56,10 @@ export function toNotificationTarget(event: OutboxEvent): NotificationTarget {
         title: 'Yangi buyurtma',
         body: "Sizning taklifingiz qabul qilindi, buyurtma yaratildi.",
       };
-    case 'order.status_changed':
-      return {
-        userId: payload.notifyUserId as string,
-        title: ORDER_STATUS[String(payload.newStatus)]?.title ?? "Buyurtma holati o'zgardi",
-        body: `Buyurtma holati «${statusLabel(payload.oldStatus)}» dan «${statusLabel(payload.newStatus)}» ga o‘zgardi.`,
-      };
+    case 'order.status_changed': {
+      const message = orderMessage(String(payload.newStatus), String(payload.actorType ?? ''), payload.actorType !== 'CUSTOMER');
+      return { userId: payload.notifyUserId as string, ...message };
+    }
     case 'payment.succeeded':
       return {
         userId: payload.customerId as string,
