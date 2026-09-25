@@ -1,0 +1,117 @@
+
+:root {
+  --gm-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --gm-font-display: 'Manrope', 'Inter', system-ui, sans-serif;
+
+  --gm-color-bg: #f5f7fb;
+  --gm-color-surface: #ffffff;
+  --gm-color-surface-muted: #eef1f7;
+  --gm-color-border: #e1e6ef;
+  --gm-color-border-strong: #c9d1de;
+  --gm-color-text: #0b1220;
+  --gm-color-text-muted: #556178;
+  --gm-color-ink: #0a1a3c;
+
+  --gm-color-primary: #1b4dff;
+  --gm-color-primary-hover: #1440d6;
+  --gm-color-primary-soft: #eaf0ff;
+  --gm-color-primary-contrast: #ffffff;
+  --gm-focus-ring: #1b4dff;
+
+  --gm-color-accent: #ffb020;
+  --gm-color-accent-contrast: #3a2600;
+
+  --gm-color-danger: #d92d3a;
+  --gm-color-danger-bg: #fdecee;
+  --gm-color-success: #067a55;
+  --gm-color-success-bg: #e4f7ee;
+  --gm-color-warning: #a8560a;
+  --gm-color-warning-bg: #fff3df;
+  --gm-color-info-bg: #eaf0ff;
+
+  --gm-radius-sm: 8px;
+  --gm-radius-md: 12px;
+  --gm-radius-lg: 16px;
+  --gm-radius-xl: 24px;
+
+  --gm-space-1: 4px;
+  --gm-space-2: 8px;
+  --gm-space-3: 12px;
+  --gm-space-4: 16px;
+  --gm-space-5: 24px;
+  --gm-space-6: 32px;
+  --gm-space-8: 48px;
+  --gm-space-10: 64px;
+
+  --gm-shadow-sm: 0 1px 2px rgba(11, 18, 32, 0.05), 0 1px 1px rgba(11, 18, 32, 0.03);
+  --gm-shadow-md: 0 6px 20px rgba(11, 18, 32, 0.08);
+  --gm-shadow-lg: 0 18px 44px rgba(11, 18, 32, 0.16);
+
+  --gm-header-height: 68px;
+  --gm-sidebar-width: 272px;
+  --gm-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+:root[data-panel='MASTER'] {
+  --gm-color-primary: #047857;
+  --gm-color-primary-hover: #065f46;
+  --gm-color-primary-soft: #e3f6ee;
+  --gm-color-info-bg: #e3f6ee;
+  --gm-focus-ring: #047857;
+}
+
+:root[data-panel='ADMIN'] {
+  --gm-color-primary: #4338ca;
+  --gm-color-primary-hover: #3730a3;
+  --gm-color-primary-soft: #edebfd;
+  --gm-color-info-bg: #edebfd;
+  --gm-focus-ring: #4338ca;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --gm-color-bg: #0a0f1c;
+  --gm-color-surface: #121a2b;
+  --gm-color-surface-muted: #19233a;
+  --gm-color-border: #26314a;
+  --gm-color-border-strong: #364464;
+  --gm-color-text: #eef2fa;
+  --gm-color-text-muted: #a3aec5;
+  --gm-color-ink: #050b18;
+
+  --gm-color-primary: #7b98ff;
+  --gm-color-primary-hover: #9bb1ff;
+  --gm-color-primary-soft: #182548;
+  --gm-color-primary-contrast: #07122e;
+  --gm-focus-ring: #9bb1ff;
+
+  --gm-color-danger: #ff7a85;
+  --gm-color-danger-bg: #2b1419;
+  --gm-color-success: #3fd79b;
+  --gm-color-success-bg: #0f2a20;
+  --gm-color-warning: #f6b26b;
+  --gm-color-warning-bg: #2d2113;
+  --gm-color-info-bg: #182548;
+
+  --gm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --gm-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --gm-shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme='dark'][data-panel='MASTER'] {
+  --gm-color-primary: #34d399;
+  --gm-color-primary-hover: #6ee7b7;
+  --gm-color-primary-soft: #0f2c22;
+  --gm-color-primary-contrast: #04231a;
+  --gm-color-info-bg: #0f2c22;
+  --gm-focus-ring: #6ee7b7;
+}
+
+:root[data-theme='dark'][data-panel='ADMIN'] {
+  --gm-color-primary: #a5a0ff;
+  --gm-color-primary-hover: #c0bcff;
+  --gm-color-primary-soft: #1f1c45;
+  --gm-color-primary-contrast: #110e33;
+  --gm-color-info-bg: #1f1c45;
+  --gm-focus-ring: #c0bcff;
+}

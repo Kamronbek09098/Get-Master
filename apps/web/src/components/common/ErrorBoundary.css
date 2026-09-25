@@ -1,0 +1,15 @@
+.gm-error-boundary {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--gm-space-3);
+  padding: var(--gm-space-6);
+}
+
+.gm-error-boundary p {
+  color: var(--gm-color-text-muted);
+  max-width: 420px;
+}

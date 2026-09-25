@@ -1,0 +1,45 @@
+.gm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.gm-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+.gm-badge--neutral {
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-text-muted);
+}
+
+.gm-badge--primary {
+  background: var(--gm-color-primary-soft);
+  color: var(--gm-color-primary);
+}
+
+.gm-badge--success {
+  background: var(--gm-color-success-bg);
+  color: var(--gm-color-success);
+}
+
+.gm-badge--warning {
+  background: var(--gm-color-warning-bg);
+  color: var(--gm-color-warning);
+}
+
+.gm-badge--danger {
+  background: var(--gm-color-danger-bg);
+  color: var(--gm-color-danger);
+}

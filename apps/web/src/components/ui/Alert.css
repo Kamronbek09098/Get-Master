@@ -1,0 +1,43 @@
+.gm-alert {
+  border-radius: var(--gm-radius-md);
+  border: 1px solid transparent;
+  border-left-width: 4px;
+  padding: var(--gm-space-3) var(--gm-space-4);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.gm-alert__title {
+  font-weight: 800;
+  font-family: var(--gm-font-display);
+  margin-bottom: 2px;
+}
+
+.gm-alert--info {
+  background: var(--gm-color-info-bg);
+  border-color: color-mix(in srgb, var(--gm-color-primary) 35%, transparent);
+  border-left-color: var(--gm-color-primary);
+  color: var(--gm-color-text);
+}
+
+.gm-alert--success {
+  background: var(--gm-color-success-bg);
+  border-color: color-mix(in srgb, var(--gm-color-success) 35%, transparent);
+  border-left-color: var(--gm-color-success);
+  color: var(--gm-color-text);
+}
+
+.gm-alert--warning {
+  background: var(--gm-color-warning-bg);
+  border-color: color-mix(in srgb, var(--gm-color-warning) 35%, transparent);
+  border-left-color: var(--gm-color-warning);
+  color: var(--gm-color-text);
+}
+
+.gm-alert--danger {
+  background: var(--gm-color-danger-bg);
+  border-color: color-mix(in srgb, var(--gm-color-danger) 35%, transparent);
+  border-left-color: var(--gm-color-danger);
+  color: var(--gm-color-text);
+}

@@ -1,0 +1,57 @@
+import { Type } from 'class-transformer';
+import {
+  IsDateString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
+
+export class CreateRequestDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  title!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  description!: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  categoryId?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  serviceId?: string;
+
+  @IsOptional()
+  @IsUUID('4')
+  addressId?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude?: number;
+
+  @IsOptional()
+  @IsDateString()
+  preferredStartAt?: string;
+
+  @IsOptional()
+  @IsDateString()
+  preferredEndAt?: string;
+}

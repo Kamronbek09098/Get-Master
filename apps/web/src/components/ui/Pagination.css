@@ -1,0 +1,5 @@
+.gm-pagination {
+  display: flex;
+  justify-content: center;
+  padding: var(--gm-space-4) 0;
+}

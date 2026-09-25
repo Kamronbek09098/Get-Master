@@ -1,0 +1,102 @@
+import { Body, Controller, Get, Param, Post, Req, Res } from '@nestjs/common';
+import type { Request, Response } from 'express';
+import { Role } from '@prisma/client';
+import { AuthService } from './auth.service';
+import { SignInDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { LogoutDto } from './dto/logout.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { VerifyOTPDto } from '../otp/dto/verify-otp.dto';
+import { RefreshToken } from '../../common/decorators/get-cookie.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
+import { RateLimit } from '../../common/decorators/rate-limit.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+
+@Controller('auth')
+export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
+  @Public()
+  @RateLimit({ policy: 'register', scope: 'ip' })
+  @Post('register')
+  register(@Body() dto: RegisterDto, @Req() req: Request) {
+    return this.authService.register(dto, req);
+  }
+
+  @Public()
+  @RateLimit({ policy: 'login', scope: 'ip+phone' })
+  @Post('login')
+  login(@Body() dto: SignInDto, @Req() req: Request) {
+    return this.authService.signIn(dto, req);
+  }
+
+  @Public()
+  @Post('verify-otp')
+  verifyLoginOtp(
+    @Body() dto: VerifyOTPDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.confirmSignIn(dto, req, res);
+  }
+
+  @Public()
+  @Post('verify-registration')
+  verifyRegistration(
+    @Body() dto: VerifyOTPDto,
+    @Req() req: Request,
+  ) {
+    return this.authService.confirmRegistration(dto, req);
+  }
+
+  @Public()
+  @Post('refresh')
+  refresh(
+    @RefreshToken() cookieToken: string,
+    @Body() dto: RefreshTokenDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.refresh(cookieToken ?? dto.refreshToken, req, res);
+  }
+
+  @Post('logout')
+  logout(
+    @RefreshToken() token: string,
+    @Req() req: Request,
+    @Body() dto: LogoutDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.signOut(
+      token,
+      req,
+      res,
+      dto.allDevices === true,
+    );
+  }
+
+  @Get('sessions')
+  findAllSessions(@CurrentUser('sub') userId: string, @CurrentUser('deviceId') deviceId: string) {
+    return this.authService.findAllSessions(userId, deviceId);
+  }
+
+  @Post('sessions/revoke-others')
+  revokeOtherSessions(
+    @CurrentUser('sub') userId: string,
+    @CurrentUser('deviceId') deviceId: string,
+    @Req() req: Request,
+  ) {
+    return this.authService.revokeOtherSessions(userId, deviceId, req);
+  }
+
+  @Post('sessions/:deviceId/revoke')
+  revokeSession(
+    @CurrentUser('sub') userId: string,
+    @CurrentUser('deviceId') deviceId: string,
+    @Param('deviceId') sessionOrDeviceId: string,
+    @Req() req: Request,
+  ) {
+    return this.authService.revokeSession(userId, sessionOrDeviceId, deviceId, req);
+  }
+}

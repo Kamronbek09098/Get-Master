@@ -1,0 +1,112 @@
+.gm-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gm-space-2);
+  border-radius: var(--gm-radius-md);
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  font-family: var(--gm-font-display);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+}
+
+.gm-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.gm-button--md {
+  min-height: 46px;
+  padding: 0 var(--gm-space-5);
+  font-size: 15px;
+}
+
+.gm-button--sm {
+  min-height: 36px;
+  padding: 0 var(--gm-space-4);
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+.gm-button--lg {
+  min-height: 54px;
+  padding: 0 var(--gm-space-6);
+  font-size: 16px;
+  border-radius: 14px;
+}
+
+.gm-button--full {
+  width: 100%;
+}
+
+.gm-button--primary {
+  background: var(--gm-color-primary);
+  color: var(--gm-color-primary-contrast);
+  box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--gm-color-primary) 70%, transparent);
+}
+
+.gm-button--primary:hover:not(:disabled) {
+  background: var(--gm-color-primary-hover);
+  color: var(--gm-color-primary-contrast);
+}
+
+.gm-button--secondary {
+  background: var(--gm-color-surface);
+  border-color: var(--gm-color-border-strong);
+  color: var(--gm-color-text);
+}
+
+.gm-button--secondary:hover:not(:disabled) {
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-text);
+}
+
+.gm-button--ghost {
+  background: transparent;
+  color: var(--gm-color-text);
+}
+
+.gm-button--ghost:hover:not(:disabled) {
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-text);
+}
+
+.gm-button--danger {
+  background: var(--gm-color-danger);
+  color: #fff;
+}
+
+.gm-button--danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+  color: #fff;
+}
+
+.gm-button--accent {
+  background: var(--gm-color-accent);
+  color: var(--gm-color-accent-contrast);
+  box-shadow: 0 6px 16px -6px rgba(255, 176, 32, 0.8);
+}
+
+.gm-button--accent:hover:not(:disabled) {
+  filter: brightness(0.96);
+  color: var(--gm-color-accent-contrast);
+}
+
+.gm-button__spinner {
+  position: absolute;
+}
+
+.gm-button > svg {
+  display: block;
+  flex-shrink: 0;
+}

@@ -1,0 +1,109 @@
+import { env } from '@/lib/env';
+import { ApiError, type ApiEnvelope } from '@/types/api';
+
+const AUTH_PATH_PREFIX = '/auth/';
+
+const PANEL_HEADERS: Record<string, string> = env.appRole ? { 'X-App-Panel': env.appRole } : {};
+
+let refreshInFlight: Promise<boolean> | null = null;
+
+async function refreshSession(): Promise<boolean> {
+  refreshInFlight ??= (async () => {
+    try {
+      const res = await fetch(`${env.apiBaseUrl}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: PANEL_HEADERS,
+      });
+      return res.ok;
+    } catch {
+      return false;
+    } finally {
+      refreshInFlight = null;
+    }
+  })();
+  return refreshInFlight;
+}
+
+export const SESSION_EXPIRED_EVENT = 'getmaster:session-expired';
+
+function notifySessionExpired(): void {
+  window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+}
+
+interface RequestOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  body?: unknown;
+  idempotencyKey?: string;
+  signal?: AbortSignal;
+}
+
+async function request<T>(path: string, options: RequestOptions = {}, isRetry = false): Promise<T> {
+  const isFormData = options.body instanceof FormData;
+  const headers: Record<string, string> = { ...PANEL_HEADERS };
+  if (!isFormData && options.body !== undefined) headers['Content-Type'] = 'application/json';
+  if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
+
+  let response: Response;
+  try {
+    response = await fetch(`${env.apiBaseUrl}${path}`, {
+      method: options.method ?? 'GET',
+      credentials: 'include',
+      headers,
+      body: isFormData ? (options.body as FormData) : options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      signal: options.signal,
+    });
+  } catch {
+    throw new ApiError({
+      statusCode: 0,
+      code: 'NETWORK_ERROR',
+      message: 'Internet aloqasi yo’q yoki server javob bermayapti.',
+      requestId: null,
+    });
+  }
+
+  if (response.status === 401 && !isRetry && !path.startsWith(AUTH_PATH_PREFIX)) {
+    const recovered = await refreshSession();
+    if (recovered) return request<T>(path, options, true);
+    notifySessionExpired();
+  }
+
+  const text = await response.text();
+  const envelope: ApiEnvelope<T> | null = text ? (JSON.parse(text) as ApiEnvelope<T>) : null;
+
+  if (!response.ok || !envelope || envelope.success === false) {
+    if (envelope && envelope.success === false) throw new ApiError(envelope);
+    throw new ApiError({
+      statusCode: response.status,
+      code: 'UNKNOWN_ERROR',
+      message: `Server kutilmagan javob qaytardi (${response.status}).`,
+      requestId: null,
+    });
+  }
+
+  return envelope.data;
+}
+
+export function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
+  return request<T>(path, { method: 'GET', signal });
+}
+
+export function apiPost<T>(path: string, body?: unknown, idempotencyKey?: string): Promise<T> {
+  return request<T>(path, { method: 'POST', body: body ?? {}, idempotencyKey });
+}
+
+export function apiUpload<T>(path: string, body: FormData): Promise<T> {
+  return request<T>(path, { method: 'POST', body });
+}
+
+export function apiPatch<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>(path, { method: 'PATCH', body: body ?? {} });
+}
+
+export function apiPut<T>(path: string, body?: unknown): Promise<T> {
+  return request<T>(path, { method: 'PUT', body: body ?? {} });
+}
+
+export function apiDelete<T>(path: string): Promise<T> {
+  return request<T>(path, { method: 'DELETE' });
+}
