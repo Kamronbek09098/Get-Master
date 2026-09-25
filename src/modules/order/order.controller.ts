@@ -1,3 +1,4 @@
+import { ConfirmCompletionDto } from './dto/confirm-completion.dto';
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -82,8 +83,8 @@ export class OrderController {
   }
 
   @Post(':id/confirm-completion')
-  confirmCompletion(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
-    return this.orderService.confirmCompletion(userId, id, panelOf(req));
+  confirmCompletion(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request, @Body() dto: ConfirmCompletionDto) {
+    return this.orderService.confirmCompletion(userId, id, panelOf(req), dto?.paymentMethod);
   }
 
   @Post(':id/dispute')

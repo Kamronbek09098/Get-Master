@@ -1,3 +1,4 @@
+import { providerLabel } from '@/features/payment/labels';
 import { useState } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatDateTime, formatMoney } from '@/lib/utils';
+import { formatDateTime, formatMoney, newIdempotencyKey } from '@/lib/utils';
 import { useRefund, useRevenueReport } from '@/features/admin/hooks/useAdmin';
 import { StatGrid } from '@/features/admin/components/StatGrid';
 import { DateRangeFilter } from '@/features/admin/components/DateRangeFilter';
@@ -38,7 +39,7 @@ export function AdminReportsPage() {
   function submitRefund() {
     if (!target) return;
     refund.mutate(
-      { id: target.id, amount: Number(amount), reason, note: note.trim() },
+      { id: target.id, amount: Number(amount), reason, note: note.trim(), idempotencyKey: newIdempotencyKey() },
       {
         onSuccess: () => {
           setTarget(null);
@@ -95,7 +96,7 @@ export function AdminReportsPage() {
                     </Button>
                   </div>
                   <p className="gm-card__meta">
-                    {row.provider} · {formatDateTime(row.succeededAt)} · Buyurtma: {row.orderId}
+                    {providerLabel(row.provider)} · {formatDateTime(row.succeededAt)} · Buyurtma: {row.orderId}
                     {Number(row.refundedAmount) > 0 && ` · Qaytarilgan: ${formatMoney(row.refundedAmount, row.currency)}`}
                   </p>
                 </div>

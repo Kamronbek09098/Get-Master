@@ -1,4 +1,4 @@
-import type { AttachmentType, OrderStatus, WorkStage } from '@/types/common';
+import type { AttachmentType, OrderStatus, PaymentProvider, PaymentStatus, WorkStage } from '@/types/common';
 
 export interface Order {
   id: string;
@@ -37,6 +37,7 @@ export interface OrderDetailsData extends Order {
   scheduledStartAt: string | null;
   conversationId: string | null;
   counterpart: OrderParty;
+  payment: { id: string; provider: PaymentProvider; status: PaymentStatus; amount: string; currency: string } | null;
 }
 
 export interface OrderListItem extends Order {

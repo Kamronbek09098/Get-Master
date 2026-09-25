@@ -36,7 +36,10 @@ export const useStartTravel = (id: string) => useOrderMutation(id, orderService.
 export const useArrive = (id: string) => useOrderMutation(id, orderService.arrive);
 export const useStartWork = (id: string) => useOrderMutation(id, orderService.startWork);
 export const useSubmitCompletion = (id: string) => useOrderMutation(id, orderService.submitCompletion);
-export const useConfirmCompletion = (id: string) => useOrderMutation(id, orderService.confirmCompletion);
+export function useConfirmCompletion(id: string) {
+  const refresh = useRefreshOrder(id);
+  return useMutation({ mutationFn: (paymentMethod?: string) => orderService.confirmCompletion(id, paymentMethod), onSuccess: refresh });
+}
 
 export function useCancelOrder(id: string) {
   const refresh = useRefreshOrder(id);

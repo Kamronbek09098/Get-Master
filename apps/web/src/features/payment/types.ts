@@ -19,7 +19,7 @@ export interface Payment {
 
 export interface CreatePaymentResult {
   payment: Payment;
-  checkoutUrl: string;
+  checkoutUrl: string | null;
 }
 
 export interface EarningsSummary {

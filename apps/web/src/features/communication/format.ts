@@ -136,7 +136,8 @@ export function canEdit(message: ChatMessage, now: number = Date.now()): boolean
 const TONES = 8;
 
 /** Foydalanuvchiga barqaror rang (0..7) beradi — avatar uchun. */
-export function avatarTone(seed: string): number {
+export function avatarTone(seed: string | null | undefined): number {
+  seed = seed ?? "";
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
   return hash % TONES;

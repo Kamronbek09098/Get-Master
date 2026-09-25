@@ -205,6 +205,7 @@ enum PaymentStatus {
 }
 
 enum PaymentProvider {
+  CASH
   CLICK
   PAYME
   UZUM

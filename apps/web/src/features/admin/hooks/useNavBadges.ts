@@ -5,12 +5,12 @@ import { communicationService } from '@/features/communication/services/communic
 import { customerService } from '@/features/customer/services/customer.service';
 import { adminService } from '../services/admin.service';
 
-type SeenKey = 'audit' | 'users' | 'chats' | 'verifications' | 'cases' | 'appeals' | 'offers';
+type SeenKey = 'audit' | 'users' | 'chats' | 'verifications' | 'cases' | 'appeals' | 'offers' | 'orders';
 const STORAGE_PREFIX = 'gm.seen.';
 /** Doimiy shovqin: har bir sessiya yangilanishi «yangi yozuv» hisoblanmasin. */
 const NOISE = new Set(['AUTH_REFRESH_ROTATED']);
 const listeners = new Set<() => void>();
-const seen: Record<SeenKey, string | null> = { audit: null, users: null, chats: null, verifications: null, cases: null, appeals: null, offers: null };
+const seen: Record<SeenKey, string | null> = { audit: null, users: null, chats: null, verifications: null, cases: null, appeals: null, offers: null, orders: null };
 
 for (const key of Object.keys(seen) as SeenKey[]) {
   try {
@@ -54,6 +54,8 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
   const verificationsSeen = useSeen('verifications');
   const casesSeen = useSeen('cases');
   const appealsSeen = useSeen('appeals');
+  const ordersSeen = useSeen('orders');
+  const onOrders = pathname.startsWith('/admin/buyurtmalar');
   const onUsers = pathname.startsWith('/admin/foydalanuvchilar');
   const onChats = pathname.startsWith('/admin/suhbatlar');
   const onAudit = pathname.startsWith('/admin/audit');
@@ -87,7 +89,7 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
 
   const unread = useUnreadCount();
   const badges = useQuery({
-    queryKey: ['admin', 'badges', usersSeen, chatsSeen, verificationsSeen, casesSeen, appealsSeen],
+    queryKey: ['admin', 'badges', usersSeen, chatsSeen, verificationsSeen, casesSeen, appealsSeen, ordersSeen],
     queryFn: () =>
       adminService.badges({
         usersSince: usersSeen ?? undefined,
@@ -95,6 +97,7 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
         verificationsSince: verificationsSeen ?? undefined,
         casesSince: casesSeen ?? undefined,
         appealsSince: appealsSeen ?? undefined,
+        ordersSince: ordersSeen ?? undefined,
       }),
     enabled: admin,
     refetchInterval: 30_000,
@@ -120,7 +123,8 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
     if (!verificationsSeen || onVerifications) markSeen('verifications', now);
     if (!casesSeen || onCases) markSeen('cases', now);
     if (!appealsSeen || onAppeals) markSeen('appeals', now);
-  }, [now, usersSeen, chatsSeen, verificationsSeen, casesSeen, appealsSeen, onUsers, onChats, onVerifications, onCases, onAppeals]);
+    if (!ordersSeen || onOrders) markSeen('orders', now);
+  }, [now, usersSeen, chatsSeen, verificationsSeen, casesSeen, appealsSeen, ordersSeen, onUsers, onChats, onVerifications, onCases, onAppeals, onOrders]);
   useEffect(() => {
     if (auditNewest && (!auditSeen || onAudit)) markSeen('audit', auditNewest);
   }, [auditNewest, auditSeen, onAudit]);
@@ -137,6 +141,7 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
     const data = badges.data;
     put('/admin/tasdiqlash', onVerifications ? 0 : (data?.verifications ?? 0));
     put('/admin/shikoyatlar', onCases ? 0 : (data?.cases ?? 0));
+    put('/admin/buyurtmalar', onOrders ? 0 : (data?.orders ?? 0));
     put('/admin/xavfsizlik', onAppeals ? 0 : (data?.appeals ?? 0));
     put('/admin/foydalanuvchilar', onUsers ? 0 : (data?.users ?? 0));
     put('/admin/suhbatlar', onChats ? 0 : (data?.chats ?? 0));

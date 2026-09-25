@@ -42,7 +42,7 @@ export type PaymentStatus =
   | 'REFUNDED'
   | 'PARTIALLY_REFUNDED';
 
-export type PaymentProvider = 'CLICK' | 'PAYME' | 'UZUM' | 'OTHER';
+export type PaymentProvider = 'CASH' | 'CLICK' | 'PAYME' | 'UZUM' | 'OTHER';
 
 export type RefundReason =
   | 'CUSTOMER_REQUEST'

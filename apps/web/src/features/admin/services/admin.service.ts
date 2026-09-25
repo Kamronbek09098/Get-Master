@@ -4,6 +4,10 @@ import type { CaseItem, CaseStatus } from '@/features/dispute/types';
 import type { ServiceCategory } from '@/features/service/types';
 import type {
   AdminBadges,
+  AdminOrderDetail,
+  AdminOrderFilters,
+  AdminOrderRow,
+  AdminOrdersSummary,
   AdminUserDetail,
   AdminUser,
   AdminChatMessage,
@@ -73,6 +77,21 @@ export const adminService = {
   },
   conversationMessages(id: string, cursor?: string) {
     return apiGet<CursorPage<AdminChatMessage>>(`/admin/conversations/${id}/messages${qs({ limit: '50', cursor })}`);
+  },
+  orders(filters: AdminOrderFilters, cursor?: string) {
+    return apiGet<CursorPage<AdminOrderRow>>(`/admin/orders${qs({ limit: '25', ...filters, cursor })}`);
+  },
+  ordersSummary() {
+    return apiGet<AdminOrdersSummary>('/admin/orders/summary');
+  },
+  order(id: string) {
+    return apiGet<AdminOrderDetail>(`/admin/orders/${id}`);
+  },
+  cancelOrder(id: string, reason: string) {
+    return apiPost<unknown>(`/admin/orders/${id}/cancel`, { reason });
+  },
+  resolveOrder(id: string, decision: 'COMPLETE' | 'CANCEL', reason: string) {
+    return apiPost<unknown>(`/admin/orders/${id}/resolve`, { decision, reason });
   },
   user(id: string) {
     return apiGet<AdminUserDetail>(`/admin/users/${id}`);

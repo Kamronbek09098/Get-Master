@@ -397,3 +397,231 @@ a.gm-achat__sender:hover strong {
   color: var(--gm-color-primary);
   text-decoration: underline;
 }
+
+/* ---- Telegram uslubidagi suhbat ko‘rinishi ---- */
+.gm-achat__scroll {
+  background-color: color-mix(in srgb, var(--gm-color-primary) 5%, var(--gm-color-surface-muted));
+  background-image:
+    radial-gradient(color-mix(in srgb, var(--gm-color-primary) 10%, transparent) 1px, transparent 1px),
+    radial-gradient(color-mix(in srgb, var(--gm-color-primary) 7%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px, 22px 22px;
+  background-position: 0 0, 11px 11px;
+  padding: var(--gm-space-3) var(--gm-space-2);
+}
+.gm-achat__messages {
+  gap: 2px;
+  padding: 0 var(--gm-space-3);
+}
+.gm-achat__day {
+  position: sticky;
+  top: 4px;
+  z-index: 2;
+  margin: var(--gm-space-3) 0 var(--gm-space-2);
+}
+.gm-achat__day span {
+  background: color-mix(in srgb, var(--gm-color-text) 55%, transparent);
+  border: 0;
+  color: #fff;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+.gm-tg__row {
+  display: flex;
+  flex-direction: column;
+  max-width: min(72%, 640px);
+  margin-top: 2px;
+}
+.gm-tg__row--first {
+  margin-top: var(--gm-space-3);
+}
+.gm-tg__row--left {
+  align-items: flex-start;
+  align-self: flex-start;
+}
+.gm-tg__row--right {
+  align-items: flex-end;
+  align-self: flex-end;
+}
+.gm-tg__bubble {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 96px;
+  padding: 6px 10px 5px;
+  border-radius: 16px;
+  background: var(--gm-color-surface);
+  box-shadow: 0 1px 1.5px rgba(15, 23, 42, 0.14);
+  overflow-wrap: anywhere;
+}
+.gm-tg__row--right .gm-tg__bubble {
+  background: color-mix(in srgb, var(--gm-color-primary) 17%, var(--gm-color-surface));
+}
+.gm-tg__row--left.gm-tg__row--last .gm-tg__bubble {
+  border-bottom-left-radius: 4px;
+}
+.gm-tg__row--right.gm-tg__row--last .gm-tg__bubble {
+  border-bottom-right-radius: 4px;
+}
+.gm-tg__row--left:not(.gm-tg__row--first) .gm-tg__bubble {
+  border-top-left-radius: 6px;
+}
+.gm-tg__row--right:not(.gm-tg__row--first) .gm-tg__bubble {
+  border-top-right-radius: 6px;
+}
+.gm-tg__bubble--deleted {
+  background: var(--gm-color-danger-bg);
+  outline: 1px dashed color-mix(in srgb, var(--gm-color-danger) 55%, transparent);
+}
+.gm-tg__name {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.gm-tg__name small {
+  color: var(--gm-color-text-muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+.gm-tg__name:hover span {
+  text-decoration: underline;
+}
+.gm-tg__deleted-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--gm-color-danger);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.gm-tg__text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+.gm-tg__reply {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 3px 8px;
+  border-left: 3px solid var(--gm-color-primary);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--gm-color-primary) 9%, transparent);
+  font-size: 0.8rem;
+}
+.gm-tg__reply strong {
+  color: var(--gm-color-primary);
+  font-size: 0.72rem;
+}
+.gm-tg__reply span {
+  color: var(--gm-color-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.gm-tg__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.gm-tg__meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: -2px;
+  color: var(--gm-color-text-muted);
+  font-size: 0.68rem;
+}
+.gm-tg__edited {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gm-color-warning);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gm-tg__edited:hover {
+  text-decoration: underline;
+}
+.gm-tg__history {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+  margin: 4px 0 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--gm-color-warning);
+  border-radius: 8px;
+  background: var(--gm-color-surface);
+  list-style: none;
+  font-size: 0.82rem;
+}
+.gm-tg__history li {
+  display: flex;
+  flex-direction: column;
+}
+.gm-tg__history small {
+  color: var(--gm-color-text-muted);
+}
+
+/* Reaksiyalar */
+.gm-tg__reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+.gm-tg__reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--gm-color-primary) 35%, var(--gm-color-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gm-color-primary) 13%, var(--gm-color-surface));
+  cursor: default;
+}
+.gm-tg__emoji {
+  font-size: 1rem;
+  line-height: 1;
+}
+.gm-tg__reactors {
+  display: inline-flex;
+}
+.gm-tg__mini {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-left: -5px;
+  border: 1.5px solid var(--gm-color-surface);
+  border-radius: 50%;
+  background: var(--tone-bg);
+  color: var(--tone-fg);
+  font-size: 0.5rem;
+  font-weight: 800;
+}
+.gm-tg__mini:first-child {
+  margin-left: 0;
+}
+.gm-tg__count {
+  color: var(--gm-color-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+@media (max-width: 900px) {
+  .gm-tg__row {
+    max-width: 90%;
+  }
+}

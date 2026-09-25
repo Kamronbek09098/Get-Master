@@ -39,6 +39,12 @@ export class PaymentController {
     return this.paymentService.findOne(userId, id);
   }
 
+  @Post('payments/:id/confirm-cash')
+  @Roles(Role.MASTER, Role.ADMIN)
+  confirmCash(@CurrentUser('sub') actorId: string, @CurrentUser('roles') roles: Role[], @Param('id', ParseUUIDPipe) id: string) {
+    return this.paymentService.confirmCash(actorId, roles, id);
+  }
+
   @Post('payments/:id/refund')
   @Roles(Role.ADMIN)
   @Idempotent()

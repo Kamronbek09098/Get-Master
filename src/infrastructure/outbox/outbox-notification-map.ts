@@ -35,9 +35,13 @@ function orderMessage(newStatus: string, actorType: string, recipientIsCustomer:
   } else {
     switch (newStatus) {
       case 'COMPLETED':
-        return { title: 'Mijoz ishni tasdiqladi', body: 'Buyurtma muvaffaqiyatli yakunlandi.' };
+        return actorType === 'ADMIN'
+          ? { title: 'Buyurtma yakunlandi', body: 'Nizo ko‘rib chiqilib, buyurtma administrator tomonidan yakunlandi.' }
+          : { title: 'Mijoz ishni tasdiqladi', body: 'Buyurtma muvaffaqiyatli yakunlandi.' };
       case 'CANCELLED':
-        return { title: 'Mijoz buyurtmani bekor qildi', body: 'Mijoz buyurtmani bekor qildi.' };
+        return actorType === 'ADMIN'
+          ? { title: 'Buyurtma bekor qilindi', body: 'Buyurtma administrator tomonidan bekor qilindi.' }
+          : { title: 'Mijoz buyurtmani bekor qildi', body: 'Mijoz buyurtmani bekor qildi.' };
       case 'DISPUTED':
         return { title: 'Mijoz nizo ochdi', body: 'Buyurtma bo‘yicha nizo ochildi. Administrator ko‘rib chiqadi.' };
     }
@@ -57,7 +61,7 @@ export function toNotificationTarget(event: OutboxEvent): NotificationTarget {
         body: "Sizning taklifingiz qabul qilindi, buyurtma yaratildi.",
       };
     case 'order.status_changed': {
-      const message = orderMessage(String(payload.newStatus), String(payload.actorType ?? ''), payload.actorType !== 'CUSTOMER');
+      const message = orderMessage(String(payload.newStatus), String(payload.actorType ?? ''), (payload.recipient ?? (payload.actorType === 'CUSTOMER' ? 'MASTER' : 'CUSTOMER')) !== 'MASTER');
       return { userId: payload.notifyUserId as string, ...message };
     }
     case 'payment.succeeded':

@@ -42,6 +42,8 @@ import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminReportsPage } from '@/pages/admin/AdminReportsPage';
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
 import { AdminUserProfilePage } from '@/pages/admin/AdminUserProfilePage';
+import { AdminOrdersPage } from '@/pages/admin/AdminOrdersPage';
+import { AdminOrderDetailPage } from '@/pages/admin/AdminOrderDetailPage';
 import { AdminVerificationsPage } from '@/pages/admin/AdminVerificationsPage';
 import { AdminCasesPage } from '@/pages/admin/AdminCasesPage';
 import { AdminSafetyPage } from '@/pages/admin/AdminSafetyPage';
@@ -127,6 +129,8 @@ export const router = createBrowserRouter([
           { path: '/admin/hisobot', element: admin(<AdminReportsPage />) },
           { path: '/admin/foydalanuvchilar', element: admin(<AdminUsersPage />) },
           { path: '/admin/foydalanuvchilar/:id', element: admin(<AdminUserProfilePage />) },
+          { path: '/admin/buyurtmalar', element: admin(<AdminOrdersPage />) },
+          { path: '/admin/buyurtmalar/:id', element: admin(<AdminOrderDetailPage />) },
           { path: '/admin/mijozlar', element: <Navigate to="/admin/foydalanuvchilar" replace /> },
           { path: '/admin/tasdiqlash', element: admin(<AdminVerificationsPage />) },
           { path: '/admin/shikoyatlar', element: admin(<AdminCasesPage />) },

@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { notificationService } from '../services/notification.service';
 
-export function useNotifications() {
-  return useQuery({ queryKey: ['notifications', 'mine'], queryFn: () => notificationService.listMine() });
+export function useNotifications(enabled = true) {
+  return useQuery({ queryKey: ['notifications', 'mine'], queryFn: () => notificationService.listMine(), enabled, refetchInterval: 20_000 });
 }
 
 export function useUnreadCount() {

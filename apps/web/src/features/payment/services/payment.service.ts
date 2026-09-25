@@ -14,11 +14,14 @@ export const paymentService = {
     const query = search.toString();
     return apiGet<{ summary: EarningsSummary } & CursorPage<Payment>>(`/payments/earnings${query ? `?${query}` : ''}`);
   },
-  refund(id: string, input: { amount: number; reason: string; note: string }) {
-    return apiPost<unknown>(`/payments/${id}/refund`, input);
+  refund(id: string, input: { amount: number; reason: string; note: string }, idempotencyKey: string) {
+    return apiPost<unknown>(`/payments/${id}/refund`, input, idempotencyKey);
   },
   create(orderId: string, provider: PaymentProvider, idempotencyKey: string) {
     return apiPost<CreatePaymentResult>('/payments', { orderId, provider }, idempotencyKey);
+  },
+  confirmCash(id: string) {
+    return apiPost<Payment>(`/payments/${id}/confirm-cash`);
   },
   get(id: string) {
     return apiGet<Payment>(`/payments/${id}`);

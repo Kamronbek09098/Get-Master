@@ -93,7 +93,7 @@ export class AdminChatService {
         deletedAt: true,
         sender: { select: PERSON },
         replyTo: { select: { id: true, text: true, deletedAt: true } },
-        reactions: { select: { emoji: true } },
+        reactions: { orderBy: { createdAt: 'asc' }, select: { emoji: true, userId: true, panel: true, createdAt: true } },
         edits: { orderBy: { editedAt: 'asc' }, select: { id: true, previousText: true, editedAt: true } },
       },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],

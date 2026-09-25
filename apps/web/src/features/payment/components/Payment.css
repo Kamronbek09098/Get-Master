@@ -1,0 +1,372 @@
+/* ---- To‘lov usuli kartalari ---- */
+.gm-paym {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--gm-space-3);
+}
+.gm-paym--compact {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--gm-space-2);
+}
+.gm-paym__card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--gm-space-3);
+  padding: var(--gm-space-3) var(--gm-space-4);
+  border: 1.5px solid var(--gm-color-border);
+  border-radius: var(--gm-radius-lg);
+  background: var(--gm-color-surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+.gm-paym__card:hover {
+  border-color: color-mix(in srgb, var(--gm-color-primary) 55%, var(--gm-color-border));
+}
+.gm-paym__card:focus-within {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gm-color-primary) 25%, transparent);
+}
+.gm-paym__card--selected {
+  border-color: var(--gm-color-primary);
+  background: var(--gm-color-primary-soft);
+}
+.gm-paym__card--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.gm-paym__card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.gm-paym__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-primary);
+  font-weight: 800;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+.gm-paym__icon--click {
+  background: #e3f2ff;
+  color: #0a7cff;
+}
+.gm-paym__icon--payme {
+  background: #e0f7f5;
+  color: #00a89c;
+}
+.gm-paym__icon--uzum {
+  background: #efe6ff;
+  color: #6d28d9;
+}
+.gm-paym__text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.gm-paym__text strong {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+.gm-paym__text em {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--gm-color-warning-bg);
+  color: var(--gm-color-warning);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 700;
+}
+.gm-paym__text small {
+  color: var(--gm-color-text-muted);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+.gm-paym__check {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid var(--gm-color-border);
+  border-radius: 50%;
+  color: var(--gm-color-primary-contrast);
+}
+.gm-paym__card--selected .gm-paym__check {
+  border-color: var(--gm-color-primary);
+  background: var(--gm-color-primary);
+}
+
+/* ---- To‘lov sahifasi ---- */
+.gm-pay {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gm-space-5);
+}
+.gm-pay__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  color: var(--gm-color-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.gm-pay__head h1 {
+  margin: 0;
+}
+.gm-pay__head p {
+  margin: 4px 0 0;
+  color: var(--gm-color-text-muted);
+}
+.gm-pay__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: var(--gm-space-5);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .gm-pay__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.gm-pay__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gm-space-4);
+  padding: var(--gm-space-5);
+  border: 1px solid var(--gm-color-border);
+  border-radius: var(--gm-radius-lg);
+  background: var(--gm-color-surface);
+  box-shadow: var(--gm-shadow-sm);
+}
+.gm-pay__panel h2 {
+  margin: 0;
+  font-family: var(--gm-font-display);
+  font-size: 1.05rem;
+}
+.gm-pay__panel > p {
+  margin: 0;
+  color: var(--gm-color-text-muted);
+}
+.gm-pay__cta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gm-space-2);
+}
+.gm-pay__cta .gm-btn,
+.gm-pay__cta button {
+  width: 100%;
+  min-height: 48px;
+  font-size: 1rem;
+}
+.gm-pay__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--gm-color-text-muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+.gm-pay__note svg {
+  flex: none;
+  margin-top: 1px;
+  color: var(--gm-color-success);
+}
+.gm-pay__aside {
+  position: sticky;
+  top: 76px;
+}
+.gm-pay__sum {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gm-space-2);
+  margin: 0;
+}
+.gm-pay__sum div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--gm-space-3);
+  font-size: 0.9rem;
+}
+.gm-pay__sum dt {
+  color: var(--gm-color-text-muted);
+}
+.gm-pay__sum dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+.gm-pay__sum .gm-pay__total {
+  padding-top: var(--gm-space-3);
+  border-top: 1px dashed var(--gm-color-border);
+}
+.gm-pay__total dt {
+  color: var(--gm-color-text);
+  font-weight: 700;
+}
+.gm-pay__total dd {
+  font-family: var(--gm-font-display);
+  font-size: 1.5rem;
+}
+.gm-pay__order {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gm-pay__order strong {
+  overflow-wrap: anywhere;
+}
+.gm-pay__order small {
+  color: var(--gm-color-text-muted);
+}
+
+/* ---- Natija holati (muvaffaqiyat / kutilmoqda) ---- */
+.gm-pay__result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--gm-space-3);
+  padding: var(--gm-space-5);
+  border: 1px solid color-mix(in srgb, var(--gm-color-success) 40%, var(--gm-color-border));
+  border-radius: var(--gm-radius-lg);
+  background: linear-gradient(180deg, var(--gm-color-success-bg), var(--gm-color-surface) 75%);
+}
+.gm-pay__result--wait {
+  border-color: color-mix(in srgb, var(--gm-color-warning) 45%, var(--gm-color-border));
+  background: linear-gradient(180deg, var(--gm-color-warning-bg), var(--gm-color-surface) 75%);
+}
+.gm-pay__result-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--gm-color-success);
+  color: #fff;
+}
+.gm-pay__result--wait .gm-pay__result-icon {
+  background: var(--gm-color-warning);
+}
+.gm-pay__result h2 {
+  margin: 0;
+  font-family: var(--gm-font-display);
+}
+.gm-pay__result p {
+  margin: 0;
+  color: var(--gm-color-text-muted);
+}
+.gm-pay__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--gm-space-3);
+  width: 100%;
+  margin: var(--gm-space-2) 0 0;
+}
+.gm-pay__facts div {
+  padding: var(--gm-space-3);
+  border-radius: var(--gm-radius-md);
+  background: color-mix(in srgb, var(--gm-color-surface) 80%, transparent);
+  border: 1px solid var(--gm-color-border);
+}
+.gm-pay__facts dt {
+  color: var(--gm-color-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.gm-pay__facts dd {
+  margin: 2px 0 0;
+  font-weight: 700;
+}
+.gm-pay__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gm-space-2);
+}
+
+/* ---- Buyurtma sahifasidagi to‘lov kartasi ---- */
+.gm-opaycard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gm-space-3);
+  padding: var(--gm-space-5);
+  border: 1px solid var(--gm-color-border);
+  border-left-width: 4px;
+  border-radius: var(--gm-radius-lg);
+  background: var(--gm-color-surface);
+  box-shadow: var(--gm-shadow-sm);
+}
+.gm-opaycard--success {
+  border-left-color: var(--gm-color-success);
+}
+.gm-opaycard--warning {
+  border-left-color: var(--gm-color-warning);
+}
+.gm-opaycard--danger {
+  border-left-color: var(--gm-color-danger);
+}
+.gm-opaycard--neutral {
+  border-left-color: var(--gm-color-border);
+}
+.gm-opaycard__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gm-space-3);
+}
+.gm-opaycard__head h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-family: var(--gm-font-display);
+  font-size: 1.05rem;
+}
+.gm-opaycard__body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gm-space-3);
+}
+.gm-opaycard__method {
+  display: flex;
+  align-items: center;
+  gap: var(--gm-space-3);
+}
+.gm-opaycard__method strong {
+  display: block;
+}
+.gm-opaycard__method small {
+  color: var(--gm-color-text-muted);
+}
+.gm-opaycard__amount {
+  font-family: var(--gm-font-display);
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+.gm-opaycard__hint {
+  margin: 0;
+  color: var(--gm-color-text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.gm-opaycard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gm-space-2);
+}

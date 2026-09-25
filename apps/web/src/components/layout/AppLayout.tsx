@@ -4,12 +4,14 @@ import { Sidebar } from './Sidebar';
 import { MobileNavigation } from './MobileNavigation';
 import { Footer } from './Footer';
 import { useCurrentRole } from '@/features/session/hooks/useCurrentRole';
+import { useAutoReadNotifications } from '@/features/notification/hooks/useAutoReadNotifications';
 import { VerificationBanner } from '@/features/trust/components/VerificationBanner';
 import { NameRequiredDialog } from '@/features/session/components/NameRequiredDialog';
 import './AppLayout.css';
 
 export function AppLayout() {
   const { role, needsMasterOnboarding } = useCurrentRole();
+  useAutoReadNotifications();
   return (
     <div className="gm-app-layout">
       <a href="#gm-main-content" className="gm-skip-link">

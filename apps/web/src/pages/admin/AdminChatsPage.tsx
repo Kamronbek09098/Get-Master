@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronDown, ChevronUp, MessagesSquare, Pencil, Search, Trash2 } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, MessagesSquare, Pencil, Search, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -9,7 +9,9 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useDebounce } from '@/hooks/useDebounce';
-import { cx, formatDate, formatDateTime, formatRelativeTime } from '@/lib/utils';
+import { cx, formatDate, formatDateTime, formatRelativeTime, initials } from '@/lib/utils';
+import { avatarTone } from '@/features/communication/format';
+import { STATUS_TEXT } from '@/features/order/order-flow';
 import { MediaViewer } from '@/features/media/components/MediaViewer';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { AccountLink } from '@/features/admin/components/AccountLink';
@@ -24,7 +26,6 @@ const TYPE_FILTERS = [
   { value: 'ORDER', label: 'Buyurtma' },
 ];
 const PANEL_LABEL: Record<string, string> = { CUSTOMER: 'mijoz', MASTER: 'usta', ADMIN: 'admin' };
-const person = (user: AdminChatPerson) => `${accountName(user)} · ID ${user.accountNumber}`;
 const ROLE_LABEL: Record<string, string> = { CUSTOMER: 'mijoz', MASTER: 'usta', ADMIN: 'admin' };
 const timeOf = (value: string) => formatDateTime(value).split(', ')[1] ?? '';
 const dayKey = (value: string) => value.slice(0, 10);
@@ -68,55 +69,108 @@ function ConversationRow({ item, active, onSelect }: { item: AdminConversation; 
   );
 }
 
-function MessageCard({ message, side }: { message: AdminChatMessage; side: 'left' | 'right' }) {
+const senderColor = (id: string) => {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return `hsl(${hash % 360} 55% 38%)`;
+};
+const GROUP_GAP_MS = 5 * 60 * 1000;
+
+/** Telegramdagi kabi: emoji + kim bosgani (kichik avatarlar), ustiga borsa ismlari chiqadi. */
+function Reactions({ message, people }: { message: AdminChatMessage; people: Map<string, AdminChatPerson> }) {
+  const groups = useMemo(() => {
+    const byEmoji = new Map<string, NonNullable<AdminChatMessage['reactions']>>();
+    for (const reaction of message.reactions ?? []) byEmoji.set(reaction.emoji, [...(byEmoji.get(reaction.emoji) ?? []), reaction]);
+    return [...byEmoji.entries()];
+  }, [message.reactions]);
+  if (groups.length === 0) return null;
+  return (
+    <div className="gm-tg__reactions" aria-label="Reaksiyalar">
+      {groups.map(([emoji, list]) => {
+        const names = list.map((reaction) => {
+          const user = reaction.userId ? people.get(reaction.userId) : undefined;
+          const role = reaction.panel ? (PANEL_LABEL[reaction.panel] ?? reaction.panel) : null;
+          return `${user ? accountName(user) : 'Noma‘lum'}${role ? ` (${role})` : ''}`;
+        });
+        return (
+          <span key={emoji} className="gm-tg__reaction" title={`${emoji} ${names.join(', ')}`}>
+            <span className="gm-tg__emoji">{emoji}</span>
+            {list.length <= 3 ? (
+              <span className="gm-tg__reactors">
+                {list.map((reaction) => {
+                  const user = reaction.userId ? people.get(reaction.userId) : undefined;
+                  return (
+                    <span key={`${reaction.userId}-${reaction.panel}`} className={cx('gm-tg__mini', `gm-tone-${avatarTone(reaction.userId ?? reaction.emoji)}`)}>
+                      {initials(user ? accountName(user) : '?')}
+                    </span>
+                  );
+                })}
+              </span>
+            ) : (
+              <span className="gm-tg__count">{list.length}</span>
+            )}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function MessageBubble({ message, side, first, last, people }: { message: AdminChatMessage; side: 'left' | 'right'; first: boolean; last: boolean; people: Map<string, AdminChatPerson> }) {
   const [open, setOpen] = useState(false);
   const deleted = !!message.deletedAt;
   const edited = message.edits.length > 0;
+  const role = message.senderPanel ? (PANEL_LABEL[message.senderPanel] ?? message.senderPanel) : null;
   return (
-    <li className={cx('gm-achat__msg', `gm-achat__msg--${side}`, deleted && 'gm-achat__msg--deleted')}>
-      <header>
-        <AccountLink userId={message.sender.id} className="gm-achat__sender">
-          <strong>{person(message.sender)}</strong>
-        </AccountLink>
-        {message.senderPanel && <Badge tone="neutral">{PANEL_LABEL[message.senderPanel] ?? message.senderPanel}</Badge>}
-        <time title={formatDateTime(message.createdAt)}>{timeOf(message.createdAt)}</time>
+    <li className={cx('gm-tg__row', `gm-tg__row--${side}`, first && 'gm-tg__row--first', last && 'gm-tg__row--last')}>
+      <div className={cx('gm-tg__bubble', deleted && 'gm-tg__bubble--deleted')}>
+        {first && (
+          <AccountLink userId={message.sender.id} className="gm-tg__name">
+            <span style={{ color: senderColor(message.sender.id) }}>{accountName(message.sender)}</span>
+            <small>
+              ID {message.sender.accountNumber}
+              {role && ` · ${role}`}
+            </small>
+          </AccountLink>
+        )}
         {deleted && (
-          <Badge tone="danger">
-            <Trash2 size={11} /> O‘chirilgan {formatDateTime(message.deletedAt)}
-          </Badge>
+          <span className="gm-tg__deleted-tag">
+            <Trash2 size={12} /> O‘chirilgan xabar · {formatDateTime(message.deletedAt)}
+          </span>
         )}
-        {edited && (
-          <Badge tone="warning">
-            <Pencil size={11} /> Tahrirlangan ({message.edits.length})
-          </Badge>
+        {message.replyTo && (
+          <blockquote className="gm-tg__reply">
+            <strong>Javob</strong>
+            <span>{message.replyTo.deletedAt ? 'O‘chirilgan xabar' : (message.replyTo.text ?? 'Fayl')}</span>
+          </blockquote>
         )}
-      </header>
-      {message.replyTo && <blockquote className="gm-achat__reply">↩ {message.replyTo.text ?? '[fayl yoki o‘chirilgan xabar]'}</blockquote>}
-      {message.attachments && message.attachments.length > 0 && (
-        <div className="gm-achat__files">
-          {message.attachments.map((file) => (
-            <MediaViewer key={file.mediaAssetId} assetId={file.mediaAssetId} alt={file.name} label={file.name} />
-          ))}
-        </div>
-      )}
-      {(message.text || !message.attachments?.length) && <p>{message.text ?? '—'}</p>}
-      {message.reactions && message.reactions.length > 0 && <small>{message.reactions.map((reaction) => reaction.emoji).join(' ')}</small>}
-      {edited && (
-        <>
-          <button type="button" className="gm-achat__toggle" onClick={() => setOpen((value) => !value)}>
-            {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />} Tahrirlash tarixi
-          </button>
-          {open && (
-            <ol className="gm-achat__history">
-              {message.edits.map((edit) => (
-                <li key={edit.id}>
-                  <small>{formatDateTime(edit.editedAt)} da o‘zgartirilgan. Oldingi matn:</small>
-                  <span>{edit.previousText ?? '—'}</span>
-                </li>
-              ))}
-            </ol>
+        {message.attachments && message.attachments.length > 0 && (
+          <div className="gm-tg__files">
+            {message.attachments.map((file) => (
+              <MediaViewer key={file.mediaAssetId} assetId={file.mediaAssetId} alt={file.name} label={file.name} size="lg" />
+            ))}
+          </div>
+        )}
+        {(message.text || !message.attachments?.length) && <p className="gm-tg__text">{message.text ?? '—'}</p>}
+        <span className="gm-tg__meta">
+          {edited && (
+            <button type="button" className="gm-tg__edited" aria-expanded={open} onClick={() => setOpen((value) => !value)} title="Tahrirlash tarixini ko‘rish">
+              <Pencil size={11} /> tahrirlangan ({message.edits.length})
+            </button>
           )}
-        </>
+          <time title={formatDateTime(message.createdAt)}>{timeOf(message.createdAt)}</time>
+        </span>
+      </div>
+      <Reactions message={message} people={people} />
+      {edited && open && (
+        <ol className="gm-tg__history">
+          {message.edits.map((edit) => (
+            <li key={edit.id}>
+              <small>{formatDateTime(edit.editedAt)} da o‘zgartirilgan. Oldingi matn:</small>
+              <span>{edit.previousText ?? '—'}</span>
+            </li>
+          ))}
+        </ol>
       )}
     </li>
   );
@@ -132,6 +186,7 @@ function Viewer({ id, onBack }: { id: string; onBack: () => void }) {
   const scrolledDown = useRef(false);
   const ordered = useMemo(() => [...(messages.data?.pages.flatMap((page) => page.items) ?? [])].reverse(), [messages.data]);
   const participants = conversation.data?.participants ?? [];
+  const people = useMemo(() => new Map(participants.map((p) => [p.user.id, p.user] as const)), [participants]);
   const sideOf = (senderId: string) => (participants.findIndex((p) => p.user.id === senderId) > 0 ? 'right' : 'left');
 
   const counts = useMemo(
@@ -188,7 +243,7 @@ function Viewer({ id, onBack }: { id: string; onBack: () => void }) {
           {conversation.data && (
             <p>
               {TYPE_LABEL[conversation.data.type]} · {ordered.length} ta xabar yuklangan
-              {conversation.data.order && <> · buyurtma holati: {conversation.data.order.status}</>}
+              {conversation.data.order && <> · buyurtma holati: {STATUS_TEXT[conversation.data.order.status as keyof typeof STATUS_TEXT] ?? conversation.data.order.status}</>}
             </p>
           )}
         </div>
@@ -238,16 +293,23 @@ function Viewer({ id, onBack }: { id: string; onBack: () => void }) {
           <EmptyState title={filtering ? 'Mos xabar topilmadi' : 'Xabar yo‘q'} description={filtering && messages.hasNextPage ? 'Eski xabarlar hali yuklanmagan bo‘lishi mumkin.' : undefined} />
         ) : (
           <ul className="gm-achat__messages">
-            {visible.map((message, index) => (
-              <Fragment key={message.id}>
-                {(index === 0 || dayKey(visible[index - 1]!.createdAt) !== dayKey(message.createdAt)) && (
-                  <li className="gm-achat__day" aria-hidden="true">
-                    <span>{formatDate(message.createdAt)}</span>
-                  </li>
-                )}
-                <MessageCard message={message} side={sideOf(message.senderId)} />
-              </Fragment>
-            ))}
+            {visible.map((message, index) => {
+              const prev = visible[index - 1];
+              const next = visible[index + 1];
+              const newDay = !prev || dayKey(prev.createdAt) !== dayKey(message.createdAt);
+              const sameGroup = (a: AdminChatMessage | undefined, b: AdminChatMessage | undefined) =>
+                !!a && !!b && a.senderId === b.senderId && a.senderPanel === b.senderPanel && dayKey(a.createdAt) === dayKey(b.createdAt) && Math.abs(new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) < GROUP_GAP_MS;
+              return (
+                <Fragment key={message.id}>
+                  {newDay && (
+                    <li className="gm-achat__day" aria-hidden="true">
+                      <span>{formatDate(message.createdAt)}</span>
+                    </li>
+                  )}
+                  <MessageBubble message={message} side={sideOf(message.senderId)} first={!sameGroup(prev, message)} last={!sameGroup(message, next)} people={people} />
+                </Fragment>
+              );
+            })}
           </ul>
         )}
       </div>
@@ -258,7 +320,8 @@ function Viewer({ id, onBack }: { id: string; onBack: () => void }) {
 export function AdminChatsPage() {
   const [search, setSearch] = useState('');
   const [type, setType] = useState('');
-  const [selected, setSelected] = useState<string | null>(null);
+  const [params] = useSearchParams();
+  const [selected, setSelected] = useState<string | null>(params.get('suhbat'));
   const [flaggedOnly, setFlaggedOnly] = useState(false);
   const debounced = useDebounce(search, 400);
   const conversations = useAdminConversations({ search: debounced.trim() || undefined, type: type || undefined });

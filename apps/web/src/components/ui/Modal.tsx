@@ -21,6 +21,9 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  // onClose har renderda yangi funksiya bo‘lishi mumkin; effect qayta ishga tushib, fokusni tortib olmasligi uchun ref'da saqlanadi.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -31,7 +34,7 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== 'Tab' || !panel) return;
@@ -55,7 +58,7 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
       document.body.style.overflow = '';
       previouslyFocused.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

@@ -1,6 +1,6 @@
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OrderStatus, PaymentProvider, PaymentStatus, Prisma } from '@prisma/client';
+import { OrderStatus, PaymentProvider, PaymentStatus, Prisma, Role } from '@prisma/client';
 import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
 import { EarningsQueryDto } from './dto/earnings-query.dto';
 import { PaymentHistoryQueryDto } from './dto/payment-history-query.dto';
@@ -69,6 +69,11 @@ export class PaymentService {
       const settled = await tx.payment.findFirst({ where: { orderId: order.id, status: { in: SETTLED_STATUSES } } });
       if (settled) throw new OrderAlreadyPaidException();
 
+      // Mijoz usulni almashtirsa, boshqa usuldagi kutilayotgan to‘lov bekor qilinadi (bitta buyurtmada bitta faol to‘lov).
+      await tx.payment.updateMany({
+        where: { orderId: order.id, status: 'PENDING', provider: { not: dto.provider } },
+        data: { status: 'CANCELLED' },
+      });
       const pending = await tx.payment.findFirst({
         where: { orderId: order.id, provider: dto.provider, status: 'PENDING' },
       });
@@ -87,7 +92,31 @@ export class PaymentService {
       });
     });
 
-    return { payment, checkoutUrl: `https://payment.example/checkout/${payment.id}` };
+    // Naqd pul uchun onlayn to‘lov sahifasi yo‘q: usta pulni olganini tasdiqlaydi.
+    return { payment, checkoutUrl: payment.provider === 'CASH' ? null : `https://payment.example/checkout/${payment.id}` };
+  }
+
+  /** Usta (yoki admin) naqd pul qabul qilinganini tasdiqlaydi. */
+  async confirmCash(actorId: string, roles: Role[], paymentId: string) {
+    const payment = await this.db.payment.findUnique({ where: { id: paymentId }, include: { order: { select: { master: { select: { userId: true } } } } } });
+    if (!payment) throw new NotFoundException(ERRORS.PAYMENT_NOT_FOUND);
+    const isAdmin = roles.includes(Role.ADMIN);
+    if (!isAdmin && payment.order.master.userId !== actorId) throw new ForbiddenException(ERRORS.NOT_ORDER_PARTICIPANT);
+    if (payment.provider !== 'CASH') throw new BadRequestException('Bu to‘lov naqd pul emas');
+    if (payment.status === 'SUCCEEDED') return payment;
+    if (payment.status !== 'PENDING' && payment.status !== 'PROCESSING') throw new ConflictException('To‘lov holati tasdiqlash uchun mos emas');
+
+    return this.db.$transaction(async (tx) => {
+      const result = await tx.payment.update({ where: { id: paymentId }, data: { status: 'SUCCEEDED', succeededAt: new Date(), metadata: { ...(payment.metadata as object | null), cashConfirmedBy: actorId } } });
+      await tx.auditLog.create({ data: { actorId, action: 'PAYMENT_CASH_CONFIRMED', targetType: 'Payment', targetId: paymentId, before: { status: payment.status }, after: { status: 'SUCCEEDED' } } });
+      await this.outbox.emit(tx, {
+        eventName: 'payment.succeeded',
+        aggregateType: 'Payment',
+        aggregateId: result.id,
+        payload: { paymentId: result.id, orderId: result.orderId, customerId: result.customerId },
+      });
+      return result;
+    });
   }
 
   async findHistory(customerId: string, query: PaymentHistoryQueryDto) {

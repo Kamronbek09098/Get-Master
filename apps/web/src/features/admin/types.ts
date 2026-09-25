@@ -149,6 +149,7 @@ export interface AdminBadges {
   appeals: number;
   users: number;
   chats: number;
+  orders: number;
   now: string;
 }
 
@@ -195,8 +196,109 @@ export interface AdminChatMessage {
   sender: AdminChatPerson;
   attachments?: Array<{ mediaAssetId: string; mimeType: string; name: string }> | null;
   replyTo?: { id: string; text: string | null; deletedAt: string | null } | null;
-  reactions?: Array<{ emoji: string }>;
+  reactions?: Array<{ emoji: string; userId?: string; panel?: string; createdAt?: string }>;
   edits: Array<{ id: string; previousText: string | null; editedAt: string }>;
 }
 
 export type { CaseStatus };
+
+export type AdminOrderStatus =
+  | 'DRAFT' | 'SUBMITTED' | 'MATCHING' | 'OFFERS_RECEIVED' | 'BOOKED' | 'CONFIRMED' | 'ON_THE_WAY' | 'ARRIVED'
+  | 'IN_PROGRESS' | 'WAITING_CONFIRMATION' | 'COMPLETED' | 'CANCELLED' | 'EXPIRED' | 'DISPUTED';
+
+export interface AdminOrderPerson {
+  id: string;
+  accountNumber: number;
+  firstName: string | null;
+  lastName: string | null;
+  phone: string;
+}
+
+export interface AdminOrderRow {
+  id: string;
+  status: AdminOrderStatus;
+  finalAmount: string;
+  currency: string;
+  createdAt: string;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  title: string;
+  scheduledStartAt: string | null;
+  customer: AdminOrderPerson;
+  master: { id: string; profession: string | null; user: AdminOrderPerson };
+  _count: { workProofs: number; cases: number; payments: number };
+}
+
+export interface AdminOrdersSummary {
+  total: number;
+  counts: Partial<Record<AdminOrderStatus, number>>;
+  active: number;
+  flagged: number;
+  completedAmount: string | number;
+  platformFee: string | number;
+}
+
+export interface AdminOrderFilters {
+  status?: AdminOrderStatus;
+  search?: string;
+  from?: string;
+  to?: string;
+  flagged?: 'true';
+}
+
+export interface AdminMediaInfo {
+  id: string;
+  originalName: string;
+  detectedMimeType: string | null;
+  sizeBytes: number | string;
+}
+
+export interface AdminOrderDetail {
+  id: string;
+  status: AdminOrderStatus;
+  originalAmount: string;
+  additionalAmount: string;
+  finalAmount: string;
+  platformFee: string | null;
+  masterAmount: string | null;
+  currency: string;
+  createdAt: string;
+  updatedAt: string;
+  startedAt: string | null;
+  completionSubmittedAt: string | null;
+  completedAt: string | null;
+  confirmedAt: string | null;
+  cancelledAt: string | null;
+  cancellationReason: string | null;
+  customer: AdminOrderPerson;
+  master: { id: string; profession: string | null; ratingAvg: string; completedOrders: number; user: AdminOrderPerson };
+  booking: {
+    scheduledStartAt: string | null;
+    scheduledEndAt: string | null;
+    agreedPrice: string;
+    locationSnapshot: Record<string, unknown> | null;
+    serviceSnapshot: Record<string, unknown> | null;
+    request: {
+      id: string;
+      title: string;
+      description: string;
+      status: string;
+      createdAt: string;
+      preferredStartAt: string | null;
+      preferredEndAt: string | null;
+      category: { name: string } | null;
+      address: { addressLine: string; city: string | null; district: string | null } | null;
+    };
+    offer: { id: string; price: string; message: string | null; estimatedMinutes: number | null; createdAt: string };
+  };
+  statusHistory: Array<{ id: string; actorType: string; oldStatus: AdminOrderStatus | null; newStatus: AdminOrderStatus; reason: string | null; createdAt: string; actor: AdminOrderPerson | null }>;
+  workProofs: Array<{ id: string; stage: 'BEFORE' | 'DURING' | 'AFTER'; mediaType: string; mediaAssetId: string | null; createdAt: string; uploadedBy: AdminOrderPerson; asset: AdminMediaInfo | null }>;
+  additionalWork: Array<{ id: string; reason: string; description: string; amount: string; currency: string; status: string; requestedAt: string; respondedAt: string | null; requestedBy: AdminOrderPerson }>;
+  payments: Array<{ id: string; provider: string; amount: string; refundedAmount: string; currency: string; status: string; failureReason: string | null; createdAt: string; succeededAt: string | null; refunds: Array<{ id: string; amount: string; status: string; reason: string }> }>;
+  review: { id: string; rating: number; comment: string | null; status: string; createdAt: string; author: AdminOrderPerson } | null;
+  warranty: { id: string; status: string; startsAt: string; expiresAt: string } | null;
+  cases: Array<{ id: string; type: string; title: string; status: string; createdAt: string }>;
+  requestAssets: AdminMediaInfo[];
+  conversationId: string | null;
+  allowedActions: { cancel: boolean; resolve: boolean };
+}

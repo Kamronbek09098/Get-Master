@@ -226,6 +226,7 @@ export class CommunicationService {
       return created;
     });
 
+    await this.markChatNotificationsRead(userId, conversationId);
     await this.notifyOthers(userId, conversationId, conversation.participantIds);
     return this.present(message);
   }
@@ -302,7 +303,18 @@ export class CommunicationService {
       where: { conversationId_userId: { conversationId, userId } },
       data: { lastReadAt },
     });
+    await this.markChatNotificationsRead(userId, conversationId);
     return { lastReadAt };
+  }
+
+  /** Suhbat o‘qilgach, undagi «Yangi xabar» bildirishnomalari ham o‘qilgan bo‘lsin (bildirishnomani ochmasdan ham). */
+  private async markChatNotificationsRead(userId: string, conversationId: string) {
+    await this.db.notification
+      .updateMany({
+        where: { userId, template: 'chat.message', status: { not: 'READ' }, data: { path: ['conversationId'], equals: conversationId } },
+        data: { status: 'READ', readAt: new Date() },
+      })
+      .catch(() => undefined);
   }
 
   private async requireParticipant(userId: string, conversationId: string, panel: Panel | null = null) {

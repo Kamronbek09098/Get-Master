@@ -372,3 +372,18 @@
   background: var(--gm-color-primary-soft);
   color: var(--gm-color-primary);
 }
+
+.gm-opaypick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gm-space-2);
+  margin-top: var(--gm-space-3);
+}
+.gm-opaypick__title {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.gm-opaypick__title small {
+  color: var(--gm-color-text-muted);
+  font-weight: 500;
+}

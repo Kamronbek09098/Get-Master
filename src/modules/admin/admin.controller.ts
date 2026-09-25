@@ -8,6 +8,8 @@ import { AdminPortfolioService } from './admin-portfolio.service';
 import { AdminChatService } from './admin-chat.service';
 import { AdminBadgesService } from './admin-badges.service';
 import { AdminBadgesQueryDto } from './dto/badges-query.dto';
+import { AdminOrdersService } from './admin-orders.service';
+import { AdminOrderActionDto, AdminOrderQueryDto, AdminOrderResolveDto } from './dto/order-query.dto';
 import { AdminConversationQueryDto } from './dto/chat-query.dto';
 import { CursorQueryDto } from '../../common/dto/cursor-query.dto';
 import { PortfolioQueryDto, ReviewPortfolioDto } from './dto/portfolio-review.dto';
@@ -27,7 +29,33 @@ export class AdminController {
     private readonly portfolio: AdminPortfolioService,
     private readonly chats: AdminChatService,
     private readonly badges: AdminBadgesService,
+    private readonly orders: AdminOrdersService,
   ) {}
+
+  @Get('orders')
+  findOrders(@Query() query: AdminOrderQueryDto) {
+    return this.orders.findAll(query);
+  }
+
+  @Get('orders/summary')
+  ordersSummary() {
+    return this.orders.summary();
+  }
+
+  @Get('orders/:id')
+  findOrder(@Param('id', ParseUUIDPipe) id: string) {
+    return this.orders.findOne(id);
+  }
+
+  @Post('orders/:id/cancel')
+  cancelOrder(@CurrentUser('sub') adminId: string, @Param('id', ParseUUIDPipe) id: string, @Body() dto: AdminOrderActionDto) {
+    return this.orders.cancel(adminId, id, dto.reason);
+  }
+
+  @Post('orders/:id/resolve')
+  resolveOrder(@CurrentUser('sub') adminId: string, @Param('id', ParseUUIDPipe) id: string, @Body() dto: AdminOrderResolveDto) {
+    return this.orders.resolve(adminId, id, dto.decision, dto.reason);
+  }
 
   @Get('badges')
   getBadges(@Query() query: AdminBadgesQueryDto) {

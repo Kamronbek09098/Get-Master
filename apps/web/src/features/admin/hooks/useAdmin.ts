@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import type { CaseStatus } from '@/features/dispute/types';
 import { adminService } from '../services/admin.service';
 import type { DateRange } from '../services/admin.service';
-import type { AuditFilters, UserFilters, VerificationDecision } from '../types';
+import type { AdminOrderFilters, AuditFilters, UserFilters, VerificationDecision } from '../types';
 
 export function useDashboard(range: DateRange) {
   return useQuery({ queryKey: ['admin', 'dashboard', range], queryFn: () => adminService.dashboard(range) });
@@ -131,14 +131,48 @@ export function useCatalogMutations() {
 export function useRefund() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (v: { id: string; amount: number; reason: string; note: string }) => {
+    mutationFn: async (v: { id: string; amount: number; reason: string; note: string; idempotencyKey: string }) => {
       const { paymentService } = await import('@/features/payment/services/payment.service');
-      return paymentService.refund(v.id, { amount: v.amount, reason: v.reason, note: v.note });
+      return paymentService.refund(v.id, { amount: v.amount, reason: v.reason, note: v.note }, v.idempotencyKey);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'report'] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
   });
 }
 
 export function useAdminUser(id: string | undefined) {
   return useQuery({ queryKey: ['admin', 'user', id], queryFn: () => adminService.user(id ?? ''), enabled: !!id });
+}
+
+export function useAdminOrders(filters: AdminOrderFilters) {
+  return useInfiniteQuery({
+    queryKey: ['admin', 'orders', filters],
+    queryFn: ({ pageParam }: { pageParam?: string }) => adminService.orders(filters, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    refetchInterval: 30_000,
+  });
+}
+
+export function useAdminOrdersSummary() {
+  return useQuery({ queryKey: ['admin', 'orders-summary'], queryFn: () => adminService.ordersSummary(), refetchInterval: 30_000 });
+}
+
+export function useAdminOrder(id: string | undefined) {
+  return useQuery({ queryKey: ['admin', 'order', id], queryFn: () => adminService.order(id ?? ''), enabled: !!id, refetchInterval: 30_000 });
+}
+
+export function useCancelOrder(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (reason: string) => adminService.cancelOrder(id, reason),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
+  });
+}
+
+export function useResolveOrder(id: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { decision: 'COMPLETE' | 'CANCEL'; reason: string }) => adminService.resolveOrder(id, input.decision, input.reason),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
+  });
 }

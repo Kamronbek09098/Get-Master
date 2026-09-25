@@ -1,3 +1,4 @@
+import { providerLabel } from '@/features/payment/labels';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -28,7 +29,7 @@ export function PaymentHistoryPage() {
           <Link key={payment.id} to={`/mijozlar/buyurtmalar/${payment.orderId}`} className="gm-card">
             <PaymentStatus payment={payment} />
             <p className="gm-card__meta">
-              {payment.provider} · {formatDateTime(payment.createdAt)}
+              {providerLabel(payment.provider)} · {formatDateTime(payment.createdAt)}
               {payment.refundedAmount !== '0' && Number(payment.refundedAmount) > 0 && ` · Qaytarilgan: ${payment.refundedAmount}`}
             </p>
             {payment.failureReason && <p className="gm-card__meta">Sabab: {payment.failureReason}</p>}

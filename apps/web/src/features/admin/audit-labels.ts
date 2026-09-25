@@ -1,6 +1,6 @@
 import type { BadgeTone } from '@/components/ui/Badge';
 
-export type AuditGroup = 'auth' | 'verification' | 'users' | 'profile' | 'catalog' | 'disputes' | 'chat' | 'other';
+export type AuditGroup = 'auth' | 'verification' | 'users' | 'profile' | 'catalog' | 'orders' | 'disputes' | 'chat' | 'other';
 
 export interface AuditActionInfo {
   /** Qisqa sarlavha. */
@@ -17,6 +17,7 @@ export const GROUP_INFO: Record<AuditGroup, { label: string; prefix?: string }> 
   users: { label: 'Foydalanuvchilar', prefix: 'ADMIN_USER_' },
   profile: { label: 'Usta profili', prefix: 'MASTER_PROFILE_' },
   catalog: { label: 'Xizmatlar katalogi', prefix: 'SERVICE_' },
+  orders: { label: 'Buyurtmalar', prefix: 'ADMIN_ORDER_' },
   disputes: { label: 'Nizo va shikoyatlar', prefix: 'DISPUTE_' },
   chat: { label: 'Chat moderatsiyasi', prefix: 'CHAT_' },
   other: { label: 'Boshqa' },
@@ -48,6 +49,9 @@ export const AUDIT_ACTIONS: Record<string, AuditActionInfo> = {
   MASTER_PROFILE_UPDATED: { label: 'Usta profili yangilandi', verb: 'usta profilini yangiladi', group: 'profile', tone: 'neutral' },
   ADMIN_PORTFOLIO_APPROVED: { label: 'Portfolio tasdiqlandi', verb: 'portfolio ishini tasdiqladi', group: 'profile', tone: 'success' },
   ADMIN_PORTFOLIO_REJECTED: { label: 'Portfolio rad etildi', verb: 'portfolio ishini rad etdi', group: 'profile', tone: 'danger' },
+
+  ADMIN_ORDER_CANCELLED: { label: 'Buyurtma bekor qilindi', verb: 'buyurtmani bekor qildi', group: 'orders', tone: 'danger' },
+  ADMIN_ORDER_COMPLETED: { label: 'Nizoli buyurtma yakunlandi', verb: 'nizoli buyurtmani yakunladi', group: 'orders', tone: 'success' },
 
   SERVICE_CATEGORY_CREATED: { label: 'Kategoriya yaratildi', verb: 'xizmat kategoriyasini yaratdi', group: 'catalog', tone: 'primary' },
   SERVICE_CREATED: { label: 'Xizmat yaratildi', verb: 'yangi xizmat qo‘shdi', group: 'catalog', tone: 'primary' },

@@ -6,11 +6,13 @@ import { AdminUsersService } from './admin-users.service';
 import { AdminPortfolioService } from './admin-portfolio.service';
 import { AdminChatService } from './admin-chat.service';
 import { AdminBadgesService } from './admin-badges.service';
+import { AdminOrdersService } from './admin-orders.service';
+import { OrderModule } from '../order/order.module';
 import { AdminAuditNotifierService } from './admin-audit-notifier.service';
 
 @Module({
-  imports: [NotificationModule],
+  imports: [NotificationModule, OrderModule],
   controllers: [AdminController],
-  providers: [AdminService, AdminUsersService, AdminPortfolioService, AdminChatService, AdminBadgesService, AdminAuditNotifierService],
+  providers: [AdminService, AdminUsersService, AdminPortfolioService, AdminChatService, AdminBadgesService, AdminAuditNotifierService, AdminOrdersService],
 })
 export class AdminModule {}

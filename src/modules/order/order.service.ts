@@ -1,5 +1,5 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { OrderActor, OrderStatus, Prisma, WorkStage } from '@prisma/client';
+import { OrderActor, OrderStatus, PaymentProvider, Prisma, WorkStage } from '@prisma/client';
 import { MasterStatsService } from '../master/master-stats.service';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { OutboxService } from '../../infrastructure/outbox/outbox.service';
@@ -79,6 +79,7 @@ export class OrderService {
           },
         },
         conversation: { select: { id: true } },
+        payments: { orderBy: { createdAt: 'desc' }, take: 1, select: { id: true, provider: true, status: true, amount: true, currency: true } },
       },
     });
     if (!order || order.customerId === order.master.user.id) throw new NotFoundException(ERRORS.ORDER_NOT_FOUND);
@@ -86,9 +87,10 @@ export class OrderService {
     const isMaster = order.master.user.id === userId;
     const viewerRole = this.viewerRole(isCustomer, isMaster, panel);
     if (!viewerRole) throw new ForbiddenException(ERRORS.NOT_ORDER_PARTICIPANT);
-    const { booking, customer, master, conversation, ...rest } = order;
+    const { booking, customer, master, conversation, payments, ...rest } = order;
     return {
       ...rest,
+      payment: payments[0] ?? null,
       viewerRole,
       service: booking.service,
       request: booking.request,
@@ -297,9 +299,20 @@ export class OrderService {
     return this.transition(orderId, 'WAITING_CONFIRMATION', actor, { completionSubmittedAt: new Date() });
   }
 
-  async confirmCompletion(userId: string, orderId: string, panel: Panel | null = null) {
+  async confirmCompletion(userId: string, orderId: string, panel: Panel | null = null, paymentMethod?: PaymentProvider) {
     const actor = await this.resolveActor(userId, orderId, ['CUSTOMER'], panel);
-    return this.transition(orderId, 'COMPLETED', actor, { completedAt: new Date() });
+    const updated = await this.transition(orderId, 'COMPLETED', actor, { completedAt: new Date() });
+    if (paymentMethod) await this.recordPaymentMethod(updated, userId, paymentMethod);
+    return updated;
+  }
+
+  /** Mijoz tanlagan to‘lov usuli har doim yozib qo‘yiladi (naqd pul ham). Allaqachon to‘lov yozuvi bo‘lsa, ikkinchisi yaratilmaydi. */
+  private async recordPaymentMethod(order: { id: string; finalAmount: Prisma.Decimal; currency: string }, customerId: string, provider: PaymentProvider) {
+    const existing = await this.db.payment.findFirst({ where: { orderId: order.id, status: { in: ['PENDING', 'PROCESSING', 'SUCCEEDED', 'PARTIALLY_REFUNDED'] } } });
+    if (existing) return;
+    await this.db.payment.create({
+      data: { orderId: order.id, customerId, provider, amount: order.finalAmount, currency: order.currency, status: 'PENDING', metadata: { chosenAt: 'ORDER_COMPLETION' } },
+    });
   }
 
   async dispute(userId: string, orderId: string, dto: ReasonDto, panel: Panel | null = null) {
@@ -381,6 +394,7 @@ export class OrderService {
     to: OrderStatus,
     actor: Actor,
     extraData: Record<string, unknown>,
+    reason: string | null = null,
   ) {
     let from: OrderStatus | null = null;
     const updated = await this.db.$transaction(async (tx) => {
@@ -400,7 +414,7 @@ export class OrderService {
           actorType: actor.type,
           oldStatus: locked.status,
           newStatus: to,
-          reason: null,
+          reason,
         },
       });
 
@@ -409,11 +423,25 @@ export class OrderService {
       }
 
       await this.emitStatusChanged(tx, updated, actor, locked.status, to);
+      if (actor.type === 'ADMIN') await this.emitStatusChanged(tx, updated, actor, locked.status, to, 'MASTER');
 
       return updated;
     });
     this.metrics.orderTransitioned(from, to);
     return updated;
+  }
+
+  /** Administrator buyurtmani bekor qiladi (band qilingan, tasdiqlangan yoki nizoli holatda). */
+  async adminCancel(adminId: string, orderId: string, reason: string) {
+    return this.transition(orderId, 'CANCELLED', { userId: adminId, type: 'ADMIN' }, { cancelledAt: new Date(), cancellationReason: reason }, reason);
+  }
+
+  /** Administrator nizoli buyurtmani yakunlaydi yoki bekor qiladi. */
+  async adminResolveDispute(adminId: string, orderId: string, decision: 'COMPLETE' | 'CANCEL', reason: string) {
+    const actor: Actor = { userId: adminId, type: 'ADMIN' };
+    return decision === 'COMPLETE'
+      ? this.transition(orderId, 'COMPLETED', actor, { completedAt: new Date() }, reason)
+      : this.transition(orderId, 'CANCELLED', actor, { cancelledAt: new Date(), cancellationReason: reason }, reason);
   }
 
   private async emitStatusChanged(
@@ -422,9 +450,11 @@ export class OrderService {
     actor: Actor,
     oldStatus: OrderStatus,
     newStatus: OrderStatus,
+    recipient?: 'CUSTOMER' | 'MASTER',
   ) {
+    const toMaster = recipient ? recipient === 'MASTER' : actor.type === 'CUSTOMER';
     let notifyUserId = order.customerId;
-    if (actor.type === 'CUSTOMER') {
+    if (toMaster) {
       const masterProfile = await tx.masterProfile.findUniqueOrThrow({ where: { id: order.masterId } });
       notifyUserId = masterProfile.userId;
     }
@@ -432,7 +462,7 @@ export class OrderService {
       eventName: 'order.status_changed',
       aggregateType: 'Order',
       aggregateId: order.id,
-      payload: { orderId: order.id, oldStatus, newStatus, notifyUserId, actorType: actor.type },
+      payload: { orderId: order.id, oldStatus, newStatus, notifyUserId, actorType: actor.type, recipient: toMaster ? 'MASTER' : 'CUSTOMER' },
       createdById: actor.userId,
     });
   }

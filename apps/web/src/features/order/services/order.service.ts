@@ -35,8 +35,8 @@ export const orderService = {
   submitCompletion(id: string) {
     return apiPost<Order>(`/orders/${id}/submit-completion`);
   },
-  confirmCompletion(id: string) {
-    return apiPost<Order>(`/orders/${id}/confirm-completion`);
+  confirmCompletion(id: string, paymentMethod?: string) {
+    return apiPost<Order>(`/orders/${id}/confirm-completion`, paymentMethod ? { paymentMethod } : {});
   },
   dispute(id: string, reason: string) {
     return apiPost<Order>(`/orders/${id}/dispute`, { reason });

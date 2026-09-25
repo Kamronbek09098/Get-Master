@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { CheckCircle2, Clock, CreditCard, Flag, Hammer, MapPinned, Navigation, ShieldAlert, Star, XCircle } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { CheckCircle2, Clock, Flag, Hammer, MapPinned, Navigation, ShieldAlert, Star, XCircle } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { Alert } from '@/components/ui/Alert';
@@ -14,6 +14,9 @@ import { OrderProgress } from '@/features/order/components/OrderProgress';
 import { OrderParty } from '@/features/order/components/OrderParty';
 import { OrderTimeline } from '@/features/order/components/OrderTimeline';
 import { WorkProofPanel } from '@/features/order/components/WorkProofPanel';
+import { OrderPaymentCard } from '@/features/order/components/OrderPaymentCard';
+import { PaymentMethodCards } from '@/features/payment/components/PaymentMethodCards';
+import type { PaymentProvider } from '@/types/common';
 import { ReviewForm } from '@/features/review/components/ReviewForm';
 import { AdditionalWorkPanel } from '@/features/work/components/AdditionalWorkPanel';
 import {
@@ -63,6 +66,7 @@ export function OrderDetailsPage() {
 
   const [dialog, setDialog] = useState<DialogKind>(null);
   const [reason, setReason] = useState('');
+  const [method, setMethod] = useState<PaymentProvider | ''>('');
 
   if (order.isLoading) return <PageLoader label="Buyurtma yuklanmoqda…" />;
   if (order.isError) return <Alert tone="danger">{getErrorMessage(order.error)}</Alert>;
@@ -156,11 +160,13 @@ export function OrderDetailsPage() {
         <StepCard tone="next" icon={<CheckCircle2 size={22} />} title="Ishni ko‘rib chiqing" lead="Usta ishni tugatdi. Natijani tekshiring va tasdiqlang. Muammo bo‘lsa, nizo oching.">
           <WorkProofPanel orderId={id} stage="BEFORE" />
           <WorkProofPanel orderId={id} stage="AFTER" />
+          <div className="gm-opaypick">
+            <h3 className="gm-opaypick__title">To‘lov usulini tanlang <small>(majburiy)</small></h3>
+            <PaymentMethodCards value={method} onChange={setMethod} compact />
+            {!method && <p className="gm-ocard__lead">Ishni tasdiqlash uchun avval to‘lov usulini tanlang.</p>}
+          </div>
           <div className="gm-oactions">
-            <Button loading={confirmCompletion.isPending} onClick={() => confirmCompletion.mutate()}>Ishni tasdiqlash</Button>
-            <Link to={`/mijozlar/buyurtmalar/${id}/tolov`}>
-              <Button variant="secondary"><CreditCard size={16} /> To‘lov qilish</Button>
-            </Link>
+            <Button loading={confirmCompletion.isPending} disabled={!method} onClick={() => method && confirmCompletion.mutate(method)}>Ishni tasdiqlash</Button>
           </div>
         </StepCard>
       );
@@ -168,11 +174,7 @@ export function OrderDetailsPage() {
       step = (
         <StepCard tone="done" icon={<Star size={22} />} title="Buyurtma yakunlandi" lead="Ustani baholang. Fikringiz boshqa mijozlarga yordam beradi.">
           <ReviewForm orderId={id} />
-          <div className="gm-oactions">
-            <Link to={`/mijozlar/buyurtmalar/${id}/tolov`}>
-              <Button variant="secondary"><CreditCard size={16} /> To‘lov ma’lumotlari</Button>
-            </Link>
-          </div>
+
         </StepCard>
       );
   }
@@ -204,6 +206,8 @@ export function OrderDetailsPage() {
       <div className="gm-olayout">
         <div className="gm-ocol">
           {step}
+
+          <OrderPaymentCard order={data} />
 
           {data.request?.description && (
             <section className="gm-ocard">

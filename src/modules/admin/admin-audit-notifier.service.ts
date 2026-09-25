@@ -34,6 +34,8 @@ const TITLES: Record<string, string> = {
   COMPLAINT_STATUS_CHANGED: 'Shikoyat holati o‘zgardi',
   APPEAL_UPDATED: 'Apellyatsiya yangilandi',
   WARRANTY_CLAIM_UPDATED: 'Kafolat da’vosi yangilandi',
+  ADMIN_ORDER_CANCELLED: 'Buyurtma administrator tomonidan bekor qilindi',
+  ADMIN_ORDER_COMPLETED: 'Nizoli buyurtma administrator tomonidan yakunlandi',
   CHAT_MESSAGE_EDITED: 'Chatdagi xabar tahrirlandi',
   CHAT_MESSAGE_DELETED: 'Chatdagi xabar o‘chirildi',
   PAYMENT_WEBHOOK_MISMATCH: 'To‘lov webhook’i mos kelmadi',

@@ -21,4 +21,8 @@ export class AdminBadgesQueryDto {
   @IsOptional()
   @IsDateString()
   appealsSince?: string;
+
+  @IsOptional()
+  @IsDateString()
+  ordersSince?: string;
 }

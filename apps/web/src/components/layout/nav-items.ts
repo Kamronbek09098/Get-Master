@@ -46,6 +46,7 @@ export function getNavItems(role: Role | null): NavItem[] {
       { to: '/admin', label: 'Boshqaruv paneli', short: 'Panel', icon: LayoutDashboard, group: 'Umumiy', primary: true },
       { to: '/admin/hisobot', label: 'Hisobotlar', short: 'Hisobot', icon: BarChart3, group: 'Umumiy', primary: true },
       { to: '/admin/foydalanuvchilar', label: 'Foydalanuvchilar', icon: Users, group: 'Boshqaruv' },
+      { to: '/admin/buyurtmalar', label: 'Buyurtmalar', icon: PackageCheck, group: 'Boshqaruv' },
       { to: '/admin/suhbatlar', label: 'Suhbatlar', icon: MessagesSquare, group: 'Boshqaruv' },
       { to: '/admin/tasdiqlash', label: 'Ustalarni tasdiqlash', short: 'Tasdiq', icon: BadgeCheck, group: 'Boshqaruv', primary: true },
       { to: '/admin/shikoyatlar', label: 'Shikoyat va nizolar', short: 'Nizolar', icon: Scale, group: 'Boshqaruv', primary: true },
