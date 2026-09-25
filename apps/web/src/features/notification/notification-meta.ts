@@ -1,5 +1,6 @@
 import { BadgeCheck, Bell, CalendarCheck, ClipboardList, Image, MessageCircle, CreditCard, Package, ScrollText, Search, Send } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { STATUS_TEXT } from '@/features/order/order-flow';
 import type { AppNotification } from './types';
 
 export type NotificationTone = 'primary' | 'success' | 'warning' | 'danger' | 'neutral';
@@ -44,4 +45,13 @@ export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/us
     default:
       return item.template?.startsWith('request') ? { icon: ClipboardList, tone: 'primary' } : { icon: Bell, tone: 'neutral' };
   }
+}
+
+/** Eski bildirishnomalarda holat kodi (ON_THE_WAY) xom holda yozilgan; foydalanuvchi tushunadigan so‘zga almashtiramiz. */
+export function notificationBody(item: AppNotification): string {
+  if (item.template !== 'order.status_changed') return item.body;
+  const words = STATUS_TEXT as Record<string, string>;
+  return item.body
+    .replace(/[A-Z]+(?:_[A-Z]+)+|\b[A-Z]{4,}\b/g, (code) => words[code] ?? code)
+    .replace(/Buyurtma holati:\s*(.+?)\s*(?:->|→)\s*(.+?)\.?$/, (_all, from: string, to: string) => `Buyurtma holati «${from}» dan «${to}» ga o‘zgardi.`);
 }

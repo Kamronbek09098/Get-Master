@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { notificationMeta } from './notification-meta';
+import { notificationBody, notificationMeta } from './notification-meta';
 import type { AppNotification } from './types';
 
 const make = (template: string, data: Record<string, unknown> = {}): AppNotification => ({
@@ -28,5 +28,17 @@ describe('notificationMeta navigation', () => {
   it('sends masters to their profile after a verification review and admins to the audit log', () => {
     expect(notificationMeta(make('trust.review', { decision: 'REJECT' }), '/ustalar').to).toBe('/ustalar/profil');
     expect(notificationMeta(make('admin.audit', { action: 'X', path: '/admin/audit' }), '/mijozlar').to).toBe('/admin/audit');
+  });
+});
+
+describe('notificationBody', () => {
+  it('turns raw order status codes into words users understand', () => {
+    const item = { ...make('order.status_changed'), body: 'Buyurtma holati: ON_THE_WAY -> ARRIVED.' };
+    expect(notificationBody(item)).toBe('Buyurtma holati «Usta yo‘lda» dan «Usta yetib keldi» ga o‘zgardi.');
+  });
+
+  it('leaves other notifications untouched', () => {
+    const item = { ...make('chat.message'), body: 'Farux sizga xabar yubordi.' };
+    expect(notificationBody(item)).toBe('Farux sizga xabar yubordi.');
   });
 });

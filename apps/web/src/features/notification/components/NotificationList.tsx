@@ -11,7 +11,7 @@ import { env } from '@/lib/env';
 import { getErrorMessage } from '@/lib/error-messages';
 import { cx, formatRelativeTime } from '@/lib/utils';
 import { useMarkAllAsRead, useMarkAsRead, useNotifications } from '../hooks/useNotifications';
-import { notificationMeta } from '../notification-meta';
+import { notificationBody, notificationMeta } from '../notification-meta';
 import type { AppNotification } from '../types';
 import './NotificationList.css';
 
@@ -98,7 +98,7 @@ export function NotificationList() {
                       </span>
                       <span className="gm-notify__body">
                         <strong>{item.title}</strong>
-                        <span>{item.body}</span>
+                        <span>{notificationBody(item)}</span>
                         <small>{formatRelativeTime(item.createdAt)}</small>
                       </span>
                       {unread && <span className="gm-notify__dot" aria-label="O‘qilmagan" />}
