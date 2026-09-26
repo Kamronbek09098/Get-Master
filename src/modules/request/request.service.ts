@@ -115,7 +115,28 @@ export class RequestService {
   }
 
   async findOne(customerId: string, requestId: string) {
-    return this.findOwned(customerId, requestId);
+    const request = await this.db.problemRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        booking: {
+          select: {
+            order: {
+              select: {
+                id: true,
+                status: true,
+                finalAmount: true,
+                currency: true,
+                master: { select: { profession: true, user: { select: { firstName: true, lastName: true, accountNumber: true } } } },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!request) throw new NotFoundException(ERRORS.REQUEST_NOT_FOUND);
+    if (request.customerId !== customerId) throw new ForbiddenException(ERRORS.NOT_REQUEST_OWNER);
+    const { booking, ...rest } = request;
+    return { ...rest, order: booking?.order ?? null };
   }
 
   async findAll(customerId: string, query: RequestQueryDto): Promise<CursorPage<ProblemRequestSummary>> {

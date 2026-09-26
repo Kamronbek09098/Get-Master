@@ -57,6 +57,13 @@ export class AdminUsersService {
     return { items: page.items.map(present), nextCursor: page.nextCursor };
   }
 
+  /** Raqamli ID (akkaunt raqami) bo‘yicha foydalanuvchini topadi. */
+  async lookupByNumber(accountNumber: number) {
+    const user = await this.db.user.findUnique({ where: { accountNumber }, select: { id: true } });
+    if (!user) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    return this.findOne(user.id);
+  }
+
   /** Bitta akkaunt haqida to‘liq ma’lumot (admin ham, mijoz/usta ham). */
   async findOne(userId: string) {
     const user = await this.db.user.findUnique({
@@ -90,7 +97,7 @@ export class AdminUsersService {
         where: { OR: [{ actorId: userId }, { targetId: userId }], action: { not: 'AUTH_REFRESH_ROTATED' } },
         orderBy: { createdAt: 'desc' },
         take: 10,
-        select: { id: true, action: true, reason: true, actorId: true, createdAt: true },
+        select: { id: true, action: true, reason: true, actorId: true, createdAt: true, actor: { select: { accountNumber: true } } },
       }),
     ]);
     const { userRoles, _count, ...rest } = user;

@@ -28,7 +28,7 @@ export function PaymentPage() {
       </Link>
       <header className="gm-pay__head">
         <h1>To‘lov</h1>
-        <p>{data.request?.title ?? 'Buyurtma'} · #{data.id.slice(0, 8)}</p>
+        <p>{data.request?.title ?? 'Buyurtma'} · №{data.orderNumber}</p>
       </header>
 
       <div className="gm-pay__layout">

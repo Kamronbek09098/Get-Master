@@ -12,7 +12,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime, formatRelativeTime } from '@/lib/utils';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { TrustBadge } from '@/features/trust/components/TrustBadge';
-import { useAdminUser } from '@/features/admin/hooks/useAdmin';
+import { useAdminUserByNumber } from '@/features/admin/hooks/useAdmin';
 import { accountPath } from '@/features/admin/components/AccountLink';
 import { actionInfo } from '@/features/admin/audit-labels';
 import { useMe } from '@/features/session/hooks/useMe';
@@ -54,10 +54,11 @@ function Stat({ icon, value, label }: { icon: ReactNode; value: number | string;
 export function AdminUserProfilePage() {
   const { id } = useParams();
   const me = useMe();
-  const user = useAdminUser(id);
+  const number = id && /^\d{1,9}$/.test(id) ? Number(id) : null;
+  const user = useAdminUserByNumber(number);
 
   // O‘z akkaunti bo‘lsa — shaxsiy profil bo‘limiga.
-  if (id && me.data?.id === id) return <Navigate to="/sozlamalar" replace />;
+  if (number !== null && me.data?.accountNumber === number) return <Navigate to="/sozlamalar" replace />;
 
   const data = user.data;
   const status = data ? (STATUS[data.status] ?? { label: data.status, tone: 'neutral' as BadgeTone }) : null;
@@ -90,7 +91,7 @@ export function AdminUserProfilePage() {
               </div>
             </div>
             <div className="gm-uprofile__actions">
-              <Link to={`/admin/audit?actor=${data.id}`}>
+              <Link to={`/admin/audit?actor=${data.accountNumber}`}>
                 <Button size="sm" variant="secondary">
                   Audit jurnali
                 </Button>
@@ -160,8 +161,8 @@ export function AdminUserProfilePage() {
                   return (
                     <li key={entry.id}>
                       <Badge tone={info.tone}>{info.label}</Badge>
-                      {entry.actorId && entry.actorId !== data.id && (
-                        <Link to={accountPath(entry.actorId, me.data?.id)} className="gm-uprofile__link">
+                      {entry.actor && entry.actor.accountNumber !== data.accountNumber && (
+                        <Link to={accountPath(entry.actor.accountNumber, me.data?.accountNumber)} className="gm-uprofile__link">
                           bajaruvchi profili
                         </Link>
                       )}

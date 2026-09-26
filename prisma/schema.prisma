@@ -187,6 +187,7 @@ enum ConversationType {
 }
 
 enum MessageType {
+  ORDER
   TEXT
   IMAGE
   VIDEO
@@ -573,12 +574,12 @@ model MasterPortfolio {
   reviewedById String?         @map("reviewed_by_id") @db.Uuid
   reviewedAt   DateTime?       @map("reviewed_at")
   rejectReason String?         @map("reject_reason")
-  title        String?       @db.VarChar(255)
+  title        String?         @db.VarChar(255)
   description  String?
-  mediaAssetId String?       @unique @map("media_asset_id") @db.Uuid
-  createdAt    DateTime      @default(now())
-  master       MasterProfile @relation(fields: [masterId], references: [id], onDelete: Cascade)
-  mediaAsset   MediaAsset?   @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull)
+  mediaAssetId String?         @unique @map("media_asset_id") @db.Uuid
+  createdAt    DateTime        @default(now())
+  master       MasterProfile   @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  mediaAsset   MediaAsset?     @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull)
 
   @@index([masterId])
   @@index([status, createdAt])
@@ -822,6 +823,7 @@ model Booking {
 
 model Order {
   id                    String                  @id @default(uuid()) @db.Uuid
+  orderNumber           Int                     @unique @default(autoincrement()) @map("order_number")
   bookingId             String                  @unique @db.Uuid
   customerId            String                  @db.Uuid
   masterId              String                  @db.Uuid
@@ -851,6 +853,7 @@ model Order {
   warranty              Warranty?
   review                Review?
   cases                 Case[]
+  chatMessages          Message[]
 
   @@index([customerId, status, createdAt])
   @@index([masterId, status, createdAt])
@@ -940,26 +943,29 @@ model ConversationParticipant {
 }
 
 model Message {
-  id             String       @id @default(uuid()) @db.Uuid
-  conversationId String       @db.Uuid
-  senderId       String       @db.Uuid
-  senderPanel    String?      @map("sender_panel") @db.VarChar(16)
-  replyToId      String?      @map("reply_to_id") @db.Uuid
-  type           MessageType  @default(TEXT)
+  id             String            @id @default(uuid()) @db.Uuid
+  conversationId String            @db.Uuid
+  senderId       String            @db.Uuid
+  senderPanel    String?           @map("sender_panel") @db.VarChar(16)
+  replyToId      String?           @map("reply_to_id") @db.Uuid
+  orderId        String?           @map("order_id") @db.Uuid
+  type           MessageType       @default(TEXT)
   text           String?
   attachments    Json?
-  createdAt      DateTime     @default(now())
-  editedAt       DateTime?    @map("edited_at")
-  deletedAt      DateTime?    @map("deleted_at")
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Restrict)
+  createdAt      DateTime          @default(now())
+  editedAt       DateTime?         @map("edited_at")
+  deletedAt      DateTime?         @map("deleted_at")
+  conversation   Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User              @relation("MessageSender", fields: [senderId], references: [id], onDelete: Restrict)
   edits          MessageEdit[]
   reactions      MessageReaction[]
-  replyTo        Message?     @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
-  replies        Message[]    @relation("MessageReplies")
+  order          Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  replyTo        Message?          @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies        Message[]         @relation("MessageReplies")
 
   @@index([conversationId, createdAt])
   @@index([replyToId])
+  @@index([orderId])
   @@map("messages")
 }
 

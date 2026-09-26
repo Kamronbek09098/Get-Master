@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import { UserRef } from '@/features/admin/components/UserRef';
 import { useState } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -33,8 +35,20 @@ function CaseCard({ item, kind }: { item: CaseItem; kind: 'complaints' | 'disput
       <p>{item.description}</p>
       <p className="gm-card__meta">
         {formatDateTime(item.createdAt)}
-        {item.orderId && ` · Buyurtma: ${item.orderId}`} · Yuboruvchi: {item.openedById}
-        {item.targetUserId && ` · Nishon: ${item.targetUserId}`}
+        {item.orderId && (
+          <>
+            {' · '}
+            <Link to={`/admin/buyurtmalar/${item.orderId}`}>Buyurtmani ochish</Link>
+          </>
+        )}
+        {' · Yuboruvchi: '}
+        <UserRef id={item.openedById} />
+        {item.targetUserId && (
+          <>
+            {' · Nishon: '}
+            <UserRef id={item.targetUserId} />
+          </>
+        )}
       </p>
       <div className="gm-form" style={{ marginTop: 'var(--gm-space-3)' }}>
         {update.isError && <Alert tone="danger">{getErrorMessage(update.error)}</Alert>}

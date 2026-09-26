@@ -49,12 +49,22 @@ function orderMessage(newStatus: string, actorType: string, recipientIsCustomer:
   return { title: 'Buyurtma yangilandi', body: 'Buyurtmangiz holati yangilandi. Tafsilotlarni buyurtma sahifasida ko‘ring.' };
 }
 
+const PROVIDER: Record<string, string> = { CASH: 'naqd pul', CLICK: 'Click', PAYME: 'Payme', UZUM: 'Uzum', OTHER: 'boshqa usul' };
+const money = (amount: unknown, currency: unknown) => `${Number(amount).toLocaleString('ru-RU')} ${String(currency ?? 'UZS')}`;
+
 export type NotificationTarget = { userId: string; title: string; body: string } | null;
 
 export function toNotificationTarget(event: OutboxEvent): NotificationTarget {
   const payload = event.payload as Record<string, unknown>;
   switch (event.eventName) {
     case 'order.booked':
+      if (payload.direct) {
+        return {
+          userId: payload.masterUserId as string,
+          title: 'Mijoz sizga buyurtma yubordi',
+          body: `«${String(payload.title)}» — ${money(payload.amount, payload.currency)}. Suhbatda yoki buyurtma sahifasida qabul qiling.`,
+        };
+      }
       return {
         userId: payload.masterUserId as string,
         title: 'Yangi buyurtma',
@@ -64,6 +74,22 @@ export function toNotificationTarget(event: OutboxEvent): NotificationTarget {
       const message = orderMessage(String(payload.newStatus), String(payload.actorType ?? ''), (payload.recipient ?? (payload.actorType === 'CUSTOMER' ? 'MASTER' : 'CUSTOMER')) !== 'MASTER');
       return { userId: payload.notifyUserId as string, ...message };
     }
+    case 'payment.method_chosen': {
+      const cash = payload.provider === 'CASH';
+      return {
+        userId: payload.masterUserId as string,
+        title: cash ? 'Mijoz naqd to‘lovni tanladi' : `Mijoz ${PROVIDER[String(payload.provider)] ?? 'onlayn'} orqali to‘laydi`,
+        body: cash
+          ? `Mijoz ${money(payload.amount, payload.currency)} ni naqd pul bilan to‘laydi. Pulni olgach, buyurtma sahifasida «Naqd pulni qabul qildim» tugmasini bosing.`
+          : `To‘lov summasi ${money(payload.amount, payload.currency)}. To‘lov yakunlangach sizga xabar beramiz.`,
+      };
+    }
+    case 'payment.received':
+      return {
+        userId: payload.masterUserId as string,
+        title: 'Mijoz to‘lovni amalga oshirdi',
+        body: `${money(payload.amount, payload.currency)} (${PROVIDER[String(payload.provider)] ?? 'onlayn to‘lov'}) qabul qilindi.`,
+      };
     case 'payment.succeeded':
       return {
         userId: payload.customerId as string,

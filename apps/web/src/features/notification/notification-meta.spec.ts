@@ -31,6 +31,14 @@ describe('notificationMeta navigation', () => {
   });
 });
 
+describe('payment notifications for masters', () => {
+  it('opens the order and scrolls to the payment card', () => {
+    const cash = { ...make('payment.method_chosen', { orderId: 'o9' }), title: 'Mijoz naqd to‘lovni tanladi' };
+    expect(notificationMeta(cash, '/ustalar').to).toBe('/ustalar/buyurtmalar/o9#tolov');
+    expect(notificationMeta(make('payment.received', { orderId: 'o9' }), '/ustalar').to).toBe('/ustalar/buyurtmalar/o9#tolov');
+  });
+});
+
 describe('notificationText', () => {
   it('rewrites legacy raw-status notifications into what actually happened', () => {
     const raw = { ...make('order.status_changed'), title: 'Buyurtma holati o\'zgardi', body: 'Buyurtma holati: CONFIRMED -> ON_THE_WAY.' };

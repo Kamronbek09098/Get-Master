@@ -11,6 +11,7 @@ export interface MatchingRun {
 export interface MatchingResult {
   id: string;
   masterId: string;
+  master?: { user: { accountNumber: number } };
   score: string | null;
   distanceKm: string | null;
   status: MatchStatus;

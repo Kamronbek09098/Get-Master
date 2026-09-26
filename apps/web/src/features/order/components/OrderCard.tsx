@@ -21,6 +21,7 @@ export function OrderCard({ order }: { order: OrderListItem }) {
         </div>
         <OrderStatus status={order.status} />
       </div>
+      <p className="gm-ocardlink__meta">Buyurtma №{order.orderNumber}</p>
       <p className="gm-ocardlink__meta">
         {party}: <strong>{accountName(order.counterpart)}</strong>
       </p>

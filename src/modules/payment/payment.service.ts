@@ -80,7 +80,7 @@ export class PaymentService {
       if (pending) return pending;
 
       const full = await tx.order.findUniqueOrThrow({ where: { id: order.id } });
-      return tx.payment.create({
+      const created = await tx.payment.create({
         data: {
           orderId: order.id,
           customerId,
@@ -90,6 +90,15 @@ export class PaymentService {
           status: 'PENDING',
         },
       });
+      // Ustaga: mijoz to‘lov usulini tanladi (naqd bo‘lsa, pulni olgach tasdiqlashi kerak).
+      await this.outbox.emit(tx, {
+        eventName: 'payment.method_chosen',
+        aggregateType: 'Payment',
+        aggregateId: created.id,
+        payload: { paymentId: created.id, orderId: order.id, masterUserId: order.masterUserId, provider: created.provider, amount: String(created.amount), currency: created.currency },
+        createdById: customerId,
+      });
+      return created;
     });
 
     // Naqd pul uchun onlayn to‘lov sahifasi yo‘q: usta pulni olganini tasdiqlaydi.
@@ -286,6 +295,15 @@ export class PaymentService {
         aggregateId: result.id,
         payload: { paymentId: result.id, orderId: result.orderId, customerId: result.customerId },
       });
+      if (payload.status === 'SUCCEEDED') {
+        const order = await tx.order.findUniqueOrThrow({ where: { id: result.orderId }, select: { master: { select: { userId: true } } } });
+        await this.outbox.emit(tx, {
+          eventName: 'payment.received',
+          aggregateType: 'Payment',
+          aggregateId: result.id,
+          payload: { paymentId: result.id, orderId: result.orderId, masterUserId: order.master.userId, provider: result.provider, amount: String(result.amount), currency: result.currency },
+        });
+      }
       return { applied: true as const, payment: result };
     });
 

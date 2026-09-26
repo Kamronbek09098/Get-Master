@@ -2,10 +2,10 @@ import { Fragment, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
-  Check,
   ChevronDown,
   ChevronUp,
-  Copy,
+  Bot,
+  ScrollText,
   CreditCard,
   LogIn,
   MessageSquare,
@@ -13,6 +13,8 @@ import {
   Scale,
   Search,
   ShieldCheck,
+  Shield,
+  User,
   Sparkles,
   UserCog,
   Users,
@@ -30,13 +32,12 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { cx, formatDate, formatDateTime, formatRelativeTime } from '@/lib/utils';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { AccountLink } from '@/features/admin/components/AccountLink';
-import { useAuditLogs } from '@/features/admin/hooks/useAdmin';
+import { useAuditLogs, useAuditSummary } from '@/features/admin/hooks/useAdmin';
 import { AUDIT_ACTIONS, DOCUMENT_LABEL, FIELD_LABEL, GROUP_INFO, TARGET_LABEL, actionInfo, formatValue } from '@/features/admin/audit-labels';
 import type { AuditGroup } from '@/features/admin/audit-labels';
-import type { AuditFilters, AuditLog } from '@/features/admin/types';
+import type { AuditActorRole, AuditFilters, AuditLog } from '@/features/admin/types';
 import './AdminAuditPage.css';
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const GROUP_ICON: Record<AuditGroup, ReactNode> = {
   auth: <LogIn size={18} />,
   verification: <ShieldCheck size={18} />,
@@ -50,6 +51,15 @@ const GROUP_ICON: Record<AuditGroup, ReactNode> = {
 };
 const CATEGORY_CHIPS = (Object.keys(GROUP_INFO) as AuditGroup[]).filter((key) => GROUP_INFO[key].prefix);
 const ACTION_OPTIONS = Object.entries(AUDIT_ACTIONS).sort((a, b) => a[1].label.localeCompare(b[1].label));
+
+const ROLE_TABS: Array<{ value: AuditActorRole | ''; label: string; hint: string; icon: ReactNode }> = [
+  { value: '', label: 'Hammasi', hint: 'Barcha amallar', icon: <ScrollText size={18} /> },
+  { value: 'ADMIN', label: 'Adminlar', hint: 'Administratorlar qilgan amallar', icon: <Shield size={18} /> },
+  { value: 'MASTER', label: 'Ustalar', hint: 'Ustalar qilgan amallar', icon: <Wrench size={18} /> },
+  { value: 'CUSTOMER', label: 'Mijozlar', hint: 'Mijozlar qilgan amallar', icon: <User size={18} /> },
+  { value: 'SYSTEM', label: 'Tizim', hint: 'Bajaruvchisiz (avtomatik) amallar', icon: <Bot size={18} /> },
+];
+const ROLE_NAME: Record<AuditActorRole, string> = { ADMIN: 'Admin', MASTER: 'Usta', CUSTOMER: 'Mijoz', SYSTEM: 'Tizim' };
 
 const dayStart = (value: string) => (value ? new Date(`${value}T00:00:00`).toISOString() : undefined);
 const dayEnd = (value: string) => (value ? new Date(`${value}T23:59:59.999`).toISOString() : undefined);
@@ -72,29 +82,10 @@ function changesOf(log: AuditLog): Change[] {
   return keys.map((key) => ({ key, from: before[key], to: after[key], hasFrom: key in before, hasTo: key in after }));
 }
 
-function CopyButton({ value, label }: { value: string; label: string }) {
-  const [done, setDone] = useState(false);
-  return (
-    <button
-      type="button"
-      className="gm-audit__copy"
-      title={`${label}ni nusxalash`}
-      onClick={() => {
-        void navigator.clipboard?.writeText(value).then(() => {
-          setDone(true);
-          window.setTimeout(() => setDone(false), 1500);
-        });
-      }}
-    >
-      {done ? <Check size={13} /> : <Copy size={13} />}
-    </button>
-  );
-}
-
 function Person({ user, fallback }: { user: { id: string; accountNumber: number; firstName: string | null; lastName: string | null; phone: string } | null | undefined; fallback: string }) {
   if (!user) return <strong>{fallback}</strong>;
   return (
-    <AccountLink userId={user.id} className="gm-audit__person">
+    <AccountLink accountNumber={user.accountNumber} className="gm-audit__person">
       <ChatAvatar name={accountName(user)} seed={user.id} size="sm" />
       <strong>{accountName(user)}</strong>
       <small>ID {user.accountNumber}</small>
@@ -131,6 +122,7 @@ function AuditEntry({ log }: { log: AuditLog }) {
           <div className="gm-audit__title">
             <h3>{info.label}</h3>
             <Badge tone={info.tone}>{GROUP_INFO[info.group].label}</Badge>
+            {log.actorRole && <span className={cx('gm-audit__by', `gm-audit__by--${log.actorRole.toLowerCase()}`)}>{ROLE_NAME[log.actorRole]}</span>}
           </div>
           <time dateTime={log.createdAt} title={formatDateTime(log.createdAt)}>
             <strong>{timeOf(log.createdAt)}</strong>
@@ -181,7 +173,7 @@ function AuditEntry({ log }: { log: AuditLog }) {
             </Detail>
             {log.actor && (
               <Detail label="Bajaruvchi">
-                <AccountLink userId={log.actor.id} className="gm-audit__link">
+                <AccountLink accountNumber={log.actor.accountNumber} className="gm-audit__link">
                   {accountName(log.actor)}
                 </AccountLink>{' '}
                 · ID {log.actor.accountNumber} · {log.actor.phone}
@@ -189,30 +181,15 @@ function AuditEntry({ log }: { log: AuditLog }) {
             )}
             {log.targetUser && (
               <Detail label="Kimga nisbatan">
-                <AccountLink userId={log.targetUser.id} className="gm-audit__link">
+                <AccountLink accountNumber={log.targetUser.accountNumber} className="gm-audit__link">
                   {accountName(log.targetUser)}
                 </AccountLink>{' '}
                 · ID {log.targetUser.accountNumber} · {log.targetUser.phone}
               </Detail>
             )}
-            {targetName && (
-              <Detail label="Obyekt">
-                {targetName}
-                {log.targetId && (
-                  <>
-                    {' '}
-                    <code>{log.targetId}</code> <CopyButton value={log.targetId} label="Obyekt ID" />
-                  </>
-                )}
-              </Detail>
-            )}
+            {targetName && !log.targetUser && <Detail label="Obyekt turi">{targetName}</Detail>}
             {log.ipAddress && <Detail label="IP manzil">{log.ipAddress}</Detail>}
             {log.device && <Detail label="Qurilma">{log.device}</Detail>}
-            {log.requestId && (
-              <Detail label="So‘rov ID">
-                <code>{log.requestId}</code> <CopyButton value={log.requestId} label="So‘rov ID" />
-              </Detail>
-            )}
             {(log.before !== null && log.before !== undefined) || (log.after !== null && log.after !== undefined) ? (
               <Detail label="Xom ma’lumot (JSON)">
                 <pre>{JSON.stringify({ oldin: log.before ?? null, keyin: log.after ?? null }, null, 2)}</pre>
@@ -227,6 +204,7 @@ function AuditEntry({ log }: { log: AuditLog }) {
 
 export function AdminAuditPage() {
   const [search, setSearch] = useState('');
+  const [role, setRole] = useState<AuditActorRole | ''>('');
   const [category, setCategory] = useState('');
   const [action, setAction] = useState('');
   const [params] = useSearchParams();
@@ -234,20 +212,23 @@ export function AdminAuditPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
-  const actorValid = UUID.test(actorId.trim());
+  const actorValid = /^\d{1,9}$/.test(actorId.trim());
   const filters: AuditFilters = {
+    actorRole: role || undefined,
     search: search.trim() || undefined,
     category: action ? undefined : category || undefined,
     action: action || undefined,
-    actorId: actorValid ? actorId.trim() : undefined,
+    actorNumber: actorValid ? Number(actorId.trim()) : undefined,
     from: dayStart(from),
     to: dayEnd(to),
   };
   const logs = useAuditLogs(filters);
+  const summary = useAuditSummary(filters);
   const items = useMemo(() => logs.data?.pages.flatMap((page) => page.items) ?? [], [logs.data]);
-  const active = !!(search || category || action || actorId || from || to);
+  const active = !!(role || search || category || action || actorId || from || to);
 
   const reset = () => {
+    setRole('');
     setSearch('');
     setCategory('');
     setAction('');
@@ -264,6 +245,33 @@ export function AdminAuditPage() {
           <p className="gm-page-lead">Tizimda kim, qachon va nima qilgani: har bir muhim amal, uning sababi va o‘zgarishlari bilan.</p>
         </div>
       </div>
+
+      <section className="gm-audit__roles" role="tablist" aria-label="Amalni kim bajargani">
+        {ROLE_TABS.map((tab) => {
+          const count = tab.value ? summary.data?.[tab.value] : summary.data?.ALL;
+          const selected = role === tab.value;
+          return (
+            <button
+              key={tab.value || 'ALL'}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              title={tab.hint}
+              className={cx('gm-audit__role', tab.value && `gm-audit__role--${tab.value.toLowerCase()}`, selected && 'gm-audit__role--on')}
+              onClick={() => setRole(tab.value)}
+            >
+              <span className="gm-audit__role-icon" aria-hidden="true">
+                {tab.icon}
+              </span>
+              <span className="gm-audit__role-text">
+                <strong>{tab.label}</strong>
+                <small>{tab.hint}</small>
+              </span>
+              <span className="gm-audit__role-count">{count ?? '…'}</span>
+            </button>
+          );
+        })}
+      </section>
 
       <section className="gm-audit__filters" aria-label="Filtrlar">
         <div className="gm-audit__search">
@@ -310,8 +318,8 @@ export function AdminAuditPage() {
             <input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} />
           </label>
           <label className="gm-audit__grow">
-            <span>Bajaruvchi ID (UUID)</span>
-            <input value={actorId} onChange={(event) => setActorId(event.target.value)} placeholder="a7c1…" aria-invalid={!!actorId && !actorValid} />
+            <span>Bajaruvchi ID (raqam)</span>
+            <input value={actorId} inputMode="numeric" onChange={(event) => setActorId(event.target.value.replace(/\D/g, ''))} placeholder="Masalan, 578" aria-invalid={!!actorId && !actorValid} />
           </label>
           {active && (
             <Button size="sm" variant="secondary" onClick={reset}>

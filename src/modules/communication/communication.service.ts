@@ -142,6 +142,9 @@ export class CommunicationService {
       ...cursorArgs(query),
     });
     const page = toCursorPage(rows, query);
+    const counterpartIds = page.items.flatMap((row) => row.participants.filter((p) => p.userId !== userId).map((p) => p.userId));
+    const masters = counterpartIds.length ? await this.db.masterProfile.findMany({ where: { userId: { in: counterpartIds } }, select: { userId: true } }) : [];
+    const masterUserIds = new Set(masters.map((row) => row.userId));
     const items = await Promise.all(
       page.items
         .filter((row) => row.participants.length > 1)
@@ -158,6 +161,7 @@ export class CommunicationService {
         return {
           ...conversation,
           counterpart: (participants.find((p) => p.userId !== userId) ?? mine)?.user ?? null,
+          counterpartIsMaster: participants.some((p) => p.userId !== userId && masterUserIds.has(p.userId)),
           counterpartLastReadAt: participants.find((p) => p.userId !== userId)?.lastReadAt ?? null,
           lastMessage: messages[0] ? this.present(messages[0]) : null,
           unreadCount,
@@ -378,6 +382,7 @@ export class CommunicationService {
       senderId: true,
       senderPanel: true,
       type: true,
+      orderId: true,
       text: true,
       attachments: true,
       createdAt: true,

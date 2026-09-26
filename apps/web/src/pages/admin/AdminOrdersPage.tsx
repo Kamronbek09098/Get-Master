@@ -86,7 +86,7 @@ export function AdminOrdersPage() {
       <section className="gm-aord__filters" aria-label="Filtrlar">
         <div className="gm-aord__search">
           <Search size={16} aria-hidden="true" />
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buyurtma ID, mijoz yoki usta ismi/telefoni, so‘rov nomi" aria-label="Qidirish" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buyurtma raqami (№), mijoz yoki usta ID/ismi/telefoni, so‘rov nomi" aria-label="Qidirish" />
         </div>
         <div className="gm-aord__tabs" role="group" aria-label="Holat">
           {TABS.map((tab) => (
@@ -141,7 +141,7 @@ export function AdminOrdersPage() {
                   {order.master.profession && <small> · {order.master.profession}</small>}
                 </p>
                 <div className="gm-aord__meta">
-                  <span>#{order.id.slice(0, 8)}</span>
+                  <span>№{order.orderNumber}</span>
                   <span title={formatDateTime(order.createdAt)}>{formatRelativeTime(order.createdAt)}</span>
                   {order.scheduledStartAt && <span>Reja: {formatDateTime(order.scheduledStartAt)}</span>}
                   {order._count.workProofs > 0 && (

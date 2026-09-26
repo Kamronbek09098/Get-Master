@@ -176,3 +176,12 @@ export function useResolveOrder(id: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
   });
 }
+
+export function useAuditSummary(filters: AuditFilters) {
+  const { actorRole: _ignored, ...rest } = filters;
+  return useQuery({ queryKey: ['admin', 'audit-summary', rest], queryFn: () => adminService.auditSummary(rest), refetchInterval: 30_000 });
+}
+
+export function useAdminUserByNumber(accountNumber: number | null) {
+  return useQuery({ queryKey: ['admin', 'user-number', accountNumber], queryFn: () => adminService.userByNumber(accountNumber as number), enabled: accountNumber !== null, retry: false });
+}

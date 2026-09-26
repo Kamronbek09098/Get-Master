@@ -217,9 +217,12 @@ export class MasterService {
     return toCursorPage(rows, query);
   }
 
-  async findOne(masterId: string) {
+  /** Usta ochiq ID si — raqamli (akkaunt raqami); ichki UUID ham qabul qilinadi (backend ichida). */
+  async findOne(idOrNumber: string) {
+    const isNumber = /^\d{1,9}$/.test(idOrNumber);
+    if (!isNumber && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrNumber)) throw new NotFoundException(ERRORS.MASTER_NOT_FOUND);
     const master = await this.db.masterProfile.findFirst({
-      where: { id: masterId, status: 'ACTIVE', verification: 'VERIFIED' },
+      where: { ...(isNumber ? { user: { accountNumber: Number(idOrNumber) } } : { id: idOrNumber }), status: 'ACTIVE', verification: 'VERIFIED' },
       select: PUBLIC_MASTER_SELECT,
     });
     if (!master) throw new NotFoundException(ERRORS.MASTER_NOT_FOUND);

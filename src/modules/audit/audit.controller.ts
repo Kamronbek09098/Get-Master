@@ -9,6 +9,11 @@ import { AuditService } from './audit.service';
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 
+  @Get('summary')
+  summary(@Query() query: AuditQueryDto) {
+    return this.auditService.summary(query);
+  }
+
   @Get()
   findAll(@Query() query: AuditQueryDto) {
     return this.auditService.findAll(query);

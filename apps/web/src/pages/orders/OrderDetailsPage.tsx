@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { CheckCircle2, Clock, Flag, Hammer, MapPinned, Navigation, ShieldAlert, Star, XCircle } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -63,6 +63,14 @@ export function OrderDetailsPage() {
   const confirmCompletion = useConfirmCompletion(id);
   const cancelOrder = useCancelOrder(id);
   const disputeOrder = useDisputeOrder(id);
+
+  const { hash } = useLocation();
+  const loaded = !!order.data;
+  // Bildirishnomadan «#tolov» bilan kelinsa, to‘lov kartasiga tushamiz.
+  useEffect(() => {
+    if (hash !== '#tolov' || !loaded) return;
+    window.setTimeout(() => document.getElementById('tolov')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150);
+  }, [hash, loaded]);
 
   const [dialog, setDialog] = useState<DialogKind>(null);
   const [reason, setReason] = useState('');
@@ -194,7 +202,7 @@ export function OrderDetailsPage() {
         <div>
           <h1>{data.request?.title ?? 'Buyurtma'}</h1>
           <p>
-            {data.service?.name ?? 'Xizmat'} · Buyurtma #{data.id.slice(0, 8)}
+            {data.service?.name ?? 'Xizmat'} · Buyurtma №{data.orderNumber}
           </p>
         </div>
         <OrderStatus status={status} />

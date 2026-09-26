@@ -78,7 +78,7 @@ function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminU
               {Number(user.masterProfile.ratingAvg).toFixed(1)} · {user.masterProfile.completedOrders} ta ish
             </p>
           )}
-          <p className="gm-card__meta">ID: {user.id}</p>
+          
         </div>
       </div>
 

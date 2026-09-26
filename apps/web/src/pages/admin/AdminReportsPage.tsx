@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { providerLabel } from '@/features/payment/labels';
 import { useState } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -96,7 +97,7 @@ export function AdminReportsPage() {
                     </Button>
                   </div>
                   <p className="gm-card__meta">
-                    {providerLabel(row.provider)} · {formatDateTime(row.succeededAt)} · Buyurtma: {row.orderId}
+                    {providerLabel(row.provider)} · {formatDateTime(row.succeededAt)} · <Link to={`/admin/buyurtmalar/${row.orderId}`}>Buyurtmani ochish</Link>
                     {Number(row.refundedAmount) > 0 && ` · Qaytarilgan: ${formatMoney(row.refundedAmount, row.currency)}`}
                   </p>
                 </div>

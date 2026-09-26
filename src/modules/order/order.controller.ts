@@ -4,13 +4,24 @@ import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { panelOf } from '../../common/utils/panel';
 import { OrderService } from './order.service';
+import { DirectOrderService } from './direct-order.service';
+import { CreateDirectOrderDto } from './dto/create-direct-order.dto';
 import { CreateWorkProofDto } from './dto/create-work-proof.dto';
 import { ReasonDto } from './dto/reason.dto';
 import { OrderHistoryQueryDto } from './dto/order-history-query.dto';
 
 @Controller('orders')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(
+    private readonly orderService: OrderService,
+    private readonly directOrders: DirectOrderService,
+  ) {}
+
+  /** Suhbat ichidan ustaga buyurtma yuborish (mijoz). */
+  @Post('direct')
+  createDirect(@CurrentUser('sub') userId: string, @Body() dto: CreateDirectOrderDto) {
+    return this.directOrders.create(userId, dto);
+  }
 
   @Get()
   findAll(@CurrentUser('sub') userId: string, @Req() req: Request) {

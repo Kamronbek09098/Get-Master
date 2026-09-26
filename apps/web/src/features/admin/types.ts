@@ -112,6 +112,7 @@ export interface AuditLog {
   /** Amal kimga nisbatan bajarilgan (foydalanuvchi yoki usta hujjati egasi). */
   targetUser?: { id: string; accountNumber: number; firstName: string | null; lastName: string | null; phone: string } | null;
   targetDocumentType?: string | null;
+  actorRole?: AuditActorRole;
 }
 
 export interface AdminUserDetail {
@@ -140,7 +141,7 @@ export interface AdminUserDetail {
   } | null;
   stats: { orders: number; requests: number; messages: number; reviews: number; activeDevices: number };
   lastSession: { lastSeenAt: string; ipAddress: string | null; userAgent: string | null; panel: string | null } | null;
-  recentActivity: Array<{ id: string; action: string; reason: string | null; actorId: string | null; createdAt: string }>;
+  recentActivity: Array<{ id: string; action: string; reason: string | null; actorId: string | null; actor?: { accountNumber: number } | null; createdAt: string }>;
 }
 
 export interface AdminBadges {
@@ -153,7 +154,13 @@ export interface AdminBadges {
   now: string;
 }
 
+export type AuditActorRole = 'ADMIN' | 'MASTER' | 'CUSTOMER' | 'SYSTEM';
+
+export type AuditSummary = Record<AuditActorRole | 'ALL', number>;
+
 export interface AuditFilters {
+  actorRole?: AuditActorRole;
+  actorNumber?: number;
   actorId?: string;
   action?: string;
   category?: string;
@@ -216,6 +223,7 @@ export interface AdminOrderPerson {
 
 export interface AdminOrderRow {
   id: string;
+  orderNumber: number;
   status: AdminOrderStatus;
   finalAmount: string;
   currency: string;
@@ -255,6 +263,10 @@ export interface AdminMediaInfo {
 
 export interface AdminOrderDetail {
   id: string;
+  orderNumber: number;
+  /** Mijozning va ustaning nechanchi buyurtmasi ekani (foydalanuvchilarga ko‘rinadigan raqam). */
+  customerOrderIndex: number;
+  masterOrderIndex: number;
   status: AdminOrderStatus;
   originalAmount: string;
   additionalAmount: string;

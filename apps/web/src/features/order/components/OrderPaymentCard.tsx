@@ -73,7 +73,7 @@ export function OrderPaymentCard({ order }: { order: OrderDetailsData }) {
   const canConfirmCash = isMaster && payment?.provider === 'CASH' && payment.status === 'PENDING' && completed;
 
   return (
-    <section className={`gm-opaycard gm-opaycard--${tone}`} aria-label="To‘lov">
+    <section id="tolov" className={`gm-opaycard gm-opaycard--${tone}`} aria-label="To‘lov">
       <header className="gm-opaycard__head">
         <h2>
           <Icon size={20} aria-hidden="true" /> {title}

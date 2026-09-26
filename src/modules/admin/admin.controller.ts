@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -80,6 +80,11 @@ export class AdminController {
   @Get('users')
   findAllUsers(@Query() query: UserQueryDto) {
     return this.users.findAll(query);
+  }
+
+  @Get('users/by-number/:number')
+  lookupUser(@Param('number', ParseIntPipe) number: number) {
+    return this.users.lookupByNumber(number);
   }
 
   @Get('users/:id')

@@ -2,6 +2,7 @@ import type { AttachmentType, OrderStatus, PaymentProvider, PaymentStatus, WorkS
 
 export interface Order {
   id: string;
+  orderNumber: number;
   bookingId: string;
   customerId: string;
   masterId: string;

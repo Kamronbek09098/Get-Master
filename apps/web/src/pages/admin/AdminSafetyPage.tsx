@@ -1,3 +1,5 @@
+import { UserRef } from '@/features/admin/components/UserRef';
+import { UserNumberField } from '@/features/admin/components/UserNumberField';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -38,7 +40,7 @@ const RESOLVE_OPTIONS: AppealStatus[] = ['UNDER_REVIEW', 'ACCEPTED', 'REJECTED',
 
 function ActionForm() {
   const create = useCreateAction();
-  const [userId, setUserId] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
   const [type, setType] = useState<UserActionType>('WARNING');
   const [restriction, setRestriction] = useState('');
   const [reason, setReason] = useState('');
@@ -48,7 +50,7 @@ function ActionForm() {
     event.preventDefault();
     create.mutate(
       {
-        userId: userId.trim(),
+        userId: userId ?? '',
         type,
         restrictionType: (restriction || undefined) as RestrictionType | undefined,
         reason: reason.trim(),
@@ -62,13 +64,13 @@ function ActionForm() {
     <form className="gm-form" onSubmit={handleSubmit}>
       {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
       {create.isSuccess && <Alert tone="success">Chora qo‘llandi.</Alert>}
-      <Input label="Foydalanuvchi ID" required value={userId} onChange={(e) => setUserId(e.target.value)} />
+      <UserNumberField label="Foydalanuvchi ID" onResolve={setUserId} />
       <Select label="Chora turi" options={ACTION_OPTIONS} value={type} onChange={(e) => setType(e.target.value as UserActionType)} />
       <Select label="Cheklov turi" options={RESTRICTION_OPTIONS} value={restriction} onChange={(e) => setRestriction(e.target.value)} />
       <Input label="Tugash vaqti (ixtiyoriy)" type="datetime-local" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
       <Textarea label="Sabab" required rows={3} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
       <div>
-        <Button type="submit" loading={create.isPending} disabled={!userId.trim() || !reason.trim()}>
+        <Button type="submit" loading={create.isPending} disabled={!userId || !reason.trim()}>
           Qo‘llash
         </Button>
       </div>
@@ -78,7 +80,7 @@ function ActionForm() {
 
 function CompensationForm() {
   const create = useCreateCompensation();
-  const [recipientId, setRecipientId] = useState('');
+  const [recipientId, setRecipientId] = useState<string | null>(null);
   const [type, setType] = useState<CompensationType>('REFUND');
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
@@ -86,7 +88,7 @@ function CompensationForm() {
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     create.mutate(
-      { recipientId: recipientId.trim(), type, amount: amount ? Number(amount) : undefined, reason: reason.trim() },
+      { recipientId: recipientId ?? '', type, amount: amount ? Number(amount) : undefined, reason: reason.trim() },
       { onSuccess: () => setReason('') },
     );
   }
@@ -95,12 +97,12 @@ function CompensationForm() {
     <form className="gm-form" onSubmit={handleSubmit}>
       {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
       {create.isSuccess && <Alert tone="success">Kompensatsiya yaratildi.</Alert>}
-      <Input label="Oluvchi ID" required value={recipientId} onChange={(e) => setRecipientId(e.target.value)} />
+      <UserNumberField label="Oluvchi ID" onResolve={setRecipientId} />
       <Select label="Turi" options={COMPENSATION_OPTIONS} value={type} onChange={(e) => setType(e.target.value as CompensationType)} />
       <Input label="Summa (ixtiyoriy)" type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} />
       <Textarea label="Sabab" required rows={3} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
       <div>
-        <Button type="submit" loading={create.isPending} disabled={!recipientId.trim() || !reason.trim()}>
+        <Button type="submit" loading={create.isPending} disabled={!recipientId || !reason.trim()}>
           Yaratish
         </Button>
       </div>
@@ -127,7 +129,7 @@ function AppealCard({ id, status: initial, reason, decision: initialDecision, cr
         <Badge tone={initial === 'ACCEPTED' ? 'success' : initial === 'REJECTED' ? 'danger' : 'warning'}>{APPEAL_LABEL[initial]}</Badge>
       </div>
       <p>{reason}</p>
-      <p className="gm-card__meta">Foydalanuvchi: {userId}</p>
+      <p className="gm-card__meta">Foydalanuvchi: <UserRef id={userId} /></p>
       {decision && closed && <p className="gm-card__meta">Qaror: {decision}</p>}
       {!closed && (
         <div className="gm-form">
@@ -207,7 +209,7 @@ export function AdminSafetyPage() {
               </div>
               <p>{action.reason}</p>
               <p className="gm-card__meta">
-                Foydalanuvchi: {action.userId} · {formatDateTime(action.createdAt)}
+                Foydalanuvchi: <UserRef id={action.userId} /> · {formatDateTime(action.createdAt)}
                 {action.expiresAt && ` · Tugaydi: ${formatDateTime(action.expiresAt)}`}
               </p>
               {!action.liftedAt && (

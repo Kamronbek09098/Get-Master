@@ -1,4 +1,4 @@
-import type { RequestStatus } from '@/types/common';
+import type { OrderStatus, RequestStatus } from '@/types/common';
 
 export interface ProblemRequest {
   id: string;
@@ -19,6 +19,14 @@ export interface ProblemRequest {
   expiresAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** So‘rov bo‘yicha yaratilgan buyurtma (usta tanlangach). */
+  order?: {
+    id: string;
+    status: OrderStatus;
+    finalAmount: string;
+    currency: string;
+    master: { profession: string | null; user: { firstName: string | null; lastName: string | null; accountNumber: number } };
+  } | null;
 }
 
 export interface ProblemRequestSummary extends ProblemRequest {

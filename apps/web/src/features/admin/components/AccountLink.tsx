@@ -2,16 +2,16 @@ import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useMe } from '@/features/session/hooks/useMe';
 
-/** Akkaunt ustiga bosilganda: o‘zingizniki bo‘lsa — shaxsiy bo‘lim, boshqaniki bo‘lsa — o‘sha foydalanuvchi profili. */
-export function accountPath(userId: string, myId: string | undefined) {
-  return userId === myId ? '/sozlamalar' : `/admin/foydalanuvchilar/${userId}`;
+/** Profil manzili raqamli ID bilan: o‘zingizniki — shaxsiy bo‘lim, boshqaniki — foydalanuvchi profili. */
+export function accountPath(accountNumber: number, myNumber: number | undefined) {
+  return accountNumber === myNumber ? '/sozlamalar' : `/admin/foydalanuvchilar/${accountNumber}`;
 }
 
-export function AccountLink({ userId, className, children }: { userId: string; className?: string; children: ReactNode }) {
+export function AccountLink({ accountNumber, className, children }: { accountNumber: number; className?: string; children: ReactNode }) {
   const me = useMe();
-  const own = userId === me.data?.id;
+  const own = accountNumber === me.data?.accountNumber;
   return (
-    <Link to={accountPath(userId, me.data?.id)} className={className} title={own ? 'Mening profilim' : 'Profilni ochish'}>
+    <Link to={accountPath(accountNumber, me.data?.accountNumber)} className={className} title={own ? 'Mening profilim' : 'Profilni ochish'}>
       {children}
     </Link>
   );

@@ -72,7 +72,7 @@ function Party({ role, person, extra }: { role: string; person: AdminOrderPerson
   return (
     <div className="gm-aordd__party">
       <small>{role}</small>
-      <AccountLink userId={person.id} className="gm-aordd__link">
+      <AccountLink accountNumber={person.accountNumber} className="gm-aordd__link">
         {accountName(person)}
       </AccountLink>
       <span>
@@ -168,7 +168,7 @@ export function AdminOrderDetailPage() {
                 <OrderStatus status={order.status} />
               </div>
               <p>
-                Buyurtma <code>#{order.id.slice(0, 8)}</code> · yaratilgan {formatDateTime(order.createdAt)}
+                Buyurtma <strong>№{order.orderNumber}</strong> (mijozning {order.customerOrderIndex}-, ustaning {order.masterOrderIndex}-buyurtmasi) · yaratilgan {formatDateTime(order.createdAt)}
                 {order.booking.request.category && ` · ${order.booking.request.category.name}`}
               </p>
             </div>
@@ -321,7 +321,7 @@ export function AdminOrderDetailPage() {
                       {ACTOR[step.actorType] ?? step.actorType}
                       {step.actor && ` · ${accountName(step.actor)}`}
                     </span>
-                    {step.reason && <em>Sabab: {step.reason}</em>}
+                    {step.reason && step.reason !== 'Offer accepted' && <em>Sabab: {step.reason}</em>}
                     <time>{formatDateTime(step.createdAt)}</time>
                   </li>
                 ))}

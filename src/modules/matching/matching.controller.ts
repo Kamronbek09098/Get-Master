@@ -28,6 +28,7 @@ export class MatchingController {
       where: { runId: run.id },
       orderBy: { score: 'desc' },
       take: query.limit,
+      include: { master: { select: { user: { select: { accountNumber: true } } } } },
     });
     return { run, results };
   }

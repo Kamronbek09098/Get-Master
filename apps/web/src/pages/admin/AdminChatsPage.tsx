@@ -125,7 +125,7 @@ function MessageBubble({ message, side, first, last, people }: { message: AdminC
     <li className={cx('gm-tg__row', `gm-tg__row--${side}`, first && 'gm-tg__row--first', last && 'gm-tg__row--last')}>
       <div className={cx('gm-tg__bubble', deleted && 'gm-tg__bubble--deleted')}>
         {first && (
-          <AccountLink userId={message.sender.id} className="gm-tg__name">
+          <AccountLink accountNumber={message.sender.accountNumber} className="gm-tg__name">
             <span style={{ color: senderColor(message.sender.id) }}>{accountName(message.sender)}</span>
             <small>
               ID {message.sender.accountNumber}
@@ -249,7 +249,7 @@ function Viewer({ id, onBack }: { id: string; onBack: () => void }) {
         </div>
         <div className="gm-achat__people">
           {participants.map((p, index) => (
-            <AccountLink key={p.user.id} userId={p.user.id} className={cx('gm-achat__person', index > 0 && 'gm-achat__person--right')}>
+            <AccountLink key={p.user.id} accountNumber={p.user.accountNumber} className={cx('gm-achat__person', index > 0 && 'gm-achat__person--right')}>
               <ChatAvatar name={accountName(p.user)} seed={p.user.id} size="sm" />
               <span>
                 <strong>{accountName(p.user)}</strong>

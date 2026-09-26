@@ -23,7 +23,7 @@ export function useAutoReadNotifications() {
     for (const item of notifications.data?.items ?? []) {
       if (item.status === 'READ' || sent.current.has(item.id)) continue;
       if (item.template === 'chat.message') continue;
-      const target = notificationMeta(item, base).to?.split('?')[0];
+      const target = notificationMeta(item, base).to?.split(/[?#]/)[0];
       if (target && target === pathname) {
         sent.current.add(item.id);
         mutate(item.id);

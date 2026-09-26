@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { cursorArgs, dateRangeWhere, toCursorPage } from '../../common/utils/cursor';
-import { AuditQueryDto } from './dto/audit-query.dto';
+import { ActorRole, AuditQueryDto } from './dto/audit-query.dto';
 
 const PERSON = { id: true, accountNumber: true, firstName: true, lastName: true, phone: true } as const;
 
@@ -10,10 +10,30 @@ const PERSON = { id: true, accountNumber: true, firstName: true, lastName: true,
 export class AuditService {
   constructor(private readonly db: PrismaService) {}
 
-  async findAll(query: AuditQueryDto) {
+  /**
+   * Bajaruvchi turi: admin roli bor bo‘lsa — admin; aks holda usta roli bor bo‘lsa — usta; qolganlari — mijoz.
+   * Bajaruvchisi yo‘q yozuvlar — tizim.
+   */
+  private roleWhere(role: ActorRole): Prisma.AuditLogWhereInput {
+    const admin = { userRoles: { some: { role: Role.ADMIN } } };
+    const master = { userRoles: { some: { role: Role.MASTER } } };
+    switch (role) {
+      case 'SYSTEM':
+        return { actorId: null };
+      case 'ADMIN':
+        return { actor: { is: admin } };
+      case 'MASTER':
+        return { actor: { is: { AND: [master, { NOT: admin }] } } };
+      default:
+        return { actor: { is: { AND: [{ NOT: admin }, { NOT: master }] } } };
+    }
+  }
+
+  private baseWhere(query: AuditQueryDto): Prisma.AuditLogWhereInput {
     const search = query.search?.trim();
-    const where: Prisma.AuditLogWhereInput = {
+    return {
       actorId: query.actorId,
+      ...(query.actorNumber ? { actor: { is: { accountNumber: query.actorNumber } } } : {}),
       targetType: query.targetType,
       targetId: query.targetId,
       createdAt: dateRangeWhere(query),
@@ -25,14 +45,33 @@ export class AuditService {
           : []),
       ],
     };
+  }
+
+  async findAll(query: AuditQueryDto) {
+    const base = this.baseWhere(query);
+    const where: Prisma.AuditLogWhereInput = query.actorRole ? { AND: [base, this.roleWhere(query.actorRole)] } : base;
     const rows = await this.db.auditLog.findMany({
       where,
-      include: { actor: { select: PERSON } },
+      include: { actor: { select: { ...PERSON, userRoles: { select: { role: true } } } } },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       ...cursorArgs(query),
     });
     const page = toCursorPage(rows, query);
-    return { ...page, items: await this.withTargetUsers(page.items) };
+    const withRole = page.items.map(({ actor, ...log }) => {
+      const roles = actor?.userRoles.map((item) => item.role) ?? [];
+      const actorRole: ActorRole = !actor ? 'SYSTEM' : roles.includes(Role.ADMIN) ? 'ADMIN' : roles.includes(Role.MASTER) ? 'MASTER' : 'CUSTOMER';
+      return { ...log, actor: actor ? { id: actor.id, accountNumber: actor.accountNumber, firstName: actor.firstName, lastName: actor.lastName, phone: actor.phone } : null, actorRole };
+    });
+    return { ...page, items: await this.withTargetUsers(withRole) };
+  }
+
+  /** Bajaruvchi turlari bo‘yicha yozuvlar soni (boshqa filtrlar hisobga olinadi, bajaruvchi turidan tashqari). */
+  async summary(query: AuditQueryDto) {
+    const base = this.baseWhere(query);
+    const roles: ActorRole[] = ['ADMIN', 'MASTER', 'CUSTOMER', 'SYSTEM'];
+    const counts = await Promise.all(roles.map((role) => this.db.auditLog.count({ where: { AND: [base, this.roleWhere(role)] } })));
+    const byRole = Object.fromEntries(roles.map((role, index) => [role, counts[index]!]));
+    return { ...byRole, ALL: counts.reduce((sum, value) => sum + value, 0) };
   }
 
   /** Amal kimga qarshi bajarilganini (foydalanuvchi yoki usta hujjati egasi) ko‘rsatish uchun. */

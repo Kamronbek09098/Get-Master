@@ -1,10 +1,21 @@
-import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { DateRangeQueryDto } from '../../../common/dto/cursor-query.dto';
+
+export type ActorRole = 'ADMIN' | 'MASTER' | 'CUSTOMER' | 'SYSTEM';
 
 export class AuditQueryDto extends DateRangeQueryDto {
   @IsOptional()
   @IsUUID('4')
   actorId?: string;
+
+  /** Bajaruvchining raqamli ID si (akkaunt raqami). */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(2_000_000_000)
+  actorNumber?: number;
 
   @IsOptional()
   @IsString()
@@ -25,6 +36,11 @@ export class AuditQueryDto extends DateRangeQueryDto {
   @IsOptional()
   @IsUUID('4')
   targetId?: string;
+
+  /** Amalni kim bajargani: admin, usta, mijoz yoki tizim (bajaruvchisiz). */
+  @IsOptional()
+  @IsIn(['ADMIN', 'MASTER', 'CUSTOMER', 'SYSTEM'])
+  actorRole?: ActorRole;
 
   /** Amal nomi yoki sababdan qidirish. */
   @IsOptional()

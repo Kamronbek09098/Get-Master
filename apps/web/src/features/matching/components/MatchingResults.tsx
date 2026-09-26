@@ -8,8 +8,8 @@ import { useMatching } from '../hooks/useMatching';
 const STATUS_LABEL: Record<string, string> = {
   PENDING: 'Kutilmoqda',
   RUNNING: 'Ustalar izlanmoqda',
-  COMPLETED: 'Yakunlandi',
-  FAILED: 'Xatolik',
+  COMPLETED: 'Qidiruv yakunlandi',
+  FAILED: 'Qidiruvda xatolik yuz berdi',
 };
 
 export function MatchingResults({ requestId, serviceSelected = true }: { requestId: string; serviceSelected?: boolean }) {
@@ -31,10 +31,15 @@ export function MatchingResults({ requestId, serviceSelected = true }: { request
   const results = matching.data.results;
   return (
     <div className="gm-list">
-      <p>Holat: {STATUS_LABEL[matching.data.run.status]}</p>
-      {results.length === 0 && <EmptyState title="Hozircha mos usta topilmadi" />}
+      <p>{STATUS_LABEL[matching.data.run.status] ?? matching.data.run.status}</p>
+      {results.length === 0 && (
+        <EmptyState
+          title="Hozircha mos usta topilmadi"
+          description="Ustalar o‘zlari ham so‘rovingizga taklif yuborishi mumkin. Yangi takliflar «Takliflar» bo‘limida ko‘rinadi."
+        />
+      )}
       {results.map((result, index) => (
-        <Link key={result.id} to={`/ustalar-katalogi/${result.masterId}`} className="gm-card">
+        <Link key={result.id} to={`/ustalar-katalogi/${result.master?.user.accountNumber ?? result.masterId}`} className="gm-card">
           <div className="gm-card__header">
             <h3>{index + 1}-o‘rin</h3>
             {result.score && <span>Ball: {Number(result.score).toFixed(2)}</span>}

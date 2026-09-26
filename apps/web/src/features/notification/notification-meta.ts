@@ -1,4 +1,4 @@
-import { BadgeCheck, Bell, CalendarCheck, ClipboardList, Image, MessageCircle, CreditCard, Package, ScrollText, Search, Send } from 'lucide-react';
+import { Banknote, BadgeCheck, Bell, CalendarCheck, ClipboardList, Image, MessageCircle, CreditCard, Package, ScrollText, Search, Send } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { STATUS_TEXT } from '@/features/order/order-flow';
 import type { AppNotification } from './types';
@@ -25,6 +25,12 @@ export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/us
       return { icon: CalendarCheck, tone: 'success', to: orderPath(base, data.orderId) };
     case 'order.status_changed':
       return { icon: Package, tone: 'primary', to: orderPath(base, data.orderId) };
+    case 'payment.method_chosen': {
+      const cash = item.title.includes('naqd');
+      return { icon: cash ? Banknote : CreditCard, tone: 'warning', to: typeof data.orderId === 'string' ? `${orderPath(base, data.orderId)}#tolov` : `${base}/buyurtmalar` };
+    }
+    case 'payment.received':
+      return { icon: CreditCard, tone: 'success', to: typeof data.orderId === 'string' ? `${orderPath(base, data.orderId)}#tolov` : `${base}/buyurtmalar` };
     case 'payment.succeeded':
       return { icon: CreditCard, tone: 'success', to: base === '/mijozlar' ? (typeof data.orderId === 'string' ? `/mijozlar/buyurtmalar/${data.orderId}` : '/mijozlar/tolovlar') : undefined };
     case 'payment.failed':
@@ -41,7 +47,7 @@ export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/us
       return { icon: ScrollText, tone, to: typeof data.path === 'string' ? data.path : '/admin/audit' };
     }
     case 'offer.received':
-      return { icon: Send, tone: 'success', to: typeof data.requestId === 'string' ? `/mijozlar/sorovlar/${data.requestId}` : '/mijozlar/sorovlar' };
+      return { icon: Send, tone: 'success', to: typeof data.requestId === 'string' ? `/mijozlar/sorovlar/${data.requestId}` : '/mijozlar/buyurtmalar' };
     default:
       return item.template?.startsWith('request') ? { icon: ClipboardList, tone: 'primary' } : { icon: Bell, tone: 'neutral' };
   }

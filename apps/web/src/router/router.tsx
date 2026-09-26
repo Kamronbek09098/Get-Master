@@ -7,7 +7,7 @@ import { RoleSelectPage } from '@/pages/RoleSelectPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
 import { OtpPage } from '@/pages/auth/OtpPage';
-import { RequestsPage } from '@/pages/requests/RequestsPage';
+import { CustomerOrdersPage } from '@/pages/orders/CustomerOrdersPage';
 import { CreateRequestPage } from '@/pages/requests/CreateRequestPage';
 import { RequestDetailsPage } from '@/pages/requests/RequestDetailsPage';
 import { OrdersPage } from '@/pages/orders/OrdersPage';
@@ -94,10 +94,10 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         children: [
-          { path: '/mijozlar/sorovlar', element: customer(<RequestsPage />) },
+          { path: '/mijozlar/sorovlar', element: <Navigate to="/mijozlar/buyurtmalar" replace /> },
           { path: '/mijozlar/sorov-yaratish', element: customer(<CreateRequestPage />) },
           { path: '/mijozlar/sorovlar/:id', element: customer(<RequestDetailsPage />) },
-          { path: '/mijozlar/buyurtmalar', element: customer(<OrdersPage />) },
+          { path: '/mijozlar/buyurtmalar', element: customer(<CustomerOrdersPage />) },
           { path: '/mijozlar/buyurtmalar/:id', element: customer(<OrderDetailsPage />) },
           { path: '/mijozlar/buyurtmalar/:orderId/tolov', element: customer(<PaymentPage />) },
           { path: '/ustalar/buyurtmalar', element: master(<OrdersPage />) },

@@ -65,7 +65,7 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
 
   const customer = role === 'CUSTOMER';
   const offersSeen = useSeen('offers');
-  const onRequests = pathname.startsWith('/mijozlar/sorovlar');
+  const onRequests = pathname.startsWith('/mijozlar/buyurtmalar') || pathname.startsWith('/mijozlar/sorovlar');
   const offers = useQuery({
     queryKey: ['customer', 'badges', offersSeen],
     queryFn: () => customerService.badges(offersSeen ?? undefined),
@@ -136,7 +136,7 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
 
   put('/bildirishnomalar', unread.data?.count ?? 0);
   if (chatRole) put(role === 'MASTER' ? '/ustalar/chat' : '/mijozlar/chat', chatUnread.data?.count ?? 0);
-  if (customer) put('/mijozlar/sorovlar', onRequests ? 0 : (offers.data?.offers ?? 0));
+  if (customer) put('/mijozlar/buyurtmalar', onRequests ? 0 : (offers.data?.offers ?? 0));
   if (admin) {
     const data = badges.data;
     put('/admin/tasdiqlash', onVerifications ? 0 : (data?.verifications ?? 0));

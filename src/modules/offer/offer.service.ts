@@ -256,7 +256,6 @@ export class OfferService {
           actorType: 'CUSTOMER',
           oldStatus: null,
           newStatus: 'BOOKED',
-          reason: 'Offer accepted',
         },
       });
 

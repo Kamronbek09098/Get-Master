@@ -88,8 +88,10 @@ export class OrderService {
     const viewerRole = this.viewerRole(isCustomer, isMaster, panel);
     if (!viewerRole) throw new ForbiddenException(ERRORS.NOT_ORDER_PARTICIPANT);
     const { booking, customer, master, conversation, payments, ...rest } = order;
+    const orderNumber = await this.ordinalFor(order, viewerRole);
     return {
       ...rest,
+      orderNumber,
       payment: payments[0] ?? null,
       viewerRole,
       service: booking.service,
@@ -98,6 +100,18 @@ export class OrderService {
       conversationId: conversation?.id ?? null,
       counterpart: viewerRole === 'MASTER' ? customer : { ...master.user, profession: master.profession },
     };
+  }
+
+  /**
+   * Foydalanuvchiga ko‘rinadigan buyurtma raqami: mijoz (yoki usta) uchun uning nechanchi buyurtmasi.
+   * Birinchi buyurtma — №1, ikkinchisi — №2… Umumiy (tizim) raqami faqat adminda ko‘rinadi.
+   */
+  private async ordinalFor(order: { id: string; customerId: string; masterId: string; createdAt: Date; orderNumber: number }, role: 'CUSTOMER' | 'MASTER' | null) {
+    if (!role) return order.orderNumber;
+    const party = role === 'MASTER' ? { masterId: order.masterId } : { customerId: order.customerId };
+    return this.db.order.count({
+      where: { ...party, OR: [{ createdAt: { lt: order.createdAt } }, { createdAt: order.createdAt, orderNumber: { lte: order.orderNumber } }] },
+    });
   }
 
   private viewerRole(isCustomer: boolean, isMaster: boolean, panel: Panel | null): 'CUSTOMER' | 'MASTER' | null {
@@ -160,12 +174,20 @@ export class OrderService {
         master: { select: { user: { select: { id: true, accountNumber: true, firstName: true, lastName: true } } } },
       },
     });
+    const [customerSeq, masterSeq] = await Promise.all([
+      this.db.order.findMany({ where: asCustomer, select: { id: true }, orderBy: [{ createdAt: 'asc' }, { orderNumber: 'asc' }] }),
+      masterProfile ? this.db.order.findMany({ where: asMaster, select: { id: true }, orderBy: [{ createdAt: 'asc' }, { orderNumber: 'asc' }] }) : Promise.resolve([] as Array<{ id: string }>),
+    ]);
+    const customerIndex = new Map(customerSeq.map((row, index) => [row.id, index + 1]));
+    const masterIndex = new Map(masterSeq.map((row, index) => [row.id, index + 1]));
     return rows
       .filter((row) => row.customerId !== row.master.user.id)
       .map(({ booking, customer, master, ...order }) => {
       const viewerRole = this.viewerRole(order.customerId === userId, master.user.id === userId, panel);
+      const personal = (viewerRole === 'MASTER' ? masterIndex : customerIndex).get(order.id) ?? order.orderNumber;
       return {
         ...order,
+        orderNumber: personal,
         viewerRole,
         service: booking.service,
         title: booking.request.title,
@@ -307,11 +329,21 @@ export class OrderService {
   }
 
   /** Mijoz tanlagan to‘lov usuli har doim yozib qo‘yiladi (naqd pul ham). Allaqachon to‘lov yozuvi bo‘lsa, ikkinchisi yaratilmaydi. */
-  private async recordPaymentMethod(order: { id: string; finalAmount: Prisma.Decimal; currency: string }, customerId: string, provider: PaymentProvider) {
+  private async recordPaymentMethod(order: { id: string; masterId: string; finalAmount: Prisma.Decimal; currency: string }, customerId: string, provider: PaymentProvider) {
     const existing = await this.db.payment.findFirst({ where: { orderId: order.id, status: { in: ['PENDING', 'PROCESSING', 'SUCCEEDED', 'PARTIALLY_REFUNDED'] } } });
     if (existing) return;
-    await this.db.payment.create({
-      data: { orderId: order.id, customerId, provider, amount: order.finalAmount, currency: order.currency, status: 'PENDING', metadata: { chosenAt: 'ORDER_COMPLETION' } },
+    await this.db.$transaction(async (tx) => {
+      const payment = await tx.payment.create({
+        data: { orderId: order.id, customerId, provider, amount: order.finalAmount, currency: order.currency, status: 'PENDING', metadata: { chosenAt: 'ORDER_COMPLETION' } },
+      });
+      const master = await tx.masterProfile.findUniqueOrThrow({ where: { id: order.masterId }, select: { userId: true } });
+      await this.outbox.emit(tx, {
+        eventName: 'payment.method_chosen',
+        aggregateType: 'Payment',
+        aggregateId: payment.id,
+        payload: { paymentId: payment.id, orderId: order.id, masterUserId: master.userId, provider, amount: String(order.finalAmount), currency: order.currency },
+        createdById: customerId,
+      });
     });
   }
 

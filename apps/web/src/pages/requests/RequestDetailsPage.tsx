@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, PackageCheck } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatDateTime } from '@/lib/utils';
+import { accountName } from '@/lib/account-name';
+import { formatDateTime, formatMoney } from '@/lib/utils';
+import { OrderStatus } from '@/features/order/components/OrderStatus';
 import { useCancelRequest, useRequest, useSubmitRequest } from '@/features/request/hooks/useRequests';
 import { RequestStatus } from '@/features/request/components/RequestStatus';
 import { CANCELLABLE_STATUSES, OFFER_ELIGIBLE_STATUSES } from '@/features/request/types';
@@ -33,6 +36,9 @@ export function RequestDetailsPage() {
 
   return (
     <div>
+      <Link to="/mijozlar/buyurtmalar" className="gm-pay__back" style={{ marginBottom: 'var(--gm-space-3)', display: 'inline-flex' }}>
+        <ArrowLeft size={16} /> Buyurtmalarga qaytish
+      </Link>
       <div className="gm-page-header">
         <h1>{data.title}</h1>
         <RequestStatus status={data.status} />
@@ -84,7 +90,30 @@ export function RequestDetailsPage() {
         </div>
       )}
 
-      {data.status !== 'DRAFT' && (
+      {data.order && (
+        <div className="gm-detail-section">
+          <h2>Buyurtma yaratildi</h2>
+          <div className="gm-card">
+            <div className="gm-card__header">
+              <h3>
+                <PackageCheck size={18} aria-hidden="true" style={{ verticalAlign: '-3px', marginRight: 6 }} />
+                {accountName(data.order.master.user)}
+              </h3>
+              <OrderStatus status={data.order.status} />
+            </div>
+            <p className="gm-card__meta">
+              {data.order.master.profession ?? 'Usta'} · ID {data.order.master.user.accountNumber} · {formatMoney(data.order.finalAmount, data.order.currency)}
+            </p>
+            <div style={{ marginTop: 'var(--gm-space-3)' }}>
+              <Link to={`/mijozlar/buyurtmalar/${data.order.id}`}>
+                <Button>Buyurtmani ochish</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {data.status !== 'DRAFT' && data.status !== 'BOOKED' && data.status !== 'CANCELLED' && data.status !== 'EXPIRED' && (
         <div className="gm-detail-section">
           <h2>Mos ustalar</h2>
           <MatchingResults requestId={id} serviceSelected={!!data.serviceId} />

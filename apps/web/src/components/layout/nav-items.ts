@@ -79,9 +79,8 @@ export function getNavItems(role: Role | null): NavItem[] {
     ];
   }
   return [
-    { to: '/mijozlar/sorovlar', label: 'So‘rovlarim', short: 'So‘rovlar', icon: ClipboardList, group: 'Asosiy', primary: true },
-    { to: '/mijozlar/sorov-yaratish', label: 'Yangi so‘rov', short: 'Yangi', icon: PlusCircle, group: 'Asosiy', primary: true },
     { to: '/mijozlar/buyurtmalar', label: 'Buyurtmalar', icon: PackageCheck, group: 'Asosiy', primary: true },
+    { to: '/mijozlar/sorov-yaratish', label: 'Yangi buyurtma', short: 'Yangi', icon: PlusCircle, group: 'Asosiy', primary: true },
     { to: '/mijozlar/tolovlar', label: 'To‘lovlar', icon: CreditCard, group: 'Asosiy' },
     { to: '/bronlar', label: 'Bronlar', icon: CalendarCheck, group: 'Asosiy' },
     { to: '/ustalar-katalogi', label: 'Ustalar', icon: Users, group: 'Asosiy' },

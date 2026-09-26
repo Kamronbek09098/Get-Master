@@ -20,7 +20,7 @@ describe('getNavItems', () => {
   it('defaults to the customer menu', () => {
     for (const role of ['CUSTOMER', null] as const) {
       const paths = getNavItems(role).map((item) => item.to);
-      expect(paths[0]).toBe('/mijozlar/sorovlar');
+      expect(paths[0]).toBe('/mijozlar/buyurtmalar');
       expect(paths).toContain('/mijozlar/tolovlar');
     }
   });

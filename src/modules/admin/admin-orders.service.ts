@@ -16,15 +16,9 @@ export class AdminOrdersService {
     private readonly orders: OrderService,
   ) {}
 
-  /** Buyurtma ID ning boshlanishi bo‘yicha qidirish (UUID ustunida startsWith yo‘q). */
-  private async idsByPrefix(prefix: string): Promise<string[]> {
-    const rows = await this.db.$queryRaw<Array<{ id: string }>>`SELECT id::text AS id FROM orders WHERE id::text LIKE ${prefix.toLowerCase() + '%'} LIMIT 50`;
-    return rows.map((row) => row.id);
-  }
-
   async findAll(query: AdminOrderQueryDto) {
     const search = query.search?.trim();
-    const idMatches = search && /^[0-9a-f-]{4,36}$/i.test(search) ? await this.idsByPrefix(search) : [];
+    const numeric = search && /^#?\d{1,9}$/.test(search) ? Number(search.replace('#', '')) : null;
     const where: Prisma.OrderWhereInput = {
       status: query.status,
       createdAt: dateRangeWhere(query),
@@ -34,7 +28,7 @@ export class AdminOrdersService {
             AND: [
               {
                 OR: [
-                  ...(idMatches.length ? [{ id: { in: idMatches } }] : []),
+                  ...(numeric !== null ? [{ orderNumber: numeric }, { customer: { accountNumber: numeric } }, { master: { user: { accountNumber: numeric } } }] : []),
                   { customer: { OR: [{ phone: { contains: search } }, { firstName: { contains: search, mode: 'insensitive' as const } }, { lastName: { contains: search, mode: 'insensitive' as const } }] } },
                   { master: { user: { OR: [{ phone: { contains: search } }, { firstName: { contains: search, mode: 'insensitive' as const } }, { lastName: { contains: search, mode: 'insensitive' as const } }] } } },
                   { booking: { request: { title: { contains: search, mode: 'insensitive' as const } } } },
@@ -49,6 +43,7 @@ export class AdminOrdersService {
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       select: {
         id: true,
+        orderNumber: true,
         status: true,
         finalAmount: true,
         currency: true,
@@ -116,8 +111,16 @@ export class AdminOrdersService {
       : [];
     const assetById = new Map(proofAssets.map((asset) => [asset.id, asset]));
 
+    const before = { OR: [{ createdAt: { lt: order.createdAt } }, { createdAt: order.createdAt, orderNumber: { lte: order.orderNumber } }] };
+    const [customerOrderIndex, masterOrderIndex] = await Promise.all([
+      this.db.order.count({ where: { customerId: order.customerId, ...before } }),
+      this.db.order.count({ where: { masterId: order.masterId, ...before } }),
+    ]);
+
     return {
       ...order,
+      customerOrderIndex,
+      masterOrderIndex,
       workProofs: order.workProofs.map((proof) => ({ ...proof, asset: proof.mediaAssetId ? (assetById.get(proof.mediaAssetId) ?? null) : null })),
       requestAssets,
       conversationId: order.conversation?.id ?? null,

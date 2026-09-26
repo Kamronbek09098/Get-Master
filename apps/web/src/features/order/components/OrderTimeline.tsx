@@ -19,7 +19,7 @@ export function OrderTimeline({ orderId }: { orderId: string }) {
               <small>
                 {ACTOR_TEXT[entry.actorType]} · {formatDateTime(entry.createdAt)}
               </small>
-              {entry.reason && <p>“{entry.reason}”</p>}
+              {entry.reason && entry.reason !== 'Offer accepted' && <p>“{entry.reason}”</p>}
             </div>
           </li>
         ))}

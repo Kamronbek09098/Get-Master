@@ -15,6 +15,7 @@ import type {
   AdminPortfolioItem,
   AdminVerification,
   AuditFilters,
+  AuditSummary,
   AuditLog,
   Dashboard,
   RevenueRow,
@@ -93,6 +94,9 @@ export const adminService = {
   resolveOrder(id: string, decision: 'COMPLETE' | 'CANCEL', reason: string) {
     return apiPost<unknown>(`/admin/orders/${id}/resolve`, { decision, reason });
   },
+  userByNumber(accountNumber: number) {
+    return apiGet<AdminUserDetail>(`/admin/users/by-number/${accountNumber}`);
+  },
   user(id: string) {
     return apiGet<AdminUserDetail>(`/admin/users/${id}`);
   },
@@ -100,7 +104,10 @@ export const adminService = {
     return apiGet<AdminBadges>(`/admin/badges${qs(since)}`);
   },
   audit(filters: AuditFilters, cursor?: string) {
-    return apiGet<CursorPage<AuditLog>>(`/audit-logs${qs({ limit: '30', ...filters, cursor })}`);
+    return apiGet<CursorPage<AuditLog>>(`/audit-logs${qs({ limit: '30', ...filters, actorNumber: filters.actorNumber ? String(filters.actorNumber) : undefined, cursor })}`);
+  },
+  auditSummary(filters: AuditFilters) {
+    return apiGet<AuditSummary>(`/audit-logs/summary${qs({ ...filters, actorRole: undefined, actorNumber: filters.actorNumber ? String(filters.actorNumber) : undefined })}`);
   },
   categories() {
     return apiGet<ServiceCategory[]>('/service-categories');
