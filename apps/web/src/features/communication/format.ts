@@ -130,7 +130,7 @@ export function previewText(conversation: Conversation, meId: string | undefined
 export const EDIT_WINDOW_MS = 48 * 60 * 60_000;
 
 export function canEdit(message: ChatMessage, now: number = Date.now()): boolean {
-  return !message.deleted && !message.status && message.type !== 'SYSTEM' && now - new Date(message.createdAt).getTime() <= EDIT_WINDOW_MS;
+  return !message.deleted && !message.status && message.type !== 'SYSTEM' && message.type !== 'ORDER' && now - new Date(message.createdAt).getTime() <= EDIT_WINDOW_MS;
 }
 
 const TONES = 8;

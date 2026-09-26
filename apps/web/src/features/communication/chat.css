@@ -1336,3 +1336,101 @@ body:has(.gm-messenger) .gm-footer {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ---- Chatdagi buyurtma kartasi ---- */
+.gm-ochat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: min(320px, 70vw);
+  max-width: 380px;
+  padding: 2px 0;
+}
+.gm-ochat--error {
+  color: var(--gm-color-danger);
+  font-size: 0.85rem;
+}
+.gm-ochat__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.gm-ochat__head > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.gm-ochat__head strong {
+  overflow-wrap: anywhere;
+}
+.gm-ochat__head small {
+  color: var(--gm-color-text-muted);
+  font-size: 0.72rem;
+}
+.gm-ochat__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--gm-color-primary-soft);
+  color: var(--gm-color-primary);
+}
+.gm-ochat__text {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.85rem;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+.gm-ochat__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.gm-ochat__facts span:not(:first-child) {
+  color: var(--gm-color-text-muted);
+  font-weight: 500;
+}
+.gm-ochat__bar {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gm-color-text) 10%, transparent);
+}
+.gm-ochat__bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--gm-color-primary);
+}
+.gm-ochat__hint {
+  margin: 0;
+  color: var(--gm-color-text-muted);
+  font-size: 0.82rem;
+}
+.gm-ochat__hint--bad {
+  color: var(--gm-color-danger);
+}
+.gm-ochat__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.gm-ochat__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  color: var(--gm-color-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+}

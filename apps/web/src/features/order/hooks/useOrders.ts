@@ -6,8 +6,8 @@ export function useMyOrders() {
   return useQuery({ queryKey: ['orders', 'mine'], queryFn: () => orderService.listMine() });
 }
 
-export function useOrder(id: string) {
-  return useQuery({ queryKey: ['orders', id], queryFn: () => orderService.get(id), enabled: !!id, refetchInterval: 30_000 });
+export function useOrder(id: string, refetchInterval = 30_000) {
+  return useQuery({ queryKey: ['orders', id], queryFn: () => orderService.get(id), enabled: !!id, refetchInterval });
 }
 
 export function useOrderTimeline(id: string) {
@@ -64,5 +64,16 @@ export function useRemoveWorkProof(id: string) {
   return useMutation({
     mutationFn: (proofId: string) => orderService.removeWorkProof(id, proofId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['orders', id, 'workProofs'] }),
+  });
+}
+
+export function useCreateDirectOrder(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { title: string; description: string; price: number; scheduledStartAt?: string; addressId?: string }) => orderService.createDirect({ conversationId, ...input }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      void queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
   });
 }

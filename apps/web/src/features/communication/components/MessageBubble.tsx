@@ -9,6 +9,7 @@ import { mediaService } from '@/features/media/services/media.service';
 import { canEdit, clock, replySnippet } from '../format';
 import type { ChatAttachment, ChatMessage } from '../types';
 import { Linkified } from './Linkified';
+import { ChatOrderCard } from './ChatOrderCard';
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '👏'];
 
@@ -72,7 +73,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
   const failed = message.status === 'failed';
   const settled = !message.deleted && !message.status;
   const editable = mine && canEdit(message);
-  const deletable = mine && settled;
+  const deletable = mine && settled && message.type !== 'ORDER';
   const hasText = !!message.text;
   const panel = env.appRole ?? '';
 
@@ -136,8 +137,9 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
           <span className="gm-bubble__text">Xabar o‘chirilgan</span>
         ) : (
           <>
+            {message.type === 'ORDER' && message.orderId && <ChatOrderCard orderId={message.orderId} />}
             {message.attachments && message.attachments.length > 0 && <Attachments items={message.attachments} />}
-            {hasText && (
+            {hasText && message.type !== 'ORDER' && (
               <span className="gm-bubble__text">
                 <Linkified text={message.text ?? ''} />
               </span>

@@ -37,7 +37,9 @@ export interface ChatMessage {
   attachments?: ChatAttachment[] | null;
   replyTo?: ChatReplyPreview | null;
   reactions?: ChatReaction[];
-  type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'SYSTEM';
+  type: 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'SYSTEM' | 'ORDER';
+  /** type = ORDER bo‘lsa: suhbatdan yuborilgan buyurtma. */
+  orderId?: string | null;
   text: string | null;
   createdAt: string;
   editedAt: string | null;
@@ -51,6 +53,8 @@ export interface Conversation {
   orderId: string | null;
   order: { id: string; status: OrderStatus } | null;
   counterpart: ChatUser | null;
+  /** Suhbatdoshi usta bo‘lsa, mijoz chatdan unga buyurtma yubora oladi. */
+  counterpartIsMaster?: boolean;
   counterpartLastReadAt: string | null;
   lastMessage: ChatMessage | null;
   unreadCount: number;

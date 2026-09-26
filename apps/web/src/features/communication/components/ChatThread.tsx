@@ -3,6 +3,10 @@ import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useMe } from '@/features/session/hooks/useMe';
+import { useAuthStore } from '@/store/auth.store';
+import { env } from '@/lib/env';
+import { accountName } from '@/lib/account-name';
+import { DirectOrderDialog } from './DirectOrderDialog';
 import { useDeleteMessage, useEditMessage, useMessages, useReactMessage, useSendMessage } from '../hooks/useCommunication';
 import { canEdit, isOwnMessage } from '../format';
 import type { ChatMessage, Conversation } from '../types';
@@ -19,6 +23,10 @@ export function ChatThread({ conversation }: { conversation: Conversation }) {
   const react = useReactMessage(conversation.id);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [deleting, setDeleting] = useState<ChatMessage | null>(null);
+  const [orderOpen, setOrderOpen] = useState(false);
+  const preferredRole = useAuthStore((state) => state.preferredRole);
+  const isCustomerPanel = (env.appRole ?? preferredRole) === 'CUSTOMER';
+  const canOrder = isCustomerPanel && !!conversation.counterpartIsMaster;
 
   const messages = useMessages(conversation.id);
   const lastEditable = useMemo(
@@ -62,7 +70,9 @@ export function ChatThread({ conversation }: { conversation: Conversation }) {
         onEdit={(message, text) => edit.mutate({ messageId: message.id, text }, { onSuccess: () => setEditing(null) })}
         onCancelEdit={() => setEditing(null)}
         onEditLast={lastEditable ? () => setEditing(lastEditable) : undefined}
+        onOrder={canOrder ? () => setOrderOpen(true) : undefined}
       />
+      {orderOpen && <DirectOrderDialog conversationId={conversation.id} masterName={accountName(conversation.counterpart)} onClose={() => setOrderOpen(false)} />}
       <ConfirmDialog
         open={!!deleting}
         title="Xabarni o‘chirish"

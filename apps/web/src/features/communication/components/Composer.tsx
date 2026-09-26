@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { AlertCircle, Check, CornerUpLeft, FileText, Loader2, Paperclip, Pencil, Send, Smile, X } from 'lucide-react';
+import { AlertCircle, Check, CornerUpLeft, FileText, Loader2, Package, Paperclip, Pencil, Send, Smile, X } from 'lucide-react';
 import { cx } from '@/lib/utils';
 import { useAttachments } from '../hooks/useAttachments';
 import { replySnippet } from '../format';
@@ -20,10 +20,12 @@ export interface ComposerProps {
   onEdit: (message: ChatMessage, text: string) => void;
   onCancelEdit: () => void;
   onEditLast?: () => void;
+  /** Berilsa, «Buyurtma yuborish» tugmasi ko‘rinadi (mijoz → usta suhbati). */
+  onOrder?: () => void;
 }
 
 /** Xabar yozish maydoni: Enter — yuborish, Shift+Enter — yangi qator; tahrirlash rejimi va emoji. */
-export function Composer({ conversationId, editing, replyTo = null, onCancelReply, onSend, onEdit, onCancelEdit, onEditLast }: ComposerProps) {
+export function Composer({ conversationId, editing, replyTo = null, onCancelReply, onSend, onEdit, onCancelEdit, onEditLast, onOrder }: ComposerProps) {
   const files = useAttachments(conversationId);
   const fileInput = useRef<HTMLInputElement>(null);
   const [text, setText] = useState(() => drafts.get(conversationId) ?? '');
@@ -146,6 +148,11 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
         </div>
       )}
       <div className="gm-composer__row">
+        {onOrder && !editing && (
+          <button type="button" className="gm-composer__icon" aria-label="Ustaga buyurtma yuborish" title="Ustaga buyurtma yuborish" onClick={onOrder}>
+            <Package size={22} />
+          </button>
+        )}
         <div className="gm-composer__emoji" ref={emojiRef}>
           <button
             type="button"

@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ProblemRequest } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { ServiceService } from '../service/service.service';
@@ -160,8 +160,14 @@ export class RequestService {
 
   private async validateReferences(
     customerId: string,
-    dto: { categoryId?: string; serviceId?: string; addressId?: string },
+    dto: { categoryId?: string; serviceId?: string; addressId?: string; preferredStartAt?: string; preferredEndAt?: string },
   ) {
+    // Buyurtma sanasi o‘tmishda bo‘lishi mumkin emas (soat farqi uchun 1 daqiqa yumshatma).
+    const start = dto.preferredStartAt ? new Date(dto.preferredStartAt) : null;
+    const end = dto.preferredEndAt ? new Date(dto.preferredEndAt) : null;
+    if (start && start.getTime() < Date.now() - 60_000) throw new BadRequestException(ERRORS.AVAILABLE_AT_IN_FUTURE);
+    if (end && end.getTime() < Date.now() - 60_000) throw new BadRequestException(ERRORS.AVAILABLE_AT_IN_FUTURE);
+    if (start && end && end.getTime() < start.getTime()) throw new BadRequestException('Tugash vaqti boshlanish vaqtidan oldin bo‘lishi mumkin emas');
     if (dto.addressId) await this.customers.assertOwnsAddress(customerId, dto.addressId);
     if (!dto.categoryId && !dto.serviceId) return null;
     return this.catalog.assertCatalogSelection(dto.categoryId, dto.serviceId);

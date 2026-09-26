@@ -36,3 +36,7 @@ export function useConfirmCash() {
     },
   });
 }
+
+export function useEarningsOverview(days: number) {
+  return useQuery({ queryKey: ['payments', 'earnings-overview', days], queryFn: () => paymentService.earningsOverview(days), refetchInterval: 30_000 });
+}

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { OrderStatus, PaymentProvider, PaymentStatus, Prisma, Role } from '@prisma/client';
 import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
 import { EarningsQueryDto } from './dto/earnings-query.dto';
+import { EarningsOverviewQueryDto } from './dto/earnings-overview-query.dto';
 import { PaymentHistoryQueryDto } from './dto/payment-history-query.dto';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
@@ -182,6 +183,84 @@ export class PaymentService {
     return {
       summary: { grossAmount: gross, refundedAmount: refunded, netAmount: gross.sub(refunded), paymentCount: aggregate._count },
       ...toCursorPage(rows, query),
+    };
+  }
+
+  /**
+   * Ustaning daromad ko‘rinishi: bugun/hafta/oy/jami, kunlik grafik, to‘lov usullari va kutilayotgan (naqd) to‘lovlar.
+   * Kunlar Toshkent vaqti (UTC+5) bo‘yicha hisoblanadi.
+   */
+  async earningsOverview(userId: string, query: EarningsOverviewQueryDto) {
+    const masterProfile = await this.db.masterProfile.findUnique({ where: { userId }, select: { id: true } });
+    if (!masterProfile) throw new NotFoundException(ERRORS.MASTER_PROFILE_NOT_FOUND);
+    const days = query.days ?? 30;
+    const TZ_MS = 5 * 60 * 60 * 1000;
+    const dayKey = (date: Date) => new Date(date.getTime() + TZ_MS).toISOString().slice(0, 10);
+    const now = new Date();
+    const today = dayKey(now);
+    const dayShift = (key: string, delta: number) => new Date(Date.parse(`${key}T00:00:00Z`) + delta * 86_400_000).toISOString().slice(0, 10);
+    const weekday = (new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7; // dushanba = 0
+    const weekStart = dayShift(today, -weekday);
+    const monthStart = `${today.slice(0, 8)}01`;
+    const chartStart = dayShift(today, -(days - 1));
+    const earliest = [chartStart, weekStart, monthStart].sort()[0]!;
+    const since = new Date(`${earliest}T00:00:00+05:00`);
+
+    const [rows, providers, all, pending] = await Promise.all([
+      this.db.$queryRaw<Array<{ day: string; gross: Prisma.Decimal; net: Prisma.Decimal; count: number }>>`
+        SELECT to_char((p.succeeded_at AT TIME ZONE 'Asia/Tashkent')::date, 'YYYY-MM-DD') AS day,
+               COALESCE(SUM(p.amount), 0) AS gross,
+               COALESCE(SUM(p.amount - p.refunded_amount), 0) AS net,
+               COUNT(*)::int AS count
+        FROM payments p JOIN orders o ON o.id = p."orderId"
+        WHERE o."masterId" = ${masterProfile.id}::uuid
+          AND p.status IN ('SUCCEEDED', 'PARTIALLY_REFUNDED', 'REFUNDED')
+          AND p.succeeded_at >= ${since}
+        GROUP BY 1 ORDER BY 1`,
+      this.db.$queryRaw<Array<{ provider: string; net: Prisma.Decimal; count: number }>>`
+        SELECT p.provider::text AS provider, COALESCE(SUM(p.amount - p.refunded_amount), 0) AS net, COUNT(*)::int AS count
+        FROM payments p JOIN orders o ON o.id = p."orderId"
+        WHERE o."masterId" = ${masterProfile.id}::uuid
+          AND p.status IN ('SUCCEEDED', 'PARTIALLY_REFUNDED', 'REFUNDED')
+          AND p.succeeded_at >= ${new Date(`${chartStart}T00:00:00+05:00`)}
+        GROUP BY 1 ORDER BY 2 DESC`,
+      this.db.payment.aggregate({
+        where: { status: { in: SETTLED_STATUSES }, order: { masterId: masterProfile.id } },
+        _sum: { amount: true, refundedAmount: true },
+        _count: true,
+      }),
+      this.db.payment.aggregate({
+        where: { status: { in: ['PENDING', 'PROCESSING'] }, order: { masterId: masterProfile.id, status: { in: ['WAITING_CONFIRMATION', 'COMPLETED'] } } },
+        _sum: { amount: true },
+        _count: true,
+      }),
+    ]);
+
+    const byDay = new Map(rows.map((row) => [row.day, { net: Number(row.net), gross: Number(row.gross), count: row.count }]));
+    const daily = Array.from({ length: days }, (_, index) => {
+      const date = dayShift(chartStart, index);
+      return { date, ...(byDay.get(date) ?? { net: 0, gross: 0, count: 0 }) };
+    });
+    const sumFrom = (start: string) => {
+      let net = 0;
+      let count = 0;
+      for (const [day, value] of byDay) if (day >= start) { net += value.net; count += value.count; }
+      return { net, count };
+    };
+    const yesterday = byDay.get(dayShift(today, -1));
+    const allNet = Number(all._sum.amount ?? 0) - Number(all._sum.refundedAmount ?? 0);
+    const chartTotal = daily.reduce((sum, item) => sum + item.net, 0);
+    const bestDay = daily.reduce((best, item) => (item.net > best.net ? item : best), daily[0]!);
+    return {
+      currency: 'UZS',
+      today: { date: today, ...sumFrom(today), yesterday: yesterday?.net ?? 0 },
+      week: sumFrom(weekStart),
+      month: sumFrom(monthStart),
+      all: { net: allNet, count: all._count },
+      pending: { amount: Number(pending._sum.amount ?? 0), count: pending._count },
+      range: { days, net: chartTotal, average: Math.round(chartTotal / days), bestDay: bestDay.net > 0 ? bestDay : null },
+      daily,
+      providers: providers.map((row) => ({ provider: row.provider, net: Number(row.net), count: row.count })),
     };
   }
 

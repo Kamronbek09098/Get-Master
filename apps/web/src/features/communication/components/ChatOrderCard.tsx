@@ -1,0 +1,150 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Banknote, CheckCircle2, ExternalLink, Hammer, MapPinned, Navigation, PackageCheck, XCircle } from 'lucide-react';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { Alert } from '@/components/ui/Alert';
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { Textarea } from '@/components/ui/Textarea';
+import { accountName } from '@/lib/account-name';
+import { getErrorMessage } from '@/lib/error-messages';
+import { formatDateTime, formatMoney } from '@/lib/utils';
+import { OrderStatus } from '@/features/order/components/OrderStatus';
+import { FLOW_STEPS, stepIndex } from '@/features/order/order-flow';
+import { useArrive, useCancelOrder, useConfirmCompletion, useConfirmOrder, useOrder, useStartTravel, useStartWork, useSubmitCompletion } from '@/features/order/hooks/useOrders';
+import { PaymentMethodCards } from '@/features/payment/components/PaymentMethodCards';
+import { useConfirmCash } from '@/features/payment/hooks/usePayment';
+import { providerLabel } from '@/features/payment/labels';
+import type { PaymentProvider } from '@/types/common';
+
+/**
+ * Chatdagi buyurtma kartasi: buyurtma holati jonli yangilanadi va shu yerning o‘zida
+ * usta qabul qiladi, bajaradi; mijoz tasdiqlaydi va to‘lov usulini tanlaydi.
+ */
+export function ChatOrderCard({ orderId }: { orderId: string }) {
+  const query = useOrder(orderId, 8_000);
+  const confirm = useConfirmOrder(orderId);
+  const travel = useStartTravel(orderId);
+  const arrive = useArrive(orderId);
+  const start = useStartWork(orderId);
+  const submit = useSubmitCompletion(orderId);
+  const complete = useConfirmCompletion(orderId);
+  const cancel = useCancelOrder(orderId);
+  const cash = useConfirmCash();
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [reason, setReason] = useState('');
+  const [method, setMethod] = useState<PaymentProvider | ''>('');
+
+  if (query.isLoading) return <Skeleton style={{ height: 120, width: 300, borderRadius: 12 }} />;
+  if (query.isError || !query.data) return <div className="gm-ochat gm-ochat--error">Buyurtmani ochib bo‘lmadi</div>;
+
+  const order = query.data;
+  const master = order.viewerRole === 'MASTER';
+  const status = order.status;
+  const index = stepIndex(status);
+  const percent = status === 'COMPLETED' ? 100 : index >= 0 ? Math.round(((index + 1) / FLOW_STEPS.length) * 100) : 0;
+  const link = `${master ? '/ustalar' : '/mijozlar'}/buyurtmalar/${order.id}`;
+  const error = [confirm, travel, arrive, start, submit, complete, cancel, cash].find((mutation) => mutation.isError)?.error;
+  const busy = [confirm, travel, arrive, start, submit, complete, cash].some((mutation) => mutation.isPending);
+  const canCancel = status === 'BOOKED' || status === 'CONFIRMED';
+  const payment = order.payment;
+
+  let hint = '';
+  const actions: Array<{ label: string; icon: JSX.Element; run: () => void; primary?: boolean; disabled?: boolean }> = [];
+  if (master) {
+    if (status === 'BOOKED') {
+      hint = 'Mijoz sizga buyurtma yubordi. Qabul qilasizmi?';
+      actions.push({ label: 'Qabul qilish', icon: <CheckCircle2 size={15} />, run: () => confirm.mutate(), primary: true });
+    } else if (status === 'CONFIRMED') {
+      hint = 'Buyurtma qabul qilindi. Tayyor bo‘lgach, yo‘lga chiqing.';
+      actions.push({ label: 'Yo‘lga chiqdim', icon: <Navigation size={15} />, run: () => travel.mutate(), primary: true });
+    } else if (status === 'ON_THE_WAY') {
+      hint = 'Mijoz sizni kutmoqda.';
+      actions.push({ label: 'Yetib keldim', icon: <MapPinned size={15} />, run: () => arrive.mutate(), primary: true });
+    } else if (status === 'ARRIVED') {
+      hint = 'Ishni boshlash uchun tayyor bo‘lsangiz, boshlang.';
+      actions.push({ label: 'Ishni boshlash', icon: <Hammer size={15} />, run: () => start.mutate(), primary: true });
+    } else if (status === 'IN_PROGRESS') {
+      hint = 'Ish tugagach, mijozga tasdiqlash uchun yuboring. Rasmlarni buyurtma sahifasidan yuklang.';
+      actions.push({ label: 'Ishni tugatdim', icon: <CheckCircle2 size={15} />, run: () => submit.mutate(), primary: true });
+    } else if (status === 'WAITING_CONFIRMATION') hint = 'Mijoz ishni tasdiqlashini kuting.';
+    else if (status === 'COMPLETED' && payment?.provider === 'CASH' && payment.status === 'PENDING') {
+      hint = 'Mijoz naqd pul bilan to‘laydi. Pulni olgach, tasdiqlang.';
+      actions.push({ label: 'Naqd pulni qabul qildim', icon: <Banknote size={15} />, run: () => cash.mutate(payment.id), primary: true });
+    } else if (status === 'COMPLETED') hint = 'Buyurtma yakunlandi.';
+  } else if (status === 'BOOKED') hint = 'Usta buyurtmani qabul qilishini kuting.';
+  else if (status === 'CONFIRMED') hint = 'Usta buyurtmani qabul qildi.';
+  else if (status === 'ON_THE_WAY') hint = 'Usta yo‘lda.';
+  else if (status === 'ARRIVED') hint = 'Usta yetib keldi.';
+  else if (status === 'IN_PROGRESS') hint = 'Ish jarayonida.';
+  else if (status === 'WAITING_CONFIRMATION') hint = 'Usta ishni tugatdi. To‘lov usulini tanlab, ishni tasdiqlang.';
+  else if (status === 'COMPLETED') hint = payment ? `Yakunlandi. To‘lov: ${providerLabel(payment.provider)}.` : 'Yakunlandi. To‘lov usulini buyurtma sahifasida tanlang.';
+
+  return (
+    <div className="gm-ochat">
+      <div className="gm-ochat__head">
+        <span className="gm-ochat__icon" aria-hidden="true">
+          <PackageCheck size={18} />
+        </span>
+        <div>
+          <strong>{order.request?.title ?? 'Buyurtma'}</strong>
+          <small>
+            Buyurtma №{order.orderNumber} · {accountName(order.counterpart)}
+          </small>
+        </div>
+        <OrderStatus status={status} />
+      </div>
+      {order.request?.description && <p className="gm-ochat__text">{order.request.description}</p>}
+      <div className="gm-ochat__facts">
+        <span>{formatMoney(order.finalAmount, order.currency)}</span>
+        {order.scheduledStartAt && <span>{formatDateTime(order.scheduledStartAt)}</span>}
+      </div>
+      {index >= 0 && (
+        <div className="gm-ochat__bar" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
+          <span style={{ width: `${percent}%` }} />
+        </div>
+      )}
+      {status === 'CANCELLED' ? <p className="gm-ochat__hint gm-ochat__hint--bad">Buyurtma bekor qilindi{order.cancellationReason ? `: ${order.cancellationReason}` : ''}</p> : hint && <p className="gm-ochat__hint">{hint}</p>}
+
+      {!master && status === 'WAITING_CONFIRMATION' && <PaymentMethodCards value={method} onChange={setMethod} compact disabled={busy} />}
+      {error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
+
+      <div className="gm-ochat__actions">
+        {!master && status === 'WAITING_CONFIRMATION' && (
+          <Button size="sm" loading={complete.isPending} disabled={!method || busy} onClick={() => method && complete.mutate(method)}>
+            <CheckCircle2 size={15} /> Ishni tasdiqlash
+          </Button>
+        )}
+        {actions.map((action) => (
+          <Button key={action.label} size="sm" loading={busy} disabled={action.disabled || busy} onClick={action.run}>
+            {action.icon} {action.label}
+          </Button>
+        ))}
+        {canCancel && (
+          <Button size="sm" variant="danger" onClick={() => setCancelOpen(true)}>
+            <XCircle size={15} /> {master && status === 'BOOKED' ? 'Rad etish' : 'Bekor qilish'}
+          </Button>
+        )}
+        <Link to={link} className="gm-ochat__more">
+          <ExternalLink size={14} /> Batafsil
+        </Link>
+      </div>
+
+      <ConfirmDialog
+        open={cancelOpen}
+        title={master && status === 'BOOKED' ? 'Buyurtmani rad etish' : 'Buyurtmani bekor qilish'}
+        description="Sababini yozing. Bu amalni qaytarib bo‘lmaydi."
+        confirmLabel={master && status === 'BOOKED' ? 'Rad etish' : 'Bekor qilish'}
+        cancelLabel="Yopish"
+        tone="danger"
+        loading={cancel.isPending}
+        confirmDisabled={reason.trim().length < 3}
+        onCancel={() => setCancelOpen(false)}
+        onConfirm={() => cancel.mutate(reason.trim(), { onSuccess: () => { setCancelOpen(false); setReason(''); } })}
+      >
+        {cancel.isError && <Alert tone="danger">{getErrorMessage(cancel.error)}</Alert>}
+        <Textarea label="Sabab" required rows={3} value={reason} onChange={(event) => setReason(event.target.value)} />
+      </ConfirmDialog>
+    </div>
+  );
+}

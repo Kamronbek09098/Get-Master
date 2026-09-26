@@ -10,6 +10,7 @@ import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CreateRefundDto } from './dto/create-refund.dto';
 import { EarningsQueryDto } from './dto/earnings-query.dto';
+import { EarningsOverviewQueryDto } from './dto/earnings-overview-query.dto';
 import { PaymentHistoryQueryDto } from './dto/payment-history-query.dto';
 
 @Controller()
@@ -26,6 +27,12 @@ export class PaymentController {
   @Get('payments/history')
   findHistory(@CurrentUser('sub') customerId: string, @Query() query: PaymentHistoryQueryDto) {
     return this.paymentService.findHistory(customerId, query);
+  }
+
+  @Get('payments/earnings/overview')
+  @Roles(Role.MASTER)
+  earningsOverview(@CurrentUser('sub') userId: string, @Query() query: EarningsOverviewQueryDto) {
+    return this.paymentService.earningsOverview(userId, query);
   }
 
   @Get('payments/earnings')
