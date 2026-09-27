@@ -18,6 +18,8 @@ import {
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { CreateRefundDto } from './dto/create-refund.dto';
 import { ERRORS } from '../../common/constants/error-messages';
+import { ClickService } from './click/click.service';
+import { PaymeService } from './payme/payme.service';
 
 const PUBLIC_PAYMENT_SELECT = {
   id: true,
@@ -54,6 +56,8 @@ export class PaymentService {
     private readonly config: ConfigService,
     private readonly outbox: OutboxService,
     private readonly metrics: MetricsService,
+    private readonly click: ClickService,
+    private readonly payme: PaymeService,
   ) {}
 
   async create(customerId: string, dto: CreatePaymentDto) {
@@ -102,8 +106,15 @@ export class PaymentService {
       return created;
     });
 
-    // Naqd pul uchun onlayn to‘lov sahifasi yo‘q: usta pulni olganini tasdiqlaydi.
-    return { payment, checkoutUrl: payment.provider === 'CASH' ? null : `https://payment.example/checkout/${payment.id}` };
+    return { payment, checkoutUrl: this.buildCheckoutUrl(payment) };
+  }
+
+  /** Naqd pul uchun onlayn to‘lov sahifasi yo‘q. Click/Payme sozlangan bo‘lsa haqiqiy checkout sahifasiga, aks holda sinov havolasiga yo‘naltiradi. */
+  private buildCheckoutUrl(payment: { id: string; provider: PaymentProvider; amount: Prisma.Decimal }): string | null {
+    if (payment.provider === 'CASH') return null;
+    if (payment.provider === 'CLICK' && this.click.isConfigured()) return this.click.buildCheckoutUrl(payment);
+    if (payment.provider === 'PAYME' && this.payme.isConfigured()) return this.payme.buildCheckoutUrl(payment);
+    return `https://payment.example/checkout/${payment.id}`;
   }
 
   /** Usta (yoki admin) naqd pul qabul qilinganini tasdiqlaydi. */

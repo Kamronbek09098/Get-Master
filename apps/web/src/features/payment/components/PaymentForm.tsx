@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { Banknote, CheckCircle2, Clock, Lock, ShieldCheck } from 'lucide-react';
@@ -42,6 +42,13 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
   }
 
   const result = createPayment.data?.payment ?? (current && SETTLED.includes(current.status) ? { ...current, succeededAt: null } : null);
+  const checkoutUrl = createPayment.data?.checkoutUrl ?? null;
+  const isTestCheckout = !!checkoutUrl && checkoutUrl.startsWith('https://payment.example/');
+  const isRealCheckout = !!checkoutUrl && !isTestCheckout;
+
+  useEffect(() => {
+    if (isRealCheckout && checkoutUrl) window.location.href = checkoutUrl;
+  }, [isRealCheckout, checkoutUrl]);
 
   if (result && SETTLED.includes(result.status)) {
     return (
@@ -77,9 +84,14 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
             : 'To‘lov kutilmoqda. To‘lov provayderi tasdiqlagach, holat avtomatik yangilanadi.'}
         </p>
         <Facts items={[['Usul', PROVIDER_LABEL[payment.provider]], ['Summa', formatMoney(payment.amount, payment.currency)], ['Holat', cash ? 'Usta tasdiqlashi kutilmoqda' : PAYMENT_STATUS_LABEL[payment.status]]]} />
-        {!cash && createPayment.data.checkoutUrl && (
+        {isTestCheckout && (
           <Alert tone="warning" title="Sinov rejimi">
             Haqiqiy to‘lov provayderi hali ulanmagan, shuning uchun bu real to‘lov sahifasiga olib bormaydi.
+          </Alert>
+        )}
+        {isRealCheckout && (
+          <Alert tone="info" title="To‘lov sahifasiga yo‘naltirilmoqda">
+            Bir necha soniyada {PROVIDER_LABEL[payment.provider]} to‘lov sahifasiga o‘tasiz.
           </Alert>
         )}
         <div className="gm-pay__actions">
