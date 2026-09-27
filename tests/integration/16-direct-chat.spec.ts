@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { bootHarness, createAdmin, createMaster, createUser, firstService, type Harness, type TestMaster, type TestUser, uploadImage } from '../helpers/harness';
+import { bookOrder, bootHarness, createAdmin, createMaster, createUser, firstService, type Harness, type TestMaster, type TestUser, uploadImage } from '../helpers/harness';
 
 let h: Harness;
 let service: { id: string };
@@ -104,6 +104,31 @@ describe('POST /conversations/direct — chat with a master before any order', (
     expect(direct.type).toBe('DIRECT');
     const orderChats = await h.db.conversation.count({ where: { type: 'ORDER', participants: { some: { userId: customer.id } } } });
     expect(orderChats).toBe(0);
+  });
+
+  it('reuses an existing order conversation instead of opening a second, empty chat with the same master', async () => {
+    const buyer = await createUser(h, ['CUSTOMER']);
+    const target = await createMaster(h, service.id);
+    const order = await bookOrder(h, buyer, target, service.id);
+    const orderChat = await h.db.conversation.findUniqueOrThrow({ where: { orderId: order.orderId } });
+
+    const opened = await open(buyer.token, target.masterId);
+    expect(opened.status).toBe(201);
+    expect(opened.data.id).toBe(orderChat.id);
+    expect(opened.data.type).toBe('ORDER');
+    expect(await h.db.conversation.count({ where: { participants: { some: { userId: buyer.id } } } })).toBe(1);
+  });
+
+  it('falls back to a fresh DIRECT conversation when the only existing chat is a read-only (cancelled) order', async () => {
+    const buyer = await createUser(h, ['CUSTOMER']);
+    const target = await createMaster(h, service.id);
+    const order = await bookOrder(h, buyer, target, service.id);
+    await h.db.order.update({ where: { id: order.orderId }, data: { status: 'CANCELLED' } });
+
+    const opened = await open(buyer.token, target.masterId);
+    expect(opened.status).toBe(201);
+    expect(opened.data.type).toBe('DIRECT');
+    expect(await h.db.conversation.count({ where: { participants: { some: { userId: buyer.id } } } })).toBe(2);
   });
 });
 

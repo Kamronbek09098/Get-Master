@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useUnreadCount } from '@/features/notification/hooks/useNotifications';
+import { useNotifications, useUnreadCount } from '@/features/notification/hooks/useNotifications';
 import { communicationService } from '@/features/communication/services/communication.service';
 import { customerService } from '@/features/customer/services/customer.service';
 import { adminService } from '../services/admin.service';
@@ -87,6 +87,14 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
     refetchOnWindowFocus: true,
   });
 
+  const master = role === 'MASTER';
+  const onMasterOrders = pathname.startsWith('/ustalar/buyurtmalar');
+  // Buyurtma holati o'zgarganda (usta yetib keldi, ishni tugatdi va h.k.) "Buyurtmalar" bo'limida ham belgi yonsin.
+  const orderNotifications = useNotifications(customer || master);
+  const orderNotifUnread = (orderNotifications.data?.items ?? []).filter(
+    (item) => !item.readAt && (item.template === 'order.booked' || item.template === 'order.status_changed'),
+  ).length;
+
   const unread = useUnreadCount();
   const badges = useQuery({
     queryKey: ['admin', 'badges', usersSeen, chatsSeen, verificationsSeen, casesSeen, appealsSeen, ordersSeen],
@@ -136,7 +144,8 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
 
   put('/bildirishnomalar', unread.data?.count ?? 0);
   if (chatRole) put(role === 'MASTER' ? '/ustalar/chat' : '/mijozlar/chat', chatUnread.data?.count ?? 0);
-  if (customer) put('/mijozlar/buyurtmalar', onRequests ? 0 : (offers.data?.offers ?? 0));
+  if (customer) put('/mijozlar/buyurtmalar', onRequests ? 0 : (offers.data?.offers ?? 0) + orderNotifUnread);
+  if (master) put('/ustalar/buyurtmalar', onMasterOrders ? 0 : orderNotifUnread);
   if (admin) {
     const data = badges.data;
     put('/admin/tasdiqlash', onVerifications ? 0 : (data?.verifications ?? 0));

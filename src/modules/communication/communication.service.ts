@@ -80,6 +80,17 @@ export class CommunicationService {
     if (!master) throw new NotFoundException(ERRORS.MASTER_NOT_FOUND);
     if (master.userId === userId) throw new ForbiddenException(ERRORS.CHAT_WITH_SELF);
 
+    // Ikkovi o‘rtasida allaqachon suhbat bo‘lsa (buyurtma suhbati yoki oldingi to‘g‘ridan-to‘g‘ri suhbat),
+    // yangisini yaratmasdan o‘shanga qaytariladi — bitta juftlik uchun bir nechta parallel suhbat bo‘lmasin.
+    const candidates = await this.db.conversation.findMany({
+      where: { AND: [{ participants: { some: { userId } } }, { participants: { some: { userId: master.userId } } }] },
+      include: { order: { select: { status: true } } },
+      orderBy: { updatedAt: 'desc' },
+      take: 10,
+    });
+    const writable = candidates.find((c) => !(c.order && CLOSED_ORDER_STATUSES.includes(c.order.status)));
+    if (writable) return this.findOne(userId, writable.id, panel);
+
     const directKey = [userId, master.userId].sort().join(':');
     const existing = await this.db.conversation.findUnique({ where: { directKey } });
     if (existing) return this.findOne(userId, existing.id, panel);
