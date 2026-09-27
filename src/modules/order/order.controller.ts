@@ -9,6 +9,7 @@ import { CreateDirectOrderDto } from './dto/create-direct-order.dto';
 import { CreateWorkProofDto } from './dto/create-work-proof.dto';
 import { ReasonDto } from './dto/reason.dto';
 import { OrderHistoryQueryDto } from './dto/order-history-query.dto';
+import { ProposeRescheduleDto } from './dto/propose-reschedule.dto';
 
 @Controller('orders')
 export class OrderController {
@@ -116,5 +117,25 @@ export class OrderController {
     @Req() req: Request,
   ) {
     return this.orderService.cancel(userId, id, dto, panelOf(req));
+  }
+
+  @Post(':id/reschedule')
+  proposeReschedule(
+    @CurrentUser('sub') userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ProposeRescheduleDto,
+    @Req() req: Request,
+  ) {
+    return this.orderService.proposeReschedule(userId, id, dto, panelOf(req));
+  }
+
+  @Post(':id/reschedule/accept')
+  acceptReschedule(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    return this.orderService.acceptReschedule(userId, id, panelOf(req));
+  }
+
+  @Post(':id/reschedule/decline')
+  declineReschedule(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    return this.orderService.declineReschedule(userId, id, panelOf(req));
   }
 }

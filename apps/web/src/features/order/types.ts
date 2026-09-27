@@ -36,6 +36,8 @@ export interface OrderDetailsData extends Order {
   service: { id: string; name: string } | null;
   request: { id: string; title: string; description: string } | null;
   scheduledStartAt: string | null;
+  /** Ikkinchi tomon tasdiqlashini kutayotgan yangi vaqt taklifi (bo'lsa). */
+  reschedule: { proposedStartAt: string; proposedByMe: boolean } | null;
   conversationId: string | null;
   counterpart: OrderParty;
   payment: { id: string; provider: PaymentProvider; status: PaymentStatus; amount: string; currency: string } | null;

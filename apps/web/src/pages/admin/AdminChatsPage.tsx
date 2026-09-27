@@ -41,6 +41,7 @@ function ConversationRow({ item, active, onSelect }: { item: AdminConversation; 
   const names = item.participants.map((p) => accountName(p.user)).join(' ↔ ');
   const last = item.lastMessage;
   const preview = !last ? 'Xabar yo‘q' : last.deletedAt ? '🗑 O‘chirilgan xabar' : (last.text ?? '📎 Fayl');
+  const deletedBy = item.participants.filter((p) => p.deletedAt);
   return (
     <button type="button" className={cx('gm-achat__row', active && 'gm-achat__row--active')} onClick={onSelect} aria-current={active ? 'true' : undefined}>
       <ChatAvatar name={accountName(item.participants[0]?.user)} seed={item.id} />
@@ -62,6 +63,13 @@ function ConversationRow({ item, active, onSelect }: { item: AdminConversation; 
             <Badge tone="warning">
               <Pencil size={11} /> {item.editedCount}
             </Badge>
+          )}
+          {deletedBy.length > 0 && (
+            <span title={`${deletedBy.map((p) => accountName(p.user)).join(', ')} ro‘yxatidan o‘chirgan (xabarlar saqlangan)`}>
+              <Badge tone="neutral">
+                <Trash2 size={11} /> {deletedBy.map((p) => accountName(p.user)).join(', ')} o‘chirgan
+              </Badge>
+            </span>
           )}
         </span>
       </span>

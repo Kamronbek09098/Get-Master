@@ -33,4 +33,7 @@ export const communicationService = {
   markRead(conversationId: string) {
     return apiPost<unknown>(`/conversations/${conversationId}/read`);
   },
+  deleteConversation(conversationId: string) {
+    return apiDelete<{ deleted: boolean }>(`/conversations/${conversationId}`);
+  },
 };

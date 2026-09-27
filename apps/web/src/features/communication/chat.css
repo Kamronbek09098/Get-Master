@@ -293,6 +293,48 @@
   color: var(--gm-color-primary-contrast);
 }
 
+.gm-convo-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.gm-convo-row .gm-convo {
+  flex: 1;
+  min-width: 0;
+}
+
+.gm-convo__delete {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gm-color-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, background-color 0.12s ease, color 0.12s ease;
+}
+
+.gm-convo-row:hover .gm-convo__delete,
+.gm-convo__delete:focus-visible {
+  opacity: 1;
+}
+
+.gm-convo__delete:hover {
+  background: var(--gm-color-danger-bg);
+  color: var(--gm-color-danger);
+}
+
+@media (hover: none) {
+  .gm-convo__delete {
+    opacity: 0.55;
+  }
+}
+
 .gm-convo__body {
   flex: 1;
   min-width: 0;

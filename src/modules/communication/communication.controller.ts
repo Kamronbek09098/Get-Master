@@ -98,4 +98,9 @@ export class CommunicationController {
   markRead(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
     return this.communicationService.markRead(userId, id, panelOf(req));
   }
+
+  @Delete(':id')
+  deleteForMe(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    return this.communicationService.deleteForMe(userId, id, panelOf(req));
+  }
 }

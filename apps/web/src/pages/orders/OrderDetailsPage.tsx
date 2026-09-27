@@ -13,6 +13,7 @@ import { OrderStatus } from '@/features/order/components/OrderStatus';
 import { OrderProgress } from '@/features/order/components/OrderProgress';
 import { OrderParty } from '@/features/order/components/OrderParty';
 import { OrderTimeline } from '@/features/order/components/OrderTimeline';
+import { ScheduleCard } from '@/features/order/components/ScheduleCard';
 import { WorkProofPanel } from '@/features/order/components/WorkProofPanel';
 import { OrderPaymentCard } from '@/features/order/components/OrderPaymentCard';
 import { PaymentMethodCards } from '@/features/payment/components/PaymentMethodCards';
@@ -90,6 +91,7 @@ export function OrderDetailsPage() {
   const canDispute = status === 'IN_PROGRESS' || status === 'WAITING_CONFIRMATION';
   const reasonReady = reason.trim().length >= 3;
   const otherName = isMaster ? 'mijoz' : 'usta';
+  const tooEarly = !!data.scheduledStartAt && new Date(data.scheduledStartAt).getTime() > Date.now();
 
   function closeDialog() {
     setDialog(null);
@@ -127,9 +129,14 @@ export function OrderDetailsPage() {
         <StepCard tone="next" icon={<Hammer size={22} />} title="Ishni boshlashdan oldin" lead="Ishdan oldingi holatni suratga oling. Kamida bitta rasm bo‘lmasa, ishni boshlab bo‘lmaydi.">
           <WorkProofPanel orderId={id} stage="BEFORE" canEdit required />
           <div className="gm-oactions">
-            <Button disabled={counts.BEFORE === 0} loading={startWork.isPending} onClick={() => startWork.mutate()}>Ishni boshlash</Button>
+            <Button disabled={counts.BEFORE === 0 || tooEarly} loading={startWork.isPending} onClick={() => startWork.mutate()}>Ishni boshlash</Button>
           </div>
           {counts.BEFORE === 0 && <p className="gm-oneed">Davom etish uchun kamida 1 ta rasm yuklang.</p>}
+          {tooEarly && data.scheduledStartAt && (
+            <p className="gm-oneed">
+              Ish belgilangan vaqtdan ({formatDateTime(data.scheduledStartAt)}) oldin boshlanmaydi. Vaqt kelishinmasa, pastdagi «Belgilangan vaqt» bo‘limidan yangisini taklif qiling.
+            </p>
+          )}
         </StepCard>
       );
     else if (status === 'IN_PROGRESS')
@@ -214,6 +221,8 @@ export function OrderDetailsPage() {
       <div className="gm-olayout">
         <div className="gm-ocol">
           {step}
+
+          <ScheduleCard order={data} />
 
           <OrderPaymentCard order={data} />
 

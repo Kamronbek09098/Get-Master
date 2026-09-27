@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageCircle, Search } from 'lucide-react';
+import { MessageCircle, Search, Trash2 } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { getErrorMessage } from '@/lib/error-messages';
 import { env } from '@/lib/env';
@@ -9,16 +10,18 @@ import { cx } from '@/lib/utils';
 import { useMe } from '@/features/session/hooks/useMe';
 import { useAuthStore } from '@/store/auth.store';
 import { listTime, previewText } from '../format';
-import { useConversations } from '../hooks/useCommunication';
+import { useConversations, useDeleteConversation } from '../hooks/useCommunication';
 import { counterpartName } from '../names';
 import { ChatAvatar } from './ChatAvatar';
 
-export function ConversationList({ selectedId, onSelect }: { selectedId: string | null; onSelect: (id: string) => void }) {
+export function ConversationList({ selectedId, onSelect }: { selectedId: string | null; onSelect: (id: string | null) => void }) {
   const conversations = useConversations();
   const me = useMe();
   const role = useAuthStore((state) => state.preferredRole);
   const [query, setQuery] = useState('');
   const [onlyUnread, setOnlyUnread] = useState(false);
+  const deleteConversation = useDeleteConversation();
+  const [toDelete, setToDelete] = useState<{ id: string; name: string } | null>(null);
 
   const items = useMemo(() => conversations.data?.items ?? [], [conversations.data]);
   const unreadTotal = items.filter((item) => item.unreadCount > 0).length;
@@ -93,12 +96,16 @@ export function ConversationList({ selectedId, onSelect }: { selectedId: string 
             const active = conversation.id === selectedId;
             const time = conversation.lastMessage?.createdAt ?? conversation.updatedAt;
             return (
-              <li key={conversation.id}>
+              <li key={conversation.id} className="gm-convo-row">
                 <button
                   type="button"
                   className={cx('gm-convo', active && 'gm-convo--active', conversation.unreadCount > 0 && 'gm-convo--unread')}
                   aria-current={active ? 'true' : undefined}
                   onClick={() => onSelect(conversation.id)}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    setToDelete({ id: conversation.id, name });
+                  }}
                 >
                   <ChatAvatar name={name} seed={conversation.counterpart?.id ?? conversation.id} />
                   <span className="gm-convo__body">
@@ -116,11 +123,46 @@ export function ConversationList({ selectedId, onSelect }: { selectedId: string 
                     </span>
                   </span>
                 </button>
+                <button
+                  type="button"
+                  className="gm-convo__delete"
+                  aria-label={`${name} bilan suhbatni o‘chirish`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setToDelete({ id: conversation.id, name });
+                  }}
+                >
+                  <Trash2 size={16} />
+                </button>
               </li>
             );
           })}
         </ul>
       )}
+
+      <ConfirmDialog
+        open={!!toDelete}
+        title="Suhbatni o‘chirish"
+        description={
+          toDelete
+            ? `${toDelete.name} bilan suhbat sizning ro‘yxatingizdan o‘chiriladi. Yozishmalar saqlanib qoladi — u sizga yangi xabar yozsa, suhbat qaytadan paydo bo‘ladi.`
+            : ''
+        }
+        confirmLabel="O‘chirish"
+        tone="danger"
+        loading={deleteConversation.isPending}
+        onCancel={() => setToDelete(null)}
+        onConfirm={() => {
+          if (!toDelete) return;
+          const id = toDelete.id;
+          deleteConversation.mutate(id, {
+            onSuccess: () => {
+              if (id === selectedId) onSelect(null);
+              setToDelete(null);
+            },
+          });
+        }}
+      />
     </>
   );
 }

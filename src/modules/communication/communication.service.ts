@@ -146,7 +146,7 @@ export class CommunicationService {
       },
       include: {
         order: { select: { id: true, status: true } },
-        participants: { select: { userId: true, roles: true, lastReadAt: true, user: { select: USER_NAME_SELECT } } },
+        participants: { select: { userId: true, roles: true, lastReadAt: true, deletedAt: true, user: { select: USER_NAME_SELECT } } },
         messages: { orderBy: { createdAt: 'desc' }, take: 1, select: this.messageSelect() },
       },
       orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
@@ -159,6 +159,11 @@ export class CommunicationService {
     const items = await Promise.all(
       page.items
         .filter((row) => row.participants.length > 1)
+        // Telegram uslubida: men o'chirgan suhbat ro'yxatimda yashiriladi, faqat o'chirgandan keyin yangi faollik bo'lsa qayta chiqadi.
+        .filter((row) => {
+          const mine = row.participants.find((p) => p.userId === userId);
+          return !mine?.deletedAt || row.updatedAt > mine.deletedAt;
+        })
         .map(async ({ messages, participants, ...conversation }) => {
         const mine = participants.find((p) => p.userId === userId);
         const unreadCount = await this.db.message.count({
@@ -320,6 +325,20 @@ export class CommunicationService {
     });
     await this.markChatNotificationsRead(userId, conversationId);
     return { lastReadAt };
+  }
+
+  /**
+   * Telegram uslubida suhbatni o'chirish: faqat shu foydalanuvchining ro'yxatidan yashiriladi,
+   * xabarlar o'zgarmaydi va boshqa tomon (yoki admin) hech narsani yo'qotmaydi. Suhbatda keyinroq
+   * yangi xabar kelsa (kim yozishidan qat'i nazar), suhbat ro'yxatda avtomatik qayta paydo bo'ladi.
+   */
+  async deleteForMe(userId: string, conversationId: string, panel: Panel | null = null) {
+    await this.requireParticipant(userId, conversationId, panel);
+    await this.db.conversationParticipant.update({
+      where: { conversationId_userId: { conversationId, userId } },
+      data: { deletedAt: new Date() },
+    });
+    return { deleted: true };
   }
 
   /** Suhbat o‘qilgach, undagi «Yangi xabar» bildirishnomalari ham o‘qilgan bo‘lsin (bildirishnomani ochmasdan ham). */

@@ -47,4 +47,13 @@ export const orderService = {
   cancel(id: string, reason: string) {
     return apiPost<Order>(`/orders/${id}/cancel`, { reason });
   },
+  proposeReschedule(id: string, scheduledStartAt: string) {
+    return apiPost<{ proposed: true; proposedStartAt: string }>(`/orders/${id}/reschedule`, { scheduledStartAt });
+  },
+  acceptReschedule(id: string) {
+    return apiPost<{ scheduledStartAt: string }>(`/orders/${id}/reschedule/accept`);
+  },
+  declineReschedule(id: string) {
+    return apiPost<{ declined: true }>(`/orders/${id}/reschedule/decline`);
+  },
 };

@@ -37,7 +37,7 @@ export class AdminChatService {
     const rows = await this.db.conversation.findMany({
       where,
       include: {
-        participants: { select: { roles: true, user: { select: PERSON } } },
+        participants: { select: { roles: true, deletedAt: true, user: { select: PERSON } } },
         order: { select: { id: true, status: true } },
         messages: { orderBy: { createdAt: 'desc' }, take: 1, select: { text: true, createdAt: true, deletedAt: true } },
         _count: { select: { messages: true } },
@@ -69,7 +69,7 @@ export class AdminChatService {
     const conversation = await this.db.conversation.findUnique({
       where: { id: conversationId },
       include: {
-        participants: { select: { roles: true, user: { select: PERSON } } },
+        participants: { select: { roles: true, deletedAt: true, user: { select: PERSON } } },
         order: { select: { id: true, status: true } },
       },
     });

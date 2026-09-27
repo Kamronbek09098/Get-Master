@@ -134,6 +134,11 @@ export const ERRORS = {
   ORDER_ALREADY_PAID: 'Bu buyurtma uchun allaqachon to‘lov qilingan',
   ORDER_NOT_IN_PROGRESS: 'Buyurtma ish jarayonida emas',
   ORDER_NOT_COMPLETED: 'Buyurtma hali yakunlanmagan',
+  WORK_TOO_EARLY: (scheduledAt: string) => `Ish belgilangan vaqtdan (${scheduledAt}) oldin boshlanmaydi. Vaqtni o‘zgartirish kerak bo‘lsa, mijoz/usta bilan kelishib, buyurtmada yangi vaqt taklif qiling`,
+  RESCHEDULE_NOT_ALLOWED: 'Buyurtmaning hozirgi holatida vaqtini o‘zgartirib bo‘lmaydi',
+  RESCHEDULE_TIME_INVALID: 'Yangi vaqt kelajakda bo‘lishi kerak',
+  RESCHEDULE_NOT_PENDING: 'Ko‘rib chiqilishi kerak bo‘lgan vaqt taklifi topilmadi',
+  RESCHEDULE_OWN_PROPOSAL: 'O‘zingiz taklif qilgan vaqtni o‘zingiz tasdiqlay olmaysiz',
 
   WORK_PROOF_NOT_FOUND: 'Ish isboti topilmadi',
   WORK_PROOF_MEDIA_TYPE: 'Ish isboti rasm yoki video bo‘lishi kerak',

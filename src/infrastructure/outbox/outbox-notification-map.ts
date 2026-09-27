@@ -1,4 +1,5 @@
 import { OutboxEvent } from '@prisma/client';
+import { formatUzDateTime } from '../../common/utils/format-date';
 
 /**
  * Buyurtma holati o‘zgarganda kimga nima deyilishi: «kim nima qildi» ko‘rinishida, joriy holatni aytadi.
@@ -101,6 +102,30 @@ export function toNotificationTarget(event: OutboxEvent): NotificationTarget {
         userId: payload.customerId as string,
         title: "To'lov amalga oshmadi",
         body: "To'lovingiz amalga oshmadi, qaytadan urinib ko'ring.",
+      };
+    case 'order.reschedule_proposed':
+      return {
+        userId: payload.notifyUserId as string,
+        title: 'Buyurtma vaqtini o‘zgartirish taklif qilindi',
+        body: `Yangi taklif qilingan vaqt: ${formatUzDateTime(String(payload.proposedStartAt))}. Buyurtma sahifasida ko‘rib chiqing.`,
+      };
+    case 'order.reschedule_accepted':
+      return {
+        userId: payload.notifyUserId as string,
+        title: 'Vaqt o‘zgartirish taklifi qabul qilindi',
+        body: `Buyurtmaning yangi vaqti: ${formatUzDateTime(String(payload.scheduledStartAt))}.`,
+      };
+    case 'order.reschedule_declined':
+      return {
+        userId: payload.notifyUserId as string,
+        title: 'Vaqt o‘zgartirish taklifi rad etildi',
+        body: 'Boshqa vaqt taklif qilib ko‘ring yoki avvalgi belgilangan vaqtda davom eting.',
+      };
+    case 'order.reminder':
+      return {
+        userId: payload.notifyUserId as string,
+        title: 'Buyurtma vaqti yaqinlashmoqda',
+        body: `Belgilangan vaqt: ${formatUzDateTime(String(payload.scheduledStartAt))}.`,
       };
     default:
       return null;

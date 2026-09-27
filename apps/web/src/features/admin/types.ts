@@ -183,7 +183,7 @@ export interface AdminConversation {
   type: 'ORDER' | 'SUPPORT' | 'DIRECT';
   orderId: string | null;
   updatedAt: string;
-  participants: Array<{ roles: string[]; user: AdminChatPerson }>;
+  participants: Array<{ roles: string[]; deletedAt: string | null; user: AdminChatPerson }>;
   order: { id: string; status: string } | null;
   lastMessage: { text: string | null; createdAt: string; deletedAt: string | null } | null;
   messageCount: number;

@@ -798,6 +798,13 @@ model Booking {
   scheduledStartAt DateTime? @map("scheduled_start_at")
   scheduledEndAt   DateTime? @map("scheduled_end_at")
 
+  /** Mijoz/usta tomonidan taklif qilingan yangi vaqt — ikkinchi tomon tasdiqlagunicha kuchga kirmaydi. */
+  proposedStartAt DateTime? @map("proposed_start_at")
+  proposedById    String?   @db.Uuid @map("proposed_by_id")
+  proposedAt      DateTime? @map("proposed_at")
+  /** Belgilangan vaqt yaqinlashgani haqida eslatma yuborilganmi (takror yuborilmasligi uchun). */
+  reminderSentAt  DateTime? @map("reminder_sent_at")
+
   agreedPrice Decimal @map("agreed_price") @db.Decimal(14, 2)
   currency    String  @default("UZS") @db.VarChar(3)
 
@@ -933,6 +940,8 @@ model ConversationParticipant {
   userId         String       @db.Uuid
   joinedAt       DateTime     @default(now()) @map("joined_at")
   lastReadAt     DateTime?    @map("last_read_at")
+  /** Telegram uslubida: suhbat faqat shu ishtirokchi uchun ro'yxatdan yashiriladi — xabarlar o'chmaydi, yangi faollik bo'lsa qayta chiqadi. */
+  deletedAt      DateTime?    @map("deleted_at")
   roles          String[]     @default([])
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User         @relation("ConversationParticipants", fields: [userId], references: [id], onDelete: Cascade)

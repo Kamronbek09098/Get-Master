@@ -137,3 +137,12 @@ export function useMarkRead(conversationId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations'], exact: true }),
   });
 }
+
+/** Telegram uslubida: faqat mening ro‘yxatimdan yashiradi — xabarlar va boshqa tomon uchun suhbat o‘zgarmaydi. */
+export function useDeleteConversation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (conversationId: string) => communicationService.deleteConversation(conversationId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
+  });
+}

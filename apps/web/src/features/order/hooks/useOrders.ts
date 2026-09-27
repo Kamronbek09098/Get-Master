@@ -51,6 +51,14 @@ export function useDisputeOrder(id: string) {
   return useMutation({ mutationFn: (reason: string) => orderService.dispute(id, reason), onSuccess: refresh });
 }
 
+export function useProposeReschedule(id: string) {
+  const refresh = useRefreshOrder(id);
+  return useMutation({ mutationFn: (scheduledStartAt: string) => orderService.proposeReschedule(id, scheduledStartAt), onSuccess: refresh });
+}
+
+export const useAcceptReschedule = (id: string) => useOrderMutation(id, orderService.acceptReschedule);
+export const useDeclineReschedule = (id: string) => useOrderMutation(id, orderService.declineReschedule);
+
 export function useAddWorkProof(id: string) {
   const queryClient = useQueryClient();
   return useMutation({

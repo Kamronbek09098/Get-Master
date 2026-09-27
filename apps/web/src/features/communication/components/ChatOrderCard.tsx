@@ -62,8 +62,9 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
       hint = 'Mijoz sizni kutmoqda.';
       actions.push({ label: 'Yetib keldim', icon: <MapPinned size={15} />, run: () => arrive.mutate(), primary: true });
     } else if (status === 'ARRIVED') {
-      hint = 'Ishni boshlash uchun tayyor bo‘lsangiz, boshlang.';
-      actions.push({ label: 'Ishni boshlash', icon: <Hammer size={15} />, run: () => start.mutate(), primary: true });
+      const tooEarly = !!order.scheduledStartAt && new Date(order.scheduledStartAt).getTime() > Date.now();
+      hint = tooEarly ? `Ish belgilangan vaqtdan (${formatDateTime(order.scheduledStartAt!)}) oldin boshlanmaydi.` : 'Ishni boshlash uchun tayyor bo‘lsangiz, boshlang.';
+      actions.push({ label: 'Ishni boshlash', icon: <Hammer size={15} />, run: () => start.mutate(), primary: true, disabled: tooEarly });
     } else if (status === 'IN_PROGRESS') {
       hint = 'Ish tugagach, mijozga tasdiqlash uchun yuboring. Rasmlarni buyurtma sahifasidan yuklang.';
       actions.push({ label: 'Ishni tugatdim', icon: <CheckCircle2 size={15} />, run: () => submit.mutate(), primary: true });

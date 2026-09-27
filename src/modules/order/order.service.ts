@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { OrderActor, OrderStatus, PaymentProvider, Prisma, WorkStage } from '@prisma/client';
 import { MasterStatsService } from '../master/master-stats.service';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
@@ -6,13 +6,18 @@ import { OutboxService } from '../../infrastructure/outbox/outbox.service';
 import { assertTransition } from './order-state-machine';
 import { CreateWorkProofDto } from './dto/create-work-proof.dto';
 import { OrderHistoryQueryDto } from './dto/order-history-query.dto';
+import { ProposeRescheduleDto } from './dto/propose-reschedule.dto';
 import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
 import { ReasonDto } from './dto/reason.dto';
 import { MetricsService } from '../../infrastructure/metrics/metrics.service';
 import { ERRORS } from '../../common/constants/error-messages';
+import { RescheduleNotAllowedException, RescheduleNotPendingException, RescheduleOwnProposalException, WorkTooEarlyException } from '../../common/exceptions/business.exception';
+import { formatUzDateTime } from '../../common/utils/format-date';
 import type { Panel } from '../../common/utils/panel';
 
 const MAX_WORK_PROOFS_PER_STAGE = 10;
+/** Ish hali boshlanmagan bosqichlarda — mijoz va usta kelishib vaqtni o'zgartirishi mumkin. */
+const RESCHEDULABLE_STATUSES: OrderStatus[] = ['BOOKED', 'CONFIRMED', 'ON_THE_WAY', 'ARRIVED'];
 
 const HISTORY_SELECT = {
   id: true,
@@ -66,6 +71,8 @@ export class OrderService {
         booking: {
           select: {
             scheduledStartAt: true,
+            proposedStartAt: true,
+            proposedById: true,
             service: { select: { id: true, name: true } },
             request: { select: { id: true, title: true, description: true } },
           },
@@ -97,6 +104,9 @@ export class OrderService {
       service: booking.service,
       request: booking.request,
       scheduledStartAt: booking.scheduledStartAt,
+      reschedule: booking.proposedStartAt
+        ? { proposedStartAt: booking.proposedStartAt, proposedByMe: booking.proposedById === userId }
+        : null,
       conversationId: conversation?.id ?? null,
       counterpart: viewerRole === 'MASTER' ? customer : { ...master.user, profession: master.profession },
     };
@@ -307,6 +317,11 @@ export class OrderService {
     if (beforeProofCount === 0) {
       throw new ForbiddenException(ERRORS.BEFORE_PROOF_REQUIRED);
     }
+    // Mijoz va usta kelishib vaqtni o'zgartirmagan bo'lsa, ish belgilangan vaqtdan oldin boshlanmaydi.
+    const order = await this.db.order.findUniqueOrThrow({ where: { id: orderId }, select: { booking: { select: { scheduledStartAt: true } } } });
+    if (order.booking.scheduledStartAt && order.booking.scheduledStartAt.getTime() > Date.now()) {
+      throw new WorkTooEarlyException(formatUzDateTime(order.booking.scheduledStartAt));
+    }
     return this.transition(orderId, 'IN_PROGRESS', actor, { startedAt: new Date() });
   }
 
@@ -386,6 +401,79 @@ export class OrderService {
     return this.transition(orderId, 'CANCELLED', actor, {
       cancelledAt: new Date(),
       cancellationReason: dto.reason,
+    });
+  }
+
+  /** Mijoz yoki usta buyurtmaga yangi vaqt taklif qiladi — ikkinchi tomon tasdiqlashi kerak. */
+  async proposeReschedule(userId: string, orderId: string, dto: ProposeRescheduleDto, panel: Panel | null = null) {
+    const actor = await this.resolveActor(userId, orderId, ['CUSTOMER', 'MASTER'], panel);
+    const proposedStartAt = new Date(dto.scheduledStartAt);
+    if (proposedStartAt.getTime() <= Date.now()) throw new BadRequestException(ERRORS.RESCHEDULE_TIME_INVALID);
+
+    return this.db.$transaction(async (tx) => {
+      const locked = await this.lockOrder(tx, orderId);
+      if (!RESCHEDULABLE_STATUSES.includes(locked.status)) throw new RescheduleNotAllowedException();
+      const order = await tx.order.findUniqueOrThrow({ where: { id: orderId }, select: { bookingId: true, customerId: true, masterId: true } });
+      await tx.booking.update({
+        where: { id: order.bookingId },
+        data: { proposedStartAt, proposedById: userId, proposedAt: new Date() },
+      });
+      const masterProfile = await tx.masterProfile.findUniqueOrThrow({ where: { id: order.masterId }, select: { userId: true } });
+      const notifyUserId = actor.type === 'CUSTOMER' ? masterProfile.userId : order.customerId;
+      await this.notifyUser(tx, orderId, actor, notifyUserId, 'order.reschedule_proposed', { proposedStartAt: proposedStartAt.toISOString() });
+      return { proposed: true, proposedStartAt };
+    });
+  }
+
+  /** Ikkinchi tomon taklif qilingan vaqtni tasdiqlaydi — shu ondan e'tiboran yangi vaqt kuchga kiradi. */
+  async acceptReschedule(userId: string, orderId: string, panel: Panel | null = null) {
+    const actor = await this.resolveActor(userId, orderId, ['CUSTOMER', 'MASTER'], panel);
+    return this.db.$transaction(async (tx) => {
+      await this.lockOrder(tx, orderId);
+      const order = await tx.order.findUniqueOrThrow({ where: { id: orderId }, select: { bookingId: true } });
+      const booking = await tx.booking.findUniqueOrThrow({ where: { id: order.bookingId } });
+      if (!booking.proposedStartAt || !booking.proposedById) throw new RescheduleNotPendingException();
+      if (booking.proposedById === userId) throw new RescheduleOwnProposalException();
+
+      const updated = await tx.booking.update({
+        where: { id: order.bookingId },
+        data: { scheduledStartAt: booking.proposedStartAt, proposedStartAt: null, proposedById: null, proposedAt: null, reminderSentAt: null },
+      });
+      await this.notifyUser(tx, orderId, actor, booking.proposedById, 'order.reschedule_accepted', { scheduledStartAt: updated.scheduledStartAt!.toISOString() });
+      return { scheduledStartAt: updated.scheduledStartAt };
+    });
+  }
+
+  /** Ikkinchi tomon taklif qilingan vaqtni rad etadi — buyurtmaning avvalgi vaqti o'zgarishsiz qoladi. */
+  async declineReschedule(userId: string, orderId: string, panel: Panel | null = null) {
+    const actor = await this.resolveActor(userId, orderId, ['CUSTOMER', 'MASTER'], panel);
+    return this.db.$transaction(async (tx) => {
+      await this.lockOrder(tx, orderId);
+      const order = await tx.order.findUniqueOrThrow({ where: { id: orderId }, select: { bookingId: true } });
+      const booking = await tx.booking.findUniqueOrThrow({ where: { id: order.bookingId } });
+      if (!booking.proposedStartAt || !booking.proposedById) throw new RescheduleNotPendingException();
+      if (booking.proposedById === userId) throw new RescheduleOwnProposalException();
+
+      await tx.booking.update({ where: { id: order.bookingId }, data: { proposedStartAt: null, proposedById: null, proposedAt: null } });
+      await this.notifyUser(tx, orderId, actor, booking.proposedById, 'order.reschedule_declined', {});
+      return { declined: true };
+    });
+  }
+
+  private async notifyUser(
+    tx: Prisma.TransactionClient,
+    orderId: string,
+    actor: Actor,
+    notifyUserId: string,
+    eventName: string,
+    extra: Record<string, unknown>,
+  ) {
+    await this.outbox.emit(tx, {
+      eventName,
+      aggregateType: 'Order',
+      aggregateId: orderId,
+      payload: { orderId, notifyUserId, ...extra },
+      createdById: actor.userId,
     });
   }
 

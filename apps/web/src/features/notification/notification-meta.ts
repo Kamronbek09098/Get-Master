@@ -1,4 +1,4 @@
-import { Banknote, BadgeCheck, Bell, CalendarCheck, ClipboardList, Image, MessageCircle, CreditCard, Package, ScrollText, Search, Send } from 'lucide-react';
+import { Banknote, BadgeCheck, Bell, CalendarCheck, CalendarClock, ClipboardList, Image, MessageCircle, CreditCard, Package, ScrollText, Search, Send } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { STATUS_TEXT } from '@/features/order/order-flow';
 import type { AppNotification } from './types';
@@ -25,6 +25,14 @@ export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/us
       return { icon: CalendarCheck, tone: 'success', to: orderPath(base, data.orderId) };
     case 'order.status_changed':
       return { icon: Package, tone: 'primary', to: orderPath(base, data.orderId) };
+    case 'order.reschedule_proposed':
+      return { icon: CalendarClock, tone: 'warning', to: orderPath(base, data.orderId) };
+    case 'order.reschedule_accepted':
+      return { icon: CalendarClock, tone: 'success', to: orderPath(base, data.orderId) };
+    case 'order.reschedule_declined':
+      return { icon: CalendarClock, tone: 'danger', to: orderPath(base, data.orderId) };
+    case 'order.reminder':
+      return { icon: CalendarClock, tone: 'warning', to: orderPath(base, data.orderId) };
     case 'payment.method_chosen': {
       const cash = item.title.includes('naqd');
       return { icon: cash ? Banknote : CreditCard, tone: 'warning', to: typeof data.orderId === 'string' ? `${orderPath(base, data.orderId)}#tolov` : `${base}/buyurtmalar` };

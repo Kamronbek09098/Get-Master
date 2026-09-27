@@ -12,6 +12,7 @@ vi.mock('../hooks/useCommunication', () => ({
   useConversations: () => ({ isLoading: false, isError: false, data: { items: state.conversations } }),
   useMessages: () => ({ isLoading: false, isError: false, data: { items: state.messages } }),
   useMarkRead: () => ({ mutate: markAsRead }),
+  useDeleteConversation: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock('@/features/session/hooks/useMe', () => ({ useMe: () => ({ data: { id: 'me' } }) }));
 
@@ -86,7 +87,8 @@ describe('ConversationList', () => {
     expect(screen.getByLabelText('3 ta o‘qilmagan')).toBeInTheDocument();
     expect(screen.getByText('Siz: Rahmat')).toBeInTheDocument();
     expect(screen.getByRole('button', { current: true })).toHaveTextContent('Aziz Rahimov');
-    await userEvent.click(screen.getByRole('button', { name: /Jasur/ }));
+    const [selectRow] = screen.getAllByRole('button', { name: /Jasur/ }).filter((btn) => !btn.hasAttribute('aria-label'));
+    await userEvent.click(selectRow!);
     expect(onSelect).toHaveBeenCalledWith('c2');
   });
 
@@ -97,7 +99,8 @@ describe('ConversationList', () => {
     ];
     render(<ConversationList selectedId={null} onSelect={() => undefined} />);
     await userEvent.type(screen.getByRole('searchbox', { name: 'Suhbatlarni qidirish' }), 'jasur');
-    expect(screen.getAllByRole('button', { name: /Jasur|Aziz/ })).toHaveLength(1);
+    const rows = screen.getAllByRole('button', { name: /Jasur|Aziz/ }).filter((btn) => !btn.hasAttribute('aria-label'));
+    expect(rows).toHaveLength(1);
     expect(screen.getByText('Jasur Karimov')).toBeInTheDocument();
     await userEvent.clear(screen.getByRole('searchbox'));
     await userEvent.click(screen.getByRole('button', { name: /O‘qilmagan/ }));

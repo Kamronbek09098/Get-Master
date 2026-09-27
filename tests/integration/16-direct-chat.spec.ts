@@ -249,3 +249,67 @@ describe('Telegram-style features: reply, reactions and attachments', () => {
     expect(caption.data.editedAt).toBeTruthy();
   });
 });
+
+describe('DELETE /conversations/:id — Telegram-style delete (hidden for me only)', () => {
+  const inList = (res: { data: { items: Array<{ id: string }> } }, id: string) => res.data.items.some((item) => item.id === id);
+
+  it('hides the chat from my own list but leaves it untouched for the other side', async () => {
+    const buyer = await createUser(h, ['CUSTOMER']);
+    const target = await createMaster(h, service.id);
+    const chat = (await open(buyer.token, target.masterId)).data.id as string;
+    await h.post(`/conversations/${chat}/messages`, buyer.token, { text: 'salom' });
+
+    expect(inList(await h.get('/conversations', buyer.token), chat)).toBe(true);
+    const del = await h.del(`/conversations/${chat}`, buyer.token);
+    expect(del.status).toBe(200);
+    expect(inList(await h.get('/conversations', buyer.token), chat)).toBe(false);
+    // Boshqa tomon hech narsa sezmaydi: xabarlar va suhbat o'zi joyida.
+    expect(inList(await h.get('/conversations', target.token), chat)).toBe(true);
+    expect((await h.get(`/conversations/${chat}/messages`, target.token)).data.items).toHaveLength(1);
+  });
+
+  it('reappears once new activity happens, whichever side sends it — nothing is actually deleted', async () => {
+    const buyer = await createUser(h, ['CUSTOMER']);
+    const target = await createMaster(h, service.id);
+    const chat = (await open(buyer.token, target.masterId)).data.id as string;
+    await h.del(`/conversations/${chat}`, buyer.token);
+    expect(inList(await h.get('/conversations', buyer.token), chat)).toBe(false);
+
+    await h.post(`/conversations/${chat}/messages`, target.token, { text: 'assalomu alaykum' });
+    expect(inList(await h.get('/conversations', buyer.token), chat)).toBe(true);
+    // O'chirishdan oldingi xabar tarixi ham yo'qolmagan.
+    const history = (await h.get(`/conversations/${chat}/messages`, buyer.token)).data.items;
+    expect(history.map((m: { text: string }) => m.text)).toContain('assalomu alaykum');
+  });
+
+  it('is idempotent and refuses non-participants', async () => {
+    const buyer = await createUser(h, ['CUSTOMER']);
+    const target = await createMaster(h, service.id);
+    const outsider = await createUser(h, ['CUSTOMER']);
+    const chat = (await open(buyer.token, target.masterId)).data.id as string;
+
+    expect((await h.del(`/conversations/${chat}`, buyer.token)).status).toBe(200);
+    expect((await h.del(`/conversations/${chat}`, buyer.token)).status).toBe(200);
+    expect((await h.del(`/conversations/${chat}`, outsider.token)).status).toBe(403);
+    expect((await h.del(`/conversations/${chat}`, undefined)).status).toBe(401);
+  });
+
+  it('never hides anything from admin — deleted chats, their messages and who deleted them stay fully visible', async () => {
+    const admin = await createAdmin(h);
+    const buyer = await createUser(h, ['CUSTOMER']);
+    const target = await createMaster(h, service.id);
+    const chat = (await open(buyer.token, target.masterId)).data.id as string;
+    await h.post(`/conversations/${chat}/messages`, buyer.token, { text: 'admin ko‘rishi kerak' });
+    await h.del(`/conversations/${chat}`, buyer.token);
+
+    const list = await h.get('/admin/conversations?limit=100', admin.token);
+    const row = list.data.items.find((item: { id: string }) => item.id === chat);
+    expect(row).toBeTruthy();
+    expect(row.messageCount).toBe(1);
+    const mine = row.participants.find((p: { user: { id: string } }) => p.user.id === buyer.id);
+    expect(mine.deletedAt).toBeTruthy();
+
+    const messages = await h.get(`/admin/conversations/${chat}/messages`, admin.token);
+    expect(messages.data.items.map((m: { text: string }) => m.text)).toContain('admin ko‘rishi kerak');
+  });
+});

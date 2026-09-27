@@ -99,6 +99,8 @@ describe('end-to-end: request → … → review → statistics', () => {
     for (const path of ['confirm', 'start-travel', 'arrive']) expect((await h.post(`${O}/${path}`, master.token)).status).toBe(201);
     const before = await uploadImage(h, master.token, 'WORK_PROOF', 'Order', ids.order, 101);
     expect((await h.post(`${O}/work-proofs`, master.token, { stage: 'BEFORE', mediaAssetId: before })).status).toBe(201);
+    // Ish "ertaga" (2 kundan keyin) belgilangan edi — real hayotda usta shu vaqt kelgach boshlaydi; testda vaqtni simulyatsiya qilamiz.
+    await h.db.booking.update({ where: { id: ids.booking }, data: { scheduledStartAt: new Date(Date.now() - 1000) } });
     expect((await h.post(`${O}/start-work`, master.token)).data.status).toBe('IN_PROGRESS');
     const after = await uploadImage(h, master.token, 'WORK_PROOF', 'Order', ids.order, 102);
     expect((await h.post(`${O}/work-proofs`, master.token, { stage: 'AFTER', mediaAssetId: after })).status).toBe(201);

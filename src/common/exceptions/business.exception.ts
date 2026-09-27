@@ -140,3 +140,27 @@ export class WebhookVerificationFailedException extends DomainException {
     super(HttpStatus.BAD_REQUEST, 'WEBHOOK_VERIFICATION_FAILED', ERRORS.WEBHOOK_VERIFICATION_FAILED);
   }
 }
+
+export class WorkTooEarlyException extends DomainException {
+  constructor(scheduledAt: string) {
+    super(HttpStatus.CONFLICT, 'WORK_TOO_EARLY', ERRORS.WORK_TOO_EARLY(scheduledAt));
+  }
+}
+
+export class RescheduleNotAllowedException extends DomainException {
+  constructor() {
+    super(HttpStatus.CONFLICT, 'RESCHEDULE_NOT_ALLOWED', ERRORS.RESCHEDULE_NOT_ALLOWED);
+  }
+}
+
+export class RescheduleNotPendingException extends DomainException {
+  constructor() {
+    super(HttpStatus.CONFLICT, 'RESCHEDULE_NOT_PENDING', ERRORS.RESCHEDULE_NOT_PENDING);
+  }
+}
+
+export class RescheduleOwnProposalException extends DomainException {
+  constructor() {
+    super(HttpStatus.FORBIDDEN, 'RESCHEDULE_OWN_PROPOSAL', ERRORS.RESCHEDULE_OWN_PROPOSAL);
+  }
+}
