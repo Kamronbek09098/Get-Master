@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react';
-import { Monitor, Moon, Sun } from 'lucide-react';
-import { getThemeMode, setThemeMode, watchSystemTheme } from '@/lib/theme';
+import { useState } from 'react';
+import { Moon, Sun } from 'lucide-react';
+import { getThemeMode, setThemeMode } from '@/lib/theme';
 import type { ThemeMode } from '@/lib/theme';
 
-const NEXT: Record<ThemeMode, ThemeMode> = { system: 'light', light: 'dark', dark: 'system' };
-const LABEL: Record<ThemeMode, string> = { system: 'Tizim mavzusi', light: 'Yorug‘ mavzu', dark: 'Qorong‘i mavzu' };
-const ICON = { system: Monitor, light: Sun, dark: Moon } as const;
+const NEXT: Record<ThemeMode, ThemeMode> = { light: 'dark', dark: 'light' };
+const LABEL: Record<ThemeMode, string> = { light: 'Yorug‘ mavzu', dark: 'Qorong‘i mavzu' };
+const ICON = { light: Sun, dark: Moon } as const;
 
 export function ThemeToggle() {
   const [mode, setMode] = useState<ThemeMode>(getThemeMode);
-  useEffect(() => watchSystemTheme(), []);
 
   const Icon = ICON[mode];
   return (
