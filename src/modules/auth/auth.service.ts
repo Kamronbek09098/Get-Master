@@ -514,9 +514,10 @@ export class AuthService {
     throw new ForbiddenException(ERRORS.DEVICE_TOO_NEW_TO_REVOKE(hours));
   }
 
-  async findAllSessions(userId: string, currentDeviceId?: string) {
+  async findAllSessions(userId: string, currentDeviceId: string | undefined, req: Request) {
+    const panel = panelOf(req);
     const rows = await this.db.deviceSession.findMany({
-      where: { userId, status: SessionStatus.ACTIVE },
+      where: { userId, status: SessionStatus.ACTIVE, ...(panel ? { panel } : {}) },
       orderBy: { lastSeenAt: 'desc' },
     });
     const current = rows.find((row) => !!currentDeviceId && row.deviceId === currentDeviceId);
@@ -541,9 +542,14 @@ export class AuthService {
 
   async revokeSession(userId: string, sessionOrDeviceId: string, currentDeviceId: string, req: Request) {
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(sessionOrDeviceId);
+    const panel = panelOf(req);
     const result = await this.db.$transaction(async (tx) => {
       const session = await tx.deviceSession.findFirst({
-        where: { userId, OR: [{ deviceId: sessionOrDeviceId }, ...(isUuid ? [{ id: sessionOrDeviceId }] : [])] },
+        where: {
+          userId,
+          ...(panel ? { panel } : {}),
+          OR: [{ deviceId: sessionOrDeviceId }, ...(isUuid ? [{ id: sessionOrDeviceId }] : [])],
+        },
       });
       if (!session) throw new BadRequestException(ERRORS.DEVICE_SESSION_NOT_FOUND);
 
@@ -571,12 +577,18 @@ export class AuthService {
   }
 
   async revokeOtherSessions(userId: string, currentDeviceId: string, req: Request) {
+    const panel = panelOf(req);
     const revoked = await this.db.$transaction(async (tx) => {
       const current = await tx.deviceSession.findUnique({
         where: { userId_deviceId: { userId, deviceId: currentDeviceId } },
       });
       const others = await tx.deviceSession.findMany({
-        where: { userId, status: SessionStatus.ACTIVE, NOT: { deviceId: currentDeviceId } },
+        where: {
+          userId,
+          status: SessionStatus.ACTIVE,
+          NOT: { deviceId: currentDeviceId },
+          ...(panel ? { panel } : {}),
+        },
         select: { deviceId: true, createdAt: true },
       });
       const until = this.revokeLockedUntil(current ?? undefined);
@@ -623,7 +635,7 @@ export class AuthService {
 
       if (!existing) {
         const activeCount = await tx.deviceSession.count({
-          where: { userId, status: SessionStatus.ACTIVE },
+          where: { userId, status: SessionStatus.ACTIVE, panel: panelOf(req) },
         });
         if (activeCount >= maxDevices) {
           throw new ForbiddenException(

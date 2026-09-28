@@ -77,8 +77,12 @@ export class AuthController {
   }
 
   @Get('sessions')
-  findAllSessions(@CurrentUser('sub') userId: string, @CurrentUser('deviceId') deviceId: string) {
-    return this.authService.findAllSessions(userId, deviceId);
+  findAllSessions(
+    @CurrentUser('sub') userId: string,
+    @CurrentUser('deviceId') deviceId: string,
+    @Req() req: Request,
+  ) {
+    return this.authService.findAllSessions(userId, deviceId, req);
   }
 
   @Post('sessions/revoke-others')
