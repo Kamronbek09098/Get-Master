@@ -17,6 +17,11 @@ export class AdminOrderQueryDto extends DateRangeQueryDto {
   @IsOptional()
   @IsIn(['true'])
   flagged?: 'true';
+
+  /** true bo‘lsa, hali yakunlanmagan/bekor qilinmagan barcha "jarayondagi" holatlar (band qilingandan tortib tasdiq kutilmoqdagacha). */
+  @IsOptional()
+  @IsIn(['true'])
+  ongoing?: 'true';
 }
 
 export class AdminOrderActionDto {

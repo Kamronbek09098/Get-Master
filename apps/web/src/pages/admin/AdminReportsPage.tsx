@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { providerLabel } from '@/features/payment/labels';
 import { useState } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -15,6 +15,7 @@ import { StatGrid } from '@/features/admin/components/StatGrid';
 import { DateRangeFilter } from '@/features/admin/components/DateRangeFilter';
 import { toRange } from '@/features/admin/range';
 import type { RefundReason } from '@/types/common';
+import './AdminReportsPage.css';
 
 const REASONS: Array<{ value: RefundReason; label: string }> = [
   { value: 'CUSTOMER_REQUEST', label: 'Mijoz talabi' },
@@ -27,6 +28,7 @@ const REASONS: Array<{ value: RefundReason; label: string }> = [
 ];
 
 export function AdminReportsPage() {
+  const navigate = useNavigate();
   const [range, setRange] = useState({ from: '', to: '' });
   const report = useRevenueReport(toRange(range));
   const refund = useRefund();
@@ -86,24 +88,36 @@ export function AdminReportsPage() {
             {report.data && report.data.items.length === 0 && <EmptyState title="Bu davrda to‘lovlar yo‘q" />}
             <div className="gm-list">
               {report.data?.items.map((row) => (
-                <div key={row.id} className="gm-card">
-                  <div className="gm-card__header">
+                <div
+                  key={row.id}
+                  className="gm-card gm-card--clickable gm-payment-card"
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => navigate(`/admin/buyurtmalar/${row.orderId}`)}
+                  onKeyDown={(event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return;
+                    event.preventDefault();
+                    navigate(`/admin/buyurtmalar/${row.orderId}`);
+                  }}
+                >
+                  <div className="gm-payment-card__info">
                     <h3>{formatMoney(row.amount, row.currency)}</h3>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => {
-                        setTarget({ id: row.id, max: Number(row.amount) - Number(row.refundedAmount) });
-                        setAmount('');
-                      }}
-                    >
-                      Qaytarish
-                    </Button>
+                    <p className="gm-card__meta">
+                      {providerLabel(row.provider)} · {formatDateTime(row.succeededAt)}
+                      {Number(row.refundedAmount) > 0 && ` · Qaytarilgan: ${formatMoney(row.refundedAmount, row.currency)}`}
+                    </p>
                   </div>
-                  <p className="gm-card__meta">
-                    {providerLabel(row.provider)} · {formatDateTime(row.succeededAt)} · <Link to={`/admin/buyurtmalar/${row.orderId}`}>Buyurtmani ochish</Link>
-                    {Number(row.refundedAmount) > 0 && ` · Qaytarilgan: ${formatMoney(row.refundedAmount, row.currency)}`}
-                  </p>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setTarget({ id: row.id, max: Number(row.amount) - Number(row.refundedAmount) });
+                      setAmount('');
+                    }}
+                  >
+                    Qaytarish
+                  </Button>
                 </div>
               ))}
             </div>

@@ -1,21 +1,33 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 import { formatMoney } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
 
-export function StatGrid({ items }: { items: Array<{ label: string; value: string | number; icon?: ReactNode }> }) {
+export function StatGrid({ items }: { items: Array<{ label: string; value: string | number; icon?: ReactNode; to?: string }> }) {
   return (
     <div className="gm-stat-grid">
-      {items.map((item) => (
-        <div key={item.label} className="gm-stat">
-          {item.icon && (
-            <span className="gm-stat__icon" aria-hidden="true">
-              {item.icon}
-            </span>
-          )}
-          <span className="gm-stat__value">{item.value}</span>
-          <span className="gm-stat__label">{item.label}</span>
-        </div>
-      ))}
+      {items.map((item) => {
+        const content = (
+          <>
+            {item.icon && (
+              <span className="gm-stat__icon" aria-hidden="true">
+                {item.icon}
+              </span>
+            )}
+            <span className="gm-stat__value">{item.value}</span>
+            <span className="gm-stat__label">{item.label}</span>
+          </>
+        );
+        return item.to ? (
+          <Link key={item.label} to={item.to} className="gm-stat gm-stat--clickable">
+            {content}
+          </Link>
+        ) : (
+          <div key={item.label} className="gm-stat">
+            {content}
+          </div>
+        );
+      })}
     </div>
   );
 }

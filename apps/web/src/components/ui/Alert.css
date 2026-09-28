@@ -11,7 +11,11 @@
 .gm-alert__title {
   font-weight: 800;
   font-family: var(--gm-font-display);
-  margin-bottom: 2px;
+  margin-bottom: 6px;
+}
+
+.gm-alert__body {
+  line-height: 1.5;
 }
 
 .gm-alert--info {

@@ -1,0 +1,23 @@
+.gm-payment-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gm-space-4);
+}
+
+.gm-payment-card__info {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.gm-payment-card > .gm-button {
+  flex-shrink: 0;
+}
+
+.gm-payment-card__info h3 {
+  font-size: 16px;
+}
+
+.gm-payment-card__info .gm-card__meta {
+  margin-top: var(--gm-space-1);
+}

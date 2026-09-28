@@ -26,11 +26,23 @@
 }
 button.gm-aord__stat {
   cursor: pointer;
+  transition: border-color 0.15s var(--gm-ease), background 0.15s var(--gm-ease);
+}
+button.gm-aord__stat:hover {
+  border-color: var(--gm-color-border-strong);
+}
+button.gm-aord__stat:focus-visible {
+  outline: 2px solid var(--gm-focus-ring);
+  outline-offset: 2px;
 }
 .gm-aord__stat--warn {
   color: var(--gm-color-danger);
 }
 .gm-aord__stat--on {
+  border-color: var(--gm-color-primary);
+  background: var(--gm-color-primary-soft);
+}
+.gm-aord__stat--warn.gm-aord__stat--on {
   border-color: var(--gm-color-danger);
   background: var(--gm-color-danger-bg);
 }

@@ -35,14 +35,29 @@ export function AdminOrdersPage() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [flagged, setFlagged] = useState(false);
+  const [ongoing, setOngoing] = useState(false);
   const debounced = useDebounce(search, 400);
 
-  const filters: AdminOrderFilters = { status: status || undefined, search: debounced.trim() || undefined, from: dayStart(from), to: dayEnd(to), flagged: flagged ? 'true' : undefined };
+  /** Yuqoridagi statistik kartochkalar bir-birini istisno qiladi: biri tanlanganda qolganlari tozalanadi. */
+  function selectView(next: { status?: AdminOrderStatus | ''; flagged?: boolean; ongoing?: boolean }) {
+    setStatus(next.status ?? '');
+    setFlagged(next.flagged ?? false);
+    setOngoing(next.ongoing ?? false);
+  }
+
+  const filters: AdminOrderFilters = {
+    status: status || undefined,
+    search: debounced.trim() || undefined,
+    from: dayStart(from),
+    to: dayEnd(to),
+    flagged: flagged ? 'true' : undefined,
+    ongoing: ongoing ? 'true' : undefined,
+  };
   const orders = useAdminOrders(filters);
   const summary = useAdminOrdersSummary();
   const items = useMemo(() => orders.data?.pages.flatMap((page) => page.items) ?? [], [orders.data]);
   const counts = summary.data?.counts ?? {};
-  const active = !!(status || search || from || to || flagged);
+  const active = !!(status || search || from || to || flagged || ongoing);
 
   return (
     <div className="gm-aord">
@@ -55,31 +70,46 @@ export function AdminOrdersPage() {
 
       {summary.data && (
         <section className="gm-aord__stats" aria-label="Umumiy ko‘rsatkichlar">
-          <div className="gm-aord__stat">
+          <button
+            type="button"
+            className={cx('gm-aord__stat', !status && !flagged && !ongoing && 'gm-aord__stat--on')}
+            onClick={() => selectView({})}
+            aria-pressed={!status && !flagged && !ongoing}
+          >
             <ClipboardList size={18} />
             <strong>{summary.data.total}</strong>
             <small>Jami buyurtma</small>
-          </div>
-          <div className="gm-aord__stat">
+          </button>
+          <button type="button" className={cx('gm-aord__stat', ongoing && 'gm-aord__stat--on')} onClick={() => selectView({ ongoing: true })} aria-pressed={ongoing}>
             <ArrowRight size={18} />
             <strong>{summary.data.active}</strong>
             <small>Jarayonda</small>
-          </div>
-          <button type="button" className={cx('gm-aord__stat gm-aord__stat--warn', flagged && 'gm-aord__stat--on')} onClick={() => setFlagged((value) => !value)} aria-pressed={flagged}>
+          </button>
+          <button type="button" className={cx('gm-aord__stat gm-aord__stat--warn', flagged && 'gm-aord__stat--on')} onClick={() => selectView({ flagged: true })} aria-pressed={flagged}>
             <AlertTriangle size={18} />
             <strong>{summary.data.flagged}</strong>
             <small>Nizoli / shikoyatli</small>
           </button>
-          <div className="gm-aord__stat">
+          <button
+            type="button"
+            className={cx('gm-aord__stat', status === 'COMPLETED' && 'gm-aord__stat--on')}
+            onClick={() => selectView({ status: 'COMPLETED' })}
+            aria-pressed={status === 'COMPLETED'}
+          >
             <CheckCircle2 size={18} />
             <strong>{counts.COMPLETED ?? 0}</strong>
             <small>Yakunlangan</small>
-          </div>
-          <div className="gm-aord__stat">
+          </button>
+          <button
+            type="button"
+            className={cx('gm-aord__stat', status === 'COMPLETED' && 'gm-aord__stat--on')}
+            onClick={() => selectView({ status: 'COMPLETED' })}
+            aria-pressed={status === 'COMPLETED'}
+          >
             <Wallet size={18} />
             <strong>{formatMoney(summary.data.completedAmount)}</strong>
             <small>Yakunlanganlar summasi</small>
-          </div>
+          </button>
         </section>
       )}
 
@@ -90,7 +120,13 @@ export function AdminOrdersPage() {
         </div>
         <div className="gm-aord__tabs" role="group" aria-label="Holat">
           {TABS.map((tab) => (
-            <button key={tab.value} type="button" aria-pressed={status === tab.value} className={cx('gm-otab', status === tab.value && 'gm-otab--active')} onClick={() => setStatus(tab.value)}>
+            <button
+              key={tab.value}
+              type="button"
+              aria-pressed={status === tab.value}
+              className={cx('gm-otab', status === tab.value && 'gm-otab--active')}
+              onClick={() => selectView({ status: tab.value })}
+            >
               {tab.label}
               {tab.value && (counts[tab.value] ?? 0) > 0 && <span className="gm-aord__count">{counts[tab.value]}</span>}
             </button>
@@ -115,6 +151,7 @@ export function AdminOrdersPage() {
                 setFrom('');
                 setTo('');
                 setFlagged(false);
+                setOngoing(false);
               }}
             >
               <X size={14} /> Tozalash

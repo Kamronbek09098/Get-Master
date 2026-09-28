@@ -307,6 +307,7 @@ export interface AdminOrderFilters {
   from?: string;
   to?: string;
   flagged?: 'true';
+  ongoing?: 'true';
 }
 
 export interface AdminMediaInfo {

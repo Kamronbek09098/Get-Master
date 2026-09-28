@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { UserRef } from '@/features/admin/components/UserRef';
 import { useState } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -70,7 +70,9 @@ function CaseCard({ item, kind }: { item: CaseItem; kind: 'complaints' | 'disput
 }
 
 export function AdminCasesPage() {
-  const [kind, setKind] = useState<'complaints' | 'disputes'>('complaints');
+  const [searchParams] = useSearchParams();
+  const initialKind = searchParams.get('kind');
+  const [kind, setKind] = useState<'complaints' | 'disputes'>(initialKind === 'disputes' ? 'disputes' : 'complaints');
   const [status, setStatus] = useState<CaseStatus | ''>('');
   const cases = useAdminCases(kind, status || undefined);
   const items = cases.data?.items ?? [];

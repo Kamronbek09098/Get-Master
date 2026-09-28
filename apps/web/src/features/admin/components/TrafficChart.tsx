@@ -75,11 +75,9 @@ export function TrafficChart({ data, window }: { data: DevOpsSnapshot['traffic']
         <span className="gm-card__meta">Jami: {total} ta so‘rov</span>
         <span>{bucketLabel(data[data.length - 1]!.at, window)}</span>
       </div>
-      {hover !== null && (
-        <p className="gm-card__meta">
-          {formatDateTime(data[hover]!.at)} — {data[hover]!.count} ta so‘rov
-        </p>
-      )}
+      <p className="gm-card__meta gm-traffic-chart__hover">
+        {hover !== null ? `${formatDateTime(data[hover]!.at)} — ${data[hover]!.count} ta so‘rov` : ' '}
+      </p>
     </div>
   );
 }

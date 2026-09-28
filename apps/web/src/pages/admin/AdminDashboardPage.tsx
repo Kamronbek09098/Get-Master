@@ -28,12 +28,12 @@ export function AdminDashboardPage() {
         <>
           <StatGrid
             items={[
-              { label: 'Foydalanuvchilar', value: data.users.total, icon: <Users size={20} /> },
-              { label: 'Ustalar', value: data.masters.total, icon: <Wrench size={20} /> },
+              { label: 'Foydalanuvchilar', value: data.users.total, icon: <Users size={20} />, to: '/admin/foydalanuvchilar' },
+              { label: 'Ustalar', value: data.masters.total, icon: <Wrench size={20} />, to: '/admin/foydalanuvchilar?role=MASTER' },
               { label: 'So‘rovlar', value: data.requests.total, icon: <ClipboardList size={20} /> },
               { label: 'Bronlar', value: data.bookings.total, icon: <CalendarCheck size={20} /> },
-              { label: 'Buyurtmalar', value: data.orders.total, icon: <PackageCheck size={20} /> },
-              { label: 'Nizolar', value: data.disputes.total, icon: <Scale size={20} /> },
+              { label: 'Buyurtmalar', value: data.orders.total, icon: <PackageCheck size={20} />, to: '/admin/buyurtmalar' },
+              { label: 'Nizolar', value: data.disputes.total, icon: <Scale size={20} />, to: '/admin/shikoyatlar?kind=disputes' },
               { label: 'Sharhlar', value: data.reviews.total, icon: <UserRound size={20} /> },
               { label: 'O‘rtacha baho', value: Number(data.reviews.averageRating).toFixed(2), icon: <Star size={20} /> },
             ]}

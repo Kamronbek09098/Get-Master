@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Ban, CheckCircle2, Search, Snowflake, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -114,8 +115,14 @@ function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminU
   );
 }
 
+const VALID_ROLES = new Set(['CUSTOMER', 'MASTER', 'ADMIN']);
+
 export function AdminUsersPage() {
-  const [role, setRole] = useState<UserFilters['role'] | ''>('');
+  const [searchParams] = useSearchParams();
+  const initialRole = searchParams.get('role');
+  const [role, setRole] = useState<UserFilters['role'] | ''>(
+    initialRole && VALID_ROLES.has(initialRole) ? (initialRole as UserFilters['role']) : '',
+  );
   const [status, setStatus] = useState<ManagedStatus | ''>('');
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search.trim(), 350);

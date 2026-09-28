@@ -20,7 +20,7 @@ export class AdminOrdersService {
     const search = query.search?.trim();
     const numeric = search && /^#?\d{1,9}$/.test(search) ? Number(search.replace('#', '')) : null;
     const where: Prisma.OrderWhereInput = {
-      status: query.status,
+      ...(query.ongoing ? { status: { in: ACTIVE } } : { status: query.status }),
       createdAt: dateRangeWhere(query),
       ...(query.flagged ? { OR: [{ status: 'DISPUTED' }, { cases: { some: { status: { in: ['REPORTED', 'UNDER_REVIEW'] } } } }] } : {}),
       ...(search

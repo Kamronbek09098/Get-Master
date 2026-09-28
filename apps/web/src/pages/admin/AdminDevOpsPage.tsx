@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Bell, Database, GitCommit, RefreshCw, Server, Tag, Timer } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
@@ -52,9 +53,21 @@ function formatDuration(totalSeconds: number): string {
 function PingBadge({ label, ok, latencyMs }: { label: string; ok: boolean; latencyMs: number | null }) {
   const tone: BadgeTone = ok ? 'success' : 'danger';
   return (
-    <div className="gm-key-value__row">
-      <span>{label}</span>
+    <div className="gm-devops-row">
+      <span className="gm-devops-row__label">{label}</span>
       <Badge tone={tone}>{ok ? `Ulangan${latencyMs !== null ? ` · ${latencyMs} ms` : ''}` : 'Ulanmagan'}</Badge>
+    </div>
+  );
+}
+
+function InfoRow({ label, value, icon }: { label: string; value: ReactNode; icon?: ReactNode }) {
+  return (
+    <div className="gm-devops-row">
+      <span className="gm-devops-row__label">
+        {icon}
+        {label}
+      </span>
+      <strong className="gm-devops-row__value">{value}</strong>
     </div>
   );
 }
@@ -138,75 +151,36 @@ export function AdminDevOpsPage() {
               <h2>
                 <Server size={18} /> Node jarayoni
               </h2>
-              <div className="gm-key-value gm-key-value--rows">
-                <div className="gm-key-value__row">
-                  <span>Holat</span>
+              <div className="gm-devops-rows">
+                <div className="gm-devops-row">
+                  <span className="gm-devops-row__label">Holat</span>
                   <Badge tone="success">online</Badge>
                 </div>
-                <div className="gm-key-value__row">
-                  <span>PID</span>
-                  <strong>{data.process.pid}</strong>
-                </div>
-                <div className="gm-key-value__row">
-                  <span>Jarayon ishlash vaqti</span>
-                  <strong>{formatDuration(data.process.uptimeSeconds)}</strong>
-                </div>
-                <div className="gm-key-value__row">
-                  <span>Xotira (RSS)</span>
-                  <strong>{data.process.rssMB} MB</strong>
-                </div>
-                <div className="gm-key-value__row">
-                  <span>Heap</span>
-                  <strong>
-                    {data.process.heapUsedMB} / {data.process.heapTotalMB} MB
-                  </strong>
-                </div>
-                <div className="gm-key-value__row">
-                  <span>CPU vaqti</span>
-                  <strong>
-                    {data.process.cpuUserMs} ms user · {data.process.cpuSystemMs} ms sys
-                  </strong>
-                </div>
-                <div className="gm-key-value__row">
-                  <span>Nazoratchi</span>
-                  <span className="gm-card__meta">Yo‘q — Docker konteynerida to‘g‘ridan-to‘g‘ri jarayon (PM2/systemd ishlatilmaydi)</span>
-                </div>
+                <InfoRow label="PID" value={data.process.pid} />
+                <InfoRow label="Jarayon ishlash vaqti" value={formatDuration(data.process.uptimeSeconds)} />
+                <InfoRow label="Xotira (RSS)" value={`${data.process.rssMB} MB`} />
+                <InfoRow label="Heap" value={`${data.process.heapUsedMB} / ${data.process.heapTotalMB} MB`} />
+                <InfoRow label="CPU vaqti" value={`${data.process.cpuUserMs} ms user · ${data.process.cpuSystemMs} ms sys`} />
               </div>
+              <p className="gm-devops-note">
+                <strong>Nazoratchi:</strong> yo‘q — Docker konteynerida to‘g‘ridan-to‘g‘ri jarayon sifatida ishlaydi (PM2/systemd ishlatilmaydi).
+              </p>
             </section>
 
             <section className="gm-detail-section">
               <h2>
                 <Tag size={18} /> Versiya va bog‘liqliklar
               </h2>
-              <div className="gm-key-value gm-key-value--rows">
-                <div className="gm-key-value__row">
-                  <span>
-                    <GitCommit size={14} /> Commit
-                  </span>
-                  <strong>{data.version.commit ?? '—'}</strong>
-                </div>
-                <div className="gm-key-value__row">
-                  <span>Versiya</span>
-                  <strong>
-                    v{data.version.appVersion} · {data.version.environment}
-                  </strong>
-                </div>
-                <div className="gm-key-value__row">
-                  <span>Ishga tushgan</span>
-                  <strong>{formatDateTime(data.version.startedAt)}</strong>
-                </div>
-                <div className="gm-key-value__row">
-                  <span>Node.js</span>
-                  <strong>{data.version.nodeVersion}</strong>
-                </div>
-                <div className="gm-key-value__row">
-                  <span>Tizim</span>
-                  <strong>{data.system.platform}</strong>
-                </div>
+              <div className="gm-devops-rows">
+                <InfoRow icon={<GitCommit size={14} />} label="Commit" value={data.version.commit ?? '—'} />
+                <InfoRow label="Versiya" value={`v${data.version.appVersion} · ${data.version.environment}`} />
+                <InfoRow label="Ishga tushgan" value={formatDateTime(data.version.startedAt)} />
+                <InfoRow label="Node.js" value={data.version.nodeVersion} />
+                <InfoRow label="Tizim" value={data.system.platform} />
                 <PingBadge label="Ma’lumotlar bazasi" ok={data.dependencies.database.ok} latencyMs={data.dependencies.database.latencyMs} />
                 <PingBadge label="Redis" ok={data.dependencies.redis.ok} latencyMs={data.dependencies.redis.latencyMs} />
-                <div className="gm-key-value__row">
-                  <span>
+                <div className="gm-devops-row">
+                  <span className="gm-devops-row__label">
                     <Bell size={14} /> Telegram ogohlantirish
                   </span>
                   <Badge tone={data.dependencies.telegramAlerting ? 'success' : 'neutral'}>
