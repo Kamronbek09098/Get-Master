@@ -32,7 +32,7 @@ export function MasterPage() {
         <input
           type="search"
           aria-label="Usta qidirish"
-          placeholder="Ism yoki kasb bo‘yicha qidiring"
+          placeholder="Ism, kasb yoki ID bo‘yicha qidiring"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />

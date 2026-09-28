@@ -204,6 +204,7 @@ export class MasterService {
               { profession: { contains: query.q, mode: 'insensitive' } },
               { user: { firstName: { contains: query.q, mode: 'insensitive' } } },
               { user: { lastName: { contains: query.q, mode: 'insensitive' } } },
+              ...(/^\d{1,9}$/.test(query.q) ? [{ user: { accountNumber: Number(query.q) } }] : []),
             ],
           }
         : {}),
