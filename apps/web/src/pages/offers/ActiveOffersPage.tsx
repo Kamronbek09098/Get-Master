@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { CalendarClock, CheckCircle2, Users } from 'lucide-react';
+import { CalendarClock, CheckCircle2, Timer, Users } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatDateTime, formatMoney, formatRelativeTime } from '@/lib/utils';
+import { formatCountdown, formatDateTime, formatMoney, formatRelativeTime } from '@/lib/utils';
+import { useCountdown } from '@/hooks/useCountdown';
 import { AcceptRequestDialog } from '@/features/offer/components/AcceptRequestDialog';
 import { OfferBadge } from '@/features/offer/components/OfferBadge';
 import { useOpenRequests } from '@/features/offer/hooks/useOffers';
@@ -16,6 +17,18 @@ const TABS: Array<{ value: OpenRequestScope; label: string }> = [
   { value: 'all', label: 'Barcha faol' },
   { value: 'mine', label: 'Menga mos' },
 ];
+
+function ExpiryCountdown({ expiresAt }: { expiresAt: string | null }) {
+  const remaining = useCountdown(expiresAt);
+  if (remaining === null) return null;
+  const expired = remaining <= 0;
+  const soon = !expired && remaining < 60 * 60_000;
+  return (
+    <Badge tone={expired ? 'danger' : soon ? 'warning' : 'neutral'}>
+      <Timer size={14} /> {formatCountdown(remaining)}
+    </Badge>
+  );
+}
 
 export function ActiveOffersPage() {
   const [scope, setScope] = useState<OpenRequestScope>('all');
@@ -69,6 +82,7 @@ export function ActiveOffersPage() {
               <div className="gm-action-row">
                 {request.notified && <Badge tone="primary">Sizga yuborilgan</Badge>}
                 {request.service && <Badge tone="neutral">{request.service.name}</Badge>}
+                {request.expiresAt && <ExpiryCountdown expiresAt={request.expiresAt} />}
               </div>
             </div>
             <p className="gm-request-card__description">{request.description}</p>
@@ -80,7 +94,7 @@ export function ActiveOffersPage() {
                 <CalendarClock size={14} /> {formatRelativeTime(request.createdAt)}
               </span>
               {request.preferredStartAt && <span>Xohlangan vaqt: {formatDateTime(request.preferredStartAt)}</span>}
-              {request.expiresAt && <span>Muddati: {formatDateTime(request.expiresAt)}</span>}
+              {request.expiresAt && <span>Taklif muddati: {formatDateTime(request.expiresAt)}</span>}
             </p>
 
             <div className="gm-action-row" style={{ marginTop: 'var(--gm-space-3)' }}>

@@ -70,6 +70,19 @@ export function formatRelativeTime(value: string | Date, now: number = Date.now(
   return 'hozirgina';
 }
 
+/** `ms` — qolgan millisekund (masalan `useCountdown` dan). Kun/soat/daqiqa ko‘rinishida chiqaradi. */
+export function formatCountdown(ms: number): string {
+  if (ms <= 0) return 'Muddati tugagan';
+  const totalMinutes = Math.floor(ms / 60_000);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if (days > 0) return `${days} kun ${hours} soat qoldi`;
+  if (hours > 0) return `${hours} soat ${minutes} daqiqa qoldi`;
+  if (minutes > 0) return `${minutes} daqiqa qoldi`;
+  return '1 daqiqadan kam qoldi';
+}
+
 export function newIdempotencyKey(): string {
   return crypto.randomUUID();
 }

@@ -230,42 +230,66 @@ export class MasterService {
     return master;
   }
 
+  /**
+   * Faqat oldindan hisoblangan (async to‘lqinli) `MatchingResult`ga tayanish sahifani doim bo‘sh qoldirib
+   * yuborishi mumkin (masalan usta hali `MasterService` qo‘shmagan yoki to‘lqin unga yetib bormagan bo‘lsa).
+   * Shuning uchun `findOpenRequests`dagi «menga mos» filtri bilan bir xil, jonli hisoblanadigan mantiq ishlatiladi:
+   * ustaning faol xizmat toifalariga mos yoki alohida NOTIFIED qilingan barcha ochiq so‘rovlar qaytariladi.
+   */
   async findIncomingRequests(userId: string, query: CursorQueryDto) {
     const profile = await this.requireOwn(userId);
-    const rows = await this.db.matchingResult.findMany({
+    const services = await this.db.masterService.findMany({
+      where: { masterId: profile.id, isActive: true },
+      select: { serviceId: true },
+    });
+    const serviceIds = services.map((service) => service.serviceId);
+    const now = new Date();
+
+    const filters: Prisma.ProblemRequestWhereInput[] = [
+      { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
+      {
+        OR: [
+          ...(serviceIds.length ? [{ serviceId: { in: serviceIds } }] : []),
+          { matchingRuns: { some: { results: { some: { masterId: profile.id, status: 'NOTIFIED' } } } } },
+        ],
+      },
+    ];
+
+    const rows = await this.db.problemRequest.findMany({
       where: {
-        masterId: profile.id,
-        status: 'NOTIFIED',
-        run: { request: { status: { in: ['SUBMITTED', 'MATCHING', 'OFFERS_RECEIVED'] }, customerId: { not: userId } } },
+        status: { in: ['SUBMITTED', 'MATCHING', 'OFFERS_RECEIVED'] },
+        customerId: { not: userId },
+        AND: filters,
       },
       select: {
         id: true,
-        score: true,
+        title: true,
+        description: true,
+        status: true,
+        preferredStartAt: true,
+        preferredEndAt: true,
+        expiresAt: true,
         createdAt: true,
-        run: {
-          select: {
-            request: {
-              select: {
-                id: true,
-                title: true,
-                description: true,
-                status: true,
-                preferredStartAt: true,
-                preferredEndAt: true,
-                expiresAt: true,
-                createdAt: true,
-                offers: { where: { masterId: profile.id }, select: { id: true, status: true } },
-              },
-            },
-          },
+        offers: { where: { masterId: profile.id }, select: { id: true, status: true } },
+        matchingRuns: {
+          select: { results: { where: { masterId: profile.id }, select: { id: true, score: true, createdAt: true } } },
         },
       },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       ...cursorArgs(query),
     });
+
     const page = toCursorPage(rows, query);
     return {
-      items: page.items.map(({ run, ...result }) => ({ ...result, request: run.request })),
+      items: page.items.map(({ matchingRuns, ...request }) => {
+        const result = matchingRuns.flatMap((run) => run.results)[0] ?? null;
+        return {
+          id: result?.id ?? request.id,
+          score: result?.score ?? null,
+          createdAt: result?.createdAt ?? request.createdAt,
+          request,
+        };
+      }),
       nextCursor: page.nextCursor,
     };
   }

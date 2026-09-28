@@ -1,4 +1,5 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { ProblemRequest } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { ServiceService } from '../service/service.service';
@@ -19,6 +20,8 @@ export type ProblemRequestSummary = ProblemRequest & { service: { id: string; na
 
 @Injectable()
 export class RequestService {
+  private readonly logger = new Logger(RequestService.name);
+
   constructor(
     private readonly db: PrismaService,
     private readonly outbox: OutboxService,
@@ -156,6 +159,33 @@ export class RequestService {
     const page = hasMore ? rows.slice(0, limit) : rows;
     const items = page.map(({ _count, ...request }) => ({ ...request, offersCount: _count.offers }));
     return { items, nextCursor: hasMore ? (items[items.length - 1]?.id ?? null) : null };
+  }
+
+  /** Belgilangan muddatgacha hech qaysi usta taklif bermagan/mijoz qabul qilmagan so‘rovlarni bekor qiladi. */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async expireOverdueRequests(): Promise<void> {
+    try {
+      const now = new Date();
+      const overdue = await this.db.problemRequest.findMany({
+        where: { status: { in: ['SUBMITTED', 'MATCHING', 'OFFERS_RECEIVED'] }, expiresAt: { lte: now } },
+        select: { id: true },
+      });
+      if (overdue.length === 0) return;
+      const ids = overdue.map((request) => request.id);
+      await this.db.$transaction([
+        this.db.problemRequest.updateMany({
+          where: { id: { in: ids } },
+          data: { status: 'EXPIRED', cancelledAt: now },
+        }),
+        this.db.offer.updateMany({
+          where: { requestId: { in: ids }, status: 'PENDING' },
+          data: { status: 'EXPIRED' },
+        }),
+      ]);
+      this.logger.log(`Muddati tugagan ${ids.length} ta so‘rov bekor qilingan buyurtmalarga o‘tkazildi`);
+    } catch (error) {
+      this.logger.error('Muddati tugagan so‘rovlarni yopib bo‘lmadi', error instanceof Error ? error.stack : undefined);
+    }
   }
 
   private async validateReferences(
