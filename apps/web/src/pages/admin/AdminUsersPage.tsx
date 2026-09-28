@@ -30,6 +30,7 @@ const ROLE_TABS: Array<{ value: UserFilters['role'] | ''; label: string }> = [
   { value: '', label: 'Hammasi' },
   { value: 'CUSTOMER', label: 'Mijozlar' },
   { value: 'MASTER', label: 'Ustalar' },
+  { value: 'ADMIN', label: 'Adminlar' },
 ];
 
 const STATUS_OPTIONS = [
@@ -51,6 +52,7 @@ function masterWorkState(user: AdminUser): { label: string; tone: BadgeTone } | 
 function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminUser, action: UserAction) => void }) {
   const restricted = user.status === 'SUSPENDED' || user.status === 'BLOCKED';
   const deleted = user.status === 'DELETED';
+  const isAdmin = user.roles.includes('ADMIN');
   const workState = masterWorkState(user);
 
   return (
@@ -64,6 +66,7 @@ function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminU
             <h3>{displayName(user)}</h3>
             {user.roles.includes('CUSTOMER') && <Badge tone="primary">Mijoz</Badge>}
             {user.roles.includes('MASTER') && <Badge tone="primary">Usta</Badge>}
+            {isAdmin && <Badge tone="warning">Admin</Badge>}
             <Badge tone={STATUS[user.status].tone}>{STATUS[user.status].label}</Badge>
             {workState && <Badge tone={workState.tone}>{workState.label}</Badge>}
           </div>
@@ -82,7 +85,11 @@ function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminU
         </div>
       </div>
 
-      {!deleted && (
+      {isAdmin && (
+        <p className="gm-card__meta">Admin akkauntlarni bu yerdan muzlatish, bloklash yoki o‘chirish mumkin emas.</p>
+      )}
+
+      {!deleted && !isAdmin && (
         <div className="gm-action-row">
           {restricted ? (
             <Button size="sm" onClick={() => onAction(user, 'ACTIVATE')}>
@@ -126,7 +133,7 @@ export function AdminUsersPage() {
       <div className="gm-page-header">
         <div>
           <h1>Foydalanuvchilar</h1>
-          <p className="gm-page-lead">Mijozlar va ustalarni boshqaring.</p>
+          <p className="gm-page-lead">Mijozlar va ustalarni boshqaring, adminlarni ko‘ring.</p>
         </div>
       </div>
 
@@ -149,7 +156,7 @@ export function AdminUsersPage() {
         <div style={{ flex: '1 1 260px' }}>
           <Input
             label="Qidirish"
-            placeholder="Ism, familiya yoki telefon"
+            placeholder="Ism, familiya, telefon yoki ID"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             autoComplete="off"

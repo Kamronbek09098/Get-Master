@@ -148,24 +148,43 @@ export class MasterService {
       });
       if (activeServices === 0) throw new ConflictException(ERRORS.ACTIVE_SERVICE_REQUIRED);
     }
-    return this.db.masterProfile.update({ where: { id: profile.id }, data: { status: dto.status } });
+    const updated = await this.db.masterProfile.update({ where: { id: profile.id }, data: { status: dto.status } });
+    await this.db.auditLog.create({
+      data: {
+        actorId: userId,
+        action: 'MASTER_STATUS_CHANGED',
+        targetType: 'MasterProfile',
+        targetId: profile.id,
+        before: { status: profile.status } as Prisma.InputJsonValue,
+        after: { status: dto.status } as Prisma.InputJsonValue,
+      },
+    });
+    return updated;
   }
 
   async pause(userId: string, dto: PauseMasterDto) {
     const profile = await this.requireOwn(userId);
     if (dto.until && dto.until <= new Date()) throw new BadRequestException(ERRORS.UNTIL_IN_FUTURE);
-    return this.db.masterProfile.update({
+    const updated = await this.db.masterProfile.update({
       where: { id: profile.id },
       data: { isPaused: true, pauseReason: dto.reason, pausedUntil: dto.until ?? null },
     });
+    await this.db.auditLog.create({
+      data: { actorId: userId, action: 'MASTER_PAUSED', targetType: 'MasterProfile', targetId: profile.id, reason: dto.reason },
+    });
+    return updated;
   }
 
   async resume(userId: string) {
     const profile = await this.requireOwn(userId);
-    return this.db.masterProfile.update({
+    const updated = await this.db.masterProfile.update({
       where: { id: profile.id },
       data: { isPaused: false, pauseReason: null, pausedUntil: null },
     });
+    await this.db.auditLog.create({
+      data: { actorId: userId, action: 'MASTER_RESUMED', targetType: 'MasterProfile', targetId: profile.id },
+    });
+    return updated;
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)
@@ -384,9 +403,13 @@ export class MasterService {
         throw new BadRequestException(ERRORS.PORTFOLIO_MEDIA_TYPE);
       }
       try {
-        return await tx.masterPortfolio.create({
+        const created = await tx.masterPortfolio.create({
           data: { masterId: profile.id, mediaAssetId: asset.id, title: dto.title, description: dto.description },
         });
+        await tx.auditLog.create({
+          data: { actorId: userId, action: 'MASTER_PORTFOLIO_CREATED', targetType: 'MasterPortfolio', targetId: created.id },
+        });
+        return created;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
           throw new ConflictException(ERRORS.MEDIA_USED_PORTFOLIO);
@@ -400,7 +423,7 @@ export class MasterService {
     const profile = await this.requireOwn(userId);
     const item = await this.db.masterPortfolio.findFirst({ where: { id: itemId, masterId: profile.id } });
     if (!item) throw new NotFoundException(ERRORS.PORTFOLIO_ITEM_NOT_FOUND);
-    return this.db.masterPortfolio.update({
+    const updated = await this.db.masterPortfolio.update({
       where: { id: itemId },
       data: {
         title: dto.title,
@@ -411,6 +434,10 @@ export class MasterService {
         rejectReason: null,
       },
     });
+    await this.db.auditLog.create({
+      data: { actorId: userId, action: 'MASTER_PORTFOLIO_UPDATED', targetType: 'MasterPortfolio', targetId: itemId },
+    });
+    return updated;
   }
 
   async removePortfolio(userId: string, itemId: string): Promise<{ deleted: true }> {
@@ -424,6 +451,9 @@ export class MasterService {
     await this.db.$transaction(async (tx) => {
       await tx.masterPortfolio.delete({ where: { id: itemId } });
       if (item.mediaAssetId) await tx.mediaAsset.delete({ where: { id: item.mediaAssetId } });
+      await tx.auditLog.create({
+        data: { actorId: userId, action: 'MASTER_PORTFOLIO_REMOVED', targetType: 'MasterPortfolio', targetId: itemId },
+      });
     });
 
     const asset = item.mediaAsset;

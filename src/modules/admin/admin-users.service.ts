@@ -34,17 +34,28 @@ export class AdminUsersService {
   constructor(private readonly db: PrismaService) {}
 
   async findAll(query: UserQueryDto) {
-    const roles = query.role ? [query.role] : [Role.CUSTOMER, Role.MASTER];
+    // ID (accountNumber) bo‘yicha qidirilganda admin akkauntlar ham qidiruv doirasiga kiradi —
+    // oddiy ism/telefon qidiruvi va filtrsiz ro‘yxat avvalgidek faqat mijoz/ustalar bilan cheklanadi.
+    const isIdSearch = !!query.search && /^\d{1,9}$/.test(query.search);
+    const roles = query.role ? [query.role] : isIdSearch ? [Role.CUSTOMER, Role.MASTER, Role.ADMIN] : [Role.CUSTOMER, Role.MASTER];
     const where: Prisma.UserWhereInput = {
       userRoles: { some: { role: { in: roles } } },
       status: query.status,
       deletedAt: query.status === UserStatus.DELETED ? { not: null } : null,
     };
     if (query.search) {
+      // accountNumber — Int ustun, Prisma uni matn sifatida qisman (contains) solishtira olmaydi,
+      // shuning uchun mos keladigan raqamlarni kichik raw so‘rov bilan topib, natijani OR ga qo‘shamiz.
+      const matchingAccountNumbers = isIdSearch
+        ? await this.db.$queryRaw<Array<{ accountNumber: number }>>`
+            SELECT "account_number" AS "accountNumber" FROM users WHERE "account_number"::text LIKE ${`%${query.search}%`} LIMIT 50
+          `
+        : [];
       where.OR = [
         { phone: { contains: query.search } },
         { firstName: { contains: query.search, mode: 'insensitive' } },
         { lastName: { contains: query.search, mode: 'insensitive' } },
+        ...(matchingAccountNumbers.length ? [{ accountNumber: { in: matchingAccountNumbers.map((row) => row.accountNumber) } }] : []),
       ];
     }
     const rows = await this.db.user.findMany({

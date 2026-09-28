@@ -9,6 +9,8 @@ import { AdminChatService } from './admin-chat.service';
 import { AdminBadgesService } from './admin-badges.service';
 import { AdminBadgesQueryDto } from './dto/badges-query.dto';
 import { AdminOrdersService } from './admin-orders.service';
+import { AdminDevopsService } from './admin-devops.service';
+import { DevopsQueryDto } from './dto/devops-query.dto';
 import { AdminOrderActionDto, AdminOrderQueryDto, AdminOrderResolveDto } from './dto/order-query.dto';
 import { AdminConversationQueryDto } from './dto/chat-query.dto';
 import { CursorQueryDto } from '../../common/dto/cursor-query.dto';
@@ -30,7 +32,13 @@ export class AdminController {
     private readonly chats: AdminChatService,
     private readonly badges: AdminBadgesService,
     private readonly orders: AdminOrdersService,
+    private readonly devops: AdminDevopsService,
   ) {}
+
+  @Get('devops')
+  getDevops(@Query() query: DevopsQueryDto) {
+    return this.devops.snapshot(query.window ?? '1h');
+  }
 
   @Get('orders')
   findOrders(@Query() query: AdminOrderQueryDto) {

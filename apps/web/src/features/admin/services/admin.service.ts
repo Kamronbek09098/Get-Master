@@ -18,6 +18,8 @@ import type {
   AuditSummary,
   AuditLog,
   Dashboard,
+  DevOpsSnapshot,
+  DevOpsWindow,
   RevenueRow,
   RevenueSummary,
   UserFilters,
@@ -42,6 +44,9 @@ export const adminService = {
   },
   report(range: DateRange) {
     return apiGet<{ summary: RevenueSummary } & CursorPage<RevenueRow>>(`/admin/reports${qs({ ...range })}`);
+  },
+  devops(window: DevOpsWindow) {
+    return apiGet<DevOpsSnapshot>(`/admin/devops${qs({ window })}`);
   },
   users(filters: UserFilters, cursor?: string) {
     return apiGet<CursorPage<AdminUser>>(`/admin/users${qs({ ...filters, cursor, limit: '20' })}`);

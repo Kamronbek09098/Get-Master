@@ -389,6 +389,17 @@ export class OrderService {
           description: dto.reason,
         },
       });
+      await tx.auditLog.create({
+        data: {
+          actorId: userId,
+          action: 'ORDER_DISPUTED',
+          targetType: 'Order',
+          targetId: orderId,
+          before: { status: order.status } as Prisma.InputJsonValue,
+          after: { status: 'DISPUTED' } as Prisma.InputJsonValue,
+          reason: dto.reason,
+        },
+      });
       await this.emitStatusChanged(tx, updated, actor, order.status, 'DISPUTED');
       return updated;
     });
@@ -420,6 +431,15 @@ export class OrderService {
       });
       const masterProfile = await tx.masterProfile.findUniqueOrThrow({ where: { id: order.masterId }, select: { userId: true } });
       const notifyUserId = actor.type === 'CUSTOMER' ? masterProfile.userId : order.customerId;
+      await tx.auditLog.create({
+        data: {
+          actorId: userId,
+          action: 'ORDER_RESCHEDULE_PROPOSED',
+          targetType: 'Order',
+          targetId: orderId,
+          after: { proposedStartAt: proposedStartAt.toISOString() } as Prisma.InputJsonValue,
+        },
+      });
       await this.notifyUser(tx, orderId, actor, notifyUserId, 'order.reschedule_proposed', { proposedStartAt: proposedStartAt.toISOString() });
       return { proposed: true, proposedStartAt };
     });
@@ -439,6 +459,15 @@ export class OrderService {
         where: { id: order.bookingId },
         data: { scheduledStartAt: booking.proposedStartAt, proposedStartAt: null, proposedById: null, proposedAt: null, reminderSentAt: null },
       });
+      await tx.auditLog.create({
+        data: {
+          actorId: userId,
+          action: 'ORDER_RESCHEDULE_ACCEPTED',
+          targetType: 'Order',
+          targetId: orderId,
+          after: { scheduledStartAt: updated.scheduledStartAt!.toISOString() } as Prisma.InputJsonValue,
+        },
+      });
       await this.notifyUser(tx, orderId, actor, booking.proposedById, 'order.reschedule_accepted', { scheduledStartAt: updated.scheduledStartAt!.toISOString() });
       return { scheduledStartAt: updated.scheduledStartAt };
     });
@@ -455,6 +484,9 @@ export class OrderService {
       if (booking.proposedById === userId) throw new RescheduleOwnProposalException();
 
       await tx.booking.update({ where: { id: order.bookingId }, data: { proposedStartAt: null, proposedById: null, proposedAt: null } });
+      await tx.auditLog.create({
+        data: { actorId: userId, action: 'ORDER_RESCHEDULE_DECLINED', targetType: 'Order', targetId: orderId },
+      });
       await this.notifyUser(tx, orderId, actor, booking.proposedById, 'order.reschedule_declined', {});
       return { declined: true };
     });
@@ -540,6 +572,21 @@ export class OrderService {
 
       if (to === 'COMPLETED' || to === 'CANCELLED' || to === 'EXPIRED') {
         await this.masterStats.recompute(updated.masterId, tx);
+      }
+
+      // Admin orqali qilingan o'zgarishlar allaqachon AdminOrdersService tomonidan ADMIN_ORDER_* nomi bilan yoziladi.
+      if (actor.type !== 'ADMIN') {
+        await tx.auditLog.create({
+          data: {
+            actorId: actor.userId,
+            action: `ORDER_${to}`,
+            targetType: 'Order',
+            targetId: orderId,
+            before: { status: locked.status } as Prisma.InputJsonValue,
+            after: { status: to } as Prisma.InputJsonValue,
+            reason,
+          },
+        });
       }
 
       await this.emitStatusChanged(tx, updated, actor, locked.status, to);

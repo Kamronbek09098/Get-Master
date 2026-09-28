@@ -33,7 +33,7 @@ export class WarrantyService {
     const startsAt = new Date();
     const expiresAt = new Date(startsAt.getTime() + days * 24 * 60 * 60 * 1000);
 
-    return this.db.warranty.create({
+    const warranty = await this.db.warranty.create({
       data: {
         orderId: dto.orderId,
         masterId: order.masterId,
@@ -42,6 +42,10 @@ export class WarrantyService {
         conditions: dto.conditions,
       },
     });
+    await this.db.auditLog.create({
+      data: { actorId: userId, action: 'WARRANTY_CREATED', targetType: 'Warranty', targetId: warranty.id },
+    });
+    return warranty;
   }
 
   findAll(userId: string) {
@@ -76,7 +80,7 @@ export class WarrantyService {
       throw new ConflictException(ERRORS.WARRANTY_NOT_ACTIVE);
     }
 
-    return this.db.warrantyClaim.create({
+    const claim = await this.db.warrantyClaim.create({
       data: {
         warrantyId: id,
         openedById: userId,
@@ -85,6 +89,10 @@ export class WarrantyService {
         evidence: dto.evidenceKey ? { storageKey: dto.evidenceKey } : undefined,
       },
     });
+    await this.db.auditLog.create({
+      data: { actorId: userId, action: 'WARRANTY_CLAIM_CREATED', targetType: 'WarrantyClaim', targetId: claim.id, reason: dto.reason },
+    });
+    return claim;
   }
 
   async findAllClaims(userId: string, id: string) {

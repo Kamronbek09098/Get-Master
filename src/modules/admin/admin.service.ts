@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CaseType, OrderStatus, PaymentStatus, Prisma, ReviewStatus, Role } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
@@ -17,7 +18,10 @@ const sum = (rows: Array<{ _count: number }>) => rows.reduce((total, row) => tot
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   private dateRange(dateFrom?: string, dateTo?: string): Prisma.DateTimeFilter | undefined {
     if (!dateFrom && !dateTo) return undefined;
@@ -91,11 +95,16 @@ export class AdminService {
 
     const gross = revenue._sum.amount ?? new Prisma.Decimal(0);
     const refunded = revenue._sum.refundedAmount ?? new Prisma.Decimal(0);
+    const netRevenue = gross.sub(refunded);
+    const commissionRate = this.config.get<number>('payment.platformCommissionRate', 0.03);
     return {
       summary: {
         totalRevenue: gross,
         totalRefunded: refunded,
-        netRevenue: gross.sub(refunded),
+        netRevenue,
+        // Ilova (platforma) sof foydasi — sof tushumning komissiya ulushi (PLATFORM_COMMISSION_RATE).
+        platformProfit: netRevenue.mul(commissionRate),
+        commissionRate,
         totalPayments: revenue._count,
         totalOrders,
         completedOrders,

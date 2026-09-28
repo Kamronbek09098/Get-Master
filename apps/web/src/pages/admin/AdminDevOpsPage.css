@@ -1,0 +1,128 @@
+.gm-devops-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--gm-space-4);
+  margin-bottom: var(--gm-space-5);
+}
+
+.gm-devops-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--gm-space-4);
+}
+
+.gm-devops-cols .gm-detail-section {
+  margin-top: 0;
+}
+
+.gm-devops-big {
+  font-family: var(--gm-font-display);
+  font-size: 26px;
+  font-weight: 700;
+  margin: var(--gm-space-1) 0 0;
+}
+
+.gm-devops-issues {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.gm-devops-traffic-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gm-space-3);
+  margin-bottom: var(--gm-space-4);
+}
+
+.gm-devops-traffic-head h2 {
+  margin: 0;
+}
+
+.gm-devops-cols h2,
+.gm-devops-traffic-head h2,
+section.gm-detail-section > h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gm-usage__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--gm-color-text-muted);
+  margin-bottom: var(--gm-space-2);
+}
+
+.gm-usage__head span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gm-usage__head strong {
+  font-family: var(--gm-font-display);
+  font-size: 22px;
+  color: var(--gm-color-text);
+}
+
+.gm-usage__track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--gm-color-surface-muted);
+  overflow: hidden;
+  margin-bottom: var(--gm-space-2);
+}
+
+.gm-usage__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s var(--gm-ease);
+}
+
+.gm-usage__fill--good {
+  background: var(--gm-color-success);
+}
+
+.gm-usage__fill--warning {
+  background: var(--gm-color-warning);
+}
+
+.gm-usage__fill--danger {
+  background: var(--gm-color-danger);
+}
+
+.gm-key-value--rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gm-space-3);
+  grid-template-columns: none;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: none;
+}
+
+.gm-key-value__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gm-space-3);
+  font-size: 14px;
+}
+
+.gm-key-value__row > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gm-color-text-muted);
+}
+
+.gm-key-value__row strong {
+  font-weight: 600;
+  text-align: right;
+}

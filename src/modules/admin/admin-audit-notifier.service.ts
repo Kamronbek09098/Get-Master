@@ -6,8 +6,49 @@ import { NotificationService } from '../notification/notification.service';
 
 const POLL_MS = 15_000;
 const TEMPLATE = 'admin.audit';
-/** Adminni bezovta qilmaydigan doimiy texnik yozuvlar. */
-const SILENT = new Set(['AUTH_REFRESH_ROTATED', 'AUTH_LOGIN_COMPLETED', 'AUTH_LOGOUT', 'AUTH_LOGOUT_ALL', 'AUTH_SESSION_REVOKED', 'AUTH_OTHER_SESSIONS_REVOKED']);
+/**
+ * Adminni bezovta qilmaydigan doimiy texnik yozuvlar — bular Audit jurnalida to'liq ko'rinadi,
+ * lekin har biri uchun bildirishnoma yuborilmaydi (aks holda mijoz/usta kundalik amallari
+ * adminlarni bildirishnomalar bilan to'ldirib yuboradi). Faqat admin e'tiborini talab qiladigan
+ * hodisalar (nizo, apellyatsiya, kafolat da'vosi, pul qaytarish, hujjat tasdiqlash va h.k.) ochiq qoladi.
+ */
+const SILENT = new Set([
+  'AUTH_REFRESH_ROTATED',
+  'AUTH_LOGIN_COMPLETED',
+  'AUTH_LOGOUT',
+  'AUTH_LOGOUT_ALL',
+  'AUTH_SESSION_REVOKED',
+  'AUTH_OTHER_SESSIONS_REVOKED',
+  'REQUEST_CREATED',
+  'REQUEST_UPDATED',
+  'REQUEST_SUBMITTED',
+  'REQUEST_CANCELLED',
+  'OFFER_CREATED',
+  'OFFER_WITHDRAWN',
+  'OFFER_ACCEPTED',
+  'ORDER_CONFIRMED',
+  'ORDER_ON_THE_WAY',
+  'ORDER_ARRIVED',
+  'ORDER_IN_PROGRESS',
+  'ORDER_WAITING_CONFIRMATION',
+  'ORDER_COMPLETED',
+  'ORDER_CANCELLED',
+  'ORDER_RESCHEDULE_PROPOSED',
+  'ORDER_RESCHEDULE_ACCEPTED',
+  'ORDER_RESCHEDULE_DECLINED',
+  'MASTER_STATUS_CHANGED',
+  'MASTER_PAUSED',
+  'MASTER_RESUMED',
+  'MASTER_PORTFOLIO_CREATED',
+  'MASTER_PORTFOLIO_UPDATED',
+  'MASTER_PORTFOLIO_REMOVED',
+  'CUSTOMER_PROFILE_UPDATED',
+  'CUSTOMER_ADDRESS_CREATED',
+  'CUSTOMER_ADDRESS_UPDATED',
+  'CUSTOMER_ADDRESS_REMOVED',
+  'REVIEW_CREATED',
+  'WARRANTY_CREATED',
+]);
 
 const TITLES: Record<string, string> = {
   AUTH_REGISTERED: 'Yangi foydalanuvchi ro‘yxatdan o‘tdi',
@@ -39,6 +80,10 @@ const TITLES: Record<string, string> = {
   CHAT_MESSAGE_EDITED: 'Chatdagi xabar tahrirlandi',
   CHAT_MESSAGE_DELETED: 'Chatdagi xabar o‘chirildi',
   PAYMENT_WEBHOOK_MISMATCH: 'To‘lov webhook’i mos kelmadi',
+  ORDER_DISPUTED: 'Buyurtma bo‘yicha nizo ochildi',
+  PAYMENT_REFUNDED: 'To‘lov qaytarildi',
+  WARRANTY_CLAIM_CREATED: 'Yangi kafolat da’vosi yuborildi',
+  APPEAL_CREATED: 'Yangi apellyatsiya yuborildi',
 };
 
 const humanize = (code: string) => {

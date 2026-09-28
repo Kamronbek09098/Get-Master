@@ -42,7 +42,7 @@ export class RequestService {
     });
     if (duplicate) return duplicate;
 
-    return this.db.problemRequest.create({
+    const created = await this.db.problemRequest.create({
       data: {
         customerId,
         title: dto.title,
@@ -57,6 +57,10 @@ export class RequestService {
         status: 'DRAFT',
       },
     });
+    await this.db.auditLog.create({
+      data: { actorId: customerId, action: 'REQUEST_CREATED', targetType: 'ProblemRequest', targetId: created.id },
+    });
+    return created;
   }
 
   async update(customerId: string, requestId: string, dto: UpdateRequestDto) {
@@ -65,7 +69,7 @@ export class RequestService {
       throw new ForbiddenException(ERRORS.ONLY_DRAFT_EDITABLE);
     }
     const selection = await this.validateReferences(customerId, dto);
-    return this.db.problemRequest.update({
+    const updated = await this.db.problemRequest.update({
       where: { id: requestId },
       data: {
         title: dto.title,
@@ -79,6 +83,10 @@ export class RequestService {
         preferredEndAt: dto.preferredEndAt ? new Date(dto.preferredEndAt) : undefined,
       },
     });
+    await this.db.auditLog.create({
+      data: { actorId: customerId, action: 'REQUEST_UPDATED', targetType: 'ProblemRequest', targetId: requestId },
+    });
+    return updated;
   }
 
   async submit(customerId: string, requestId: string) {
@@ -94,6 +102,9 @@ export class RequestService {
           submittedAt: new Date(),
           expiresAt: new Date(Date.now() + REQUEST_DEFAULT_TTL_HOURS * 60 * 60 * 1000),
         },
+      });
+      await tx.auditLog.create({
+        data: { actorId: customerId, action: 'REQUEST_SUBMITTED', targetType: 'ProblemRequest', targetId: requestId },
       });
       await this.outbox.emit(tx, {
         eventName: 'classification.requested',
@@ -111,10 +122,14 @@ export class RequestService {
     if (!CANCELLABLE_STATUSES.includes(request.status)) {
       throw new InvalidTransitionException(request.status, 'CANCELLED');
     }
-    return this.db.problemRequest.update({
+    const updated = await this.db.problemRequest.update({
       where: { id: requestId },
       data: { status: 'CANCELLED', cancellationReason: dto.reason, cancelledAt: new Date() },
     });
+    await this.db.auditLog.create({
+      data: { actorId: customerId, action: 'REQUEST_CANCELLED', targetType: 'ProblemRequest', targetId: requestId, reason: dto.reason },
+    });
+    return updated;
   }
 
   async findOne(customerId: string, requestId: string) {

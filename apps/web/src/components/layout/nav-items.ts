@@ -1,4 +1,5 @@
 import {
+  Activity,
   BadgeCheck,
   BarChart3,
   Bell,
@@ -45,6 +46,7 @@ export function getNavItems(role: Role | null): NavItem[] {
     return [
       { to: '/admin', label: 'Boshqaruv paneli', short: 'Panel', icon: LayoutDashboard, group: 'Umumiy', primary: true },
       { to: '/admin/hisobot', label: 'Hisobotlar', short: 'Hisobot', icon: BarChart3, group: 'Umumiy', primary: true },
+      { to: '/admin/devops', label: 'DevOps', icon: Activity, group: 'Umumiy' },
       { to: '/admin/foydalanuvchilar', label: 'Foydalanuvchilar', icon: Users, group: 'Boshqaruv' },
       { to: '/admin/buyurtmalar', label: 'Buyurtmalar', icon: PackageCheck, group: 'Boshqaruv' },
       { to: '/admin/suhbatlar', label: 'Suhbatlar', icon: MessagesSquare, group: 'Boshqaruv' },

@@ -69,6 +69,10 @@ export function AdminReportsPage() {
               { label: 'Jami tushum', value: formatMoney(summary.totalRevenue) },
               { label: 'Qaytarilgan', value: formatMoney(summary.totalRefunded) },
               { label: 'Sof tushum', value: formatMoney(summary.netRevenue) },
+              {
+                label: `Ilova sof foydasi (${(summary.commissionRate * 100).toFixed(0)}%)`,
+                value: formatMoney(summary.platformProfit),
+              },
               { label: 'To‘lovlar', value: summary.totalPayments },
               { label: 'Buyurtmalar', value: summary.totalOrders },
               { label: 'Yakunlangan', value: summary.completedOrders },

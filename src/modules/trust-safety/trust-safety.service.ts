@@ -77,7 +77,7 @@ export class TrustSafetyService {
       }
     }
 
-    return this.db.appeal.create({
+    const appeal = await this.db.appeal.create({
       data: {
         userId,
         caseId: dto.caseId,
@@ -85,6 +85,8 @@ export class TrustSafetyService {
         reason: dto.reason,
       },
     });
+    await this.writeAudit(userId, 'APPEAL_CREATED', 'Appeal', appeal.id);
+    return appeal;
   }
 
   findMyAppeals(userId: string) {

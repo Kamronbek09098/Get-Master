@@ -51,6 +51,9 @@ export class CustomerService {
       where: { id: userId },
       data: { firstName: dto.firstName?.trim(), lastName: dto.lastName?.trim() },
     });
+    await this.db.auditLog.create({
+      data: { actorId: userId, action: 'CUSTOMER_PROFILE_UPDATED', targetType: 'User', targetId: userId },
+    });
     return this.findOne(userId);
   }
 
@@ -81,7 +84,7 @@ export class CustomerService {
       if (count >= MAX_ADDRESSES) throw new ConflictException(ERRORS.MAX_ADDRESSES(MAX_ADDRESSES));
       const makeDefault = dto.isDefault === true || count === 0;
       if (makeDefault) await tx.address.updateMany({ where: { userId, isDefault: true }, data: { isDefault: false } });
-      return tx.address.create({
+      const created = await tx.address.create({
         data: {
           userId,
           title: dto.title,
@@ -93,6 +96,10 @@ export class CustomerService {
           isDefault: makeDefault,
         },
       });
+      await tx.auditLog.create({
+        data: { actorId: userId, action: 'CUSTOMER_ADDRESS_CREATED', targetType: 'Address', targetId: created.id },
+      });
+      return created;
     });
   }
 
@@ -105,7 +112,7 @@ export class CustomerService {
         await tx.address.updateMany({ where: { userId, isDefault: true, id: { not: addressId } }, data: { isDefault: false } });
       }
       const isDefault = current.isDefault ? true : dto.isDefault;
-      return tx.address.update({
+      const updated = await tx.address.update({
         where: { id: addressId },
         data: {
           title: dto.title,
@@ -117,6 +124,10 @@ export class CustomerService {
           isDefault,
         },
       });
+      await tx.auditLog.create({
+        data: { actorId: userId, action: 'CUSTOMER_ADDRESS_UPDATED', targetType: 'Address', targetId: addressId },
+      });
+      return updated;
     });
   }
 
@@ -130,6 +141,9 @@ export class CustomerService {
         const next = await tx.address.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } });
         if (next) await tx.address.update({ where: { id: next.id }, data: { isDefault: true } });
       }
+      await tx.auditLog.create({
+        data: { actorId: userId, action: 'CUSTOMER_ADDRESS_REMOVED', targetType: 'Address', targetId: addressId },
+      });
     });
     return { deleted: true };
   }

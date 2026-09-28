@@ -59,6 +59,15 @@ export class ReviewService {
           where: { id: participants.masterId },
           data: { ratingAvg: Math.round(average * 100) / 100, ratingCount: total },
         });
+        await tx.auditLog.create({
+          data: {
+            actorId: userId,
+            action: 'REVIEW_CREATED',
+            targetType: 'Review',
+            targetId: review.id,
+            after: { orderId: dto.orderId, rating: dto.rating, status } as Prisma.InputJsonValue,
+          },
+        });
         return review;
       });
     } catch (error) {

@@ -1,6 +1,59 @@
 import type { CaseStatus } from '@/features/dispute/types';
 import type { MasterVerificationStatus } from '@/features/master/types';
 
+export type DevOpsWindow = '1h' | '24h' | '7d';
+
+export interface DevOpsIssue {
+  level: 'warning' | 'danger';
+  message: string;
+}
+
+export interface DevOpsPing {
+  ok: boolean;
+  latencyMs: number | null;
+}
+
+export interface DevOpsSnapshot {
+  checkedAt: string;
+  issues: DevOpsIssue[];
+  system: {
+    hostname: string;
+    platform: string;
+    cpuCount: number;
+    cpuPercent: number;
+    loadAvg: [number, number, number];
+    totalMemMB: number;
+    freeMemMB: number;
+    usedMemPercent: number;
+    uptimeSeconds: number;
+    disk: { totalGB: number; usedGB: number; freeGB: number; usedPercent: number } | null;
+  };
+  process: {
+    pid: number;
+    nodeVersion: string;
+    uptimeSeconds: number;
+    rssMB: number;
+    heapUsedMB: number;
+    heapTotalMB: number;
+    cpuUserMs: number;
+    cpuSystemMs: number;
+  };
+  version: {
+    appVersion: string;
+    commit: string | null;
+    environment: string;
+    nodeVersion: string;
+    startedAt: string;
+  };
+  dependencies: {
+    database: DevOpsPing;
+    redis: DevOpsPing;
+    telegramAlerting: boolean;
+  };
+  backup: { configured: boolean; message: string };
+  traffic: Array<{ at: string; count: number }>;
+}
+
 export interface Dashboard {
   users: { total: number; byStatus: Record<string, number> };
   masters: { total: number; byStatus: Record<string, number>; byVerification: Record<string, number> };
@@ -16,6 +69,8 @@ export interface RevenueSummary {
   totalRevenue: string;
   totalRefunded: string;
   netRevenue: string;
+  platformProfit: string;
+  commissionRate: number;
   totalPayments: number;
   totalOrders: number;
   completedOrders: number;
@@ -57,7 +112,7 @@ export interface AdminUser {
 }
 
 export interface UserFilters {
-  role?: 'CUSTOMER' | 'MASTER';
+  role?: 'CUSTOMER' | 'MASTER' | 'ADMIN';
   status?: ManagedStatus;
   search?: string;
 }

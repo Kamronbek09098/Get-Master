@@ -4,8 +4,8 @@ import { CursorQueryDto } from '../../../common/dto/cursor-query.dto';
 
 export class UserQueryDto extends CursorQueryDto {
   @IsOptional()
-  @IsIn(['CUSTOMER', 'MASTER'])
-  role?: 'CUSTOMER' | 'MASTER';
+  @IsIn(['CUSTOMER', 'MASTER', 'ADMIN'])
+  role?: 'CUSTOMER' | 'MASTER' | 'ADMIN';
 
   @IsOptional()
   @IsEnum(UserStatus)

@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import type { CaseStatus } from '@/features/dispute/types';
 import { adminService } from '../services/admin.service';
 import type { DateRange } from '../services/admin.service';
-import type { AdminOrderFilters, AuditFilters, UserFilters, VerificationDecision } from '../types';
+import type { AdminOrderFilters, AuditFilters, DevOpsWindow, UserFilters, VerificationDecision } from '../types';
 
 export function useDashboard(range: DateRange) {
   return useQuery({ queryKey: ['admin', 'dashboard', range], queryFn: () => adminService.dashboard(range) });
@@ -10,6 +10,14 @@ export function useDashboard(range: DateRange) {
 
 export function useRevenueReport(range: DateRange) {
   return useQuery({ queryKey: ['admin', 'report', range], queryFn: () => adminService.report(range) });
+}
+
+export function useDevOps(window: DevOpsWindow) {
+  return useQuery({
+    queryKey: ['admin', 'devops', window],
+    queryFn: () => adminService.devops(window),
+    refetchInterval: 15_000,
+  });
 }
 
 export function useAdminUsers(filters: UserFilters) {

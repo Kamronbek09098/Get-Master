@@ -9,10 +9,20 @@ import { AdminBadgesService } from './admin-badges.service';
 import { AdminOrdersService } from './admin-orders.service';
 import { OrderModule } from '../order/order.module';
 import { AdminAuditNotifierService } from './admin-audit-notifier.service';
+import { AdminDevopsService } from './admin-devops.service';
 
 @Module({
   imports: [NotificationModule, OrderModule],
   controllers: [AdminController],
-  providers: [AdminService, AdminUsersService, AdminPortfolioService, AdminChatService, AdminBadgesService, AdminAuditNotifierService, AdminOrdersService],
+  providers: [
+    AdminService,
+    AdminUsersService,
+    AdminPortfolioService,
+    AdminChatService,
+    AdminBadgesService,
+    AdminAuditNotifierService,
+    AdminOrdersService,
+    AdminDevopsService,
+  ],
 })
 export class AdminModule {}

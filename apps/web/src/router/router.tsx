@@ -50,6 +50,7 @@ import { AdminSafetyPage } from '@/pages/admin/AdminSafetyPage';
 import { AdminCatalogPage } from '@/pages/admin/AdminCatalogPage';
 import { AdminPoliciesPage } from '@/pages/admin/AdminPoliciesPage';
 import { AdminAuditPage } from '@/pages/admin/AdminAuditPage';
+import { AdminDevOpsPage } from '@/pages/admin/AdminDevOpsPage';
 import { AdminChatsPage } from '@/pages/admin/AdminChatsPage';
 import type { ReactNode } from 'react';
 import type { Role } from '@/types/common';
@@ -138,6 +139,7 @@ export const router = createBrowserRouter([
           { path: '/admin/katalog', element: admin(<AdminCatalogPage />) },
           { path: '/admin/siyosatlar', element: admin(<AdminPoliciesPage />) },
           { path: '/admin/audit', element: admin(<AdminAuditPage />) },
+          { path: '/admin/devops', element: admin(<AdminDevOpsPage />) },
           { path: '/admin/suhbatlar', element: admin(<AdminChatsPage />) },
           { path: '/bildirishnomalar', element: <NotificationsPage /> },
           { path: '/sozlamalar', element: <SettingsPage /> },

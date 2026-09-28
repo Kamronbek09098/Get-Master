@@ -95,6 +95,15 @@ export class OfferService {
         where: { id: dto.requestId, status: { in: ['SUBMITTED', 'MATCHING'] } },
         data: { status: 'OFFERS_RECEIVED' },
       });
+      await this.db.auditLog.create({
+        data: {
+          actorId: userId,
+          action: 'OFFER_CREATED',
+          targetType: 'Offer',
+          targetId: offer.id,
+          after: { requestId: dto.requestId, price: String(offer.price) } as Prisma.InputJsonValue,
+        },
+      });
       await this.masterStats.recompute(masterProfile.id).catch((error: unknown) => {
         this.logger.warn(`Usta statistikasini yangilab bo‘lmadi: ${String(error)}`);
       });
@@ -182,6 +191,9 @@ export class OfferService {
       data: { status: 'WITHDRAWN' },
     });
     if (result.count === 0) throw new OfferNotAvailableException();
+    await this.db.auditLog.create({
+      data: { actorId: userId, action: 'OFFER_WITHDRAWN', targetType: 'Offer', targetId: offerId },
+    });
     return this.db.offer.findUniqueOrThrow({ where: { id: offerId } });
   }
 
@@ -256,6 +268,16 @@ export class OfferService {
           actorType: 'CUSTOMER',
           oldStatus: null,
           newStatus: 'BOOKED',
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorId: customerId,
+          action: 'OFFER_ACCEPTED',
+          targetType: 'Offer',
+          targetId: offer.id,
+          after: { orderId: order.id, bookingId: booking.id } as Prisma.InputJsonValue,
         },
       });
 

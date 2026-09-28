@@ -1,6 +1,21 @@
 import type { BadgeTone } from '@/components/ui/Badge';
 
-export type AuditGroup = 'auth' | 'verification' | 'users' | 'profile' | 'catalog' | 'orders' | 'disputes' | 'chat' | 'other';
+export type AuditGroup =
+  | 'auth'
+  | 'verification'
+  | 'users'
+  | 'profile'
+  | 'catalog'
+  | 'requests'
+  | 'offers'
+  | 'orderFlow'
+  | 'orders'
+  | 'payments'
+  | 'reviews'
+  | 'customer'
+  | 'disputes'
+  | 'chat'
+  | 'other';
 
 export interface AuditActionInfo {
   /** Qisqa sarlavha. */
@@ -15,9 +30,15 @@ export const GROUP_INFO: Record<AuditGroup, { label: string; prefix?: string }> 
   auth: { label: 'Kirish va sessiyalar', prefix: 'AUTH_' },
   verification: { label: 'Ustalarni tasdiqlash', prefix: 'VERIFICATION_' },
   users: { label: 'Foydalanuvchilar', prefix: 'ADMIN_USER_' },
-  profile: { label: 'Usta profili', prefix: 'MASTER_PROFILE_' },
+  profile: { label: 'Usta faoliyati', prefix: 'MASTER_' },
   catalog: { label: 'Xizmatlar katalogi', prefix: 'SERVICE_' },
-  orders: { label: 'Buyurtmalar', prefix: 'ADMIN_ORDER_' },
+  requests: { label: 'So‘rovlar', prefix: 'REQUEST_' },
+  offers: { label: 'Takliflar', prefix: 'OFFER_' },
+  orderFlow: { label: 'Buyurtma jarayoni', prefix: 'ORDER_' },
+  orders: { label: 'Admin — buyurtmalar', prefix: 'ADMIN_ORDER_' },
+  payments: { label: 'To‘lovlar', prefix: 'PAYMENT_' },
+  reviews: { label: 'Sharhlar', prefix: 'REVIEW_' },
+  customer: { label: 'Mijoz profili', prefix: 'CUSTOMER_' },
   disputes: { label: 'Nizo va shikoyatlar', prefix: 'DISPUTE_' },
   chat: { label: 'Chat moderatsiyasi', prefix: 'CHAT_' },
   other: { label: 'Boshqa' },
@@ -47,8 +68,35 @@ export const AUDIT_ACTIONS: Record<string, AuditActionInfo> = {
 
   MASTER_PROFILE_CREATED: { label: 'Usta profili yaratildi', verb: 'usta profilini yaratdi', group: 'profile', tone: 'primary' },
   MASTER_PROFILE_UPDATED: { label: 'Usta profili yangilandi', verb: 'usta profilini yangiladi', group: 'profile', tone: 'neutral' },
+  MASTER_STATUS_CHANGED: { label: 'Usta holati o‘zgardi', verb: 'profil holatini o‘zgartirdi', group: 'profile', tone: 'neutral' },
+  MASTER_PAUSED: { label: 'Usta pauza qo‘ydi', verb: 'qabul qilishni pauza qildi', group: 'profile', tone: 'warning' },
+  MASTER_RESUMED: { label: 'Usta pauzadan chiqdi', verb: 'pauzadan chiqdi', group: 'profile', tone: 'success' },
+  MASTER_PORTFOLIO_CREATED: { label: 'Portfolio ishi qo‘shildi', verb: 'portfoliosiga yangi ish qo‘shdi', group: 'profile', tone: 'primary' },
+  MASTER_PORTFOLIO_UPDATED: { label: 'Portfolio ishi yangilandi', verb: 'portfolio ishini yangiladi', group: 'profile', tone: 'neutral' },
+  MASTER_PORTFOLIO_REMOVED: { label: 'Portfolio ishi o‘chirildi', verb: 'portfolio ishini o‘chirdi', group: 'profile', tone: 'warning' },
   ADMIN_PORTFOLIO_APPROVED: { label: 'Portfolio tasdiqlandi', verb: 'portfolio ishini tasdiqladi', group: 'profile', tone: 'success' },
   ADMIN_PORTFOLIO_REJECTED: { label: 'Portfolio rad etildi', verb: 'portfolio ishini rad etdi', group: 'profile', tone: 'danger' },
+
+  REQUEST_CREATED: { label: 'So‘rov yaratildi', verb: 'yangi so‘rov yaratdi', group: 'requests', tone: 'primary' },
+  REQUEST_UPDATED: { label: 'So‘rov yangilandi', verb: 'so‘rovni yangiladi', group: 'requests', tone: 'neutral' },
+  REQUEST_SUBMITTED: { label: 'So‘rov yuborildi', verb: 'so‘rovni ustalarga yubordi', group: 'requests', tone: 'primary' },
+  REQUEST_CANCELLED: { label: 'So‘rov bekor qilindi', verb: 'so‘rovni bekor qildi', group: 'requests', tone: 'danger' },
+
+  OFFER_CREATED: { label: 'Taklif berildi', verb: 'so‘rovga taklif berdi', group: 'offers', tone: 'primary' },
+  OFFER_WITHDRAWN: { label: 'Taklif qaytarib olindi', verb: 'taklifini qaytarib oldi', group: 'offers', tone: 'warning' },
+  OFFER_ACCEPTED: { label: 'Taklif qabul qilindi', verb: 'taklifni qabul qildi', group: 'offers', tone: 'success' },
+
+  ORDER_CONFIRMED: { label: 'Buyurtma tasdiqlandi', verb: 'buyurtmani tasdiqladi', group: 'orderFlow', tone: 'primary' },
+  ORDER_ON_THE_WAY: { label: 'Usta yo‘lga chiqdi', verb: 'ish joyiga yo‘lga chiqdi', group: 'orderFlow', tone: 'primary' },
+  ORDER_ARRIVED: { label: 'Usta yetib keldi', verb: 'ish joyiga yetib keldi', group: 'orderFlow', tone: 'primary' },
+  ORDER_IN_PROGRESS: { label: 'Ish boshlandi', verb: 'ishni boshladi', group: 'orderFlow', tone: 'primary' },
+  ORDER_WAITING_CONFIRMATION: { label: 'Tasdiq kutilmoqda', verb: 'ish yakunini tasdiqlash uchun yubordi', group: 'orderFlow', tone: 'warning' },
+  ORDER_COMPLETED: { label: 'Buyurtma yakunlandi', verb: 'buyurtmani yakunladi', group: 'orderFlow', tone: 'success' },
+  ORDER_CANCELLED: { label: 'Buyurtma bekor qilindi', verb: 'buyurtmani bekor qildi', group: 'orderFlow', tone: 'danger' },
+  ORDER_DISPUTED: { label: 'Buyurtma bo‘yicha nizo ochildi', verb: 'buyurtma bo‘yicha nizo ochdi', group: 'orderFlow', tone: 'danger' },
+  ORDER_RESCHEDULE_PROPOSED: { label: 'Yangi vaqt taklif qilindi', verb: 'buyurtma vaqtini o‘zgartirishni taklif qildi', group: 'orderFlow', tone: 'neutral' },
+  ORDER_RESCHEDULE_ACCEPTED: { label: 'Yangi vaqt tasdiqlandi', verb: 'yangi vaqtni tasdiqladi', group: 'orderFlow', tone: 'success' },
+  ORDER_RESCHEDULE_DECLINED: { label: 'Yangi vaqt rad etildi', verb: 'taklif qilingan vaqtni rad etdi', group: 'orderFlow', tone: 'warning' },
 
   ADMIN_ORDER_CANCELLED: { label: 'Buyurtma bekor qilindi', verb: 'buyurtmani bekor qildi', group: 'orders', tone: 'danger' },
   ADMIN_ORDER_COMPLETED: { label: 'Nizoli buyurtma yakunlandi', verb: 'nizoli buyurtmani yakunladi', group: 'orders', tone: 'success' },
@@ -60,13 +108,26 @@ export const AUDIT_ACTIONS: Record<string, AuditActionInfo> = {
 
   DISPUTE_STATUS_CHANGED: { label: 'Nizo holati o‘zgardi', verb: 'nizo holatini o‘zgartirdi', group: 'disputes', tone: 'warning' },
   COMPLAINT_STATUS_CHANGED: { label: 'Shikoyat holati o‘zgardi', verb: 'shikoyat holatini o‘zgartirdi', group: 'disputes', tone: 'warning' },
+  APPEAL_CREATED: { label: 'Apellyatsiya yuborildi', verb: 'apellyatsiya yubordi', group: 'disputes', tone: 'primary' },
   APPEAL_UPDATED: { label: 'Apellyatsiya yangilandi', verb: 'apellyatsiyani ko‘rib chiqdi', group: 'disputes', tone: 'warning' },
+  WARRANTY_CREATED: { label: 'Kafolat ochildi', verb: 'buyurtmaga kafolat ochdi', group: 'disputes', tone: 'primary' },
+  WARRANTY_CLAIM_CREATED: { label: 'Kafolat da’vosi yuborildi', verb: 'kafolat bo‘yicha da’vo yubordi', group: 'disputes', tone: 'primary' },
   WARRANTY_CLAIM_UPDATED: { label: 'Kafolat da’vosi yangilandi', verb: 'kafolat da’vosini yangiladi', group: 'disputes', tone: 'warning' },
+  COMPENSATION_CREATED: { label: 'Kompensatsiya berildi', verb: 'kompensatsiya ajratdi', group: 'disputes', tone: 'success' },
 
   CHAT_MESSAGE_EDITED: { label: 'Xabar tahrirlandi', verb: 'chatdagi xabarni tahrir qildi', group: 'chat', tone: 'warning' },
   CHAT_MESSAGE_DELETED: { label: 'Xabar o‘chirildi', verb: 'chatdagi xabarni o‘chirdi', group: 'chat', tone: 'danger' },
 
-  PAYMENT_WEBHOOK_MISMATCH: { label: 'To‘lov webhook’i mos kelmadi', verb: 'to‘lov webhook’i mos kelmadi', group: 'other', tone: 'danger' },
+  PAYMENT_CASH_CONFIRMED: { label: 'Naqd to‘lov tasdiqlandi', verb: 'naqd to‘lovni tasdiqladi', group: 'payments', tone: 'success' },
+  PAYMENT_REFUNDED: { label: 'To‘lov qaytarildi', verb: 'to‘lovni qaytardi', group: 'payments', tone: 'warning' },
+  PAYMENT_WEBHOOK_MISMATCH: { label: 'To‘lov webhook’i mos kelmadi', verb: 'to‘lov webhook’i mos kelmadi', group: 'payments', tone: 'danger' },
+
+  REVIEW_CREATED: { label: 'Sharh qoldirildi', verb: 'ustaga sharh qoldirdi', group: 'reviews', tone: 'primary' },
+
+  CUSTOMER_PROFILE_UPDATED: { label: 'Mijoz profili yangilandi', verb: 'profilini yangiladi', group: 'customer', tone: 'neutral' },
+  CUSTOMER_ADDRESS_CREATED: { label: 'Manzil qo‘shildi', verb: 'yangi manzil qo‘shdi', group: 'customer', tone: 'primary' },
+  CUSTOMER_ADDRESS_UPDATED: { label: 'Manzil yangilandi', verb: 'manzilni yangiladi', group: 'customer', tone: 'neutral' },
+  CUSTOMER_ADDRESS_REMOVED: { label: 'Manzil o‘chirildi', verb: 'manzilni o‘chirdi', group: 'customer', tone: 'warning' },
 };
 
 const humanize = (code: string) => {
@@ -82,6 +143,7 @@ export const TARGET_LABEL: Record<string, string> = {
   User: 'Foydalanuvchi',
   MasterVerification: 'Tasdiqlash hujjati',
   MasterProfile: 'Usta profili',
+  MasterPortfolio: 'Portfolio ishi',
   DeviceSession: 'Qurilma sessiyasi',
   Service: 'Xizmat',
   ServiceCategory: 'Xizmat kategoriyasi',
@@ -89,6 +151,13 @@ export const TARGET_LABEL: Record<string, string> = {
   Message: 'Chat xabari',
   Order: 'Buyurtma',
   Payment: 'To‘lov',
+  ProblemRequest: 'So‘rov',
+  Offer: 'Taklif',
+  Address: 'Manzil',
+  Review: 'Sharh',
+  Warranty: 'Kafolat',
+  WarrantyClaim: 'Kafolat da’vosi',
+  Appeal: 'Apellyatsiya',
 };
 
 export const STATUS_LABEL: Record<string, string> = {

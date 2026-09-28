@@ -4,6 +4,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { createValidationPipe } from './common/pipes/validation.pipe';
 import { MetricsService } from './infrastructure/metrics/metrics.service';
+import { RequestRateService } from './infrastructure/metrics/request-rate.service';
 import { createMetricsMiddleware } from './infrastructure/metrics/metrics.middleware';
 
 (BigInt.prototype as unknown as { toJSON(): number }).toJSON = function toJSON() {
@@ -27,7 +28,7 @@ export function configureApp(app: INestApplication): void {
   }
   const requestIdMiddleware = new RequestIdMiddleware();
   app.use(requestIdMiddleware.use.bind(requestIdMiddleware));
-  app.use(createMetricsMiddleware(app.get(MetricsService)));
+  app.use(createMetricsMiddleware(app.get(MetricsService), app.get(RequestRateService)));
 
   const origins = config.get<string[]>('app.corsOrigins', []);
   app.enableCors({

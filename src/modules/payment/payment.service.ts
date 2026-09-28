@@ -319,6 +319,17 @@ export class PaymentService {
         data: { refundedAmount: newRefundedAmount, status: newStatus },
       });
 
+      await tx.auditLog.create({
+        data: {
+          actorId: actorId,
+          action: 'PAYMENT_REFUNDED',
+          targetType: 'Payment',
+          targetId: paymentId,
+          reason: dto.reason,
+          after: { amount: String(dto.amount), currency: payment.currency, newStatus } as Prisma.InputJsonValue,
+        },
+      });
+
       return refund;
     });
   }
