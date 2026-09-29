@@ -63,8 +63,11 @@ describe('GET /masters/me/incoming-requests', () => {
   });
 
   it('paginates with a cursor', async () => {
-    const fresh = await createMaster(h, service.id);
-    for (let i = 0; i < 3; i += 1) await notify(await openRequest(h, customer, service.id), fresh.masterId);
+    // O‘z xizmati bilan alohida: umumiy `service`dagi boshqa testlarning hali moslashtirilmagan
+    // so‘rovlari «xizmat turi mos + moslashtirilmagan» xavfsizlik filtri orqali sizib kirmasin.
+    const isolatedService = await freshService(h);
+    const fresh = await createMaster(h, isolatedService.id);
+    for (let i = 0; i < 3; i += 1) await notify(await openRequest(h, customer, isolatedService.id), fresh.masterId);
     const first = await h.get('/masters/me/incoming-requests?limit=2', fresh.token);
     expect(first.data.items).toHaveLength(2);
     expect(first.data.nextCursor).toBeTruthy();
