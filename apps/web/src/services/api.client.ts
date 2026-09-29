@@ -27,7 +27,13 @@ async function refreshSession(): Promise<boolean> {
 
 export const SESSION_EXPIRED_EVENT = 'getmaster:session-expired';
 
+let lastSessionExpiredAt = 0;
+
 function notifySessionExpired(): void {
+  // Bir nechta fon so'rovi bir vaqtda 401 qaytarsa ham, faqat bitta xabar ko'rsatiladi.
+  const now = Date.now();
+  if (now - lastSessionExpiredAt < 3000) return;
+  lastSessionExpiredAt = now;
   window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
 }
 

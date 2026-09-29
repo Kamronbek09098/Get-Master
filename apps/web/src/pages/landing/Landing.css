@@ -379,6 +379,7 @@
   display: flex;
   align-items: center;
   gap: var(--gm-space-3);
+  min-width: 0;
   padding: var(--gm-space-4) var(--gm-space-5);
   background: var(--gm-color-surface);
   border: 1px solid var(--gm-color-border);
@@ -391,6 +392,7 @@
 
 .gm-landing__category span {
   display: grid;
+  flex-shrink: 0;
   place-items: center;
   width: 48px;
   height: 48px;
@@ -493,8 +495,13 @@
   }
 
   .gm-landing__trust,
-  .gm-landing__steps {
+  .gm-landing__steps,
+  .gm-landing__categories {
     grid-template-columns: 1fr;
+  }
+
+  .gm-landing__category {
+    padding: var(--gm-space-3) var(--gm-space-4);
   }
 
   .gm-landing__cta {

@@ -10,6 +10,10 @@ html,
 body,
 #root {
   min-height: 100%;
+  /* Ilova gorizontal tomonga surilmasligi/tebranmasligi uchun — ba'zi elementlarning
+     (masalan aylantirilgan kartalar) piksel darajasidagi toshib chiqishi sabab bo'lmasin. */
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 html {
