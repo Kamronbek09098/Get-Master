@@ -9,6 +9,9 @@ interface RouteInfo {
 
 const SKIP_PREFIXES = ['/api/v1/auth', '/api/v1/otp', '/api/v1/webhooks'];
 const isIdParam = (name: string) => /(^|[a-z])id$/i.test(name);
+// GET /masters/:id deliberately accepts either a UUID or a numeric account number (dual-format
+// public lookup) and does its own format check, returning 404 — not 400 — for anything else.
+const ACCEPTS_NON_UUID = new Set(['GET /masters/:id']);
 
 function listRoutes(h: Harness): RouteInfo[] {
   const server = h.app.getHttpAdapter().getInstance() as any;
@@ -74,7 +77,7 @@ describe('route sweep', () => {
         statuses.push(res.status);
       }
       if (statuses.some((s) => s >= 500)) offenders.push(`${route.method} ${route.path} → ${statuses}`);
-      if (!statuses.includes(400)) unreached.push(`${route.method} ${route.path} → ${statuses}`);
+      if (!statuses.includes(400) && !ACCEPTS_NON_UUID.has(`${route.method} ${route.path}`)) unreached.push(`${route.method} ${route.path} → ${statuses}`);
     }
     expect(offenders).toEqual([]);
     expect(unreached).toEqual([]);

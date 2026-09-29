@@ -278,27 +278,31 @@ describe('K02 — registration & login', () => {
         data: { createdAt: new Date(Date.now() - hours * 3_600_000) },
       });
 
-    it('lists only active devices with browser, IP and panel, marks the current one and never leaks device ids', async () => {
+    it('lists only active devices with browser, IP and panel, marks the current one, never leaks device ids, and is scoped to the caller’s own panel', async () => {
       const ip = '10.1.4.1';
       const phone = await registerAndActivate(ip);
       const desktop = await signIn(phone, ip, CHROME, 'CUSTOMER');
-      const mobile = await signIn(phone, ip, PHONE_UA, 'MASTER');
+      const mobile = await signIn(phone, ip, PHONE_UA, 'CUSTOMER');
+      const masterApp = await signIn(phone, ip, PHONE_UA, 'MASTER');
 
       const list = await sessions(desktop);
       expect(list.status).toBe(200);
+      // Faqat shu chaqiruvchi panel (CUSTOMER) qurilmalari ko‘rinadi — boshqa panel (MASTER) sizib chiqmaydi.
       expect(list.data).toHaveLength(2);
       for (const item of list.data) {
         expect(item).not.toHaveProperty('deviceId');
         expect(item.status).toBe('ACTIVE');
         expect(item.ipAddress).toBe(ip);
+        expect(item.panel).toBe('CUSTOMER');
       }
       const current = list.data.filter((item: { isCurrent: boolean }) => item.isCurrent);
       expect(current).toHaveLength(1);
       expect(current[0]).toMatchObject({ userAgent: CHROME, panel: 'CUSTOMER' });
-      expect(list.data.find((item: { isCurrent: boolean }) => !item.isCurrent)).toMatchObject({ userAgent: PHONE_UA, panel: 'MASTER' });
+      expect(list.data.find((item: { isCurrent: boolean }) => !item.isCurrent)).toMatchObject({ userAgent: PHONE_UA, panel: 'CUSTOMER' });
 
-      const fromMobile = await sessions(mobile);
-      expect(fromMobile.data.find((item: { isCurrent: boolean }) => item.isCurrent)).toMatchObject({ panel: 'MASTER' });
+      const fromMaster = await sessions(masterApp);
+      expect(fromMaster.data).toHaveLength(1);
+      expect(fromMaster.data[0]).toMatchObject({ isCurrent: true, panel: 'MASTER' });
     });
 
     it('signs one device out by its session id — that device loses access at once, the caller keeps it', async () => {

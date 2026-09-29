@@ -252,8 +252,9 @@ export class MasterService {
   /**
    * Faqat oldindan hisoblangan (async to‘lqinli) `MatchingResult`ga tayanish sahifani doim bo‘sh qoldirib
    * yuborishi mumkin (masalan usta hali `MasterService` qo‘shmagan yoki to‘lqin unga yetib bormagan bo‘lsa).
-   * Shuning uchun `findOpenRequests`dagi «menga mos» filtri bilan bir xil, jonli hisoblanadigan mantiq ishlatiladi:
-   * ustaning faol xizmat toifalariga mos yoki alohida NOTIFIED qilingan barcha ochiq so‘rovlar qaytariladi.
+   * Shuning uchun so‘rov hali umuman moslashtirilmagan (birorta ham `matchingRun` yo‘q) bo‘lsa, ustaning
+   * faol xizmat toifasiga mosligi kifoya. Ammo moslashtirish allaqachon o‘tgan bo‘lsa — ustani aniq NOTIFIED
+   * qilmagan (masalan, faqat CANDIDATE sifatida baholab, e’lon qilmagan) so‘rovlar bu yerda ko‘rinmasligi kerak.
    */
   async findIncomingRequests(userId: string, query: CursorQueryDto) {
     const profile = await this.requireOwn(userId);
@@ -268,7 +269,7 @@ export class MasterService {
       { OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] },
       {
         OR: [
-          ...(serviceIds.length ? [{ serviceId: { in: serviceIds } }] : []),
+          ...(serviceIds.length ? [{ serviceId: { in: serviceIds }, matchingRuns: { none: {} } }] : []),
           { matchingRuns: { some: { results: { some: { masterId: profile.id, status: 'NOTIFIED' } } } } },
         ],
       },

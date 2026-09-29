@@ -156,7 +156,8 @@ describe('M02 — notifications', () => {
       { label: 'status-changed notification' },
     );
     expect(changed).toHaveLength(1);
-    expect(changed[0]!.body).toContain('BOOKED -> CONFIRMED');
+    // Bildirishnoma matni endi texnik holat emas, oddiy tilda joriy vaziyatni tushuntiradi.
+    expect(changed[0]!.body).toContain('Usta buyurtmangizni qabul qildi va tasdiqladi.');
     expect(await h.db.notification.count({ where: { userId: master.id, template: 'order.status_changed' } })).toBe(0);
   });
 });
