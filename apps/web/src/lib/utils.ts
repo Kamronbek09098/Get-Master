@@ -5,10 +5,14 @@ export function cx(...values: Array<string | false | null | undefined>): string 
 export function formatMoney(amount: string | number, currency = 'UZS'): string {
   const value = typeof amount === 'string' ? Number(amount) : amount;
   if (!Number.isFinite(value)) return '—';
-  return new Intl.NumberFormat('uz-UZ', {
-    style: 'decimal',
-    maximumFractionDigits: 0,
-  }).format(value) + ' ' + currency;
+  return (
+    new Intl.NumberFormat('uz-UZ', {
+      style: 'decimal',
+      maximumFractionDigits: 0,
+    }).format(value) +
+    ' ' +
+    currency
+  );
 }
 
 const MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];

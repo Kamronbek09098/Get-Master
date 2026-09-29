@@ -8,10 +8,12 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
   hint?: string;
+  /** Input ichida chapda ko‘rsatiladigan doimiy qism, masalan telefon kodi «+998». */
+  prefix?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, hint, id, required, className, type, ...rest }, ref) => {
+  ({ label, error, hint, id, required, className, type, prefix, ...rest }, ref) => {
     const generatedId = useId();
     const [revealed, setRevealed] = useState(false);
     const isPassword = type === 'password';
@@ -26,7 +28,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {label}
           {required && <span aria-hidden="true"> *</span>}
         </label>
-        <div className={cx('gm-field__wrap', isPassword && 'gm-field__wrap--password')}>
+        <div className={cx('gm-field__wrap', isPassword && 'gm-field__wrap--password', prefix && 'gm-field__wrap--prefixed')}>
+          {prefix && (
+            <span className="gm-field__prefix" aria-hidden="true">
+              {prefix}
+            </span>
+          )}
           <input
             ref={ref}
             id={inputId}

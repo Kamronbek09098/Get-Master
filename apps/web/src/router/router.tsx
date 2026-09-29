@@ -3,6 +3,8 @@ import { RootShell } from './RootShell';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { MainLayout } from '@/layouts/MainLayout';
 import { ProtectedRoute, RedirectIfAuthed } from './ProtectedRoute';
+import { PageLoader } from '@/components/common/PageLoader';
+import { useCurrentRole } from '@/features/session/hooks/useCurrentRole';
 import { RoleSelectPage } from '@/pages/RoleSelectPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
@@ -16,8 +18,6 @@ import { CreateOfferPage } from '@/pages/offers/CreateOfferPage';
 import { PaymentPage } from '@/pages/payments/PaymentPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
-import { BookingsPage } from '@/pages/bookings/BookingsPage';
-import { BookingDetailsPage } from '@/pages/bookings/BookingDetailsPage';
 import { CustomerPage } from '@/pages/customer/CustomerPage';
 import { CustomerProfilePage } from '@/pages/customer/CustomerProfilePage';
 import { MasterPage } from '@/pages/master/MasterPage';
@@ -60,6 +60,15 @@ const customer = (el: ReactNode) => only(['CUSTOMER'], el);
 const master = (el: ReactNode) => only(['MASTER'], el);
 const admin = (el: ReactNode) => only(['ADMIN'], el);
 const shared = (el: ReactNode) => only(['CUSTOMER', 'MASTER'], el);
+
+/** Eski «Bronlar» havolalari (/bronlar) endi yagona «Buyurtmalar» bo‘limiga yo‘naltiriladi. */
+function OrdersRedirect() {
+  const { role, isLoading } = useCurrentRole();
+  if (isLoading) return <PageLoader label="Yuklanmoqda…" />;
+  if (role === 'MASTER') return <Navigate to="/ustalar/buyurtmalar" replace />;
+  if (role === 'ADMIN') return <Navigate to="/admin/buyurtmalar" replace />;
+  return <Navigate to="/mijozlar/buyurtmalar" replace />;
+}
 
 export const router = createBrowserRouter([
   {
@@ -116,8 +125,8 @@ export const router = createBrowserRouter([
           { path: '/ustalar/nizolar', element: master(<DisputesPage />) },
           { path: '/ustalar-katalogi', element: customer(<MasterPage />) },
           { path: '/ustalar-katalogi/:id', element: customer(<MasterDetailsPage />) },
-          { path: '/bronlar', element: shared(<BookingsPage />) },
-          { path: '/bronlar/:id', element: shared(<BookingDetailsPage />) },
+          { path: '/bronlar', element: shared(<OrdersRedirect />) },
+          { path: '/bronlar/:id', element: shared(<OrdersRedirect />) },
           { path: '/mijozlar/tolovlar', element: customer(<PaymentHistoryPage />) },
           { path: '/ustalar/faol-takliflar', element: master(<ActiveOffersPage />) },
           { path: '/ustalar/mening-takliflarim', element: master(<MyOffersPage />) },

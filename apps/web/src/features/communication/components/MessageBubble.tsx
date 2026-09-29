@@ -76,6 +76,9 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
   const deletable = mine && settled && message.type !== 'ORDER';
   const hasText = !!message.text;
   const panel = env.appRole ?? '';
+  // Faqat rasm(lar)dan iborat xabar — Telegramdagidek ramkasiz, rasm pufakchani to‘liq egallaydi.
+  const mediaOnly =
+    settled && message.type !== 'ORDER' && !hasText && !!message.attachments?.length && message.attachments.every((a) => a.mimeType.startsWith('image/'));
 
   useEffect(() => {
     if (!menu) return;
@@ -123,7 +126,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
   return (
     <div id={`msg-${message.id}`} className={cx('gm-msg', mine && 'gm-msg--mine', first && 'gm-msg--first', last && 'gm-msg--last')}>
       <div
-        className={cx('gm-bubble', mine && 'gm-bubble--mine', message.deleted && 'gm-bubble--deleted', failed && 'gm-bubble--failed')}
+        className={cx('gm-bubble', mine && 'gm-bubble--mine', message.deleted && 'gm-bubble--deleted', failed && 'gm-bubble--failed', mediaOnly && 'gm-bubble--media')}
         onContextMenu={openMenu}
         onDoubleClick={settled && onReply ? () => onReply(message) : undefined}
       >

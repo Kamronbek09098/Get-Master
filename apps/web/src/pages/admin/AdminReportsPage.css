@@ -1,4 +1,4 @@
-.gm-payment-card {
+.gm-card.gm-payment-card {
   display: flex;
   align-items: center;
   justify-content: space-between;

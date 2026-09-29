@@ -16,26 +16,3 @@
   text-align: center;
 }
 
-.gm-phone-field {
-  position: relative;
-  width: 100%;
-}
-
-.gm-phone-field .gm-field {
-  width: 100%;
-}
-
-.gm-phone-field__prefix {
-  position: absolute;
-  left: var(--gm-space-4);
-  bottom: 15px;
-  color: var(--gm-color-text-muted);
-  font-size: 15px;
-  font-weight: 600;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.gm-phone-field input {
-  padding-left: 62px;
-}

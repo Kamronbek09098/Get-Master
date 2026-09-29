@@ -35,19 +35,15 @@ export function RegisterForm() {
     <form className="gm-auth-form" onSubmit={(e) => void handleSubmit(onSubmit)(e)} noValidate>
       {register_.isError && <Alert tone="danger">{getErrorMessage(register_.error)}</Alert>}
 
-      <div className="gm-phone-field">
-        <span className="gm-phone-field__prefix" aria-hidden="true">
-          +998
-        </span>
-        <Input
-          label="Telefon raqami"
-          inputMode="numeric"
-          placeholder="901234567"
-          required
-          error={errors.phoneLocal?.message}
-          {...register('phoneLocal')}
-        />
-      </div>
+      <Input
+        label="Telefon raqami"
+        prefix="+998"
+        inputMode="numeric"
+        placeholder="901234567"
+        required
+        error={errors.phoneLocal?.message}
+        {...register('phoneLocal')}
+      />
       <Input label="Ism" required {...register('firstName')} error={errors.firstName?.message} />
       <Input label="Familiya" required {...register('lastName')} error={errors.lastName?.message} />
       <Input label="Email (ixtiyoriy)" type="email" {...register('email')} error={errors.email?.message} />

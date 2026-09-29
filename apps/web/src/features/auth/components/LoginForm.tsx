@@ -28,19 +28,15 @@ export function LoginForm() {
     <form className="gm-auth-form" onSubmit={(e) => void handleSubmit(onSubmit)(e)} noValidate>
       {login.isError && <Alert tone="danger">{getErrorMessage(login.error)}</Alert>}
 
-      <div className="gm-phone-field">
-        <span className="gm-phone-field__prefix" aria-hidden="true">
-          +998
-        </span>
-        <Input
-          label="Telefon raqami"
-          inputMode="numeric"
-          placeholder="901234567"
-          required
-          error={errors.phoneLocal?.message}
-          {...register('phoneLocal')}
-        />
-      </div>
+      <Input
+        label="Telefon raqami"
+        prefix="+998"
+        inputMode="numeric"
+        placeholder="901234567"
+        required
+        error={errors.phoneLocal?.message}
+        {...register('phoneLocal')}
+      />
       <Input label="Parol" type="password" required error={errors.password?.message} {...register('password')} />
       <Button type="submit" loading={login.isPending} fullWidth>
         Kirish

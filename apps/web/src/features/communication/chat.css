@@ -1088,6 +1088,49 @@ body:has(.gm-messenger) .gm-footer {
 .gm-mviewer__open--lg .gm-mviewer__hint {
   display: none;
 }
+
+/* Faqat rasmdan iborat xabar — Telegramdagidek ramkasiz: rasm pufakchani to‘liq
+   egallaydi, vaqt belgisi esa rasm ustiga qora shaffof yorliq bilan qo‘yiladi. */
+.gm-bubble--media:not(:has(.gm-quote)) {
+  padding: 0;
+  overflow: hidden;
+  box-shadow: none;
+  background: transparent;
+}
+.gm-bubble--media:not(:has(.gm-quote)) .gm-attach {
+  margin-bottom: 0;
+  gap: 2px;
+}
+.gm-bubble--media:not(:has(.gm-quote)) .gm-mviewer__open,
+.gm-bubble--media:not(:has(.gm-quote)) .gm-mviewer__open--lg {
+  display: block;
+  width: 100%;
+}
+.gm-bubble--media:not(:has(.gm-quote)) .gm-mviewer__open--lg .gm-media-thumb {
+  display: block;
+  width: min(320px, 74vw);
+  max-height: 380px;
+  border-radius: 0;
+}
+.gm-bubble--media:not(:has(.gm-quote)) .gm-mviewer__open--lg .gm-mviewer__hint {
+  display: block;
+  border-radius: 0;
+}
+.gm-bubble--media:not(:has(.gm-quote)) .gm-bubble__meta {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  float: none;
+  margin: 0;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(10, 20, 40, 0.55);
+  color: #fff;
+  opacity: 1;
+}
+.gm-bubble--media:not(:has(.gm-quote)) .gm-bubble__ticks--read {
+  color: #fff;
+}
 .gm-attach-file {
   display: inline-flex;
   align-items: center;
