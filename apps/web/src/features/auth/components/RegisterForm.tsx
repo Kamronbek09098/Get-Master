@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useRegister } from '../hooks/useAuth';
-import { registerSchema, toFullPhone, type RegisterFormValues } from '../validation';
+import { formatLocalPhone, toLocalDigits, registerSchema, toFullPhone, type RegisterFormValues } from '../validation';
 
 export function RegisterForm() {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ export function RegisterForm() {
   function onSubmit(values: RegisterFormValues) {
     register_.mutate(
       {
-        phone: toFullPhone(values.phoneLocal),
+        phone: toFullPhone(toLocalDigits(values.phoneLocal)),
         password: values.password,
         firstName: values.firstName,
         lastName: values.lastName,
@@ -39,7 +39,10 @@ export function RegisterForm() {
         label="Telefon raqami"
         prefix="+998"
         inputMode="numeric"
-        placeholder="901234567"
+        placeholder="90 123 45 67"
+        autoComplete="tel-national"
+        maxLength={12}
+        formatValue={formatLocalPhone}
         required
         error={errors.phoneLocal?.message}
         {...register('phoneLocal')}

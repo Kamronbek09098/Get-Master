@@ -10,17 +10,48 @@ html,
 body,
 #root {
   min-height: 100%;
-  /* Ilova gorizontal tomonga surilmasligi/tebranmasligi uchun — ba'zi elementlarning
-     (masalan aylantirilgan kartalar) piksel darajasidagi toshib chiqishi sabab bo'lmasin. */
   max-width: 100%;
+}
+
+/* Ilova gorizontal tomonga surilmasligi/tebranmasligi uchun. Faqat html/body'da
+   overflow-x: hidden mobil brauzer va Android WebView'da yetarli emas, shu sabab
+   touch-action va overscroll ham cheklangan. #root'ga overflow berilmaydi (sticky buzilmasin). */
+html,
+body {
+  width: 100%;
   overflow-x: hidden;
+  overscroll-behavior-x: none;
+  touch-action: pan-y pinch-zoom;
+}
+
+@supports (overflow: clip) {
+  html,
+  body {
+    overflow-x: clip;
+  }
 }
 
 html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* Ilova to‘liq ekranda (status bar ostigacha) ko‘rinadi; xavfsiz zona padding bilan hal qilinadi. */
+:root {
+  --gm-safe-top: env(safe-area-inset-top, 0px);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--gm-safe-top);
+  background: var(--gm-color-bg);
+  z-index: 9999;
+  pointer-events: none;
+}
+
 body {
+  padding-top: var(--gm-safe-top);
   margin: 0;
   background: var(--gm-color-bg);
   color: var(--gm-color-text);

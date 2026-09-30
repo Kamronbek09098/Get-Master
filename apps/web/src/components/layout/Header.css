@@ -1,6 +1,6 @@
 .gm-header {
   position: sticky;
-  top: 0;
+  top: var(--gm-safe-top);
   z-index: 600;
   display: flex;
   align-items: center;

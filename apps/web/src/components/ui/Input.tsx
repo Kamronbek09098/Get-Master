@@ -10,10 +10,12 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   hint?: string;
   /** Input ichida chapda ko‘rsatiladigan doimiy qism, masalan telefon kodi «+998». */
   prefix?: string;
+  /** Qiymatni kiritish paytida formatlaydi (masalan, telefon: «95 959 49 44»). */
+  formatValue?: (value: string) => string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, hint, id, required, className, type, prefix, ...rest }, ref) => {
+  ({ label, error, hint, id, required, className, type, prefix, formatValue, onChange, ...rest }, ref) => {
     const generatedId = useId();
     const [revealed, setRevealed] = useState(false);
     const isPassword = type === 'password';
@@ -42,6 +44,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={!!error}
             aria-describedby={describedBy}
             className={cx('gm-field__control', error && 'gm-field__control--error', className)}
+            onChange={
+              formatValue
+                ? (event) => {
+                    event.target.value = formatValue(event.target.value);
+                    onChange?.(event);
+                  }
+                : onChange
+            }
             {...rest}
           />
           {isPassword && (

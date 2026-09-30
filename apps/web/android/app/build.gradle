@@ -4,7 +4,9 @@ android {
     namespace = "uz.getmaster.customer"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "uz.getmaster.customer"
+        applicationId project.findProperty('appId') ?: "uz.getmaster.customer"
+        resValue "string", "app_name", project.findProperty('appName') ?: "GetMaster"
+        resValue "string", "title_activity_main", project.findProperty('appName') ?: "GetMaster"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

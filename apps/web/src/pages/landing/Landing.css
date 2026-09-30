@@ -11,7 +11,7 @@
 
 .gm-landing__nav {
   position: sticky;
-  top: 0;
+  top: var(--gm-safe-top);
   z-index: 50;
   border-bottom: 1px solid color-mix(in srgb, var(--gm-color-border) 70%, transparent);
   background: color-mix(in srgb, var(--gm-color-bg) 82%, transparent);

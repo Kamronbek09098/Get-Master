@@ -3,10 +3,23 @@ import { z } from 'zod';
 const LOCAL_PHONE_REGEX = /^\d{9}$/;
 const OTP_CODE_REGEX = /^\d{6}$/;
 
+/** «95 959 49 44» ko‘rinishidagi qiymatdan faqat 9 xonali raqamni ajratadi. */
+export function toLocalDigits(value: string): string {
+  let digits = value.replace(/\D/g, '');
+  if (digits.length > 9 && digits.startsWith('998')) digits = digits.slice(3);
+  return digits.slice(0, 9);
+}
+
+/** 9 ta raqamni «XX XXX XX XX» ko‘rinishiga keltiradi. */
+export function formatLocalPhone(value: string): string {
+  const d = toLocalDigits(value);
+  return [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7), d.slice(7, 9)].filter(Boolean).join(' ');
+}
+
 export const localPhoneSchema = z
   .string()
-  .trim()
-  .regex(LOCAL_PHONE_REGEX, 'Telefon raqami 9 ta raqamdan iborat bo‘lishi kerak (masalan, 901234567)');
+  .transform((value) => value.replace(/\s/g, ''))
+  .pipe(z.string().regex(LOCAL_PHONE_REGEX, 'Telefon raqami 9 ta raqamdan iborat bo‘lishi kerak (masalan, 90 123 45 67)'));
 
 export const registerSchema = z
   .object({

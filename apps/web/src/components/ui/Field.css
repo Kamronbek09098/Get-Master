@@ -107,7 +107,16 @@ select.gm-field__control {
 }
 
 .gm-field__wrap--prefixed .gm-field__control {
-  padding-left: 58px;
+  padding-left: 82px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.gm-field__wrap--prefixed .gm-field__prefix {
+  padding-right: 12px;
+  border-right: 1.5px solid var(--gm-color-border-strong);
+  height: 24px;
+  color: var(--gm-color-text);
 }
 
 .gm-field__reveal {

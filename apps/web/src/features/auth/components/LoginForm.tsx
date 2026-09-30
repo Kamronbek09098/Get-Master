@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useLogin } from '../hooks/useAuth';
-import { loginSchema, toFullPhone, type LoginFormValues } from '../validation';
+import { formatLocalPhone, toLocalDigits, loginSchema, toFullPhone, type LoginFormValues } from '../validation';
 
 export function LoginForm() {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ export function LoginForm() {
 
   function onSubmit(values: LoginFormValues) {
     login.mutate(
-      { phone: toFullPhone(values.phoneLocal), password: values.password },
+      { phone: toFullPhone(toLocalDigits(values.phoneLocal)), password: values.password },
       { onSuccess: () => navigate('/otp', { state: { flow: 'login' } }) },
     );
   }
@@ -32,7 +32,10 @@ export function LoginForm() {
         label="Telefon raqami"
         prefix="+998"
         inputMode="numeric"
-        placeholder="901234567"
+        placeholder="90 123 45 67"
+        autoComplete="tel-national"
+        maxLength={12}
+        formatValue={formatLocalPhone}
         required
         error={errors.phoneLocal?.message}
         {...register('phoneLocal')}
