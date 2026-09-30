@@ -20,8 +20,14 @@ export function configureApp(app: INestApplication): void {
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    // Shaxsiy ma'lumotli javoblar brauzer/proksi keshida qolmasin (fayl uzatish yo'li o'z Cache-Control'ini qo'yadi).
+    res.setHeader('Cache-Control', 'no-store');
+    if (config.get<string>('app.environment') === 'production') {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
     next();
   });
+  (app.getHttpAdapter().getInstance() as { disable(key: string): void }).disable('x-powered-by');
   app.enableShutdownHooks();
   if (config.get<boolean>('app.trustProxy', false)) {
     (app.getHttpAdapter().getInstance() as { set(key: string, value: boolean): void }).set('trust proxy', true);

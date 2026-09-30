@@ -11,6 +11,18 @@ export class SetUserStatusDto {
   reason?: string;
 }
 
+export class SetUserPasswordDto {
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  password!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
+}
+
 export class DeleteUserDto {
   @IsString()
   @MinLength(3)

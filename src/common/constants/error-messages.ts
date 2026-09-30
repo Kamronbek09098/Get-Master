@@ -1,3 +1,16 @@
+/** Holat kodlarining o‘zbekcha nomlari (xato xabarlarida inglizcha kod ko‘rinmasligi uchun). */
+const STATUS_LABELS_UZ: Record<string, string> = {
+  REPORTED: 'Yuborildi',
+  UNDER_REVIEW: 'Ko‘rib chiqilmoqda',
+  CONFIRMED: 'Tasdiqlandi',
+  DISMISSED: 'Rad etildi',
+  RESOLVED: 'Hal qilindi',
+  DRAFT: 'Qoralama',
+  SUBMITTED: 'Yuborilgan',
+  CANCELLED: 'Bekor qilingan',
+  COMPLETED: 'Yakunlangan',
+};
+
 export const ERRORS = {
   NOT_FOUND_PAGE: 'Sahifa topilmadi',
   UNAUTHORIZED: 'Avtorizatsiyadan o‘tilmagan',
@@ -129,7 +142,7 @@ export const ERRORS = {
   NOT_ORDER_OWNER: 'Bu buyurtma sizga tegishli emas',
   NOT_ORDER_PARTICIPANT: 'Siz bu buyurtma ishtirokchisi emassiz',
   NOT_AUTHORIZED_ORDER_ACTION: 'Bu buyurtmada ushbu amalni bajarishga ruxsat yo‘q',
-  INVALID_TRANSITION: (from: string, to: string) => `${from} holatidan ${to} holatiga o‘tib bo‘lmaydi`,
+  INVALID_TRANSITION: (from: string, to: string) => `«${STATUS_LABELS_UZ[from] ?? from}» holatidan «${STATUS_LABELS_UZ[to] ?? to}» holatiga o‘tib bo‘lmaydi`,
   ORDER_NOT_PAYABLE: 'Bu buyurtma bekor qilingan, to‘lov qabul qilinmaydi',
   ORDER_ALREADY_PAID: 'Bu buyurtma uchun allaqachon to‘lov qilingan',
   ORDER_NOT_IN_PROGRESS: 'Buyurtma ish jarayonida emas',

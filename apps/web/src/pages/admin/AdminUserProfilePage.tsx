@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { Ban, CheckCircle2, MapPin, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench } from 'lucide-react';
+import { Check, Copy, Eye, EyeOff, KeyRound, Ban, CheckCircle2, MapPin, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -19,6 +19,8 @@ import { accountPath } from '@/features/admin/components/AccountLink';
 import { actionInfo } from '@/features/admin/audit-labels';
 import { useMe } from '@/features/session/hooks/useMe';
 import { UserActionDialog } from '@/features/admin/components/UserActionDialog';
+import { PasswordResetDialog } from '@/features/admin/components/PasswordResetDialog';
+import { useRevealUserPassword } from '@/features/admin/hooks/useAdmin';
 import type { UserAction } from '@/features/admin/user-actions';
 import type { AdminUser } from '@/features/admin/types';
 import './AdminUserProfilePage.css';
@@ -60,6 +62,11 @@ export function AdminUserProfilePage() {
   const { id } = useParams();
   const me = useMe();
   const [action, setAction] = useState<UserAction | null>(null);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [loginCopied, setLoginCopied] = useState(false);
+  const reveal = useRevealUserPassword();
+  const [passwordCopied, setPasswordCopied] = useState(false);
+  const revealed = reveal.data;
   const number = id && /^\d{1,9}$/.test(id) ? Number(id) : null;
   const user = useAdminUserByNumber(number);
 
@@ -105,15 +112,15 @@ export function AdminUserProfilePage() {
                     </Button>
                   ) : (
                     <>
-                      <Button size="sm" variant="secondary" onClick={() => setAction('SUSPEND')}>
+                      <Button size="sm" variant="secondary" className="gm-btn-tone gm-btn-tone--warn" onClick={() => setAction('SUSPEND')}>
                         <Snowflake size={16} /> Muzlatish
                       </Button>
-                      <Button size="sm" variant="secondary" onClick={() => setAction('BLOCK')}>
+                      <Button size="sm" variant="secondary" className="gm-btn-tone gm-btn-tone--danger" onClick={() => setAction('BLOCK')}>
                         <Ban size={16} /> Bloklash
                       </Button>
                     </>
                   )}
-                  <Button size="sm" variant="ghost" onClick={() => setAction('DELETE')}>
+                  <Button size="sm" variant="ghost" className="gm-btn-danger-text" onClick={() => setAction('DELETE')}>
                     <Trash2 size={16} /> O‘chirish
                   </Button>
                 </>
@@ -140,6 +147,75 @@ export function AdminUserProfilePage() {
               <Field icon={<Phone size={16} />} label="Telefon">
                 {data.phone}
                 {data.phoneVerifiedAt ? ' · tasdiqlangan' : ' · tasdiqlanmagan'}
+              </Field>
+              <Field icon={<KeyRound size={16} />} label="Kirish ma’lumotlari">
+                <span className="gm-cred">
+                  <span className="gm-cred__row">
+                    <span className="gm-cred__key">Login</span>
+                    <strong className="gm-cred__value">{data.phone}</strong>
+                    <span className="gm-cred__tools">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="gm-btn-chip"
+                        onClick={() => {
+                          void navigator.clipboard?.writeText(data.phone);
+                          setLoginCopied(true);
+                          window.setTimeout(() => setLoginCopied(false), 1500);
+                        }}
+                      >
+                        {loginCopied ? <Check size={15} /> : <Copy size={15} />} {loginCopied ? 'Nusxalandi' : 'Nusxalash'}
+                      </Button>
+                    </span>
+                  </span>
+                  <span className="gm-cred__row">
+                    <span className="gm-cred__key">Parol</span>
+                    <span className="gm-cred__value">
+                      {revealed?.password ? (
+                        <strong className="gm-uprofile__pw">{revealed.password}</strong>
+                      ) : (
+                        <strong className="gm-cred__dots">••••••••••</strong>
+                      )}
+                    </span>
+                    {!data.roles.includes('ADMIN') && data.status !== 'DELETED' && (
+                      <span className="gm-cred__tools">
+                        {revealed?.password ? (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="gm-btn-chip"
+                              onClick={() => {
+                                void navigator.clipboard?.writeText(revealed.password ?? '');
+                                setPasswordCopied(true);
+                                window.setTimeout(() => setPasswordCopied(false), 1500);
+                              }}
+                            >
+                              {passwordCopied ? <Check size={15} /> : <Copy size={15} />} {passwordCopied ? 'Nusxalandi' : 'Nusxalash'}
+                            </Button>
+                            <Button size="sm" variant="secondary" className="gm-btn-chip" onClick={() => reveal.reset()}>
+                              <EyeOff size={15} /> Yashirish
+                            </Button>
+                          </>
+                        ) : (
+                          <Button size="sm" variant="secondary" className="gm-btn-chip" loading={reveal.isPending} onClick={() => reveal.mutate(data.id)}>
+                            <Eye size={15} /> Ko‘rsatish
+                          </Button>
+                        )}
+                        <Button size="sm" className="gm-btn-chip gm-btn-chip--accent" onClick={() => setPasswordOpen(true)}>
+                          <KeyRound size={15} /> O‘zgartirish
+                        </Button>
+                      </span>
+                    )}
+                  </span>
+                  <small className="gm-cred__note">
+                    {revealed && !revealed.password
+                      ? revealed.vaultEnabled
+                        ? 'Parol hali saqlanmagan — foydalanuvchi keyingi kirishida yoki parol o‘zgartirilganda paydo bo‘ladi.'
+                        : 'Ko‘rsatish o‘chirilgan (server kaliti sozlanmagan).'
+                      : 'Parol shifrlangan holda saqlanadi, uni faqat administrator ko‘ra oladi. Har bir ko‘rish auditga yoziladi.'}
+                  </small>
+                </span>
               </Field>
               <Field icon={<Mail size={16} />} label="Email">
                 {data.email ?? '—'}
@@ -258,6 +334,7 @@ export function AdminUserProfilePage() {
           </section>
         </>
       )}
+      {data && passwordOpen && <PasswordResetDialog userId={data.id} name={accountName(data)} phone={data.phone} onClose={() => setPasswordOpen(false)} />}
       {data && action && <UserActionDialog user={data as AdminUser} action={action} onClose={() => setAction(null)} />}
     </div>
   );

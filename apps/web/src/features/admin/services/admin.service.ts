@@ -54,6 +54,12 @@ export const adminService = {
   setUserStatus(id: string, status: 'ACTIVE' | 'SUSPENDED' | 'BLOCKED', reason?: string) {
     return apiPatch<AdminUser>(`/admin/users/${id}/status`, { status, reason });
   },
+  revealUserPassword(id: string) {
+    return apiGet<{ password: string | null; available: boolean; vaultEnabled: boolean }>(`/admin/users/${id}/password`);
+  },
+  setUserPassword(id: string, password: string, reason?: string) {
+    return apiPost<{ updated: boolean }>(`/admin/users/${id}/password`, { password, reason: reason || undefined });
+  },
   deleteUser(id: string, reason: string) {
     return apiPost<{ deleted: boolean }>(`/admin/users/${id}/delete`, { reason });
   },

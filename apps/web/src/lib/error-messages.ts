@@ -7,6 +7,7 @@ const CODE_MESSAGES: Record<string, string> = {
 
 export function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
+    if (error.sessionExpired) return 'Sessiya muddati tugadi. Iltimos, qayta kiring.';
     if (error.details.length > 0) return error.details.join('\n');
     return CODE_MESSAGES[error.code] ?? error.message;
   }

@@ -4,7 +4,9 @@ import type { Request } from 'express';
 import { ERRORS } from '../../common/constants/error-messages';
 import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { DeleteUserDto, SetUserStatusDto } from './dto/user-action.dto';
+import * as bcrypt from 'bcryptjs';
+import { openPassword, passwordVaultEnabled, sealPassword } from '../../common/security/password-vault';
+import { DeleteUserDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 
 const USER_SELECT = {
@@ -226,6 +228,50 @@ export class AdminUsersService {
       });
     });
     return { deleted: true };
+  }
+
+  /**
+   * Admin foydalanuvchiga yangi parol belgilaydi. Eski parol shifrlangan (bcrypt) saqlanadi va uni ko‘rsatib bo‘lmaydi;
+   * yangi parol faqat shu so‘rovda beriladi, bazada/auditda ochiq ko‘rinishda saqlanmaydi. Barcha qurilmalardan chiqariladi.
+   */
+  async setPassword(adminId: string, userId: string, dto: SetUserPasswordDto, req: Request) {
+    const target = await this.loadModerable(adminId, userId);
+    if (target.status === UserStatus.DELETED || target.deletedAt) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    const passwordHash = await bcrypt.hash(dto.password, 12);
+    await this.db.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: userId }, data: { passwordHash, passwordEnc: sealPassword(dto.password) } });
+      await this.revokeAllSessions(tx, userId);
+      await tx.auditLog.create({
+        data: {
+          actorId: adminId,
+          action: 'ADMIN_USER_PASSWORD_RESET',
+          targetType: 'User',
+          targetId: userId,
+          reason: dto.reason?.trim() || null,
+          ipAddress: req.ip?.slice(0, 64) ?? null,
+          requestId: (req as { id?: string }).id ?? null,
+        },
+      });
+    });
+    return { updated: true };
+  }
+
+  /** Faqat administrator: oddiy foydalanuvchining saqlangan (shifrdan ochilgan) parolini ko‘rsatadi; har bir ko‘rish auditga yoziladi. */
+  async revealPassword(adminId: string, userId: string, req: Request) {
+    const target = await this.loadModerable(adminId, userId);
+    const record = await this.db.user.findUnique({ where: { id: userId }, select: { passwordEnc: true } });
+    const password = openPassword(record?.passwordEnc);
+    await this.db.auditLog.create({
+      data: {
+        actorId: adminId,
+        action: 'ADMIN_USER_PASSWORD_VIEWED',
+        targetType: 'User',
+        targetId: target.id,
+        ipAddress: req.ip?.slice(0, 64) ?? null,
+        requestId: (req as { id?: string }).id ?? null,
+      },
+    });
+    return { password, available: password !== null, vaultEnabled: passwordVaultEnabled() };
   }
 
   private async loadModerable(adminId: string, userId: string) {

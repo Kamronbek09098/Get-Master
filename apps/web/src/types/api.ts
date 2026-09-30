@@ -25,6 +25,8 @@ export class ApiError extends Error {
   readonly code: string;
   readonly requestId: string | null;
   readonly details: string[];
+  /** Sessiya yangilanmadi (refresh muvaffaqiyatsiz): bu «parol noto‘g‘ri» emas, qayta kirish kerak. */
+  sessionExpired = false;
 
   constructor(body: ApiErrorBody & { details?: string[] }) {
     super(body.message);

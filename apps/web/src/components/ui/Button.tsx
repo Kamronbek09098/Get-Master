@@ -28,7 +28,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...rest}
       >
         {loading && <Spinner size="sm" />}
-        <span className={loading ? 'gm-visually-hidden' : undefined}>{children}</span>
+        <span className={loading ? 'gm-button__label gm-visually-hidden' : 'gm-button__label'}>{children}</span>
       </button>
     );
   },

@@ -51,6 +51,7 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
 
   let response: Response;
+  let sessionExpired = false;
   try {
     response = await fetch(`${env.apiBaseUrl}${path}`, {
       method: options.method ?? 'GET',
@@ -72,13 +73,18 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
     const recovered = await refreshSession();
     if (recovered) return request<T>(path, options, true);
     notifySessionExpired();
+    sessionExpired = true;
   }
 
   const text = await response.text();
   const envelope: ApiEnvelope<T> | null = text ? (JSON.parse(text) as ApiEnvelope<T>) : null;
 
   if (!response.ok || !envelope || envelope.success === false) {
-    if (envelope && envelope.success === false) throw new ApiError(envelope);
+    if (envelope && envelope.success === false) {
+      const error = new ApiError(envelope);
+      error.sessionExpired = sessionExpired;
+      throw error;
+    }
     throw new ApiError({
       statusCode: response.status,
       code: 'UNKNOWN_ERROR',

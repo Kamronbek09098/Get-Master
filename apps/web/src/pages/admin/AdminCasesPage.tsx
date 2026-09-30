@@ -19,10 +19,22 @@ const STATUS_OPTIONS = (Object.keys(CASE_STATUS_LABEL) as CaseStatus[]).map((val
   label: CASE_STATUS_LABEL[value],
 }));
 
+/** Backend qoidasi bilan bir xil: faqat shu holatlarga o‘tish mumkin. */
+const NEXT_STATUSES: Record<CaseStatus, CaseStatus[]> = {
+  REPORTED: ['UNDER_REVIEW'],
+  UNDER_REVIEW: ['CONFIRMED', 'DISMISSED'],
+  CONFIRMED: ['RESOLVED'],
+  DISMISSED: [],
+  RESOLVED: [],
+};
+
 function CaseCard({ item, kind }: { item: CaseItem; kind: 'complaints' | 'disputes' }) {
   const update = useUpdateCase(kind);
   const [status, setStatus] = useState<CaseStatus>(item.status);
   const [decision, setDecision] = useState(item.decision ?? '');
+  const next = NEXT_STATUSES[item.status];
+  const finished = next.length === 0;
+  const options = [item.status, ...next].map((value) => ({ value, label: CASE_STATUS_LABEL[value] }));
 
   return (
     <div className="gm-card">
@@ -50,21 +62,33 @@ function CaseCard({ item, kind }: { item: CaseItem; kind: 'complaints' | 'disput
           </>
         )}
       </p>
-      <div className="gm-form" style={{ marginTop: 'var(--gm-space-3)' }}>
-        {update.isError && <Alert tone="danger">{getErrorMessage(update.error)}</Alert>}
-        <Select label="Yangi holat" options={STATUS_OPTIONS} value={status} onChange={(e) => setStatus(e.target.value as CaseStatus)} />
-        <Textarea label="Qaror / izoh" rows={2} maxLength={2000} value={decision} onChange={(e) => setDecision(e.target.value)} />
-        <div>
-          <Button
-            size="sm"
-            loading={update.isPending}
-            disabled={status === item.status && decision === (item.decision ?? '')}
-            onClick={() => update.mutate({ id: item.id, status, decision: decision.trim() || undefined })}
-          >
-            Saqlash
-          </Button>
+      {finished ? (
+        <div style={{ marginTop: 'var(--gm-space-3)' }}>
+          <Alert tone="info">Bu ish yakunlangan ({CASE_STATUS_LABEL[item.status]}). Yakunlangan holatni qayta o‘zgartirib bo‘lmaydi.</Alert>
+          {item.decision && (
+            <p className="gm-card__meta" style={{ marginTop: 'var(--gm-space-2)' }}>
+              <strong>Qaror:</strong> {item.decision}
+            </p>
+          )}
         </div>
-      </div>
+      ) : (
+        <div className="gm-form" style={{ marginTop: 'var(--gm-space-3)' }}>
+          {update.isError && <Alert tone="danger">{getErrorMessage(update.error)}</Alert>}
+          <Select label="Yangi holat" options={options} value={status} onChange={(e) => setStatus(e.target.value as CaseStatus)} />
+          <Textarea label="Qaror / izoh" rows={2} maxLength={2000} value={decision} onChange={(e) => setDecision(e.target.value)} />
+          <div>
+            <Button
+              size="sm"
+              loading={update.isPending}
+              disabled={status === item.status}
+              onClick={() => update.mutate({ id: item.id, status, decision: decision.trim() || undefined })}
+            >
+              Saqlash
+            </Button>
+            {status === item.status && <span className="gm-card__meta" style={{ marginLeft: 'var(--gm-space-3)' }}>Saqlash uchun yangi holatni tanlang</span>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

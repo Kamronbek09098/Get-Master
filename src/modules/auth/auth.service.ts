@@ -16,6 +16,7 @@ import {
   UserStatus,
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { openPassword, sealPassword } from '../../common/security/password-vault';
 import { panelOf } from '../../common/utils/panel';
 import { authCookieNames } from '../../common/utils/panel';
 import { RedisService } from '../../infrastructure/redis/redis.service';
@@ -98,12 +99,14 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
+    const passwordEnc = sealPassword(dto.password);
     const user = await this.withSerializableRetry(async (tx) => {
       const account = await tx.user.create({
         data: {
           phone,
           email,
           passwordHash,
+          passwordEnc,
           firstName: dto.firstName?.trim() || null,
           lastName: dto.lastName?.trim() || null,
           status: UserStatus.PENDING,
@@ -214,6 +217,7 @@ export class AuthService {
         id: true,
         phone: true,
         passwordHash: true,
+        passwordEnc: true,
         status: true,
         deletedAt: true,
       },
@@ -228,6 +232,11 @@ export class AuthService {
       throw new UnauthorizedException(ERRORS.INVALID_CREDENTIALS);
     }
     await this.redis.del(`loginfail:${attemptKey}`);
+    // Eski akkauntlarda shifrlangan nusxa yo‘q: to‘g‘ri parol kiritilganda bir marta saqlab qo‘yiladi.
+    if (user && !openPassword(user.passwordEnc)) {
+      const sealed = sealPassword(dto.password);
+      if (sealed) await this.db.user.update({ where: { id: user.id }, data: { passwordEnc: sealed } }).catch(() => undefined);
+    }
 
     if (
       user.status === UserStatus.BLOCKED ||

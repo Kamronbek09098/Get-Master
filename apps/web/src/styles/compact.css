@@ -500,3 +500,168 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Tugmalar: umumiy tekislash va rangli variantlar ===== */
+.gm-button {
+  line-height: 1;
+}
+
+.gm-button svg {
+  flex: none;
+}
+
+.gm-button--sm {
+  gap: 6px;
+}
+
+.gm-btn-tone--warn {
+  border-color: color-mix(in srgb, var(--gm-color-warning) 45%, var(--gm-color-border));
+  background: var(--gm-color-warning-bg);
+  color: var(--gm-color-warning);
+}
+
+.gm-btn-tone--warn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gm-color-warning-bg) 70%, var(--gm-color-warning) 12%);
+  color: var(--gm-color-warning);
+}
+
+.gm-btn-tone--danger {
+  border-color: color-mix(in srgb, var(--gm-color-danger) 45%, var(--gm-color-border));
+  background: var(--gm-color-danger-bg);
+  color: var(--gm-color-danger);
+}
+
+.gm-btn-tone--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gm-color-danger-bg) 70%, var(--gm-color-danger) 12%);
+  color: var(--gm-color-danger);
+}
+
+.gm-btn-danger-text:hover:not(:disabled) {
+  background: var(--gm-color-danger-bg);
+}
+
+/* Kichik «chip» tugmalar (nusxalash, ko‘rsatish…) */
+.gm-btn-chip {
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.gm-btn-chip.gm-button--primary {
+  background: var(--gm-color-primary-soft);
+  color: var(--gm-color-primary);
+  border-color: transparent;
+}
+
+.gm-btn-chip.gm-button--primary:hover:not(:disabled) {
+  background: var(--gm-color-primary);
+  color: var(--gm-color-primary-contrast);
+}
+
+/* Admin profili: sarlavhadagi tugmalar va kirish ma’lumotlari */
+.gm-uprofile__actions .gm-button {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 13px;
+}
+
+.gm-uprofile__actions a {
+  display: inline-flex;
+}
+
+.gm-cred {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.gm-cred__row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--gm-color-border);
+  border-radius: 14px;
+  background: var(--gm-color-surface-muted);
+}
+
+.gm-cred__key {
+  color: var(--gm-color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.gm-cred__value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+
+.gm-cred__dots {
+  letter-spacing: 0.12em;
+}
+
+.gm-cred__tools {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.gm-cred__note {
+  color: var(--gm-color-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .gm-cred__row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .gm-cred__tools {
+    justify-content: flex-start;
+  }
+}
+
+.gm-uprofile__actions a,
+.gm-uprofile__actions a:hover {
+  text-decoration: none;
+}
+
+.gm-uprofile__actions a .gm-button {
+  color: var(--gm-color-text);
+}
+
+.gm-cred__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.gm-cred__key {
+  flex: 0 0 48px;
+}
+
+.gm-cred__value {
+  flex: 1 1 150px;
+  min-width: 150px;
+  overflow-wrap: break-word;
+}
+
+.gm-cred__tools {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.gm-cred__tools .gm-button {
+  white-space: nowrap;
+}

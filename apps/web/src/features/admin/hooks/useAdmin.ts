@@ -38,6 +38,19 @@ export function useSetUserStatus() {
   });
 }
 
+/** Faqat administrator: saqlangan parolni ko‘rsatadi (har bir ko‘rish auditga yoziladi). */
+export function useRevealUserPassword() {
+  return useMutation({ mutationFn: (id: string) => adminService.revealUserPassword(id) });
+}
+
+export function useSetUserPassword() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, password, reason }: { id: string; password: string; reason?: string }) => adminService.setUserPassword(id, password, reason),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  });
+}
+
 export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({
