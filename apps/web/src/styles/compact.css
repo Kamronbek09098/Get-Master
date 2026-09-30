@@ -340,3 +340,14 @@
     padding-top: 30px;
   }
 }
+
+@media (pointer: coarse) {
+  ::selection {
+    background: transparent;
+  }
+
+  input::selection,
+  textarea::selection {
+    background: color-mix(in srgb, var(--gm-color-primary) 28%, transparent);
+  }
+}

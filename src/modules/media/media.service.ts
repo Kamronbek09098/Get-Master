@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from 'crypto';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MediaAsset, MediaAssetKind, Role } from '@prisma/client';
@@ -115,11 +116,32 @@ export class MediaService {
     });
   }
 
+  private streamSignature(assetId: string, variant: string, expires: number): string {
+    const secret = this.config.getOrThrow<string>('auth.jwtSecret');
+    return createHmac('sha256', secret).update(`${assetId}:${variant}:${expires}`).digest('hex');
+  }
+
+  /** Imzolangan API havolasini tekshiradi va faylning saqlash kalitini qaytaradi. */
+  async resolveStream(assetId: string, variant: 'original' | 'thumbnail' | 'medium', expires: number, signature: string) {
+    const expected = Buffer.from(this.streamSignature(assetId, variant, expires));
+    const given = Buffer.from(signature ?? '');
+    if (!Number.isFinite(expires) || expires < Date.now() / 1000 || expected.length !== given.length || !timingSafeEqual(expected, given)) {
+      throw new NotFoundException(ERRORS.MEDIA_NOT_FOUND);
+    }
+    const asset = await this.db.mediaAsset.findUnique({ where: { id: assetId } });
+    if (!asset || asset.status !== 'READY') throw new NotFoundException(ERRORS.MEDIA_NOT_FOUND);
+    const key = variant === 'thumbnail' ? asset.thumbnailKey : variant === 'medium' ? asset.mediumKey : asset.originalKey;
+    if (!key) throw new NotFoundException(ERRORS.MEDIA_VARIANT_UNAVAILABLE);
+    const contentType = variant === 'original' ? (asset.detectedMimeType ?? 'application/octet-stream') : 'image/jpeg';
+    return { key, contentType, filename: asset.originalName };
+  }
+
   async getSignedUrl(
     userId: string,
     roles: Role[],
     assetId: string,
     variant: 'original' | 'thumbnail' | 'medium',
+    apiBase?: string,
   ): Promise<{ url: string; expiresIn: number }> {
     const asset = await this.db.mediaAsset.findUnique({ where: { id: assetId } });
     if (!asset || asset.status !== 'READY') throw new NotFoundException(ERRORS.MEDIA_NOT_FOUND);
@@ -130,6 +152,12 @@ export class MediaService {
     if (!key) throw new NotFoundException(ERRORS.MEDIA_VARIANT_UNAVAILABLE);
 
     const ttl = this.config.get<number>('storage.signedUrlTtlSeconds')!;
+    if (apiBase) {
+      // Fayl API orqali beriladi: telefon/tunnel orqali ulangan qurilma saqlash serveriga (localhost) to‘g‘ridan-to‘g‘ri ulana olmaydi.
+      const expires = Math.floor(Date.now() / 1000) + ttl;
+      const signature = this.streamSignature(assetId, variant, expires);
+      return { url: `${apiBase}/api/v1/media/file/${assetId}/${variant}?expires=${expires}&sig=${signature}`, expiresIn: ttl };
+    }
     const url = await this.storage.getSignedGetUrl(key, ttl, { downloadFilename: asset.originalName });
     return { url, expiresIn: ttl };
   }

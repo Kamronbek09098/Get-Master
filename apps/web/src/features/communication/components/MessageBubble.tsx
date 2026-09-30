@@ -16,6 +16,7 @@ const isVoice = (item: ChatAttachment) => /^voice-/i.test(item.name) || item.mim
 
 const SWIPE_TRIGGER = 56;
 const SWIPE_MAX = 84;
+const LONG_PRESS_MS = 450;
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '👏'];
 
@@ -81,6 +82,8 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
   const bubbleRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLSpanElement>(null);
   const swipe = useRef<{ x: number; y: number; active: boolean; offset: number } | null>(null);
+  const pressTimer = useRef<number | undefined>(undefined);
+  const longPressed = useRef(false);
   const failed = message.status === 'failed';
   const settled = !message.deleted && !message.status;
   const editable = mine && canEdit(message);
@@ -133,6 +136,14 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
             const touch = event.touches[0];
             if (!touch) return;
             swipe.current = { x: touch.clientX, y: touch.clientY, active: false, offset: 0 };
+            longPressed.current = false;
+            window.clearTimeout(pressTimer.current);
+            const { clientX, clientY } = touch;
+            pressTimer.current = window.setTimeout(() => {
+              longPressed.current = true;
+              navigator.vibrate?.(15);
+              openMenuAt(clientX, clientY);
+            }, LONG_PRESS_MS);
           },
           onTouchMove: (event: TouchEvent<HTMLDivElement>) => {
             const state = swipe.current;
@@ -141,6 +152,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
             if (!touch) return;
             const dx = touch.clientX - state.x;
             const dy = touch.clientY - state.y;
+            if (Math.abs(dx) > 10 || Math.abs(dy) > 10) window.clearTimeout(pressTimer.current);
             if (!state.active) {
               if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
                 swipe.current = null;
@@ -152,7 +164,9 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
             state.offset = Math.max(-SWIPE_MAX, Math.min(0, dx));
             moveBubble(state.offset, false);
           },
-          onTouchEnd: () => {
+          onTouchEnd: (event: TouchEvent<HTMLDivElement>) => {
+            window.clearTimeout(pressTimer.current);
+            if (longPressed.current && event.cancelable) event.preventDefault();
             const state = swipe.current;
             swipe.current = null;
             if (!state?.active) return;
@@ -163,21 +177,26 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
             }
           },
           onTouchCancel: () => {
+            window.clearTimeout(pressTimer.current);
             swipe.current = null;
             moveBubble(0, true);
           },
         }
       : {};
 
-  function openMenu(event: MouseEvent) {
-    if (!settled) return;
-    event.preventDefault();
+  function openMenuAt(clientX: number, clientY: number) {
     const width = 232;
     const height = 330;
     setMenu({
-      x: Math.min(event.clientX, window.innerWidth - width - 8),
-      y: Math.min(event.clientY, window.innerHeight - height - 8),
+      x: Math.max(8, Math.min(clientX, window.innerWidth - width - 8)),
+      y: Math.max(8, Math.min(clientY, window.innerHeight - height - 8)),
     });
+  }
+
+  function openMenu(event: MouseEvent) {
+    if (!settled) return;
+    event.preventDefault();
+    openMenuAt(event.clientX, event.clientY);
   }
 
   const groups = new Map<string, { count: number; mine: boolean }>();

@@ -1197,9 +1197,10 @@ body:has(.gm-messenger) .gm-footer {
 .gm-bubble__menu-trigger--float[aria-expanded='true'] {
   opacity: 1;
 }
-@media (hover: none) {
+/* Sensorli qurilmada 3 nuqta ko‘rinmaydi: menyu xabarni bosib turish (long-press) orqali ochiladi. */
+@media (hover: none), (pointer: coarse) {
   .gm-bubble__menu-trigger--float {
-    opacity: 0.55;
+    display: none;
   }
 }
 

@@ -29,8 +29,24 @@ export function VoicePlayer({ assetId }: { assetId: string }) {
         const { url } = await mediaService.getSignedUrl(assetId, 'original');
         const element = new Audio(url);
         element.preload = 'metadata';
-        element.onloadedmetadata = () => Number.isFinite(element.duration) && setDuration(element.duration);
+        // MediaRecorder (.webm) fayllarida davomiylik metadatada bo‘lmaydi (Infinity) — oxiriga o‘tkazib, aniqlab olamiz.
+        let probing = false;
+        element.onloadedmetadata = () => {
+          if (Number.isFinite(element.duration)) setDuration(element.duration);
+          else {
+            probing = true;
+            element.currentTime = 1e101;
+          }
+        };
         element.ontimeupdate = () => {
+          if (probing) {
+            if (Number.isFinite(element.duration)) {
+              probing = false;
+              setDuration(element.duration);
+              element.currentTime = 0;
+            }
+            return;
+          }
           setCurrent(element.currentTime);
           if (Number.isFinite(element.duration)) setDuration(element.duration);
         };

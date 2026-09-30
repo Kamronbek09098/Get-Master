@@ -4,6 +4,9 @@ import {
   Controller,
   Get,
   Param,
+  Query,
+  Req,
+  Res,
   ParseEnumPipe,
   ParseUUIDPipe,
   Post,
@@ -13,6 +16,9 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { Role } from '@prisma/client';
+import type { Request, Response } from 'express';
+import { Public } from '../../common/decorators/public.decorator';
+import { StorageService } from '../../infrastructure/storage/storage.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { MediaService } from './media.service';
 import { InitiateUploadDto } from './dto/initiate-upload.dto';
@@ -32,7 +38,10 @@ type MediaVariant = keyof typeof MEDIA_VARIANTS;
 
 @Controller('media')
 export class MediaController {
-  constructor(private readonly mediaService: MediaService) {}
+  constructor(
+    private readonly mediaService: MediaService,
+    private readonly storage: StorageService,
+  ) {}
 
   @Post('uploads')
   @UseInterceptors(
@@ -61,13 +70,42 @@ export class MediaController {
     return this.mediaService.getStatus(userId, roles, id);
   }
 
+  /** Imzolangan havola bilan faylni API orqali uzatadi (Range qo‘llab-quvvatlanadi: audio/video surish uchun). */
+  @Public()
+  @Get('file/:id/:variant')
+  async streamFile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('variant', new ParseEnumPipe(MEDIA_VARIANTS)) variant: MediaVariant,
+    @Query('expires') expires: string,
+    @Query('sig') sig: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const file = await this.mediaService.resolveStream(id, variant, Number(expires), sig);
+    const range = typeof req.headers.range === 'string' ? req.headers.range : undefined;
+    const object = await this.storage.getObjectStream(file.key, range);
+    res.status(range && object.contentRange ? 206 : 200);
+    res.setHeader('Content-Type', file.contentType);
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'private, max-age=600');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(file.filename)}`);
+    if (object.contentLength !== undefined) res.setHeader('Content-Length', String(object.contentLength));
+    if (object.contentRange) res.setHeader('Content-Range', object.contentRange);
+    object.body.pipe(res);
+  }
+
   @Get(':id/:variant')
   getSignedUrl(
     @CurrentUser('sub') userId: string,
     @CurrentUser('roles') roles: Role[],
     @Param('id', ParseUUIDPipe) id: string,
     @Param('variant', new ParseEnumPipe(MEDIA_VARIANTS)) variant: MediaVariant,
+    @Req() req: Request,
   ) {
-    return this.mediaService.getSignedUrl(userId, roles, id, variant);
+    const proto = String(req.headers['x-forwarded-proto'] ?? req.protocol).split(',')[0];
+    const host = String(req.headers['x-forwarded-host'] ?? req.get('host')).split(',')[0];
+    return this.mediaService.getSignedUrl(userId, roles, id, variant, `${proto}://${host}`);
   }
 }

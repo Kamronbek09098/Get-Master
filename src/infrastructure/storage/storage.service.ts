@@ -57,6 +57,17 @@ export class StorageService implements OnModuleInit {
     return Buffer.concat(chunks);
   }
 
+  /** Faylni (ixtiyoriy Range bilan) oqim sifatida qaytaradi — API orqali uzatish uchun. */
+  async getObjectStream(key: string, range?: string) {
+    const result = await this.client.send(new GetObjectCommand({ Bucket: this.bucket, Key: key, Range: range }));
+    return {
+      body: result.Body as NodeJS.ReadableStream,
+      contentLength: result.ContentLength,
+      contentRange: result.ContentRange,
+      contentType: result.ContentType,
+    };
+  }
+
   async deleteObject(key: string): Promise<void> {
     await this.client.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
   }
