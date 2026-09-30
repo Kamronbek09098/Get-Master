@@ -15,7 +15,7 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, hint, id, required, className, type, prefix, formatValue, onChange, ...rest }, ref) => {
+  ({ label, error, hint, id, required, className, type, prefix, formatValue, onChange, onKeyDown, ...rest }, ref) => {
     const generatedId = useId();
     const [revealed, setRevealed] = useState(false);
     const isPassword = type === 'password';
@@ -47,10 +47,34 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             onChange={
               formatValue
                 ? (event) => {
-                    event.target.value = formatValue(event.target.value);
+                    // Formatlashda kursor joyini saqlaymiz: o‘rtadagi raqamni o‘chirsa/qo‘shsa, kursor oxiriga sakramaydi.
+                    const el = event.target;
+                    const caret = el.selectionStart ?? el.value.length;
+                    const digitsBefore = (el.value.slice(0, caret).match(/\d/g) ?? []).length;
+                    const formatted = formatValue(el.value);
+                    el.value = formatted;
+                    let position = 0;
+                    let seen = 0;
+                    while (position < formatted.length && seen < digitsBefore) {
+                      if (/\d/.test(formatted.charAt(position))) seen += 1;
+                      position += 1;
+                    }
+                    if (document.activeElement === el) el.setSelectionRange(position, position);
                     onChange?.(event);
                   }
                 : onChange
+            }
+            onKeyDown={
+              formatValue
+                ? (event) => {
+                    const el = event.currentTarget;
+                    // Bo‘shliqdan keyin Backspace bosilsa, bo‘shliqni emas, undan oldingi raqamni o‘chiramiz.
+                    if (event.key === 'Backspace' && el.selectionStart === el.selectionEnd && el.selectionStart && el.value.charAt(el.selectionStart - 1) === ' ') {
+                      el.setSelectionRange(el.selectionStart - 1, el.selectionStart - 1);
+                    }
+                    onKeyDown?.(event);
+                  }
+                : onKeyDown
             }
             {...rest}
           />

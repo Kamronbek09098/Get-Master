@@ -11,6 +11,9 @@ export interface CurrentRole {
   role: Role | null;
   isLoading: boolean;
   isError: boolean;
+  /** Profilni yuklashdagi xato (tarmoq/server/avtorizatsiya). */
+  error: unknown;
+  refetch: () => void;
   needsMasterOnboarding: boolean;
 }
 
@@ -57,5 +60,5 @@ export function useCurrentRole(): CurrentRole {
     pushToast(WRONG_APP_MESSAGE[env.appRole], 'error');
   }, [wrongApp, clear, queryClient, pushToast]);
 
-  return { role, isLoading: me.isLoading, isError: me.isError, needsMasterOnboarding };
+  return { role, isLoading: me.isLoading, isError: me.isError, error: me.error, refetch: () => void me.refetch(), needsMasterOnboarding };
 }

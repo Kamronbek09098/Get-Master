@@ -23,6 +23,7 @@ export function ChatThread({ conversation }: { conversation: Conversation }) {
   const react = useReactMessage(conversation.id);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [deleting, setDeleting] = useState<ChatMessage | null>(null);
+  const [deleteForAll, setDeleteForAll] = useState(true);
   const [orderOpen, setOrderOpen] = useState(false);
   const preferredRole = useAuthStore((state) => state.preferredRole);
   const isCustomerPanel = (env.appRole ?? preferredRole) === 'CUSTOMER';
@@ -49,7 +50,10 @@ export function ChatThread({ conversation }: { conversation: Conversation }) {
         conversation={conversation}
         meId={me.data?.id}
         onEdit={setEditing}
-        onDelete={setDeleting}
+        onDelete={(message) => {
+          setDeleteForAll(true);
+          setDeleting(message);
+        }}
         onRetry={(message) => send.mutate({ text: message.text ?? '', tempId: message.id, attachments: message.attachments ?? undefined })}
         onReply={(message) => {
           setEditing(null);
@@ -76,13 +80,30 @@ export function ChatThread({ conversation }: { conversation: Conversation }) {
       <ConfirmDialog
         open={!!deleting}
         title="Xabarni o‘chirish"
-        description="Xabar ikkala tomon uchun ham «o‘chirilgan» deb ko‘rinadi. Moderatsiya uchun administrator o‘chirilgan va tahrirlangan xabarlarni ko‘ra oladi."
+        description={
+          deleting && isOwnMessage(deleting, me.data?.id) && deleteForAll
+            ? 'Xabar suhbatdan ikkala tomon uchun ham butunlay o‘chiriladi. Hech qanday iz qolmaydi.'
+            : 'Xabar faqat sizning suhbatingizdan o‘chadi. Suhbatdosh uni ko‘rishda davom etadi.'
+        }
         confirmLabel="O‘chirish"
         tone="danger"
         loading={remove.isPending}
         onCancel={() => setDeleting(null)}
-        onConfirm={() => deleting && remove.mutate(deleting.id, { onSettled: () => setDeleting(null) })}
-      />
+        onConfirm={() =>
+          deleting &&
+          remove.mutate(
+            { id: deleting.id, forEveryone: isOwnMessage(deleting, me.data?.id) && deleteForAll },
+            { onSettled: () => setDeleting(null) },
+          )
+        }
+      >
+        {deleting && isOwnMessage(deleting, me.data?.id) && (
+          <label className="gm-delete-both">
+            <input type="checkbox" checked={deleteForAll} onChange={(event) => setDeleteForAll(event.target.checked)} />
+            <span>{accountName(conversation.counterpart)} uchun ham o‘chirish</span>
+          </label>
+        )}
+      </ConfirmDialog>
     </>
   );
 }

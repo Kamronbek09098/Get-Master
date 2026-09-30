@@ -84,7 +84,7 @@ export function useVoiceRecorder() {
           const blob = new Blob(chunks.current, { type: format.mime.split(';')[0] });
           release();
           if (blob.size < 800 || elapsed < 1) resolve(null);
-          else resolve({ file: new File([blob], `voice-${Date.now()}.${format.ext}`, { type: format.mime.split(';')[0] }), seconds: elapsed });
+          else resolve({ file: new File([blob], `voice-${Date.now()}-d${elapsed}.${format.ext}`, { type: format.mime.split(';')[0] }), seconds: elapsed });
         };
         instance.stop();
       }),

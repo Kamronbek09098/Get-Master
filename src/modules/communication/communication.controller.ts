@@ -89,9 +89,10 @@ export class CommunicationController {
     @CurrentUser('sub') userId: string,
     @Param('id', ParseUUIDPipe) id: string,
     @Param('messageId', ParseUUIDPipe) messageId: string,
+    @Query('scope') scope: string | undefined,
     @Req() req: Request,
   ) {
-    return this.communicationService.removeMessage(userId, id, messageId, panelOf(req));
+    return this.communicationService.removeMessage(userId, id, messageId, panelOf(req), scope === 'me' ? 'me' : 'all');
   }
 
   @Post(':id/read')
@@ -99,8 +100,16 @@ export class CommunicationController {
     return this.communicationService.markRead(userId, id, panelOf(req));
   }
 
+  /** ?scope=all — ikkala tomondan butunlay o‘chirish (Telegramdagidek); aks holda faqat mening ro‘yxatimdan. */
   @Delete(':id')
-  deleteForMe(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
-    return this.communicationService.deleteForMe(userId, id, panelOf(req));
+  deleteConversation(
+    @CurrentUser('sub') userId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('scope') scope: string | undefined,
+    @Req() req: Request,
+  ) {
+    return scope === 'all'
+      ? this.communicationService.deleteForEveryone(userId, id, panelOf(req))
+      : this.communicationService.deleteForMe(userId, id, panelOf(req));
   }
 }

@@ -22,6 +22,7 @@ export function ConversationList({ selectedId, onSelect }: { selectedId: string 
   const [onlyUnread, setOnlyUnread] = useState(false);
   const deleteConversation = useDeleteConversation();
   const [toDelete, setToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [forEveryone, setForEveryone] = useState(false);
 
   const items = useMemo(() => conversations.data?.items ?? [], [conversations.data]);
   const unreadTotal = items.filter((item) => item.unreadCount > 0).length;
@@ -145,24 +146,37 @@ export function ConversationList({ selectedId, onSelect }: { selectedId: string 
         title="Suhbatni o‘chirish"
         description={
           toDelete
-            ? `${toDelete.name} bilan suhbat sizning ro‘yxatingizdan o‘chiriladi. Yozishmalar saqlanib qoladi — u sizga yangi xabar yozsa, suhbat qaytadan paydo bo‘ladi.`
+            ? forEveryone
+              ? `${toDelete.name} bilan butun yozishma ikkala tomon uchun ham butunlay o‘chiriladi. Buni qaytarib bo‘lmaydi, administrator ham ko‘ra olmaydi.`
+              : `${toDelete.name} bilan suhbat faqat sizning ro‘yxatingizdan o‘chiriladi. U sizga yangi xabar yozsa, suhbat qaytadan paydo bo‘ladi.`
             : ''
         }
         confirmLabel="O‘chirish"
         tone="danger"
         loading={deleteConversation.isPending}
-        onCancel={() => setToDelete(null)}
+        onCancel={() => {
+          setToDelete(null);
+          setForEveryone(false);
+        }}
         onConfirm={() => {
           if (!toDelete) return;
           const id = toDelete.id;
-          deleteConversation.mutate(id, {
+          deleteConversation.mutate({ id, forEveryone }, {
             onSuccess: () => {
               if (id === selectedId) onSelect(null);
               setToDelete(null);
+              setForEveryone(false);
             },
           });
         }}
-      />
+      >
+        {toDelete && (
+          <label className="gm-delete-both">
+            <input type="checkbox" checked={forEveryone} onChange={(event) => setForEveryone(event.target.checked)} />
+            <span>{toDelete.name} uchun ham o‘chirish</span>
+          </label>
+        )}
+      </ConfirmDialog>
     </>
   );
 }

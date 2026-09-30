@@ -161,7 +161,7 @@ describe('MessageList', () => {
     expect(onRetry).toHaveBeenCalledWith(expect.objectContaining({ id: 'tmp-2' }));
   });
 
-  it('offers edit and delete only on my own recent messages', async () => {
+  it('offers edit only on my own recent messages, delete on any (for me / for everyone)', async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
     state.messages = [message('m2', 'u2', 'Boshqaniki'), message('m1', 'me', 'Meniki')];
@@ -171,7 +171,7 @@ describe('MessageList', () => {
     await userEvent.click(triggers[1]!);
     const others = screen.getByRole('menu');
     expect(within(others).queryByRole('menuitem', { name: /Tahrirlash/ })).not.toBeInTheDocument();
-    expect(within(others).queryByRole('menuitem', { name: /O‘chirish/ })).not.toBeInTheDocument();
+    expect(within(others).getByRole('menuitem', { name: /O‘chirish/ })).toBeInTheDocument(); // boshqaning xabari: faqat men uchun o‘chirish
     expect(within(others).getByRole('menuitem', { name: /Nusxalash/ })).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
     await userEvent.click(screen.getAllByRole('button', { name: 'Xabar amallari' })[0]!);

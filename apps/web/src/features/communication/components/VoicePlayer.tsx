@@ -1,8 +1,22 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, Pause, Play } from 'lucide-react';
 import { mediaService } from '@/features/media/services/media.service';
 
 const RATES = [1, 1.5, 2];
+const BARS = 34;
+
+/** assetId dan doimiy «to‘lqin» balandliklari (Telegram ovozli xabaridagi kabi). */
+function waveform(seed: string): number[] {
+  let hash = 2166136261;
+  for (let i = 0; i < seed.length; i += 1) hash = Math.imul(hash ^ seed.charCodeAt(i), 16777619) >>> 0;
+  const heights: number[] = [];
+  for (let i = 0; i < BARS; i += 1) {
+    hash = Math.imul(hash ^ (hash >>> 15), 2246822507) >>> 0;
+    const base = 0.25 + (hash % 1000) / 1000 * 0.75;
+    heights.push(Math.round((i % 5 === 0 ? base * 0.8 : base) * 100));
+  }
+  return heights;
+}
 
 const format = (value: number) => {
   const total = Math.max(0, Math.round(value));
@@ -10,12 +24,12 @@ const format = (value: number) => {
 };
 
 /** Ovozli xabar pleyeri: play/pauza, progress, davomiylik va tezlik (1x / 1.5x / 2x). */
-export function VoicePlayer({ assetId }: { assetId: string }) {
+export function VoicePlayer({ assetId, seconds = 0 }: { assetId: string; seconds?: number }) {
   const audio = useRef<HTMLAudioElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [current, setCurrent] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(seconds);
   const [rate, setRate] = useState(1);
   const [failed, setFailed] = useState(false);
 
@@ -74,9 +88,11 @@ export function VoicePlayer({ assetId }: { assetId: string }) {
     } else element.pause();
   }
 
-  function seek(value: number) {
+  function seekTo(clientX: number, target: HTMLElement) {
     if (!audio.current || !duration) return;
-    audio.current.currentTime = (value / 100) * duration;
+    const rect = target.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    audio.current.currentTime = ratio * duration;
     setCurrent(audio.current.currentTime);
   }
 
@@ -86,7 +102,11 @@ export function VoicePlayer({ assetId }: { assetId: string }) {
     if (audio.current) audio.current.playbackRate = next;
   }
 
-  const progress = duration ? (current / duration) * 100 : 0;
+  const progress = duration ? current / duration : 0;
+  const bars = useMemo(() => waveform(assetId), [assetId]);
+  const active = Math.round(progress * BARS);
+  const started = playing || current > 0;
+  const label = failed ? 'Yuklab bo‘lmadi' : format(started || !duration ? current : duration);
 
   return (
     <div className="gm-voice">
@@ -94,23 +114,30 @@ export function VoicePlayer({ assetId }: { assetId: string }) {
         {loading ? <Loader2 size={20} className="gm-spin" /> : playing ? <Pause size={20} /> : <Play size={20} />}
       </button>
       <div className="gm-voice__body">
-        <input
-          type="range"
-          className="gm-voice__seek"
-          min={0}
-          max={100}
-          step={0.5}
-          value={progress}
-          disabled={!audio.current}
-          style={{ ['--gm-voice-progress' as string]: `${progress}%` }}
-          onChange={(event) => seek(Number(event.target.value))}
+        <div
+          className="gm-voice__wave"
+          role="slider"
           aria-label="Ovoz o‘rni"
-        />
-        <span className="gm-voice__time">{failed ? 'Yuklab bo‘lmadi' : duration || playing ? `${format(current)} / ${format(duration)}` : 'Ovozli xabar'}</span>
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress * 100)}
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+            seekTo(event.clientX, event.currentTarget);
+          }}
+          onPointerMove={(event) => event.buttons === 1 && seekTo(event.clientX, event.currentTarget)}
+        >
+          {bars.map((height, index) => (
+            <span key={index} className={index < active ? 'is-on' : undefined} style={{ height: `${height}%` }} />
+          ))}
+        </div>
+        <span className="gm-voice__time">{label}</span>
       </div>
-      <button type="button" className="gm-voice__rate" onClick={nextRate} aria-label="Tezlikni o‘zgartirish">
-        {rate}x
-      </button>
+      {started && (
+        <button type="button" className="gm-voice__rate" onClick={nextRate} aria-label="Tezlikni o‘zgartirish">
+          {rate}x
+        </button>
+      )}
     </div>
   );
 }

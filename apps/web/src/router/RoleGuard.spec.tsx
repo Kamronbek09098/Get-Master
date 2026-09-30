@@ -3,15 +3,18 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Role } from '@/types/common';
 
-const state: { role: Role | null; isLoading: boolean; isError: boolean; needsMasterOnboarding: boolean } = {
+const state: { role: Role | null; isLoading: boolean; isError: boolean; error: unknown; refetch: () => void; needsMasterOnboarding: boolean } = {
   role: null,
   isLoading: false,
   isError: false,
+  error: null,
+  refetch: () => undefined,
   needsMasterOnboarding: false,
 };
 vi.mock('@/features/session/hooks/useCurrentRole', () => ({ useCurrentRole: () => state }));
 
 import { RoleGuard } from './RoleGuard';
+import { ApiError } from '@/types/api';
 
 function renderGuard(roles: Role[]) {
   return render(
@@ -32,6 +35,7 @@ describe('RoleGuard', () => {
     state.role = null;
     state.isLoading = false;
     state.isError = false;
+    state.error = null;
     state.needsMasterOnboarding = false;
   });
 
@@ -64,6 +68,14 @@ describe('RoleGuard', () => {
     state.isError = true;
     renderGuard(['ADMIN']);
     expect(screen.getByText('kirish')).toBeInTheDocument();
+  });
+
+  it('shows a retry screen (no redirect loop) on network errors and keeps the session', () => {
+    state.isError = true;
+    state.error = new ApiError({ statusCode: 0, code: 'NETWORK_ERROR', message: 'x', requestId: null });
+    renderGuard(['ADMIN']);
+    expect(screen.getByText('Serverga ulanib bo‘lmadi')).toBeInTheDocument();
+    expect(screen.queryByText('kirish')).not.toBeInTheDocument();
   });
 
   it('lets a not-yet-onboarded master reach only the profile page', () => {

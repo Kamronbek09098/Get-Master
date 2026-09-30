@@ -384,6 +384,7 @@ model User {
   @@index([status])
   @@index([createdAt])
   @@map("users")
+  hiddenMessages MessageHidden[] @relation("HiddenMessages")
 }
 
 model UserRole {
@@ -971,6 +972,7 @@ model Message {
   order          Order?            @relation(fields: [orderId], references: [id], onDelete: SetNull)
   replyTo        Message?          @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
   replies        Message[]         @relation("MessageReplies")
+  hiddenBy       MessageHidden[]
 
   @@index([conversationId, createdAt])
   @@index([replyToId])
@@ -990,6 +992,19 @@ model MessageReaction {
   @@unique([messageId, userId, panel])
   @@index([messageId])
   @@map("message_reactions")
+}
+
+/// «Men uchun o'chirish»: xabar faqat shu foydalanuvchi uchun yashiriladi (Telegramdagidek), boshqalar ko'radi.
+model MessageHidden {
+  messageId String   @map("message_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation("HiddenMessages", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([messageId, userId])
+  @@index([userId])
+  @@map("message_hidden")
 }
 
 model MessageEdit {

@@ -114,7 +114,10 @@ export function useReactMessage(conversationId: string) {
 export function useDeleteMessage(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (messageId: string) => communicationService.deleteMessage(conversationId, messageId),
+    mutationFn: (input: string | { id: string; forEveryone?: boolean }) =>
+      typeof input === 'string'
+        ? communicationService.deleteMessage(conversationId, input)
+        : communicationService.deleteMessage(conversationId, input.id, input.forEveryone ?? true),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: messagesKey(conversationId) });
       void queryClient.invalidateQueries({ queryKey: ['conversations'], exact: true });
@@ -138,11 +141,14 @@ export function useMarkRead(conversationId: string) {
   });
 }
 
-/** Telegram uslubida: faqat mening ro‘yxatimdan yashiradi — xabarlar va boshqa tomon uchun suhbat o‘zgarmaydi. */
+/** Telegram uslubida: faqat mening ro‘yxatimdan yashiradi yoki (forEveryone) ikkala tomondan butunlay o‘chiradi. */
 export function useDeleteConversation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (conversationId: string) => communicationService.deleteConversation(conversationId),
+    mutationFn: (input: string | { id: string; forEveryone?: boolean }) =>
+      typeof input === 'string'
+        ? communicationService.deleteConversation(input)
+        : communicationService.deleteConversation(input.id, input.forEveryone),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
   });
 }

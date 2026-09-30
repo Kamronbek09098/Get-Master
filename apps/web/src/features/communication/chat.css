@@ -1821,3 +1821,160 @@ body:has(.gm-messenger) .gm-footer {
 .gm-bubble {
   will-change: transform;
 }
+
+.gm-delete-both {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--gm-radius-md);
+  background: var(--gm-color-surface-muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gm-delete-both input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--gm-color-danger);
+}
+
+/* ===== Telegram uslubidagi xabarlar ===== */
+.gm-msg {
+  --bubble-bg: var(--gm-color-surface);
+  --bubble-fg: var(--gm-color-text);
+}
+
+.gm-msg--mine {
+  --bubble-bg: var(--gm-color-primary);
+  --bubble-fg: var(--gm-color-primary-contrast);
+}
+
+.gm-bubble {
+  background: var(--bubble-bg);
+  color: var(--bubble-fg);
+  padding: 6px 10px 5px;
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 1.32;
+  box-shadow: 0 1px 1px color-mix(in srgb, var(--gm-color-text) 12%, transparent);
+}
+
+.gm-msg--mine .gm-bubble {
+  background: var(--bubble-bg);
+  color: var(--bubble-fg);
+}
+
+.gm-bubble__meta {
+  gap: 3px;
+  margin: 6px 0 -2px 10px;
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.7;
+}
+
+.gm-bubble__ticks svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* Guruhdagi oxirgi xabarda Telegramdagidek «dum» (tail) */
+.gm-msg--last .gm-bubble:not(.gm-bubble--media) {
+  border-bottom-left-radius: 4px;
+}
+
+.gm-msg--mine.gm-msg--last .gm-bubble:not(.gm-bubble--media) {
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 4px;
+}
+
+.gm-msg--last .gm-bubble:not(.gm-bubble--media)::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: -6px;
+  width: 8px;
+  height: 14px;
+  background: var(--bubble-bg);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 14'%3E%3Cpath d='M8 0v14H4C1.5 14 .3 12.6 0 12c2.6-.5 5.6-3 6-6.5.1-1.2 0-3.5 0-5.5z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 14'%3E%3Cpath d='M8 0v14H4C1.5 14 .3 12.6 0 12c2.6-.5 5.6-3 6-6.5.1-1.2 0-3.5 0-5.5z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+
+.gm-msg--mine.gm-msg--last .gm-bubble:not(.gm-bubble--media)::before {
+  left: auto;
+  right: -6px;
+  transform: scaleX(-1);
+}
+
+.gm-quote {
+  margin-bottom: 4px;
+  padding: 3px 8px;
+  border-left-width: 2px;
+  border-radius: 4px 8px 8px 4px;
+}
+
+.gm-quote strong {
+  font-size: 13px;
+}
+
+.gm-quote span {
+  font-size: 13.5px;
+}
+
+/* Ovozli xabar: to‘lqin (waveform) */
+.gm-voice {
+  gap: 10px;
+  min-width: 208px;
+  padding: 2px 0 0;
+}
+
+.gm-voice .gm-voice__play {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  aspect-ratio: 1;
+  padding: 0;
+  border-radius: 999px;
+}
+
+.gm-voice__body {
+  gap: 4px;
+}
+
+.gm-voice__wave {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 26px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.gm-voice__wave span {
+  flex: 1;
+  min-width: 2px;
+  max-width: 4px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.35;
+  transition: opacity 0.12s;
+}
+
+.gm-voice__wave span.is-on {
+  opacity: 1;
+}
+
+.gm-voice__time {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.gm-bubble:has(.gm-ochat)::before {
+  display: none;
+}
+
+.gm-msg .gm-bubble:has(.gm-ochat) {
+  background: var(--gm-color-surface);
+  color: var(--gm-color-text);
+  border-radius: 16px;
+}

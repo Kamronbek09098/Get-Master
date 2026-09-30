@@ -1,3 +1,4 @@
+import { StorageService } from '../../infrastructure/storage/storage.service';
 import { Panel } from '../../common/utils/panel';
 import {
   BadRequestException,
@@ -39,6 +40,7 @@ export class CommunicationService {
     private readonly db: PrismaService,
     private readonly orders: OrderService,
     private readonly notifications: NotificationService,
+    private readonly storage: StorageService,
   ) {}
 
   async create(userId: string, orderId: string, panel: Panel | null = null) {
@@ -126,6 +128,7 @@ export class CommunicationService {
             conversationId: row.conversationId,
             NOT: { senderId: userId, ...(panel ? { OR: [{ senderPanel: panel }, { senderPanel: null }] } : {}) },
             deletedAt: null,
+            hiddenBy: { none: { userId } },
             ...(row.lastReadAt ? { createdAt: { gt: row.lastReadAt } } : {}),
           },
         }),
@@ -147,7 +150,7 @@ export class CommunicationService {
       include: {
         order: { select: { id: true, status: true } },
         participants: { select: { userId: true, roles: true, lastReadAt: true, deletedAt: true, user: { select: USER_NAME_SELECT } } },
-        messages: { orderBy: { createdAt: 'desc' }, take: 1, select: this.messageSelect() },
+        messages: { where: { hiddenBy: { none: { userId } } }, orderBy: { createdAt: 'desc' }, take: 1, select: this.messageSelect() },
       },
       orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
       ...cursorArgs(query),
@@ -171,6 +174,7 @@ export class CommunicationService {
             conversationId: conversation.id,
             NOT: { senderId: userId, ...(panel ? { OR: [{ senderPanel: panel }, { senderPanel: null }] } : {}) },
             deletedAt: null,
+            hiddenBy: { none: { userId } },
             ...(mine?.lastReadAt ? { createdAt: { gt: mine.lastReadAt } } : {}),
           },
         });
@@ -202,7 +206,7 @@ export class CommunicationService {
   async findAllMessages(userId: string, conversationId: string, query: CursorQueryDto, panel: Panel | null = null) {
     await this.requireParticipant(userId, conversationId, panel);
     const rows = await this.db.message.findMany({
-      where: { conversationId },
+      where: { conversationId, hiddenBy: { none: { userId } } },
       select: this.messageSelect(),
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       ...cursorArgs(query),
@@ -280,22 +284,40 @@ export class CommunicationService {
     return this.present(updated);
   }
 
-  async removeMessage(userId: string, conversationId: string, messageId: string, panel: Panel | null = null) {
+  /**
+   * Telegramdagidek o'chirish: scope=all — xabar (va fayllari) hamma uchun butunlay o'chadi, «o'chirilgan» izi ham,
+   * admin uchun nusxa ham qolmaydi (faqat o'z xabarini); scope=me — faqat men uchun yashiriladi.
+   */
+  async removeMessage(userId: string, conversationId: string, messageId: string, panel: Panel | null = null, scope: 'all' | 'me' = 'all') {
     await this.requireParticipant(userId, conversationId, panel);
+    if (scope === 'me') {
+      const exists = await this.db.message.findFirst({ where: { id: messageId, conversationId }, select: { id: true } });
+      if (!exists) throw new NotFoundException(ERRORS.MESSAGE_NOT_FOUND);
+      await this.db.messageHidden.upsert({
+        where: { messageId_userId: { messageId, userId } },
+        create: { messageId, userId },
+        update: {},
+      });
+      return { deleted: true, forEveryone: false };
+    }
     const message = await this.requireOwnMessage(userId, conversationId, messageId, panel);
+    const attachments = (message.attachments as Array<{ mediaAssetId?: string }> | null) ?? [];
+    const assetIds = attachments.map((item) => item.mediaAssetId).filter((id): id is string => !!id);
+    const assets = assetIds.length
+      ? await this.db.mediaAsset.findMany({
+          where: { id: { in: assetIds }, linkedResourceType: 'Conversation', linkedResourceId: conversationId },
+          select: { id: true, quarantineKey: true, originalKey: true, thumbnailKey: true, mediumKey: true },
+        })
+      : [];
     await this.db.$transaction([
-      this.db.message.update({ where: { id: messageId }, data: { deletedAt: new Date() } }),
-      this.db.auditLog.create({
-        data: {
-          actorId: userId,
-          action: 'CHAT_MESSAGE_DELETED',
-          targetType: 'Message',
-          targetId: messageId,
-          before: { text: message.text, type: message.type, conversationId },
-        },
-      }),
+      this.db.mediaAsset.deleteMany({ where: { id: { in: assets.map((asset) => asset.id) } } }),
+      this.db.message.delete({ where: { id: messageId } }),
+      // Suhbat ro'yxatida oxirgi faollik yangilanishi uchun.
+      this.db.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } }),
     ]);
-    return { deleted: true };
+    const keys = assets.flatMap((asset) => [asset.quarantineKey, asset.originalKey, asset.thumbnailKey, asset.mediumKey]).filter((key): key is string => !!key);
+    await Promise.all(keys.map((key) => this.storage.deleteObject(key).catch((error: unknown) => this.logger.warn(`Faylni o‘chirib bo‘lmadi (${key}): ${String(error)}`))));
+    return { deleted: true, forEveryone: true };
   }
 
   async react(userId: string, conversationId: string, messageId: string, emoji: string | null, panel: Panel | null = null) {
@@ -339,6 +361,26 @@ export class CommunicationService {
       data: { deletedAt: new Date() },
     });
     return { deleted: true };
+  }
+
+  /**
+   * Telegramdagi «ikkala tomondan o‘chirish»: suhbat va uning barcha xabarlari, reaksiyalari, tahrir tarixi va
+   * biriktirilgan fayllar butunlay o‘chiriladi. Administrator ham keyin ko‘ra olmaydi (nusxa saqlanmaydi).
+   */
+  async deleteForEveryone(userId: string, conversationId: string, panel: Panel | null = null) {
+    await this.requireParticipant(userId, conversationId, panel);
+    const assets = await this.db.mediaAsset.findMany({
+      where: { linkedResourceType: 'Conversation', linkedResourceId: conversationId },
+      select: { id: true, quarantineKey: true, originalKey: true, thumbnailKey: true, mediumKey: true },
+    });
+    await this.db.$transaction([
+      this.db.notification.deleteMany({ where: { template: 'chat.message', data: { path: ['conversationId'], equals: conversationId } } }),
+      this.db.mediaAsset.deleteMany({ where: { id: { in: assets.map((asset) => asset.id) } } }),
+      this.db.conversation.delete({ where: { id: conversationId } }),
+    ]);
+    const keys = assets.flatMap((asset) => [asset.quarantineKey, asset.originalKey, asset.thumbnailKey, asset.mediumKey]).filter((key): key is string => !!key);
+    await Promise.all(keys.map((key) => this.storage.deleteObject(key).catch((error: unknown) => this.logger.warn(`Faylni o‘chirib bo‘lmadi (${key}): ${String(error)}`))));
+    return { deleted: true, forEveryone: true };
   }
 
   /** Suhbat o‘qilgach, undagi «Yangi xabar» bildirishnomalari ham o‘qilgan bo‘lsin (bildirishnomani ochmasdan ham). */

@@ -27,13 +27,13 @@ export const communicationService = {
   editMessage(conversationId: string, messageId: string, text: string) {
     return apiPatch<ChatMessage>(`/conversations/${conversationId}/messages/${messageId}`, { text });
   },
-  deleteMessage(conversationId: string, messageId: string) {
-    return apiDelete<{ deleted: boolean }>(`/conversations/${conversationId}/messages/${messageId}`);
+  deleteMessage(conversationId: string, messageId: string, forEveryone = true) {
+    return apiDelete<{ deleted: boolean }>(`/conversations/${conversationId}/messages/${messageId}${forEveryone ? '' : '?scope=me'}`);
   },
   markRead(conversationId: string) {
     return apiPost<unknown>(`/conversations/${conversationId}/read`);
   },
-  deleteConversation(conversationId: string) {
-    return apiDelete<{ deleted: boolean }>(`/conversations/${conversationId}`);
+  deleteConversation(conversationId: string, forEveryone = false) {
+    return apiDelete<{ deleted: boolean }>(`/conversations/${conversationId}${forEveryone ? '?scope=all' : ''}`);
   },
 };

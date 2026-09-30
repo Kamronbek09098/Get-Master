@@ -65,7 +65,7 @@ function Attachments({ items }: { items: ChatAttachment[] }) {
     <div className="gm-attach">
       {items.map((item) =>
         isVoice(item) ? (
-          <VoicePlayer key={item.mediaAssetId} assetId={item.mediaAssetId} />
+          <VoicePlayer key={item.mediaAssetId} assetId={item.mediaAssetId} seconds={Number(/-d(\d+)\.[a-z0-9]+$/i.exec(item.name)?.[1] ?? 0)} />
         ) : item.mimeType.startsWith('image/') ? (
           <MediaViewer key={item.mediaAssetId} assetId={item.mediaAssetId} alt={item.name} label={item.name} size="lg" />
         ) : (
@@ -87,7 +87,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
   const failed = message.status === 'failed';
   const settled = !message.deleted && !message.status;
   const editable = mine && canEdit(message);
-  const deletable = mine && settled && message.type !== 'ORDER';
+  const deletable = settled && message.type !== 'ORDER';
   const hasText = !!message.text;
   const panel = env.appRole ?? '';
   // Faqat rasm(lar)dan iborat xabar — Telegramdagidek ramkasiz, rasm pufakchani to‘liq egallaydi.

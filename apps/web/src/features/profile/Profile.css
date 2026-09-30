@@ -272,6 +272,11 @@
   .gm-pcol {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .gm-pcard {
+    width: 100%;
   }
   .gm-pcard {
     gap: 0;
