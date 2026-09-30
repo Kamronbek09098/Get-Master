@@ -26,22 +26,22 @@
 }
 
 .gm-button--md {
-  min-height: 46px;
-  padding: 0 var(--gm-space-5);
-  font-size: 15px;
+  min-height: var(--gm-btn-h-md);
+  padding: 0 var(--gm-btn-px);
+  font-size: var(--gm-btn-fs-md);
 }
 
 .gm-button--sm {
-  min-height: 36px;
-  padding: 0 var(--gm-space-4);
-  font-size: 13px;
+  min-height: var(--gm-btn-h-sm);
+  padding: 0 calc(var(--gm-btn-px) - 4px);
+  font-size: var(--gm-btn-fs-sm);
   border-radius: 10px;
 }
 
 .gm-button--lg {
-  min-height: 54px;
-  padding: 0 var(--gm-space-6);
-  font-size: 16px;
+  min-height: var(--gm-btn-h-lg);
+  padding: 0 calc(var(--gm-btn-px) + 4px);
+  font-size: var(--gm-btn-fs-lg);
   border-radius: 14px;
 }
 

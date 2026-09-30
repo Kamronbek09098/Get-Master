@@ -1559,3 +1559,120 @@ body:has(.gm-messenger) .gm-footer {
 .gm-bubble:has(> .gm-ochat) .gm-bubble__ticks--read {
   color: var(--gm-color-primary);
 }
+
+/* ===== Telegram uslubidagi yozish paneli ===== */
+.gm-composer {
+  padding: 8px 10px;
+  border-top: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.gm-composer__row {
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.gm-composer__pill {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 0 4px;
+  border-radius: 24px;
+  background: var(--gm-color-surface);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--gm-color-text) 14%, transparent);
+}
+
+.gm-composer__pill .gm-composer__input,
+.gm-composer__pill .gm-composer__input:focus,
+.gm-composer__pill .gm-composer__input:focus-visible {
+  flex: 1;
+  min-height: 48px;
+  padding: 13px 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow-y: hidden;
+  font-size: 16px;
+  line-height: 22px;
+  -webkit-tap-highlight-color: transparent;
+  caret-color: var(--gm-color-primary);
+}
+
+.gm-composer__pill .gm-composer__icon {
+  width: 44px;
+  height: 48px;
+  border-radius: 50%;
+  align-self: flex-end;
+}
+
+.gm-composer__send {
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+}
+
+.gm-composer__send:disabled {
+  cursor: default;
+}
+
+.gm-composer__emoji-grid {
+  bottom: 56px;
+}
+
+/* ===== Telefonda suhbat butun ekranni egallaydi ===== */
+@media (max-width: 899px) {
+  .gm-messenger--open {
+    position: fixed;
+    inset: 0;
+    z-index: 800;
+    height: 100dvh;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .gm-messenger--open .gm-messenger__head {
+    height: auto;
+    min-height: 60px;
+    padding: calc(var(--gm-safe-top) + 6px) var(--gm-space-3) 6px 6px;
+    gap: var(--gm-space-2);
+  }
+
+  .gm-messenger--open .gm-messenger__head .gm-chat-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .gm-messenger--open .gm-messenger__who strong {
+    font-size: 16px;
+    line-height: 1.25;
+  }
+
+  .gm-messenger--open .gm-thread__scroll {
+    padding: var(--gm-space-2) 8px var(--gm-space-3);
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gm-messenger--open .gm-bubble {
+    max-width: 82%;
+    font-size: 16px;
+  }
+
+  .gm-messenger--open .gm-composer {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  body:has(.gm-messenger--open) .gm-header {
+    display: none;
+  }
+
+  body:has(.gm-messenger--open) .gm-app-layout__content {
+    padding: 0;
+  }
+}

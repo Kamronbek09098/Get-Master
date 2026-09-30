@@ -1,0 +1,246 @@
+/* Telefonda ixcham joylashuv: kamroq aylantirish, hamma narsa bir ekranda ko‘rinsin. */
+@media (max-width: 899px) {
+  body {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  h1 {
+    font-size: 22px;
+  }
+
+  h2 {
+    font-size: 17px;
+  }
+
+  .gm-header {
+    padding: 0 var(--gm-space-4);
+    gap: var(--gm-space-2);
+  }
+
+  .gm-app-layout__content {
+    padding: var(--gm-space-3) var(--gm-space-4);
+    padding-bottom: 72px;
+  }
+
+  .gm-page-header {
+    margin-bottom: var(--gm-space-3);
+    gap: var(--gm-space-2);
+  }
+
+  .gm-page-header .gm-page-lead,
+  .gm-page-lead {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .gm-footer {
+    display: none;
+  }
+
+  .gm-mobile-nav {
+    padding-top: 4px;
+  }
+
+  .gm-mobile-nav__link {
+    min-height: 44px;
+    gap: 2px;
+    font-size: 10.5px;
+    padding: 4px 2px;
+  }
+
+  .gm-empty-state {
+    padding: var(--gm-space-5) var(--gm-space-4);
+    gap: 6px;
+  }
+
+  .gm-empty-state__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+
+  .gm-empty-state__title {
+    font-size: 16px;
+  }
+
+  .gm-empty-state__description {
+    font-size: 13px;
+  }
+}
+
+/* Kirish / ro‘yxatdan o‘tish: forma bir ekranga sig‘sin */
+@media (max-width: 899px) {
+  .gm-auth-layout,
+  .gm-auth-layout__main {
+    min-height: 100dvh;
+  }
+
+  .gm-auth-layout__main {
+    padding: var(--gm-space-3) var(--gm-space-4) var(--gm-space-4);
+  }
+
+  .gm-auth-layout__panel {
+    margin: var(--gm-space-3) auto 0;
+  }
+
+  .gm-auth-layout h1 {
+    font-size: 24px;
+  }
+
+  .gm-auth-form {
+    gap: 10px;
+  }
+
+  .gm-auth-form .gm-field {
+    gap: 4px;
+  }
+
+  .gm-auth-form .gm-field__label {
+    font-size: 12.5px;
+  }
+}
+
+/* Statistika kartochkalari va sana filtri: telefonda 2 ustunli, ixcham */
+@media (max-width: 899px) {
+  .gm-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--gm-space-2);
+  }
+
+  .gm-stat {
+    padding: var(--gm-space-3);
+    border-radius: var(--gm-radius-md);
+  }
+
+  .gm-stat__icon {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 6px;
+    border-radius: 9px;
+  }
+
+  .gm-stat__value {
+    font-size: 22px;
+  }
+
+  .gm-stat__label {
+    font-size: 12px;
+  }
+
+  .gm-toolbar:has(input[type='date']) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gm-space-2);
+  }
+
+  .gm-count-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: var(--gm-space-2);
+  }
+
+  .gm-count-card {
+    padding: var(--gm-space-3);
+  }
+}
+
+@media (max-width: 899px) {
+  .gm-toolbar:has(input[type='date']) > *,
+  .gm-toolbar input[type='date'] {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+/* Profil sarlavhasi, daromad kartochkalari, umumiy kartochkalar: telefonda ixcham */
+@media (max-width: 899px) {
+  .gm-phero {
+    border-radius: var(--gm-radius-lg);
+  }
+
+  .gm-phero__cover {
+    height: 48px;
+  }
+
+  .gm-phero__body {
+    padding: 0 var(--gm-space-4);
+    margin-top: -26px;
+    gap: var(--gm-space-3);
+  }
+
+  .gm-phero__body .gm-chat-avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 1.25rem;
+    border-width: 3px;
+  }
+
+  .gm-phero__who {
+    padding-top: 30px;
+  }
+
+  .gm-phero__name h2 {
+    font-size: 1.1rem;
+  }
+
+  .gm-phero__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--gm-space-2);
+    margin-top: var(--gm-space-3);
+    padding: var(--gm-space-3) var(--gm-space-4) var(--gm-space-4);
+  }
+
+  .gm-phero__stats > div {
+    padding: var(--gm-space-2) var(--gm-space-3);
+  }
+
+  .gm-phero__stats dd {
+    font-size: 1.15rem;
+  }
+
+  .gm-earn__kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--gm-space-2);
+  }
+
+  .gm-earn__kpi {
+    padding: var(--gm-space-3);
+  }
+
+  .gm-earn__hero-value {
+    font-size: 1.8rem;
+  }
+
+  .gm-card,
+  .gm-detail-section {
+    border-radius: var(--gm-radius-md);
+  }
+
+  .gm-detail-section {
+    margin-top: var(--gm-space-3);
+  }
+}
+
+@media (max-width: 899px) {
+  .gm-earn__hero-side {
+    flex-direction: row;
+    gap: var(--gm-space-2);
+  }
+
+  .gm-earn__hero-side div {
+    flex: 1;
+    min-width: 0;
+    padding: var(--gm-space-2) var(--gm-space-3);
+  }
+
+  .gm-earn__hero-side strong {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 899px) {
+  .gm-earn__kpi strong {
+    font-size: 1.05rem;
+    overflow-wrap: anywhere;
+  }
+}

@@ -89,3 +89,36 @@
   font-size: 0.75rem;
   text-align: right;
 }
+
+.gm-size-picker {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--gm-radius-md);
+  background: var(--gm-color-surface-muted);
+}
+
+.gm-size-picker__item {
+  flex: 1;
+  min-height: 38px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--gm-color-text-muted);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.gm-size-picker__item--active {
+  background: var(--gm-color-surface);
+  color: var(--gm-color-primary);
+  box-shadow: var(--gm-shadow-sm);
+}
+
+.gm-size-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gm-space-3);
+  margin-top: var(--gm-space-4);
+}

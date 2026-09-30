@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
     <meta name="theme-color" content="#155DFC" />
     <meta
       name="description"
@@ -21,6 +21,8 @@
         try {
           var mode = localStorage.getItem('getmaster.theme') === 'dark' ? 'dark' : 'light';
           document.documentElement.setAttribute('data-theme', mode);
+          var size = localStorage.getItem('getmaster.ui-size');
+          document.documentElement.setAttribute('data-ui-size', size === 'small' || size === 'large' ? size : 'medium');
         } catch (e) {
           document.documentElement.setAttribute('data-theme', 'light');
         }

@@ -15,7 +15,7 @@
 
 .gm-field__control {
   width: 100%;
-  min-height: 48px;
+  min-height: calc(var(--gm-btn-h-md) + 4px);
   padding: 0 var(--gm-space-4);
   border-radius: var(--gm-radius-md);
   border: 1.5px solid var(--gm-color-border-strong);

@@ -47,6 +47,15 @@
   --gm-shadow-md: 0 6px 20px rgba(11, 18, 32, 0.08);
   --gm-shadow-lg: 0 18px 44px rgba(11, 18, 32, 0.16);
 
+  /* Tugma o‘lchamlari (Sozlamalar → Ko‘rinish orqali o‘zgaradi) */
+  --gm-btn-h-sm: 32px;
+  --gm-btn-h-md: 40px;
+  --gm-btn-h-lg: 46px;
+  --gm-btn-fs-sm: 12.5px;
+  --gm-btn-fs-md: 14px;
+  --gm-btn-fs-lg: 15px;
+  --gm-btn-px: 18px;
+
   --gm-header-height: 68px;
   --gm-sidebar-width: 272px;
   --gm-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
@@ -114,4 +123,31 @@
   --gm-color-primary-contrast: #110e33;
   --gm-color-info-bg: #1f1c45;
   --gm-focus-ring: #c0bcff;
+}
+
+:root[data-ui-size='small'] {
+  --gm-btn-h-sm: 28px;
+  --gm-btn-h-md: 34px;
+  --gm-btn-h-lg: 40px;
+  --gm-btn-fs-sm: 12px;
+  --gm-btn-fs-md: 13px;
+  --gm-btn-fs-lg: 14px;
+  --gm-btn-px: 14px;
+}
+
+:root[data-ui-size='large'] {
+  --gm-btn-h-sm: 38px;
+  --gm-btn-h-md: 48px;
+  --gm-btn-h-lg: 56px;
+  --gm-btn-fs-sm: 14px;
+  --gm-btn-fs-md: 16px;
+  --gm-btn-fs-lg: 17px;
+  --gm-btn-px: 24px;
+}
+
+/* Telefonda joyni tejash: ixcham sarlavha, kichikroq bo‘shliqlar */
+@media (max-width: 899px) {
+  :root {
+    --gm-header-height: 56px;
+  }
 }

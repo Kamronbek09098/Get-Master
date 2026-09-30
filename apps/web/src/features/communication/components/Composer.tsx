@@ -9,6 +9,9 @@ import type { ChatAttachment, ChatMessage } from '../types';
 const MAX_LENGTH = 2000;
 const EMOJIS = ['😀', '😂', '😊', '😍', '🥰', '😉', '😎', '🤝', '👍', '👌', '🙏', '👏', '🔥', '❤️', '✅', '❌', '⏰', '📍', '🔧', '🛠️', '💧', '⚡', '🏠', '💰', '📞', '📷', '😅', '🤔', '😢', '🎉', '👋', '🙌'];
 
+/** Sensorli qurilmada (telefon) Enter — yangi qator, yuborish tugma orqali (Telegramdagidek). */
+const isTouchDevice = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+
 const drafts = new Map<string, string>();
 
 export interface ComposerProps {
@@ -37,7 +40,8 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
     if (editing) setText(editing.text ?? '');
     else setText(drafts.get(conversationId) ?? '');
     const area = areaRef.current;
-    area?.focus();
+    // Telefonda suhbat ochilganda klaviatura o‘zi chiqib ketmasin.
+    if (editing || !isTouchDevice()) area?.focus();
     if (editing) requestAnimationFrame(() => area?.setSelectionRange((editing.text ?? '').length, (editing.text ?? '').length));
   }, [editing, conversationId]);
 
@@ -45,7 +49,9 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
     const area = areaRef.current;
     if (!area) return;
     area.style.height = 'auto';
-    area.style.height = `${Math.min(area.scrollHeight, 140)}px`;
+    const height = Math.min(area.scrollHeight, 140);
+    area.style.height = `${height}px`;
+    area.style.overflowY = area.scrollHeight > 140 ? 'auto' : 'hidden';
   }, [text]);
 
   useEffect(() => {
@@ -80,7 +86,7 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && !isTouchDevice()) {
       event.preventDefault();
       submit();
     } else if (event.key === 'Escape' && (editing || replyTo)) {
@@ -148,68 +154,71 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
         </div>
       )}
       <div className="gm-composer__row">
-        {onOrder && !editing && (
-          <button type="button" className="gm-composer__icon" aria-label="Ustaga buyurtma yuborish" title="Ustaga buyurtma yuborish" onClick={onOrder}>
-            <Package size={22} />
-          </button>
-        )}
-        <div className="gm-composer__emoji" ref={emojiRef}>
-          <button
-            type="button"
-            className="gm-composer__icon"
-            aria-label="Emoji"
-            aria-expanded={emojiOpen}
-            onClick={() => setEmojiOpen((open) => !open)}
-          >
-            <Smile size={22} />
-          </button>
-          {emojiOpen && (
-            <div className="gm-composer__emoji-grid" role="listbox" aria-label="Emoji tanlash">
-              {EMOJIS.map((emoji) => (
-                <button key={emoji} type="button" role="option" aria-selected={false} onClick={() => insertEmoji(emoji)}>
-                  {emoji}
-                </button>
-              ))}
-            </div>
+        <div className="gm-composer__pill">
+          <div className="gm-composer__emoji" ref={emojiRef}>
+            <button
+              type="button"
+              className="gm-composer__icon"
+              aria-label="Emoji"
+              aria-expanded={emojiOpen}
+              onClick={() => setEmojiOpen((open) => !open)}
+            >
+              <Smile size={24} />
+            </button>
+            {emojiOpen && (
+              <div className="gm-composer__emoji-grid" role="listbox" aria-label="Emoji tanlash">
+                {EMOJIS.map((emoji) => (
+                  <button key={emoji} type="button" role="option" aria-selected={false} onClick={() => insertEmoji(emoji)}>
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <textarea
+            ref={areaRef}
+            className="gm-composer__input"
+            aria-label="Xabar"
+            placeholder={editing ? 'Xabarni tahrirlang…' : 'Xabar'}
+            rows={1}
+            value={text}
+            maxLength={MAX_LENGTH}
+            enterKeyHint={isTouchDevice() ? 'enter' : 'send'}
+            onChange={(event) => change(event.target.value)}
+            onKeyDown={onKeyDown}
+            onPaste={(event) => {
+              const pasted = Array.from(event.clipboardData.files);
+              if (pasted.length > 0 && !editing) {
+                event.preventDefault();
+                files.add(pasted);
+              }
+            }}
+          />
+
+          {onOrder && !editing && (
+            <button type="button" className="gm-composer__icon" aria-label="Ustaga buyurtma yuborish" title="Ustaga buyurtma yuborish" onClick={onOrder}>
+              <Package size={22} />
+            </button>
+          )}
+          {!editing && (
+            <>
+              <input
+                ref={fileInput}
+                type="file"
+                hidden
+                multiple
+                onChange={(event) => {
+                  files.add(Array.from(event.target.files ?? []));
+                  event.target.value = '';
+                }}
+              />
+              <button type="button" className="gm-composer__icon" aria-label="Fayl biriktirish" onClick={() => fileInput.current?.click()}>
+                <Paperclip size={22} />
+              </button>
+            </>
           )}
         </div>
-
-        {!editing && (
-          <>
-            <input
-              ref={fileInput}
-              type="file"
-              hidden
-              multiple
-              onChange={(event) => {
-                files.add(Array.from(event.target.files ?? []));
-                event.target.value = '';
-              }}
-            />
-            <button type="button" className="gm-composer__icon" aria-label="Fayl biriktirish" onClick={() => fileInput.current?.click()}>
-              <Paperclip size={21} />
-            </button>
-          </>
-        )}
-
-        <textarea
-          ref={areaRef}
-          className="gm-composer__input"
-          aria-label="Xabar"
-          placeholder={editing ? 'Xabarni tahrirlang…' : 'Xabar yozing…'}
-          rows={1}
-          value={text}
-          maxLength={MAX_LENGTH}
-          onChange={(event) => change(event.target.value)}
-          onKeyDown={onKeyDown}
-          onPaste={(event) => {
-            const pasted = Array.from(event.clipboardData.files);
-            if (pasted.length > 0 && !editing) {
-              event.preventDefault();
-              files.add(pasted);
-            }
-          }}
-        />
 
         <button
           type="button"
