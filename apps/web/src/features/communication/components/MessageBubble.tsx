@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { MouseEvent } from 'react';
+import type { MouseEvent, TouchEvent } from 'react';
 import { AlertCircle, Check, CheckCheck, Clock, Copy, CornerUpLeft, FileText, MoreHorizontal, Pencil, RotateCw, Trash2 } from 'lucide-react';
 import { env } from '@/lib/env';
 import { cx } from '@/lib/utils';
@@ -10,6 +10,12 @@ import { canEdit, clock, replySnippet } from '../format';
 import type { ChatAttachment, ChatMessage } from '../types';
 import { Linkified } from './Linkified';
 import { ChatOrderCard } from './ChatOrderCard';
+import { VoicePlayer } from './VoicePlayer';
+
+const isVoice = (item: ChatAttachment) => /^voice-/i.test(item.name) || item.mimeType.startsWith('audio/');
+
+const SWIPE_TRIGGER = 56;
+const SWIPE_MAX = 84;
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '🔥', '👏'];
 
@@ -57,7 +63,9 @@ function Attachments({ items }: { items: ChatAttachment[] }) {
   return (
     <div className="gm-attach">
       {items.map((item) =>
-        item.mimeType.startsWith('image/') ? (
+        isVoice(item) ? (
+          <VoicePlayer key={item.mediaAssetId} assetId={item.mediaAssetId} />
+        ) : item.mimeType.startsWith('image/') ? (
           <MediaViewer key={item.mediaAssetId} assetId={item.mediaAssetId} alt={item.name} label={item.name} size="lg" />
         ) : (
           <FileChip key={item.mediaAssetId} attachment={item} />
@@ -70,6 +78,9 @@ function Attachments({ items }: { items: ChatAttachment[] }) {
 export function MessageBubble({ message, mine, meId, first, last, read, onEdit, onDelete, onRetry, onReply, onReact, onJump }: MessageBubbleProps) {
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const hintRef = useRef<HTMLSpanElement>(null);
+  const swipe = useRef<{ x: number; y: number; active: boolean; offset: number } | null>(null);
   const failed = message.status === 'failed';
   const settled = !message.deleted && !message.status;
   const editable = mine && canEdit(message);
@@ -100,6 +111,64 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
     };
   }, [menu]);
 
+  function moveBubble(offset: number, animate: boolean) {
+    const bubble = bubbleRef.current;
+    if (bubble) {
+      bubble.style.transition = animate ? 'transform 0.2s ease' : 'none';
+      bubble.style.transform = offset ? `translateX(${offset}px)` : '';
+    }
+    const hint = hintRef.current;
+    if (hint) {
+      const ratio = Math.min(1, Math.abs(offset) / SWIPE_TRIGGER);
+      hint.style.opacity = String(ratio);
+      hint.style.transform = `scale(${0.6 + 0.4 * ratio})`;
+    }
+  }
+
+  // Telegramdagidek: xabarni chapga surib qo‘yib yuborish — javob berish.
+  const swipeHandlers =
+    settled && onReply
+      ? {
+          onTouchStart: (event: TouchEvent<HTMLDivElement>) => {
+            const touch = event.touches[0];
+            if (!touch) return;
+            swipe.current = { x: touch.clientX, y: touch.clientY, active: false, offset: 0 };
+          },
+          onTouchMove: (event: TouchEvent<HTMLDivElement>) => {
+            const state = swipe.current;
+            if (!state) return;
+            const touch = event.touches[0];
+            if (!touch) return;
+            const dx = touch.clientX - state.x;
+            const dy = touch.clientY - state.y;
+            if (!state.active) {
+              if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) {
+                swipe.current = null;
+                return;
+              }
+              if (dx < -12 && Math.abs(dx) > Math.abs(dy)) state.active = true;
+              else return;
+            }
+            state.offset = Math.max(-SWIPE_MAX, Math.min(0, dx));
+            moveBubble(state.offset, false);
+          },
+          onTouchEnd: () => {
+            const state = swipe.current;
+            swipe.current = null;
+            if (!state?.active) return;
+            moveBubble(0, true);
+            if (state.offset <= -SWIPE_TRIGGER) {
+              navigator.vibrate?.(12);
+              onReply(message);
+            }
+          },
+          onTouchCancel: () => {
+            swipe.current = null;
+            moveBubble(0, true);
+          },
+        }
+      : {};
+
   function openMenu(event: MouseEvent) {
     if (!settled) return;
     event.preventDefault();
@@ -124,8 +193,14 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
   const replyName = reply ? (reply.senderId === meId && (reply.senderPanel ?? panel) === panel ? 'Siz' : accountName(reply.sender)) : '';
 
   return (
-    <div id={`msg-${message.id}`} className={cx('gm-msg', mine && 'gm-msg--mine', first && 'gm-msg--first', last && 'gm-msg--last')}>
+    <div id={`msg-${message.id}`} className={cx('gm-msg', mine && 'gm-msg--mine', first && 'gm-msg--first', last && 'gm-msg--last')} {...swipeHandlers}>
+      {settled && onReply && (
+        <span className="gm-msg__swipe-hint" ref={hintRef} aria-hidden="true">
+          <CornerUpLeft size={16} />
+        </span>
+      )}
       <div
+        ref={bubbleRef}
         className={cx('gm-bubble', mine && 'gm-bubble--mine', message.deleted && 'gm-bubble--deleted', failed && 'gm-bubble--failed', mediaOnly && 'gm-bubble--media')}
         onContextMenu={openMenu}
         onDoubleClick={settled && onReply ? () => onReply(message) : undefined}

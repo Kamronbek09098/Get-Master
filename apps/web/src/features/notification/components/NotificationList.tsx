@@ -70,8 +70,8 @@ export function NotificationList() {
             {unreadCount > 0 && <span className="gm-notify__count">{unreadCount}</span>}
           </button>
         </div>
-        <Button size="sm" variant="secondary" disabled={unreadCount === 0} loading={markAllAsRead.isPending} onClick={() => markAllAsRead.mutate()}>
-          <CheckCheck size={16} /> Hammasini o‘qilgan deb belgilash
+        <Button size="sm" variant="secondary" aria-label="Hammasini o‘qilgan deb belgilash" className="gm-notify__markall-btn" disabled={unreadCount === 0} loading={markAllAsRead.isPending} onClick={() => markAllAsRead.mutate()}>
+          <CheckCheck size={16} /> <span className="gm-notify__markall">Hammasini o‘qilgan deb belgilash</span>
         </Button>
       </div>
 

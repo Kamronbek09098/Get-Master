@@ -59,7 +59,7 @@ export function CustomerProfilePage() {
 
       <div className="gm-pgrid">
         <div className="gm-pcol">
-          <ProfileCard icon={UserRound} title="Shaxsiy ma’lumotlar" hint="Ism va familiyangiz boshqa foydalanuvchilarga ko‘rinadi.">
+          <ProfileCard defaultOpen icon={UserRound} title="Shaxsiy ma’lumotlar" hint="Ism va familiyangiz boshqa foydalanuvchilarga ko‘rinadi.">
             <CustomerForm profile={data} />
           </ProfileCard>
           <ProfileCard icon={MapPin} title="Manzillarim" hint="So‘rov yaratganda tez tanlash uchun.">

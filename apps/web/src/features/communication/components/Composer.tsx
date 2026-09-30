@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { AlertCircle, Check, CornerUpLeft, FileText, Loader2, Package, Paperclip, Pencil, Send, Smile, X } from 'lucide-react';
+import { AlertCircle, Check, CornerUpLeft, FileText, Loader2, Mic, Package, Paperclip, Pencil, Send, Smile, Trash2, X } from 'lucide-react';
 import { cx } from '@/lib/utils';
-import { useAttachments } from '../hooks/useAttachments';
+import { uploadAttachment, useAttachments } from '../hooks/useAttachments';
+import { useVoiceRecorder, voiceSupported } from '../hooks/useVoiceRecorder';
 import { replySnippet } from '../format';
 import type { ChatAttachment, ChatMessage } from '../types';
 
@@ -33,6 +34,9 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
   const fileInput = useRef<HTMLInputElement>(null);
   const [text, setText] = useState(() => drafts.get(conversationId) ?? '');
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const voice = useVoiceRecorder();
+  const [voiceBusy, setVoiceBusy] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
 
@@ -85,6 +89,21 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
     setEmojiOpen(false);
   }
 
+  async function sendVoice() {
+    const recorded = await voice.stop();
+    if (!recorded) return;
+    setVoiceBusy(true);
+    setVoiceError(null);
+    try {
+      const attachment = await uploadAttachment(recorded.file, conversationId);
+      onSend('', [attachment]);
+    } catch (error) {
+      setVoiceError(error instanceof Error ? error.message : 'Ovozli xabarni yuborib bo‘lmadi');
+    } finally {
+      setVoiceBusy(false);
+    }
+  }
+
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing && !isTouchDevice()) {
       event.preventDefault();
@@ -110,6 +129,9 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
     });
   }
 
+  const recording = voice.state === 'recording';
+  const showMic = !editing && !text.trim() && files.items.length === 0 && voiceSupported();
+  const voiceMessage = voiceError ?? voice.error;
   const empty = editing ? !text.trim() : (!text.trim() && files.ready.length === 0) || files.uploading;
 
   return (
@@ -153,7 +175,24 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
           </button>
         </div>
       )}
+      {voiceMessage && (
+        <p className="gm-composer__voice-error" role="alert">
+          {voiceMessage}
+        </p>
+      )}
       <div className="gm-composer__row">
+        {recording ? (
+          <div className="gm-composer__rec" role="status" aria-live="polite">
+            <button type="button" className="gm-composer__icon" aria-label="Yozishni bekor qilish" onClick={voice.cancel}>
+              <Trash2 size={22} />
+            </button>
+            <span className="gm-composer__rec-dot" aria-hidden="true" />
+            <span className="gm-composer__rec-time">
+              {Math.floor(voice.seconds / 60)}:{String(voice.seconds % 60).padStart(2, '0')}
+            </span>
+            <span className="gm-composer__rec-hint">Yozilmoqda…</span>
+          </div>
+        ) : (
         <div className="gm-composer__pill">
           <div className="gm-composer__emoji" ref={emojiRef}>
             <button
@@ -219,7 +258,19 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
             </>
           )}
         </div>
+        )}
 
+        {showMic || recording || voiceBusy ? (
+          <button
+            type="button"
+            className="gm-composer__send gm-composer__send--ready"
+            aria-label={recording ? 'Ovozli xabarni yuborish' : 'Ovozli xabar yozish'}
+            disabled={voiceBusy}
+            onClick={() => (recording ? void sendVoice() : void voice.start())}
+          >
+            {voiceBusy ? <Loader2 size={20} className="gm-spin" /> : recording ? <Send size={19} /> : <Mic size={21} />}
+          </button>
+        ) : (
         <button
           type="button"
           className={cx('gm-composer__send', !empty && 'gm-composer__send--ready')}
@@ -229,6 +280,7 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
         >
           {editing ? <Check size={20} /> : <Send size={19} />}
         </button>
+        )}
       </div>
       {text.length > MAX_LENGTH - 200 && (
         <span className="gm-composer__count" aria-live="polite">

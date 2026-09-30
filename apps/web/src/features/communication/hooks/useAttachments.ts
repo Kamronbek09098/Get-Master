@@ -18,6 +18,22 @@ const MAX_POLLS = 90;
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Faylni yuklaydi va skaner tugashini kutadi; tayyor bo‘lsa xabarga qo‘shiladigan ma’lumotni qaytaradi. */
+export async function uploadAttachment(file: File, conversationId: string): Promise<ChatAttachment> {
+  if (file.size > MAX_BYTES) throw new Error('Fayl 25 MB dan katta');
+  const asset = await mediaService.upload(file, 'MESSAGE_ATTACHMENT', 'Conversation', conversationId);
+  let status = asset.status;
+  let mime = asset.detectedMimeType ?? (file.type || 'application/octet-stream');
+  for (let attempt = 0; attempt < MAX_POLLS && status !== 'READY' && status !== 'REJECTED' && status !== 'FAILED'; attempt += 1) {
+    await wait(POLL_MS);
+    const fresh = await mediaService.getStatus(asset.id);
+    status = fresh.status;
+    mime = fresh.detectedMimeType ?? mime;
+  }
+  if (status !== 'READY') throw new Error(status === 'REJECTED' ? 'Fayl rad etildi' : 'Fayl qayta ishlanmadi');
+  return { mediaAssetId: asset.id, mimeType: mime, name: file.name };
+}
+
 /** Suhbatga fayl biriktirish: yuklaydi, tekshiruv (skaner) tugashini kutadi va tayyor fayllarni qaytaradi. */
 export function useAttachments(conversationId: string) {
   const [items, setItems] = useState<PendingAttachment[]>([]);

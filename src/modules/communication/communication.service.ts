@@ -400,6 +400,8 @@ export class CommunicationService {
 
   private messageType(attachments: StoredAttachment[]): MessageType {
     if (attachments.length === 0) return 'TEXT';
+    // Ovozli xabar (voice-*.webm/.m4a) video sifatida emas, fayl sifatida saqlanadi.
+    if (attachments.every((a) => /^voice-/i.test(a.name))) return 'FILE';
     if (attachments.every((a) => a.mimeType.startsWith('image/'))) return 'IMAGE';
     if (attachments.every((a) => a.mimeType.startsWith('video/'))) return 'VIDEO';
     return 'FILE';

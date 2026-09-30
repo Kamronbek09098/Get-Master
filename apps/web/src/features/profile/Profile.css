@@ -248,3 +248,73 @@
     background: color-mix(in srgb, var(--gm-color-primary) 7%, var(--gm-color-surface));
   }
 }
+
+.gm-pcard__chevron {
+  display: none;
+}
+.gm-pcard__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gm-space-4);
+}
+.gm-pcard__body[hidden] {
+  display: none;
+}
+
+/* Telefonda: kartochkalar yig‘iladigan ro‘yxat (accordion) */
+@media (max-width: 899px) {
+  .gm-ppage,
+  .gm-pgrid,
+  .gm-pcol {
+    gap: var(--gm-space-2);
+  }
+  .gm-pgrid,
+  .gm-pcol {
+    display: flex;
+    flex-direction: column;
+  }
+  .gm-pcard {
+    gap: 0;
+    padding: 0;
+    border-radius: var(--gm-radius-md);
+    overflow: hidden;
+  }
+  .gm-pcard__head {
+    align-items: center;
+    padding: var(--gm-space-3) var(--gm-space-3);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gm-pcard__head:active {
+    background: var(--gm-color-surface-muted);
+  }
+  .gm-pcard__head > div {
+    flex: 1;
+    min-width: 0;
+  }
+  .gm-pcard__head h2 {
+    font-size: 0.98rem;
+  }
+  .gm-pcard__head p {
+    display: none;
+  }
+  .gm-pcard--open .gm-pcard__head p {
+    display: block;
+  }
+  .gm-pcard__chevron {
+    display: block;
+    flex: none;
+    color: var(--gm-color-text-muted);
+    transition: transform 0.2s ease;
+  }
+  .gm-pcard--open .gm-pcard__chevron {
+    transform: rotate(180deg);
+  }
+  .gm-pcard__body {
+    padding: 0 var(--gm-space-3) var(--gm-space-3);
+    border-top: 1px solid var(--gm-color-border);
+    padding-top: var(--gm-space-3);
+    gap: var(--gm-space-3);
+  }
+}

@@ -122,7 +122,7 @@ export function isRead(message: ChatMessage, counterpartLastReadAt: string | nul
 export function previewText(conversation: Conversation, meId: string | undefined): string {
   const last = conversation.lastMessage;
   if (!last) return 'Xabar yo‘q';
-  const text = last.deleted ? 'Xabar o‘chirilgan' : (last.text ?? 'Xabar');
+  const text = last.deleted ? 'Xabar o‘chirilgan' : (last.text ?? replySnippet(last));
   return isOwnMessage(last, meId) ? `Siz: ${text}` : text;
 }
 
@@ -144,9 +144,16 @@ export function avatarTone(seed: string | null | undefined): number {
 }
 
 /** Javob/iqtibos uchun qisqa matn. */
-export function replySnippet(message: { text?: string | null; type?: string; deleted?: boolean; deletedAt?: string | null }): string {
+export function replySnippet(message: {
+  text?: string | null;
+  type?: string;
+  deleted?: boolean;
+  deletedAt?: string | null;
+  attachments?: Array<{ name: string; mimeType: string }> | null;
+}): string {
   if (message.deleted || message.deletedAt) return 'Xabar o‘chirilgan';
   if (message.text) return message.text;
+  if (message.attachments?.some((a) => /^voice-/i.test(a.name) || a.mimeType.startsWith('audio/'))) return '🎤 Ovozli xabar';
   if (message.type === 'IMAGE') return '📷 Rasm';
   if (message.type === 'VIDEO') return '🎬 Video';
   if (message.type === 'FILE') return '📎 Fayl';

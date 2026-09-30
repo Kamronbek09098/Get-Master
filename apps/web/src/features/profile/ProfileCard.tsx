@@ -1,5 +1,10 @@
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import { ChevronDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { cx } from '@/lib/utils';
+
+const isMobile = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 899px)').matches;
 
 export function ProfileCard({
   icon: Icon,
@@ -8,6 +13,7 @@ export function ProfileCard({
   children,
   id,
   highlight = false,
+  defaultOpen = false,
 }: {
   icon: LucideIcon;
   title: string;
@@ -15,10 +21,29 @@ export function ProfileCard({
   children: ReactNode;
   id?: string;
   highlight?: boolean;
+  /** Telefonda kartochka yig‘ilgan holda chiqadi; shu belgi bo‘lsa ochiq boshlanadi. */
+  defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = useState(() => defaultOpen || !isMobile());
+  useEffect(() => {
+    if (highlight) setOpen(true);
+  }, [highlight]);
+
   return (
-    <section className={highlight ? 'gm-pcard gm-pcard--highlight' : 'gm-pcard'} id={id}>
-      <header className="gm-pcard__head">
+    <section className={cx('gm-pcard', highlight && 'gm-pcard--highlight', open && 'gm-pcard--open')} id={id}>
+      <header
+        className="gm-pcard__head"
+        role={isMobile() ? 'button' : undefined}
+        tabIndex={isMobile() ? 0 : undefined}
+        aria-expanded={open}
+        onClick={() => isMobile() && setOpen((value) => !value)}
+        onKeyDown={(event) => {
+          if (isMobile() && (event.key === 'Enter' || event.key === ' ')) {
+            event.preventDefault();
+            setOpen((value) => !value);
+          }
+        }}
+      >
         <span className="gm-pcard__icon" aria-hidden="true">
           <Icon size={18} />
         </span>
@@ -26,8 +51,11 @@ export function ProfileCard({
           <h2>{title}</h2>
           {hint && <p>{hint}</p>}
         </div>
+        <ChevronDown size={18} className="gm-pcard__chevron" aria-hidden="true" />
       </header>
-      {children}
+      <div className="gm-pcard__body" hidden={!open}>
+        {children}
+      </div>
     </section>
   );
 }

@@ -23,16 +23,16 @@ function CategoryCard({ category }: { category: ServiceCategory }) {
     <div className="gm-card">
       <div className="gm-card__header">
         <h3>{category.name}</h3>
-        <Button size="sm" variant="ghost" loading={removeCategory.isPending} onClick={() => removeCategory.mutate(category.id)}>
+        <Button size="sm" variant="ghost" className="gm-btn-danger-text" loading={removeCategory.isPending} onClick={() => removeCategory.mutate(category.id)}>
           Kategoriyani o‘chirish
         </Button>
       </div>
       {error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
-      <ul>
+      <ul className="gm-service-list">
         {(category.services ?? []).map((service) => (
-          <li key={service.id} style={{ display: 'flex', gap: 'var(--gm-space-2)', alignItems: 'center' }}>
+          <li key={service.id} className="gm-service-row">
             <span>{service.name}</span>
-            <Button size="sm" variant="ghost" onClick={() => removeService.mutate(service.id)}>
+            <Button size="sm" variant="ghost" className="gm-btn-danger-text" onClick={() => removeService.mutate(service.id)}>
               O‘chirish
             </Button>
           </li>

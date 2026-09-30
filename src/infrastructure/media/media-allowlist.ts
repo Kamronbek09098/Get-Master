@@ -8,6 +8,10 @@ export const EXTENSIONS_BY_MIME: Record<string, string[]> = {
   'audio/ogg': ['.ogg'],
   'audio/mp4': ['.m4a'],
   'audio/mpeg': ['.mp3'],
+  // Ovozli xabar: brauzer MediaRecorder .webm (Opus) yoki .m4a beradi; file-type webm'ni video/webm deb aniqlaydi.
+  'video/webm': ['.webm'],
+  'audio/webm': ['.webm'],
+  'audio/x-m4a': ['.m4a'],
   'application/pdf': ['.pdf'],
   'application/msword': ['.doc'],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],

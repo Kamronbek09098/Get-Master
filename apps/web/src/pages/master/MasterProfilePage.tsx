@@ -101,7 +101,7 @@ export function MasterProfilePage() {
             <MasterForm key={data?.id ?? 'new'} profile={data} />
           </ProfileCard>
           {data && (
-            <ProfileCard icon={Power} title="Ish holati" hint="Faol bo‘lsangiz mijozlar sizni topadi va takliflar keladi.">
+            <ProfileCard defaultOpen icon={Power} title="Ish holati" hint="Faol bo‘lsangiz mijozlar sizni topadi va takliflar keladi.">
               <MasterStatusPanel profile={data} />
             </ProfileCard>
           )}

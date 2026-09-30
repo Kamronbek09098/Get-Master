@@ -47,7 +47,10 @@ export class MediaService {
       return this.reject(uploaderId, kind, file, link, 'File exceeds the maximum allowed size');
     }
 
-    const detected = await fileTypeFromBuffer(file.buffer);
+    const sniffed = await fileTypeFromBuffer(file.buffer);
+    // file-type audio-only .webm (MediaRecorder/Opus) ni ham video/webm deb aniqlaydi; ovozli xabar audio/webm deb kelsa shunday qabul qilinadi.
+    const detected =
+      sniffed && sniffed.mime === 'video/webm' && file.mimetype === 'audio/webm' ? { ...sniffed, mime: 'audio/webm' as const } : sniffed;
     if (!detected || !ALLOWED_MIME_TYPES.has(detected.mime)) {
       return this.reject(uploaderId, kind, file, link, 'Unsupported or undetectable file content');
     }

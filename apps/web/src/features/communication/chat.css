@@ -1676,3 +1676,147 @@ body:has(.gm-messenger) .gm-footer {
     padding: 0;
   }
 }
+
+/* ===== Ovozli xabar ===== */
+.gm-composer__rec {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 14px 0 4px;
+  border-radius: 24px;
+  background: var(--gm-color-surface);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--gm-color-text) 14%, transparent);
+}
+
+.gm-composer__rec-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--gm-color-danger);
+  animation: gm-rec-pulse 1s ease-in-out infinite;
+}
+
+.gm-composer__rec-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  min-width: 38px;
+}
+
+.gm-composer__rec-hint {
+  color: var(--gm-color-text-muted);
+  font-size: 14px;
+}
+
+.gm-composer__voice-error {
+  margin: 0 0 6px;
+  padding: 0 8px;
+  color: var(--gm-color-danger);
+  font-size: 13px;
+}
+
+@keyframes gm-rec-pulse {
+  50% { opacity: 0.25; }
+}
+
+.gm-voice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 220px;
+  padding: 2px 0;
+}
+
+.gm-voice__play {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--gm-color-primary);
+  color: var(--gm-color-primary-contrast);
+  cursor: pointer;
+}
+
+.gm-bubble--mine .gm-voice__play {
+  background: var(--gm-color-primary-contrast);
+  color: var(--gm-color-primary);
+}
+
+.gm-voice__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gm-voice__seek {
+  --gm-voice-progress: 0%;
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.gm-voice__seek::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, currentColor var(--gm-voice-progress), color-mix(in srgb, currentColor 28%, transparent) var(--gm-voice-progress));
+}
+
+.gm-voice__seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.gm-voice__time {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.gm-voice__rate {
+  flex: none;
+  min-width: 36px;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  color: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ===== Surib javob berish ===== */
+.gm-msg__swipe-hint {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--gm-color-text) 14%, transparent);
+  color: var(--gm-color-text);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gm-bubble {
+  will-change: transform;
+}

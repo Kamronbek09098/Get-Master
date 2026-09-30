@@ -244,3 +244,99 @@
     overflow-wrap: anywhere;
   }
 }
+
+.gm-btn-danger-text,
+.gm-btn-danger-text:hover:not(:disabled) {
+  color: var(--gm-color-danger);
+}
+
+.gm-service-list {
+  margin: 0 0 var(--gm-space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.gm-service-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gm-space-2);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--gm-color-border);
+}
+
+/* Bo‘lim/holat tablari telefonda bir qatorda gorizontal aylanadi */
+@media (max-width: 899px) {
+  .gm-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    margin-bottom: var(--gm-space-3);
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gm-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gm-tabs > * {
+    flex: 0 0 auto;
+  }
+
+  .gm-inline-form .gm-field {
+    flex-basis: 100%;
+  }
+
+  .gm-inline-form > .gm-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 899px) {
+  .gm-aord__tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .gm-aord__tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gm-aord__tabs > * {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 899px) {
+  .gm-aord__stats > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .gm-aord__dates {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--gm-space-2);
+  }
+
+  .gm-aord__dates > * {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .gm-phero__body {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: var(--gm-space-3);
+  }
+
+  .gm-phero__who {
+    padding-top: 30px;
+  }
+}
