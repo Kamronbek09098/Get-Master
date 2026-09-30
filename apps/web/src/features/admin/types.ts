@@ -197,6 +197,17 @@ export interface AdminUserDetail {
   stats: { orders: number; requests: number; messages: number; reviews: number; activeDevices: number };
   lastSession: { lastSeenAt: string; ipAddress: string | null; userAgent: string | null; panel: string | null } | null;
   recentActivity: Array<{ id: string; action: string; reason: string | null; actorId: string | null; actor?: { accountNumber: number } | null; createdAt: string }>;
+  addresses?: Array<{ id: string; title: string | null; addressLine: string; city: string | null; district: string | null; isDefault: boolean }>;
+  recentOrders?: Array<{ id: string; orderNumber: number; status: string; finalAmount: string; currency: string; createdAt: string; side: 'CUSTOMER' | 'MASTER' }>;
+  masterExtra?: {
+    ratingCount: number;
+    completionRate: string;
+    responseRate: string;
+    workRadiusKm: string | null;
+    serviceAreas: unknown;
+    isPaused: boolean;
+    services: Array<{ name: string; basePrice: string | null }>;
+  } | null;
 }
 
 export interface AdminBadges {

@@ -1,0 +1,157 @@
+.gm-mappicker {
+  position: relative;
+  height: min(62dvh, 520px);
+  min-height: 320px;
+  overflow: hidden;
+  border-radius: var(--gm-radius-md);
+  border: 1px solid var(--gm-color-border);
+}
+
+.gm-mappicker__map {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.gm-mappicker__pin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 500;
+  translate: -50% -100%;
+  color: var(--gm-color-danger);
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+}
+
+.gm-mappicker__locate {
+  position: absolute;
+  right: 12px;
+  bottom: 84px;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--gm-color-surface);
+  color: var(--gm-color-primary);
+  box-shadow: var(--gm-shadow-md);
+  cursor: pointer;
+}
+
+.gm-mappicker__address {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 500;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--gm-color-surface);
+  color: var(--gm-color-text);
+  box-shadow: var(--gm-shadow-md);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.gm-mappicker .leaflet-container {
+  font-family: inherit;
+}
+
+.gm-mappicker .leaflet-top.leaflet-left {
+  top: 8px;
+}
+
+.gm-addrpick {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gm-addrpick__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gm-addrpick__list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 40;
+  margin: 4px 0 0;
+  padding: 6px;
+  list-style: none;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--gm-color-border);
+  border-radius: 14px;
+  background: var(--gm-color-surface);
+  box-shadow: var(--gm-shadow-lg);
+}
+
+.gm-addrpick__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gm-addrpick__item:hover,
+.gm-addrpick__item[aria-selected='true'] {
+  background: var(--gm-color-surface-muted);
+}
+
+.gm-addrpick__item svg {
+  flex: none;
+  margin-top: 2px;
+  color: var(--gm-color-primary);
+}
+
+.gm-addrpick__item strong {
+  display: block;
+  font-size: 14px;
+}
+
+.gm-addrpick__item small {
+  display: block;
+  color: var(--gm-color-text-muted);
+  font-size: 12.5px;
+}
+
+.gm-addrpick__hint {
+  margin: 0;
+  color: var(--gm-color-text-muted);
+  font-size: 12.5px;
+}
+
+.gm-addrpick__coords {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gm-color-success);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+@media (max-width: 899px) {
+  .gm-mappicker {
+    height: 58dvh;
+  }
+}
+
+.gm-addrpick > .gm-field {
+  position: relative;
+}

@@ -456,3 +456,47 @@
     box-sizing: border-box;
   }
 }
+
+/* Manzil qo‘shish: tez tanlash tugmalari va shahar/tuman qatori */
+.gm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gm-chip {
+  padding: 6px 14px;
+  border: 1px solid var(--gm-color-border-strong);
+  border-radius: 999px;
+  background: var(--gm-color-surface);
+  color: var(--gm-color-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gm-chip--on {
+  border-color: var(--gm-color-primary);
+  background: var(--gm-color-primary-soft);
+  color: var(--gm-color-primary);
+}
+
+.gm-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gm-space-3);
+}
+
+.gm-addr-maplink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .gm-form__row {
+    grid-template-columns: 1fr;
+  }
+}

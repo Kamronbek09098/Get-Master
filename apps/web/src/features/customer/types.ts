@@ -30,6 +30,8 @@ export interface Address {
   addressLine: string;
   city: string | null;
   district: string | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
   isDefault: boolean;
   createdAt: string;
 }
@@ -39,5 +41,7 @@ export interface AddressInput {
   addressLine: string;
   city?: string;
   district?: string;
+  latitude?: number;
+  longitude?: number;
   isDefault?: boolean;
 }

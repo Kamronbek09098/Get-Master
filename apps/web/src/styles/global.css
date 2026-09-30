@@ -846,3 +846,27 @@ html {
     user-select: text;
   }
 }
+
+/* Foydalanuvchilar ro‘yxati: karta bosilganda profil ochiladi */
+.gm-user-card__link {
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--gm-radius-md);
+  cursor: pointer;
+}
+
+.gm-user-card__link:hover h3 {
+  color: var(--gm-color-primary);
+}
+
+.gm-user-card__link:focus-visible {
+  outline: 2px solid var(--gm-focus-ring);
+  outline-offset: 4px;
+}
+
+.gm-user-card__go {
+  flex: none;
+  align-self: center;
+  margin-left: auto;
+  color: var(--gm-color-text-muted);
+}

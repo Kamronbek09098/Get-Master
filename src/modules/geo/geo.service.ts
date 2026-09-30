@@ -1,0 +1,215 @@
+import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+
+export interface GeoPlace {
+  /** Ro‘yxatda ko‘rinadigan sarlavha (masalan, «Amir Temur ko‘chasi 15»). */
+  title: string;
+  /** Qo‘shimcha qism (shahar, tuman). */
+  subtitle: string;
+  /** Manzil maydoniga yoziladigan to‘liq matn. */
+  addressLine: string;
+  city: string | null;
+  district: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  /** Yandex Suggest natijasini keyin koordinatga aylantirish uchun. */
+  uri?: string;
+}
+
+const CACHE_TTL_MS = 60_000;
+const CACHE_MAX = 300;
+const UZ_VIEWBOX = '55.9,45.6,73.2,37.1'; // Nominatim: O‘zbekiston atrofi (left,top,right,bottom)
+const UA = 'GetMaster/1.0 (address-picker)';
+
+type Cached = { at: number; value: unknown };
+
+/**
+ * Real manzillar: Yandex Geocoder/Suggest kalitlari (YANDEX_GEOCODER_API_KEY, YANDEX_SUGGEST_API_KEY) berilsa Yandex,
+ * aks holda OpenStreetMap Nominatim ishlatiladi. Kalitlar faqat serverda saqlanadi.
+ */
+@Injectable()
+export class GeoService {
+  private readonly logger = new Logger(GeoService.name);
+  private readonly cache = new Map<string, Cached>();
+
+  private get geocoderKey() {
+    return process.env.YANDEX_GEOCODER_API_KEY?.trim() || '';
+  }
+
+  private get suggestKey() {
+    return process.env.YANDEX_SUGGEST_API_KEY?.trim() || '';
+  }
+
+  private get lang() {
+    return process.env.YANDEX_LANG?.trim() || 'uz_UZ';
+  }
+
+  provider() {
+    return { geocoder: this.geocoderKey ? 'yandex' : 'osm', suggest: this.suggestKey ? 'yandex' : 'osm' };
+  }
+
+  private async cached<T>(key: string, load: () => Promise<T>): Promise<T> {
+    const hit = this.cache.get(key);
+    if (hit && Date.now() - hit.at < CACHE_TTL_MS) return hit.value as T;
+    const value = await load();
+    if (this.cache.size >= CACHE_MAX) this.cache.delete(this.cache.keys().next().value as string);
+    this.cache.set(key, { at: Date.now(), value });
+    return value;
+  }
+
+  private async fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
+    let response: Response;
+    try {
+      response = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'application/json', ...headers }, signal: AbortSignal.timeout(8000) });
+    } catch (error) {
+      this.logger.warn(`Geo so‘rovi bajarilmadi: ${String(error)}`);
+      throw new ServiceUnavailableException('Xarita xizmatiga ulanib bo‘lmadi');
+    }
+    if (!response.ok) {
+      this.logger.warn(`Geo xizmati ${response.status} qaytardi`);
+      throw new ServiceUnavailableException('Xarita xizmati vaqtincha ishlamayapti');
+    }
+    return response.json();
+  }
+
+  async suggest(query: string, lat?: number, lon?: number): Promise<GeoPlace[]> {
+    const text = query.trim();
+    if (text.length < 2) return [];
+    if (text.length > 200) throw new BadRequestException('Qidiruv matni juda uzun');
+    return this.cached(`s:${text.toLowerCase()}:${lat?.toFixed(2)}:${lon?.toFixed(2)}:${this.suggestKey ? 'y' : 'o'}`, () =>
+      this.suggestKey ? this.yandexSuggest(text, lat, lon) : this.osmSearch(text, 6),
+    );
+  }
+
+  /** Matn yoki Yandex `uri` bo‘yicha koordinatli manzil. */
+  async geocode(query?: string, uri?: string): Promise<GeoPlace | null> {
+    const text = (query ?? '').trim();
+    if (!text && !uri) throw new BadRequestException('Manzil ko‘rsatilmagan');
+    return this.cached(`g:${uri ?? text.toLowerCase()}:${this.geocoderKey ? 'y' : 'o'}`, async () => {
+      if (this.geocoderKey) return (await this.yandexGeocode(uri ? { uri } : { geocode: text }))[0] ?? null;
+      return (await this.osmSearch(text, 1))[0] ?? null;
+    });
+  }
+
+  async reverse(lat: number, lon: number): Promise<GeoPlace | null> {
+    return this.cached(`r:${lat.toFixed(5)}:${lon.toFixed(5)}:${this.geocoderKey ? 'y' : 'o'}`, async () => {
+      if (this.geocoderKey) return (await this.yandexGeocode({ geocode: `${lon},${lat}`, sco: 'longlat', kind: 'house' }))[0] ?? null;
+      return this.osmReverse(lat, lon);
+    });
+  }
+
+  // ---------------- Yandex ----------------
+
+  private async yandexSuggest(text: string, lat?: number, lon?: number): Promise<GeoPlace[]> {
+    const params = new URLSearchParams({ apikey: this.suggestKey, text, lang: this.lang, results: '7', types: 'geo,street,house', print_address: '1' });
+    if (lat !== undefined && lon !== undefined) {
+      params.set('ll', `${lon},${lat}`);
+      params.set('spn', '1.0,1.0');
+    } else {
+      params.set('ll', '69.2401,41.2995'); // Toshkent atrofidagi natijalarni birinchi qo‘yish
+      params.set('spn', '3.0,3.0');
+    }
+    const data = (await this.fetchJson(`https://suggest-maps.yandex.ru/v1/suggest?${params}`)) as {
+      results?: Array<{ title?: { text?: string }; subtitle?: { text?: string }; address?: { formatted_address?: string }; uri?: string }>;
+    };
+    return (data.results ?? []).map((item) => {
+      const title = item.title?.text ?? '';
+      const subtitle = item.subtitle?.text ?? '';
+      return {
+        title,
+        subtitle,
+        addressLine: item.address?.formatted_address ?? [subtitle, title].filter(Boolean).join(', '),
+        city: null,
+        district: null,
+        latitude: null,
+        longitude: null,
+        uri: item.uri,
+      };
+    });
+  }
+
+  private async yandexGeocode(input: Record<string, string>): Promise<GeoPlace[]> {
+    const params = new URLSearchParams({ apikey: this.geocoderKey, format: 'json', lang: this.lang, results: '1', ...input });
+    const data = (await this.fetchJson(`https://geocode-maps.yandex.ru/1.x/?${params}`)) as {
+      response?: { GeoObjectCollection?: { featureMember?: Array<{ GeoObject?: YandexGeoObject }> } };
+    };
+    const members = data.response?.GeoObjectCollection?.featureMember ?? [];
+    return members.flatMap((member) => (member.GeoObject ? [this.fromYandex(member.GeoObject)] : []));
+  }
+
+  private fromYandex(object: YandexGeoObject): GeoPlace {
+    const meta = object.metaDataProperty?.GeocoderMetaData;
+    const components = meta?.Address?.Components ?? [];
+    const pick = (...kinds: string[]) => components.find((component) => kinds.includes(component.kind))?.name ?? null;
+    const [lonText, latText] = (object.Point?.pos ?? '').split(' ');
+    const full = meta?.Address?.formatted ?? meta?.text ?? object.name ?? '';
+    const street = [pick('street'), pick('house')].filter(Boolean).join(', ');
+    return {
+      title: object.name ?? street ?? full,
+      subtitle: object.description ?? '',
+      addressLine: full,
+      city: pick('locality', 'province'),
+      district: pick('district'),
+      latitude: latText ? Number(latText) : null,
+      longitude: lonText ? Number(lonText) : null,
+    };
+  }
+
+  // ---------------- OpenStreetMap (kalit shart emas) ----------------
+
+  private async osmSearch(text: string, limit: number): Promise<GeoPlace[]> {
+    const params = new URLSearchParams({
+      q: text,
+      format: 'jsonv2',
+      addressdetails: '1',
+      limit: String(limit),
+      countrycodes: 'uz',
+      viewbox: UZ_VIEWBOX,
+      'accept-language': 'uz,ru',
+    });
+    const rows = (await this.fetchJson(`https://nominatim.openstreetmap.org/search?${params}`)) as OsmRow[];
+    return rows.map((row) => this.fromOsm(row));
+  }
+
+  private async osmReverse(lat: number, lon: number): Promise<GeoPlace | null> {
+    const params = new URLSearchParams({ lat: String(lat), lon: String(lon), format: 'jsonv2', addressdetails: '1', zoom: '18', 'accept-language': 'uz,ru' });
+    const row = (await this.fetchJson(`https://nominatim.openstreetmap.org/reverse?${params}`)) as OsmRow & { error?: string };
+    if (!row || row.error) return null;
+    const place = this.fromOsm(row);
+    return { ...place, latitude: lat, longitude: lon };
+  }
+
+  private fromOsm(row: OsmRow): GeoPlace {
+    const a = row.address ?? {};
+    const city = a.city ?? a.town ?? a.village ?? a.municipality ?? a.state ?? null;
+    const district = a.city_district ?? a.suburb ?? a.county ?? a.neighbourhood ?? null;
+    const street = [a.road, a.house_number].filter(Boolean).join(' ');
+    const name = row.name || street || district || city || row.display_name;
+    const line = [street || row.name, district, city].filter(Boolean).join(', ') || row.display_name;
+    return {
+      title: name,
+      subtitle: [district, city].filter(Boolean).join(', '),
+      addressLine: line,
+      city,
+      district,
+      latitude: Number(row.lat),
+      longitude: Number(row.lon),
+    };
+  }
+}
+
+interface YandexGeoObject {
+  name?: string;
+  description?: string;
+  Point?: { pos?: string };
+  metaDataProperty?: {
+    GeocoderMetaData?: { text?: string; Address?: { formatted?: string; Components?: Array<{ kind: string; name: string }> } };
+  };
+}
+
+interface OsmRow {
+  lat: string;
+  lon: string;
+  name?: string;
+  display_name: string;
+  address?: Record<string, string>;
+}

@@ -36,6 +36,7 @@ import { ClassificationModule } from './modules/classification/classification.mo
 import { CommunicationModule } from './modules/communication/communication.module';
 import { ComplaintModule } from './modules/complaint/complaint.module';
 import { CustomerModule } from './modules/customer/customer.module';
+import { GeoModule } from './modules/geo/geo.module';
 import { DisputeModule } from './modules/dispute/dispute.module';
 import { MasterModule } from './modules/master/master.module';
 import { MatchingModule } from './modules/matching/matching.module';
@@ -61,7 +62,7 @@ import { UsersModule } from './modules/users/users.module';
     ConfigModule.forRoot({ isGlobal: true, cache: true, expandVariables: true, load: [appConfig, authConfig, databaseConfig, paymentConfig, redisConfig, storageConfig, scannerConfig, aiConfig, mailConfig, telegramConfig, limitsConfig], validate }),
     ScheduleModule.forRoot(), RedisModule, QueueModule, OutboxModule, PaymentProviderModule,
     MetricsModule, TelegramModule, PrismaModule, AuthModule, OtpModule, AdminModule, BookingModule, ClassificationModule, CommunicationModule,
-    ComplaintModule, CustomerModule, DisputeModule, MailModule, MasterModule, MatchingModule, MediaModule, NotificationModule,
+    ComplaintModule, CustomerModule, GeoModule, DisputeModule, MailModule, MasterModule, MatchingModule, MediaModule, NotificationModule,
     OfferModule, OrderModule, PaymentModule, RequestModule, ReviewModule, ServiceModule, TrustModule,
     WorkModule, WarrantyModule, LegalModule, TrustSafetyModule, AuditModule, UsersModule,
   ],

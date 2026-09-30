@@ -72,7 +72,44 @@ export class AdminUsersService {
   async lookupByNumber(accountNumber: number) {
     const user = await this.db.user.findUnique({ where: { accountNumber }, select: { id: true } });
     if (!user) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
-    return this.findOne(user.id);
+    const base = await this.findOne(user.id);
+    // Admin profil sahifasi uchun qo‘shimcha ma’lumotlar: manzillar, oxirgi buyurtmalar, usta ko‘rsatkichlari va xizmatlari.
+    const [addresses, orders, master] = await Promise.all([
+      this.db.address.findMany({
+        where: { userId: user.id },
+        orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
+        take: 5,
+        select: { id: true, title: true, addressLine: true, city: true, district: true, isDefault: true },
+      }),
+      this.db.order.findMany({
+        where: { OR: [{ customerId: user.id }, { master: { userId: user.id } }] },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: { id: true, orderNumber: true, status: true, finalAmount: true, currency: true, createdAt: true, customerId: true },
+      }),
+      base.masterProfile
+        ? this.db.masterProfile.findUnique({
+            where: { id: base.masterProfile.id },
+            select: {
+              ratingCount: true,
+              completionRate: true,
+              responseRate: true,
+              workRadiusKm: true,
+              serviceAreas: true,
+              isPaused: true,
+              services: { where: { isActive: true }, take: 12, select: { basePrice: true, service: { select: { name: true } } } },
+            },
+          })
+        : null,
+    ]);
+    return {
+      ...base,
+      addresses,
+      recentOrders: orders.map(({ customerId, ...order }) => ({ ...order, side: customerId === user.id ? 'CUSTOMER' : 'MASTER' })),
+      masterExtra: master
+        ? { ...master, services: master.services.map((item) => ({ name: item.service.name, basePrice: item.basePrice })) }
+        : null,
+    };
   }
 
   /** Bitta akkaunt haqida to‘liq ma’lumot (admin ham, mijoz/usta ham). */

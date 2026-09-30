@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Ban, CheckCircle2, Search, Snowflake, Trash2 } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Ban, CheckCircle2, ChevronRight, Search, Snowflake, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
@@ -58,7 +58,7 @@ function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminU
 
   return (
     <div className="gm-card gm-user-card">
-      <div className="gm-user-card__main">
+      <Link to={`/admin/foydalanuvchilar/${user.accountNumber}`} className="gm-user-card__main gm-user-card__link" aria-label={`${displayName(user)} profilini ochish`}>
         <span className="gm-avatar" aria-hidden="true">
           {initials(displayName(user))}
         </span>
@@ -82,9 +82,9 @@ function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminU
               {Number(user.masterProfile.ratingAvg).toFixed(1)} · {user.masterProfile.completedOrders} ta ish
             </p>
           )}
-          
         </div>
-      </div>
+        <ChevronRight size={20} className="gm-user-card__go" aria-hidden="true" />
+      </Link>
 
       {isAdmin && (
         <p className="gm-card__meta">Admin akkauntlarni bu yerdan muzlatish, bloklash yoki o‘chirish mumkin emas.</p>

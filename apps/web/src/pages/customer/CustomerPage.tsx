@@ -6,6 +6,9 @@ import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { getErrorMessage } from '@/lib/error-messages';
+import { AddressPicker } from '@/features/geo/components/AddressPicker';
+import type { PickedAddress } from '@/features/geo/components/AddressPicker';
+import { MapPin } from 'lucide-react';
 import { useAddresses, useCreateAddress, useDeleteAddress } from '@/features/customer/hooks/useCustomer';
 
 export function CustomerPage() {
@@ -13,18 +16,23 @@ export function CustomerPage() {
   const createAddress = useCreateAddress();
   const deleteAddress = useDeleteAddress();
   const [title, setTitle] = useState('');
-  const [addressLine, setAddressLine] = useState('');
-  const [city, setCity] = useState('');
+  const [picked, setPicked] = useState<PickedAddress>({ addressLine: '', city: '', district: '', latitude: null, longitude: null });
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     createAddress.mutate(
-      { title: title || undefined, addressLine, city: city || undefined },
+      {
+        title: title || undefined,
+        addressLine: picked.addressLine.trim(),
+        city: picked.city || undefined,
+        district: picked.district || undefined,
+        latitude: picked.latitude ?? undefined,
+        longitude: picked.longitude ?? undefined,
+      },
       {
         onSuccess: () => {
           setTitle('');
-          setAddressLine('');
-          setCity('');
+          setPicked({ addressLine: '', city: '', district: '', latitude: null, longitude: null });
         },
       },
     );
@@ -54,7 +62,19 @@ export function CustomerPage() {
               </Button>
             </div>
             <p>{address.addressLine}</p>
-            {address.city && <p className="gm-card__meta">{address.city}</p>}
+            <p className="gm-card__meta">
+              {[address.district, address.city].filter(Boolean).join(', ')}
+              {address.latitude != null && address.longitude != null && (
+                <a
+                  className="gm-addr-maplink"
+                  href={`https://www.openstreetmap.org/?mlat=${address.latitude}&mlon=${address.longitude}#map=17/${address.latitude}/${address.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <MapPin size={13} aria-hidden="true" /> Xaritada
+                </a>
+              )}
+            </p>
           </div>
         ))}
       </div>
@@ -63,14 +83,19 @@ export function CustomerPage() {
         <form className="gm-form" onSubmit={handleSubmit}>
           {createAddress.isError && <Alert tone="danger">{getErrorMessage(createAddress.error)}</Alert>}
           <Input label="Nomi" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Uy, ish…" />
-          <Input
-            label="Manzil"
-            required
-            value={addressLine}
-            onChange={(event) => setAddressLine(event.target.value)}
-          />
-          <Input label="Shahar" value={city} onChange={(event) => setCity(event.target.value)} />
-          <Button type="submit" loading={createAddress.isPending} disabled={!addressLine.trim()}>
+          <div className="gm-chips" role="group" aria-label="Tez tanlash">
+            {['Uy', 'Ish', 'Ota-ona uyi'].map((name) => (
+              <button key={name} type="button" className={title === name ? 'gm-chip gm-chip--on' : 'gm-chip'} onClick={() => setTitle(name)}>
+                {name}
+              </button>
+            ))}
+          </div>
+          <AddressPicker value={picked} onChange={setPicked} />
+          <div className="gm-form__row">
+            <Input label="Shahar" value={picked.city} onChange={(event) => setPicked({ ...picked, city: event.target.value })} />
+            <Input label="Tuman" value={picked.district} onChange={(event) => setPicked({ ...picked, district: event.target.value })} />
+          </div>
+          <Button type="submit" loading={createAddress.isPending} disabled={!picked.addressLine.trim()}>
             Qo‘shish
           </Button>
         </form>
