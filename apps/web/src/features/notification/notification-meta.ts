@@ -14,12 +14,25 @@ export interface NotificationMeta {
 const orderPath = (base: string, orderId: unknown) => (typeof orderId === 'string' ? `${base}/buyurtmalar/${orderId}` : `${base}/buyurtmalar`);
 
 /** Bildirishnoma turiga qarab ikona, rang va (mumkin bo‘lsa) o‘tiladigan sahifa. */
-export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/ustalar'): NotificationMeta {
+/** Admin audit bildirishnomasi turiga mos bo‘lim: bildirishnoma ochilmasa ham shu sahifaga kirilsa o‘qilgan bo‘ladi. */
+export function adminAuditPath(action: string, fallback?: unknown): string {
+  if (action.startsWith('VERIFICATION_') || action.startsWith('ADMIN_PORTFOLIO_') || action === 'MASTER_PROFILE_CREATED' || action === 'MASTER_PROFILE_UPDATED') return '/admin/tasdiqlash';
+  if (action === 'AUTH_REGISTERED' || action === 'AUTH_REGISTRATION_VERIFIED' || action.startsWith('ADMIN_USER_')) return '/admin/foydalanuvchilar';
+  if (action === 'USER_ACTION_CREATED' || action.startsWith('APPEAL_')) return '/admin/xavfsizlik';
+  if (action.startsWith('DISPUTE_') || action.startsWith('COMPLAINT_') || action.startsWith('WARRANTY_CLAIM_') || action === 'ORDER_DISPUTED') return '/admin/shikoyatlar';
+  if (action.startsWith('ADMIN_ORDER_') || action === 'PAYMENT_REFUNDED' || action === 'PAYMENT_WEBHOOK_MISMATCH') return '/admin/buyurtmalar';
+  if (action.startsWith('CHAT_MESSAGE_')) return '/admin/suhbatlar';
+  if (action.startsWith('SERVICE_')) return '/admin/katalog';
+  return typeof fallback === 'string' ? fallback : '/admin/audit';
+}
+
+export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/ustalar', admin = false): NotificationMeta {
   const data = item.data ?? {};
   switch (item.template) {
     case 'chat.message': {
       const id = typeof data.conversationId === 'string' ? data.conversationId : null;
-      return { icon: MessageCircle, tone: 'primary', to: id ? `${base}/chat?suhbat=${id}` : `${base}/chat` };
+      const chat = admin ? '/admin/xabarlar' : `${base}/chat`;
+      return { icon: MessageCircle, tone: 'primary', to: id ? `${chat}?suhbat=${id}` : chat };
     }
     case 'order.booked':
       return { icon: CalendarCheck, tone: 'success', to: orderPath(base, data.orderId) };
@@ -52,7 +65,7 @@ export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/us
     case 'admin.audit': {
       const action = typeof data.action === 'string' ? data.action : '';
       const tone: NotificationTone = /DELETED|REJECT|MISMATCH|SUSPENDED/.test(action) ? 'danger' : /APPROVE|REACTIVATED/.test(action) ? 'success' : /SUBMITTED|REGISTERED|CREATED/.test(action) ? 'primary' : 'warning';
-      return { icon: ScrollText, tone, to: typeof data.path === 'string' ? data.path : '/admin/audit' };
+      return { icon: ScrollText, tone, to: adminAuditPath(action, data.path) };
     }
     case 'offer.received':
       return { icon: Send, tone: 'success', to: typeof data.requestId === 'string' ? `/mijozlar/sorovlar/${data.requestId}` : '/mijozlar/buyurtmalar' };

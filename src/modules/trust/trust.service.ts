@@ -185,15 +185,30 @@ export class TrustService {
   }
 
   async findAllForAdmin(query: VerificationQueryDto) {
+    const history = query.history === 'true';
     const rows = await this.db.masterVerification.findMany({
-      where: { status: query.status ?? { in: OPEN_STATUSES }, masterId: query.masterId },
+      where: { status: query.status ?? (history ? { notIn: OPEN_STATUSES } : { in: OPEN_STATUSES }), masterId: query.masterId },
       include: {
         master: { select: { id: true, profession: true, verification: true, user: { select: { accountNumber: true, firstName: true, lastName: true } } } },
+        reviewedBy: { select: { accountNumber: true, firstName: true, lastName: true } },
       },
-      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      orderBy: history ? [{ updatedAt: 'desc' }, { id: 'desc' }] : [{ createdAt: 'asc' }, { id: 'asc' }],
       ...cursorArgs(query),
     });
-    return toCursorPage(rows, query);
+    const page = toCursorPage(rows, query);
+    // Har bir hujjat bo‘yicha administrator amallari (kim, qachon, nima qildi) saqlanib turadi.
+    const logs = await this.db.auditLog.findMany({
+      where: { targetType: 'MasterVerification', targetId: { in: page.items.map((item) => item.id) }, action: { startsWith: 'VERIFICATION_' } },
+      orderBy: { createdAt: 'asc' },
+      select: { targetId: true, action: true, reason: true, createdAt: true, actor: { select: { accountNumber: true, firstName: true, lastName: true } } },
+    });
+    return {
+      ...page,
+      items: page.items.map((item) => ({
+        ...item,
+        actions: logs.filter((log) => log.targetId === item.id).map(({ targetId: _targetId, ...log }) => log),
+      })),
+    };
   }
 
   async findOneForAdmin(id: string) {

@@ -21,6 +21,7 @@ export function NotificationList() {
   const navigate = useNavigate();
   const preferredRole = useAuthStore((state) => state.preferredRole);
   const base = (env.appRole ?? preferredRole) === 'MASTER' ? '/ustalar' : '/mijozlar';
+  const admin = (env.appRole ?? preferredRole) === 'ADMIN';
   const notifications = useNotifications();
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
@@ -43,7 +44,7 @@ export function NotificationList() {
 
   function open(item: AppNotification) {
     if (item.status !== 'READ') markAsRead.mutate(item.id);
-    const { to } = notificationMeta(item, base);
+    const { to } = notificationMeta(item, base, admin);
     if (to) navigate(to);
   }
 
@@ -87,7 +88,7 @@ export function NotificationList() {
             <h2 className="gm-notify__day">{group.label}</h2>
             <ul className="gm-notify__list">
               {group.items.map((item) => {
-                const meta = notificationMeta(item, base);
+                const meta = notificationMeta(item, base, admin);
                 const text = notificationText(item, base);
                 const Icon = meta.icon;
                 const unread = item.status !== 'READ';

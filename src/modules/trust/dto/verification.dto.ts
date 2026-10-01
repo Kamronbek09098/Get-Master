@@ -38,4 +38,9 @@ export class VerificationQueryDto extends CursorQueryDto {
   @IsOptional()
   @IsUUID()
   masterId?: string;
+
+  /** `true` bo‘lsa — ko‘rib chiqib bo‘lingan hujjatlar tarixi (ular hech qachon yo‘qolmaydi). */
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  history?: string;
 }

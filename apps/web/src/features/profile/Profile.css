@@ -1427,3 +1427,80 @@
   grid-column: 3;
   justify-self: end;
 }
+
+/* Tasdiqlash kartasi: sarlavha o‘rtada */
+.gm-pcard:has(.gm-trustp) .gm-pcard__head {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 12px;
+}
+.gm-pcard:has(.gm-trustp) .gm-pcard__head > div {
+  grid-column: 2;
+  text-align: center;
+}
+.gm-pcard:has(.gm-trustp) .gm-pcard__chevron {
+  grid-column: 3;
+  justify-self: end;
+}
+
+/* ===== Profil sahifasi: barcha kartalar bir xil — sarlavha o‘rtada, ichki chetlar bir tekis ===== */
+.gm-pcard {
+  padding: 20px 18px;
+}
+.gm-pcard__head {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  align-items: center;
+  gap: 12px;
+}
+.gm-pcard__head > div {
+  grid-column: 2;
+  text-align: center;
+}
+.gm-pcard__head h2 {
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+.gm-pcard__head p {
+  margin-top: 3px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.gm-pcard__chevron {
+  grid-column: 3;
+  justify-self: end;
+}
+.gm-pcard__body {
+  gap: 14px;
+}
+.gm-inforows > div {
+  gap: 16px;
+  padding: 11px 2px;
+}
+.gm-inforows dt {
+  flex: none;
+}
+.gm-inforows dd {
+  min-width: 0;
+}
+@media (max-width: 899px) {
+  .gm-pcard {
+    padding: 0;
+  }
+  .gm-pcard__head {
+    padding: 14px 16px;
+  }
+  .gm-pcard__body {
+    padding: 16px;
+  }
+}
+
+/* Profil sahifalari: sahifa sarlavhasi o‘rtada */
+.gm-ppage > .gm-page-header {
+  justify-content: center;
+  text-align: center;
+}
+.gm-ppage > .gm-page-header h1 {
+  text-align: center;
+}

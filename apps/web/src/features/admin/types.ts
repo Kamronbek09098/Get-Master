@@ -117,6 +117,12 @@ export interface UserFilters {
   search?: string;
 }
 
+export interface AdminActor {
+  accountNumber?: number;
+  firstName: string | null;
+  lastName: string | null;
+}
+
 export interface AdminVerification {
   id: string;
   masterId: string;
@@ -125,6 +131,9 @@ export interface AdminVerification {
   status: MasterVerificationStatus;
   rejectionReason: string | null;
   createdAt: string;
+  reviewedAt?: string | null;
+  reviewedBy?: AdminActor | null;
+  actions?: Array<{ action: string; reason: string | null; createdAt: string; actor: AdminActor | null }>;
   master: {
     id: string;
     profession: string | null;
@@ -141,6 +150,8 @@ export interface AdminPortfolioItem {
   mediaAssetId: string | null;
   rejectReason: string | null;
   createdAt: string;
+  reviewedAt?: string | null;
+  reviewedBy?: AdminActor | null;
   master: {
     id: string;
     profession: string | null;

@@ -17,7 +17,7 @@ export class AdminPortfolioService {
 
   async findAll(query: PortfolioQueryDto) {
     const rows = await this.db.masterPortfolio.findMany({
-      where: { status: query.status ?? PortfolioStatus.PENDING },
+      where: { status: query.status ?? (query.history === 'true' ? { not: PortfolioStatus.PENDING } : PortfolioStatus.PENDING) },
       select: {
         id: true,
         title: true,
@@ -26,15 +26,27 @@ export class AdminPortfolioService {
         mediaAssetId: true,
         rejectReason: true,
         reviewedAt: true,
+        reviewedById: true,
         createdAt: true,
         master: {
           select: { id: true, profession: true, user: { select: { accountNumber: true, firstName: true, lastName: true } } },
         },
       },
-      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      orderBy: query.history === 'true' ? [{ reviewedAt: 'desc' }, { id: 'desc' }] : [{ createdAt: 'asc' }, { id: 'asc' }],
       ...cursorArgs(query),
     });
-    return toCursorPage(rows, query);
+    const page = toCursorPage(rows, query);
+    const reviewerIds = [...new Set(page.items.map((item) => item.reviewedById).filter((id): id is string => !!id))];
+    const reviewers = reviewerIds.length
+      ? await this.db.user.findMany({ where: { id: { in: reviewerIds } }, select: { id: true, accountNumber: true, firstName: true, lastName: true } })
+      : [];
+    return {
+      ...page,
+      items: page.items.map(({ reviewedById, ...item }) => {
+        const reviewer = reviewers.find((user) => user.id === reviewedById);
+        return { ...item, reviewedBy: reviewer ? { accountNumber: reviewer.accountNumber, firstName: reviewer.firstName, lastName: reviewer.lastName } : null };
+      }),
+    };
   }
 
   async review(adminId: string, itemId: string, dto: ReviewPortfolioDto) {

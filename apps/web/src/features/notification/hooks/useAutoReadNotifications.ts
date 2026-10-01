@@ -14,7 +14,9 @@ export function useAutoReadNotifications() {
   const { pathname } = useLocation();
   const preferredRole = useAuthStore((state) => state.preferredRole);
   const hasSession = useAuthStore((state) => state.hasSession);
-  const base = (env.appRole ?? preferredRole) === 'MASTER' ? '/ustalar' : '/mijozlar';
+  const role = env.appRole ?? preferredRole;
+  const admin = role === 'ADMIN';
+  const base = role === 'MASTER' ? '/ustalar' : '/mijozlar';
   const notifications = useNotifications(hasSession);
   const { mutate } = useMarkAsRead();
   const sent = useRef(new Set<string>());
@@ -23,11 +25,11 @@ export function useAutoReadNotifications() {
     for (const item of notifications.data?.items ?? []) {
       if (item.status === 'READ' || sent.current.has(item.id)) continue;
       if (item.template === 'chat.message') continue;
-      const target = notificationMeta(item, base).to?.split(/[?#]/)[0];
+      const target = notificationMeta(item, base, admin).to?.split(/[?#]/)[0];
       if (target && target === pathname) {
         sent.current.add(item.id);
         mutate(item.id);
       }
     }
-  }, [notifications.data, pathname, base, mutate]);
+  }, [notifications.data, pathname, base, admin, mutate]);
 }

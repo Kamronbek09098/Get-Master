@@ -63,8 +63,8 @@ export function TrustProfile({ masterId }: { masterId: string }) {
   const deletingIdentity = toDelete?.documentType === 'IDENTITY';
 
   return (
-    <div className="gm-form">
-      <p>
+    <div className="gm-form gm-trustp">
+      <p className="gm-trustp__status">
         Holat: <TrustBadge verification={trust.data.verification} />
       </p>
       {documents.length === 0 && <EmptyState title="Hali hujjat yuborilmagan" />}
@@ -93,7 +93,9 @@ export function TrustProfile({ masterId }: { masterId: string }) {
         })}
       </div>
 
+      <section className="gm-trustp__new">
       <h3>Yangi hujjat yuborish</h3>
+      <p className="gm-trustp__lead">Hujjat turini tanlang va fayl yuklang — administrator tekshirib chiqadi.</p>
       {lockedTypes.length > 0 && (
         <Alert tone="info">
           {lockedTypes.map((type) => DOCUMENT_OPTIONS.find((option) => option.value === type)?.label).join(' va ')} yuklangan. Almashtirish uchun avval yuqoridan
@@ -120,6 +122,7 @@ export function TrustProfile({ masterId }: { masterId: string }) {
         <ShieldCheck size={18} /> Tasdiqlashga yuborish
       </Button>
       {!mediaAssetId && <p className="gm-trust-submit__hint">Avval hujjat faylini yuklang — shundan keyin yuborish mumkin bo‘ladi.</p>}
+      </section>
 
       <ConfirmDialog
         open={!!toDelete}

@@ -72,8 +72,16 @@ export function useAdminVerifications(status?: string) {
   return useQuery({ queryKey: ['admin', 'verifications', status], queryFn: () => adminService.verifications(status) });
 }
 
+export function useAdminVerificationHistory() {
+  return useQuery({ queryKey: ['admin', 'verifications', 'history'], queryFn: () => adminService.verifications(undefined, true) });
+}
+
 export function useAdminPortfolio() {
   return useQuery({ queryKey: ['admin', 'portfolio'], queryFn: () => adminService.portfolio() });
+}
+
+export function useAdminPortfolioHistory() {
+  return useQuery({ queryKey: ['admin', 'portfolio', 'history'], queryFn: () => adminService.portfolio(true) });
 }
 
 export function useReviewPortfolio() {

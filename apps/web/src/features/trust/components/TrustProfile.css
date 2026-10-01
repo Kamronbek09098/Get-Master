@@ -119,3 +119,60 @@
     transform: none;
   }
 }
+
+/* ===== Tasdiqlash bo‘limi: bir tekis, o‘rtada ===== */
+.gm-trustp {
+  gap: 16px;
+}
+.gm-trustp__status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--gm-color-text-muted);
+}
+.gm-trustp .gm-empty,
+.gm-trustp [class*='empty'] {
+  padding-block: 20px;
+}
+.gm-trustp__new {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 16px;
+  border: 1px solid var(--gm-color-border);
+  border-radius: 16px;
+  background: var(--gm-color-surface-muted);
+}
+.gm-trustp__new > h3 {
+  margin: 0;
+  font-size: 1rem;
+  text-align: center;
+}
+.gm-trustp__lead {
+  margin: -6px auto 2px;
+  max-width: 40ch;
+  color: var(--gm-color-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: center;
+}
+.gm-trustp__new .gm-trust-submit {
+  align-self: center;
+  width: auto;
+  min-width: 220px;
+  min-height: 42px;
+  height: 42px;
+  font-size: 14px;
+}
+.gm-trustp__new .gm-trust-submit__hint {
+  margin: 0;
+  text-align: center;
+}
+@media (max-width: 460px) {
+  .gm-trustp__new .gm-trust-submit {
+    width: 100%;
+  }
+}

@@ -6,6 +6,11 @@ export class PortfolioQueryDto extends CursorQueryDto {
   @IsOptional()
   @IsEnum(PortfolioStatus)
   status?: PortfolioStatus;
+
+  /** `true` bo‘lsa — ko‘rib chiqilgan (tasdiqlangan/rad etilgan) ishlar tarixi. */
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  history?: string;
 }
 
 export class ReviewPortfolioDto {

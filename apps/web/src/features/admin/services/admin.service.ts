@@ -66,11 +66,11 @@ export const adminService = {
   updateCase(kind: 'complaints' | 'disputes', id: string, status: CaseStatus, decision?: string) {
     return apiPatch<CaseItem>(`/${kind}/${id}/status`, { status, decision });
   },
-  verifications(status?: string) {
-    return apiGet<CursorPage<AdminVerification>>(`/trust/admin/verifications${qs({ status })}`);
+  verifications(status?: string, history = false) {
+    return apiGet<CursorPage<AdminVerification>>(`/trust/admin/verifications${qs({ status, history: history ? 'true' : undefined, limit: history ? '50' : undefined })}`);
   },
-  portfolio() {
-    return apiGet<CursorPage<AdminPortfolioItem>>('/admin/portfolio?limit=50');
+  portfolio(history = false) {
+    return apiGet<CursorPage<AdminPortfolioItem>>(`/admin/portfolio?limit=50${history ? '&history=true' : ''}`);
   },
   reviewPortfolio(id: string, decision: 'APPROVE' | 'REJECT', reason?: string) {
     return apiPost<unknown>(`/admin/portfolio/${id}/review`, { decision, reason });
