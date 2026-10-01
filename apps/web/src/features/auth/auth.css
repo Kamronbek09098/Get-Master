@@ -16,3 +16,36 @@
   text-align: center;
 }
 
+
+/* Qurilmalar limiti ogohlantirishi (kod kiritishdan oldin) */
+.gm-devlimit {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--gm-color-warning) 45%, var(--gm-color-border));
+  border-radius: 14px;
+  background: var(--gm-color-warning-bg);
+  color: var(--gm-color-warning);
+  text-align: left;
+}
+.gm-devlimit__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--gm-color-surface);
+}
+.gm-devlimit strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.3;
+}
+.gm-devlimit p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+}

@@ -19,8 +19,16 @@ export interface LoginInput {
   password: string;
 }
 
+export interface DeviceLimitInfo {
+  reached: true;
+  max: number;
+  active: number;
+}
+
 export interface LoginResult {
   verificationRequired: true;
+  /** Yangi qurilma uchun faol qurilmalar limiti to‘lgan bo‘lsa — kod kiritishdan oldin ogohlantirish uchun. */
+  deviceLimit?: DeviceLimitInfo;
   developmentCode?: string;
 }
 

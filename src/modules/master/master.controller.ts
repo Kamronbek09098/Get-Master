@@ -7,6 +7,7 @@ import { AvailabilityService } from './availability.service';
 import { CreateMasterDto } from './dto/create-master.dto';
 import { UpdateMasterDto } from './dto/update-master.dto';
 import { MasterQueryDto } from './dto/master-query.dto';
+import { CoverageQueryDto } from './dto/coverage-query.dto';
 import { CursorQueryDto } from '../../common/dto/cursor-query.dto';
 import { OpenRequestsQueryDto } from './dto/open-requests-query.dto';
 import { MasterStatusDto, PauseMasterDto } from './dto/master-status.dto';
@@ -130,6 +131,11 @@ export class MasterController {
   @Get()
   findAll(@Query() query: MasterQueryDto) {
     return this.masterService.findAll(query);
+  }
+
+  @Get('coverage')
+  findCovering(@Query() query: CoverageQueryDto) {
+    return this.masterService.findCovering(query);
   }
 
   @Get(':id')

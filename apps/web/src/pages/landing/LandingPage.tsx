@@ -66,10 +66,10 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
           </nav>
           <div className="gm-landing__nav-actions">
             <ThemeToggle />
-            <Link to="/login" className="gm-button gm-button--ghost gm-button--sm">
+            <Link to="/login" className="gm-button gm-button--ghost gm-button--md">
               Kirish
             </Link>
-            <Link to="/register" className="gm-button gm-button--primary gm-button--sm">
+            <Link to="/register" className="gm-button gm-button--primary gm-button--md">
               Ro‘yxatdan o‘tish
             </Link>
           </div>

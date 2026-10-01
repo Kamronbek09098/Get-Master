@@ -519,3 +519,564 @@
     margin-inline: 0;
   }
 }
+
+/* ===== Tugmalar o‘lchamini moslash (yagona shkala: navbar 40 px, asosiy tugmalar 48 px, belgilar 34 px) ===== */
+.gm-landing .gm-button {
+  justify-content: center;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+/* Navbar: tema tugmasi, «Kirish» va «Ro‘yxatdan o‘tish» bir xil balandlikda */
+.gm-landing__nav-actions {
+  gap: 10px;
+}
+.gm-landing__nav-actions .gm-button {
+  min-height: 40px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+.gm-landing__nav-actions .gm-icon-button {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+/* Hero: ikkala tugma bir xil o‘lcham va kenglikda */
+.gm-landing__cta-row {
+  gap: 12px;
+}
+.gm-landing__cta-row .gm-button {
+  width: 224px;
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: 14px;
+  font-size: 15px;
+}
+
+/* Pastki taklif: hero tugmalari bilan bir xil o‘lcham */
+.gm-landing__cta .gm-button {
+  flex: none;
+  width: 224px;
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: 14px;
+  font-size: 15px;
+}
+
+/* Muammoni tasvirlash usullari (Matn, Foto…) — bir xil balandlikdagi belgilar */
+.gm-landing__inputs {
+  gap: 8px;
+}
+.gm-landing__inputs li {
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .gm-landing__nav-actions .gm-button {
+    min-height: 38px;
+    padding: 0 14px;
+  }
+  .gm-landing__nav-actions .gm-icon-button {
+    width: 38px;
+    height: 38px;
+  }
+  .gm-landing__cta-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-self: stretch;
+    width: 100%;
+  }
+  .gm-landing__cta-row .gm-button {
+    width: 100%;
+    padding: 0 12px;
+  }
+  .gm-landing__cta .gm-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 400px) {
+  .gm-landing__cta-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Pastdagi taklif bloki: kengligi boshqa bo‘limlarning ish kengligi bilan bir xil, ixcham */
+.gm-landing__cta {
+  max-width: calc(1200px - 2 * var(--gm-space-5));
+  margin: var(--gm-space-6) auto var(--gm-space-8);
+  padding: 32px 40px;
+  gap: var(--gm-space-5);
+  border-radius: 24px;
+}
+.gm-landing__cta h2 {
+  font-size: clamp(22px, 2.6vw, 30px);
+  line-height: 1.2;
+}
+.gm-landing__cta p {
+  margin-top: 6px;
+  font-size: 15px;
+}
+@media (max-width: 720px) {
+  .gm-landing__cta {
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+}
+
+/* ===== Yozuvlar chetga yopishib qolmasligi uchun joylashuvni tuzatish ===== */
+
+/* Navbar havolalari bir qatorda qoladi, o‘rta kenglikda zichroq joylashadi */
+.gm-landing__links {
+  flex: none;
+  white-space: nowrap;
+}
+.gm-landing__links a {
+  white-space: nowrap;
+}
+@media (max-width: 960px) {
+  .gm-landing__nav-inner {
+    gap: var(--gm-space-3);
+  }
+  .gm-landing__links {
+    gap: var(--gm-space-4);
+    margin-left: var(--gm-space-4);
+  }
+}
+
+/* Hero kartalari: egilgan chetlari ekran/ustun chegarasiga tegmaydi */
+.gm-hero-preview {
+  padding: var(--gm-space-5) 10px;
+}
+.gm-hero-preview__offer--1 {
+  margin-left: var(--gm-space-5);
+}
+.gm-hero-preview__offer--2 {
+  margin-right: var(--gm-space-5);
+}
+@media (max-width: 1000px) {
+  .gm-hero-preview {
+    padding: var(--gm-space-4) 8px;
+  }
+  .gm-hero-preview__offer--1 {
+    margin-left: var(--gm-space-4);
+  }
+  .gm-hero-preview__offer--2 {
+    margin-right: var(--gm-space-4);
+  }
+}
+
+/* Pastki qism: chiziq va yozuvlar boshqa bo‘limlarning ish kengligi bilan bir xil */
+.gm-landing__footer {
+  width: calc(100% - 2 * var(--gm-space-5));
+  max-width: calc(1200px - 2 * var(--gm-space-5));
+  padding: var(--gm-space-5) 0 var(--gm-space-8);
+}
+@media (max-width: 720px) {
+  .gm-landing__footer {
+    width: calc(100% - 2 * var(--gm-space-4));
+  }
+}
+
+/* «Nega GetMaster ishonchli» kartalari: belgi chapda, matn o‘ngda — bo‘sh joy qolmaydi, yozuvlar tekis */
+.gm-landing__trust-card {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  column-gap: 16px;
+  row-gap: 6px;
+  align-items: start;
+  padding: 22px 24px;
+}
+.gm-landing__trust-card .gm-landing__step-icon {
+  grid-row: 1 / span 2;
+  align-self: start;
+}
+.gm-landing__trust-card h3 {
+  align-self: end;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.3;
+}
+.gm-landing__trust-card p {
+  margin: 0;
+  align-self: start;
+  font-size: 14px;
+  line-height: 1.55;
+}
+@media (max-width: 1000px) {
+  .gm-landing__trust {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* «To‘rt qadamda hal bo‘ladi» kartalari: belgi va raqam bir qatorda, nom va matn ostida tekis */
+.gm-landing__step {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'icon . num'
+    'title title title'
+    'text text text';
+  grid-template-rows: auto auto 1fr;
+  align-items: center;
+  row-gap: 0;
+  padding: 22px 24px;
+  transition: transform 0.2s var(--gm-ease), box-shadow 0.2s var(--gm-ease), border-color 0.2s;
+}
+.gm-landing__step:hover {
+  border-color: color-mix(in srgb, var(--gm-color-primary) 40%, var(--gm-color-border));
+}
+.gm-landing__step .gm-landing__step-icon {
+  grid-area: icon;
+}
+.gm-landing__step .gm-landing__step-num {
+  position: static;
+  grid-area: num;
+  align-self: start;
+  font-size: 32px;
+  line-height: 1;
+}
+.gm-landing__step h3 {
+  grid-area: title;
+  margin: 16px 0 6px;
+  font-size: 16px;
+  line-height: 1.3;
+}
+.gm-landing__step p {
+  grid-area: text;
+  align-self: start;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* Statistika kartalari: yozuvlar o‘lchami, oraliq va ustiga kelganda ajralib turishi */
+.gm-landing__stat {
+  justify-content: center;
+  gap: 4px;
+  min-height: 92px;
+  padding: 18px 24px;
+  border-radius: 18px;
+  transition: transform 0.2s var(--gm-ease), box-shadow 0.2s var(--gm-ease), border-color 0.2s;
+}
+.gm-landing__stat:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--gm-color-primary) 40%, var(--gm-color-border));
+}
+.gm-landing__stat strong {
+  font-size: 24px;
+  line-height: 1.15;
+}
+.gm-landing__stat span {
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+@media (max-width: 720px) {
+  .gm-landing__stat {
+    min-height: 80px;
+    padding: 14px 18px;
+  }
+  .gm-landing__stat strong {
+    font-size: 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gm-landing__stat,
+  .gm-landing__step,
+  .gm-landing__trust-card {
+    transition: none;
+  }
+  .gm-landing__stat:hover {
+    transform: none;
+  }
+}
+
+/* Ishonch kartalari: belgi chap tomonning vertikal o‘rtasida, matn bloki ham o‘rtada */
+.gm-landing__trust-card {
+  grid-template-rows: auto auto;
+  align-content: center;
+  align-items: center;
+}
+.gm-landing__trust-card .gm-landing__step-icon {
+  align-self: center;
+}
+.gm-landing__trust-card h3 {
+  align-self: end;
+}
+.gm-landing__trust-card p {
+  align-self: start;
+}
+
+/* Ishonch kartalari: nom va matn o‘z ustunining o‘rtasida */
+.gm-landing__trust-card h3,
+.gm-landing__trust-card p {
+  text-align: center;
+}
+
+/* ===== Ishonch kartalari — yakuniy ko‘rinish: markazlashgan, simmetrik, nafis ===== */
+.gm-landing__trust-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 28px 24px 26px;
+  border-radius: 20px;
+  text-align: center;
+  overflow: hidden;
+  background:
+    radial-gradient(160px 90px at 50% 0%, color-mix(in srgb, var(--gm-color-primary) 9%, transparent), transparent 70%),
+    var(--gm-color-surface);
+  transition: transform 0.22s var(--gm-ease), box-shadow 0.22s var(--gm-ease), border-color 0.22s;
+}
+.gm-landing__trust-card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--gm-color-primary) 40%, var(--gm-color-border));
+  box-shadow: 0 14px 30px -16px color-mix(in srgb, var(--gm-color-primary) 55%, transparent);
+}
+.gm-landing__trust-card .gm-landing__step-icon {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 16px;
+  border-radius: 18px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--gm-color-primary) 8%, transparent);
+  transition: transform 0.22s var(--gm-ease);
+}
+.gm-landing__trust-card:hover .gm-landing__step-icon {
+  transform: scale(1.06);
+}
+.gm-landing__trust-card h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  line-height: 1.3;
+  text-align: center;
+}
+.gm-landing__trust-card p {
+  max-width: 30ch;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+}
+@media (max-width: 1000px) {
+  .gm-landing__trust-card p {
+    max-width: 44ch;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gm-landing__trust-card,
+  .gm-landing__trust-card .gm-landing__step-icon {
+    transition: none;
+  }
+  .gm-landing__trust-card:hover,
+  .gm-landing__trust-card:hover .gm-landing__step-icon {
+    transform: none;
+  }
+}
+
+.gm-landing__trust-card h3,
+.gm-landing__trust-card p,
+.gm-landing__trust-card .gm-landing__step-icon {
+  align-self: center;
+  grid-row: auto;
+}
+.gm-landing__trust-card h3 {
+  width: 100%;
+}
+
+/* ===== Bo‘lim sarlavhalari va qadam kartalari — bir xil, markazlashgan uslub ===== */
+.gm-landing__section {
+  padding: 72px var(--gm-space-5);
+}
+.gm-landing__section > h2 {
+  position: relative;
+  margin: 0 auto 40px;
+  padding-bottom: 18px;
+  font-size: clamp(26px, 3.2vw, 36px);
+  line-height: 1.15;
+  text-align: center;
+}
+.gm-landing__section > h2::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 56px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gm-color-primary), var(--gm-color-accent));
+  transform: translateX(-50%);
+}
+
+.gm-landing__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 22px 24px;
+  border-radius: 20px;
+  text-align: center;
+  background:
+    radial-gradient(160px 90px at 50% 0%, color-mix(in srgb, var(--gm-color-primary) 9%, transparent), transparent 70%),
+    var(--gm-color-surface);
+}
+.gm-landing__step:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px -16px color-mix(in srgb, var(--gm-color-primary) 55%, transparent);
+}
+.gm-landing__step .gm-landing__step-icon {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 16px;
+  border-radius: 18px;
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--gm-color-primary) 8%, transparent);
+}
+.gm-landing__step .gm-landing__step-num {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 22px;
+  line-height: 1;
+}
+.gm-landing__step h3 {
+  margin: 0 0 8px;
+  font-size: 17px;
+  line-height: 1.3;
+  text-align: center;
+}
+.gm-landing__step p {
+  max-width: 30ch;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+}
+@media (max-width: 1000px) {
+  .gm-landing__step p {
+    max-width: 44ch;
+  }
+}
+@media (max-width: 720px) {
+  .gm-landing__section {
+    padding: 48px var(--gm-space-4);
+  }
+  .gm-landing__section > h2 {
+    margin-bottom: 28px;
+  }
+}
+
+/* ===== Butun sahifa uyg‘unligi: yagona burchak radiusi, soya, ritm va tekislash ===== */
+:root {
+  --gm-land-radius: 20px;
+}
+
+/* Barcha kartalar: bir xil radius, chegara va yengil soya */
+.gm-landing__stat,
+.gm-landing__step,
+.gm-landing__trust-card,
+.gm-landing__category {
+  border-radius: var(--gm-land-radius);
+  box-shadow: var(--gm-shadow-sm);
+}
+.gm-landing__stat:hover,
+.gm-landing__category:hover {
+  box-shadow: 0 14px 30px -16px color-mix(in srgb, var(--gm-color-primary) 55%, transparent);
+}
+
+/* Statistika kartalari ham boshqa kartalar kabi markazlashgan */
+.gm-landing__stat {
+  align-items: center;
+  text-align: center;
+}
+
+/* Xizmat kartalari: aniq tekislangan, bir xil balandlik */
+.gm-landing__category {
+  min-height: 76px;
+  padding: 14px 20px;
+  transition: transform 0.2s var(--gm-ease), box-shadow 0.2s var(--gm-ease), border-color 0.2s;
+}
+.gm-landing__category:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--gm-color-primary) 40%, var(--gm-color-border));
+}
+
+/* Vertikal ritm: bo‘limlar orasidagi masofa bir xil va ortiqcha katta emas */
+.gm-landing__section {
+  padding-top: 56px;
+  padding-bottom: 56px;
+}
+.gm-landing__cta {
+  margin-top: 24px;
+  margin-bottom: 56px;
+  border-radius: 24px;
+}
+.gm-landing__footer {
+  padding-bottom: 40px;
+}
+@media (max-width: 720px) {
+  .gm-landing__section {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+  .gm-landing__cta {
+    margin-bottom: 40px;
+  }
+}
+
+/* ===== Kichik ekranlar (≤ 400 px): buyurtma kartalari siqilib ketmasligi uchun ===== */
+.gm-hero-preview__offer-body strong,
+.gm-hero-preview__offer-body span,
+.gm-hero-preview__offer-body small {
+  white-space: nowrap;
+}
+.gm-hero-preview__offer-body {
+  min-width: 0;
+}
+.gm-hero-preview__offer-body > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (max-width: 400px) {
+  .gm-hero-preview__card--main {
+    padding: var(--gm-space-4);
+  }
+  .gm-hero-preview__offer {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+  .gm-hero-preview__offer--1 {
+    margin-left: var(--gm-space-3);
+  }
+  .gm-hero-preview__offer--2 {
+    margin-right: var(--gm-space-3);
+  }
+  .gm-hero-preview__offer .gm-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+  .gm-hero-preview__offer > strong,
+  .gm-hero-preview__price {
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .gm-landing__hero h1 {
+    font-size: clamp(32px, 10vw, 38px);
+  }
+  .gm-landing__section > h2 {
+    font-size: 24px;
+  }
+  .gm-landing__stat strong {
+    font-size: 18px;
+  }
+  .gm-landing__stat span {
+    font-size: 12.5px;
+  }
+}

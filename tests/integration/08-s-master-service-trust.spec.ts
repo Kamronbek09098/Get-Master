@@ -118,6 +118,30 @@ describe('S01 — master profile', () => {
   });
 });
 
+describe('S01b — coverage: which masters can reach an address', () => {
+  it('returns only masters whose radius contains the point, hides exact coordinates, and orders by distance', async () => {
+    const near = await createMaster(h, service.id, { latitude: 41.3, longitude: 69.24, workRadiusKm: 10 });
+    const far = await createMaster(h, service.id, { latitude: 41.3, longitude: 69.24, workRadiusKm: 1 });
+    const paused = await createMaster(h, service.id, { latitude: 41.3, longitude: 69.24, workRadiusKm: 10 });
+    await h.db.masterProfile.update({ where: { id: paused.masterId }, data: { isPaused: true } });
+    const point = 'lat=41.33&lon=69.24'; // ~3.3 km dan
+    const res = await h.get(`/masters/coverage?${point}`, customer.token);
+    expect(res.status).toBe(200);
+    const ids = res.data.items.map((m: any) => m.id);
+    expect(ids).toContain(near.masterId);
+    expect(ids).not.toContain(far.masterId);
+    expect(ids).not.toContain(paused.masterId);
+    const item = res.data.items.find((m: any) => m.id === near.masterId);
+    expect(item.distanceKm).toBeGreaterThan(3);
+    expect(item.coverage).toMatchObject({ lat: 41.3, lon: 69.24, radiusKm: 10 });
+    expect(JSON.stringify(res.body)).not.toMatch(/latitude|longitude|phone|email/);
+    expect((await h.get('/masters/coverage?lat=999&lon=1', customer.token)).status).toBe(400);
+    expect((await h.get(`/masters/coverage?${point}`, undefined)).status).toBe(401);
+    const single = await h.get(`/masters/${near.masterId}`, customer.token);
+    expect(single.data.coverage).toMatchObject({ radiusKm: 10 });
+  });
+});
+
 describe('S02 — availability', () => {
   it('rejects overlaps and invalid windows, allows adjacency, and is owner-scoped', async () => {
     const m = await createMaster(h, service.id);

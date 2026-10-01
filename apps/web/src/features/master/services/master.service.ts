@@ -1,6 +1,6 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/services/api.client';
 import type { CursorPage } from '@/types/api';
-import type { MasterInput, MasterProfile, PublicMaster } from '../types';
+import type { CoveringMaster, MasterInput, MasterProfile, PublicMaster } from '../types';
 import type { Availability, AvailabilityInput, PortfolioInput, PortfolioItem } from '../manage.types';
 
 export const masterService = {
@@ -20,6 +20,9 @@ export const masterService = {
     if (params.cursor) search.set('cursor', params.cursor);
     const query = search.toString();
     return apiGet<CursorPage<PublicMaster>>(`/masters${query ? `?${query}` : ''}`);
+  },
+  covering(lat: number, lon: number) {
+    return apiGet<{ items: CoveringMaster[]; total: number }>(`/masters/coverage?lat=${lat}&lon=${lon}`);
   },
   get(id: string) {
     return apiGet<PublicMaster>(`/masters/${id}`);

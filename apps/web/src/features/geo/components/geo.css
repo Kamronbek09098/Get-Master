@@ -195,3 +195,55 @@
   background: var(--gm-color-primary);
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--gm-color-primary) 30%, transparent), 0 2px 8px rgb(0 0 0 / 0.3);
 }
+
+.gm-coverage__pin--sm span {
+  width: 14px;
+  height: 14px;
+  border-width: 3px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gm-color-primary) 25%, transparent), 0 1px 4px rgb(0 0 0 / 0.3);
+}
+
+.gm-coverage__pin--home span {
+  background: var(--gm-color-danger, #e5484d);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--gm-color-danger, #e5484d) 28%, transparent), 0 2px 8px rgb(0 0 0 / 0.35);
+}
+
+.gm-coverage .leaflet-tooltip {
+  font-weight: 700;
+}
+
+/* Ish hududi oynasi */
+.gm-covdlg {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gm-covdlg__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gm-covdlg__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.gm-covdlg__chip strong {
+  color: var(--gm-color-text);
+}
+.gm-covdlg__chip--accent {
+  background: var(--gm-color-primary-soft);
+  color: var(--gm-color-primary);
+}
+.gm-covdlg__note {
+  margin: 0;
+  color: var(--gm-color-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}

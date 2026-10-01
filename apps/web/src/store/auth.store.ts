@@ -8,6 +8,8 @@ interface AuthState {
   preferredRole: Role | null;
   pendingPhone: string | null;
   devCode: string | null;
+  deviceLimit: { max: number; active: number } | null;
+  setDeviceLimit: (limit: { max: number; active: number } | null) => void;
   setDevCode: (code: string | null) => void;
   setSession: (hasSession: boolean) => void;
   setPreferredRole: (role: Role | null) => void;
@@ -22,11 +24,13 @@ export const useAuthStore = create<AuthState>()(
       preferredRole: null,
       pendingPhone: null,
       devCode: null,
+      deviceLimit: null,
+      setDeviceLimit: (deviceLimit) => set({ deviceLimit }),
       setDevCode: (devCode) => set({ devCode }),
       setSession: (hasSession) => set({ hasSession }),
       setPreferredRole: (preferredRole) => set({ preferredRole: env.appRole ?? preferredRole }),
       setPendingPhone: (pendingPhone) => set({ pendingPhone }),
-      clear: () => set({ hasSession: false, pendingPhone: null, devCode: null }),
+      clear: () => set({ hasSession: false, pendingPhone: null, devCode: null, deviceLimit: null }),
     }),
     {
       name: 'getmaster.auth-ui',

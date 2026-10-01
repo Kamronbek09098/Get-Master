@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { MonitorSmartphone } from 'lucide-react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { OtpForm } from '@/features/auth/components/OtpForm';
 import { useVerifyOtp, useVerifyRegistration } from '@/features/auth/hooks/useAuth';
@@ -15,6 +16,7 @@ export function OtpPage() {
   const pendingPhone = useAuthStore((s) => s.pendingPhone);
   const preferredRole = useAuthStore((s) => s.preferredRole);
   const devCode = useAuthStore((s) => s.devCode);
+  const deviceLimit = useAuthStore((s) => s.deviceLimit);
   const flow: Flow = (location.state as { flow?: Flow } | null)?.flow ?? 'login';
 
   const verifyRegistration = useVerifyRegistration();
@@ -57,6 +59,20 @@ export function OtpPage() {
         <Alert tone="info" title="Dev rejim">
           Tasdiqlash kodi: <strong>{devCode}</strong>
         </Alert>
+      )}
+      {!isRegisterFlow && deviceLimit && (
+        <div className="gm-devlimit" role="alert">
+          <span className="gm-devlimit__icon" aria-hidden="true">
+            <MonitorSmartphone size={20} />
+          </span>
+          <div>
+            <strong>Qurilmalar limiti to‘lgan ({deviceLimit.active}/{deviceLimit.max})</strong>
+            <p>
+              Akkauntingizda faol qurilmalar soni chegaraga yetgan, shuning uchun bu qurilmadan kirish kodni to‘g‘ri kiritsangiz ham rad etiladi. Avval boshqa
+              qurilmangizdan «Sozlamalar → Faol qurilmalar» orqali chiqing, so‘ng bu yerga qaytib login qiling.
+            </p>
+          </div>
+        </div>
       )}
       <OtpForm
         phone={pendingPhone}

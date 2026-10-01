@@ -1044,3 +1044,29 @@
     width: 100%;
   }
 }
+
+/* Bosiladigan hudud nomlari */
+.gm-ptags li:has(.gm-ptags__btn) {
+  padding: 0;
+}
+.gm-ptags__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.gm-ptags__btn:focus-visible {
+  outline: 2px solid var(--gm-color-primary);
+  outline-offset: 2px;
+}
+.gm-pnote-muted {
+  margin: 0;
+  color: var(--gm-color-text-muted);
+  font-size: 12.5px;
+}

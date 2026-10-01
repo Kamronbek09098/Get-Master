@@ -256,7 +256,21 @@ export class AuthService {
       panel: panelOf(req),
     });
 
-    return { verificationRequired: true, ...this.devCode(issued) };
+    // Kod kiritishdan oldin foydalanuvchini ogohlantirish uchun: bu qurilma yangi bo‘lsa va limit to‘lgan bo‘lsa.
+    const deviceLimit = await this.deviceLimitState(user.id, req);
+    return { verificationRequired: true, ...(deviceLimit ? { deviceLimit } : {}), ...this.devCode(issued) };
+  }
+
+  /** Yangi qurilma uchun faol qurilmalar limiti to‘lganmi (kirish `createSession` da rad etilishidan oldin bilish uchun). */
+  private async deviceLimitState(userId: string, req: Request): Promise<{ reached: true; max: number; active: number } | null> {
+    const deviceId = this.deviceCookie(req);
+    const max = this.config.get<number>('auth.maxDevices', 2);
+    if (deviceId) {
+      const known = await this.db.deviceSession.findUnique({ where: { userId_deviceId: { userId, deviceId } }, select: { id: true } });
+      if (known) return null;
+    }
+    const active = await this.db.deviceSession.count({ where: { userId, status: SessionStatus.ACTIVE, panel: panelOf(req) } });
+    return active >= max ? { reached: true, max, active } : null;
   }
 
   private async assertLoginNotLocked(attemptKey: string): Promise<void> {

@@ -29,3 +29,14 @@ export function useMasters(q: string, categoryId?: string) {
 export function useMaster(id: string) {
   return useQuery({ queryKey: ['masters', 'one', id], queryFn: () => masterService.get(id), enabled: !!id });
 }
+
+/** Berilgan nuqtaga kela oladigan ustalar (mijoz manzili). */
+export function useCoveringMasters(lat: number | null, lon: number | null) {
+  const enabled = lat != null && lon != null;
+  return useQuery({
+    queryKey: ['masters', 'covering', lat?.toFixed(4) ?? null, lon?.toFixed(4) ?? null],
+    queryFn: () => masterService.covering(lat as number, lon as number),
+    enabled,
+    staleTime: 60_000,
+  });
+}

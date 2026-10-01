@@ -425,6 +425,22 @@ describe('K02 — registration & login', () => {
     expect([201, 403, 409]).toContain(third.status);
   });
 
+  it('warns at the password step (before any code is entered) when the device limit is reached for a new device', async () => {
+    const ip = '10.1.0.18';
+    const phone = await registerAndActivate(ip);
+    await login(phone, ip);
+    await h.db.otpCode.deleteMany({ where: { phone } });
+    const below = await h.api('POST', '/auth/login', { ip, body: { phone, password: PASSWORD } });
+    expect(below.status).toBe(201);
+    expect(below.data.deviceLimit).toBeUndefined();
+    await h.db.otpCode.deleteMany({ where: { phone } });
+    await login(phone, ip);
+    await h.db.otpCode.deleteMany({ where: { phone } });
+    const third = await h.api('POST', '/auth/login', { ip, body: { phone, password: PASSWORD } });
+    expect(third.status).toBe(201);
+    expect(third.data.deviceLimit).toMatchObject({ reached: true, max: 2 });
+  });
+
   describe('failed-login lockout (10 wrong attempts in 10 minutes → 2 minutes)', () => {
     const wrong = (phone: string, ip: string) => h.api('POST', '/auth/login', { ip, body: { phone, password: 'Nope-Nope-1' } });
     const right = (phone: string, ip: string) => h.api('POST', '/auth/login', { ip, body: { phone, password: PASSWORD } });

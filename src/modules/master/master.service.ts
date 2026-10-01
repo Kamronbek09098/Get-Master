@@ -14,6 +14,8 @@ import { toCursorPage, cursorArgs } from '../../common/utils/cursor';
 import { CreateMasterDto } from './dto/create-master.dto';
 import { UpdateMasterDto } from './dto/update-master.dto';
 import { MasterQueryDto } from './dto/master-query.dto';
+import { CoverageQueryDto } from './dto/coverage-query.dto';
+import { approxCoordinate, haversineKm } from '../../common/utils/geo';
 import { CursorQueryDto } from '../../common/dto/cursor-query.dto';
 import { OpenRequestsQueryDto } from './dto/open-requests-query.dto';
 import { MasterStatusDto, PauseMasterDto } from './dto/master-status.dto';
@@ -28,6 +30,8 @@ const PUBLIC_MASTER_SELECT = {
   bio: true,
   experienceYears: true,
   workRadiusKm: true,
+  latitude: true,
+  longitude: true,
   serviceAreas: true,
   ratingAvg: true,
   ratingCount: true,
@@ -52,6 +56,19 @@ const PUBLIC_MASTER_SELECT = {
     select: { id: true, title: true, description: true, mediaAssetId: true, createdAt: true },
   },
 } satisfies Prisma.MasterProfileSelect;
+
+type PublicRow = Prisma.MasterProfileGetPayload<{ select: typeof PUBLIC_MASTER_SELECT }>;
+
+/** Ommaviy ko‘rinish: aniq koordinata o‘rniga yaxlitlangan ish hududi (`coverage`) beriladi. */
+function toPublic(row: PublicRow) {
+  const { latitude, longitude, ...rest } = row;
+  const radius = row.workRadiusKm != null ? Number(row.workRadiusKm) : null;
+  const coverage =
+    latitude != null && longitude != null && radius
+      ? { lat: approxCoordinate(Number(latitude)), lon: approxCoordinate(Number(longitude)), radiusKm: radius }
+      : null;
+  return { ...rest, coverage };
+}
 
 @Injectable()
 export class MasterService {
@@ -236,7 +253,36 @@ export class MasterService {
       orderBy: [{ ratingAvg: 'desc' }, { id: 'asc' }],
       ...cursorArgs(query),
     });
-    return toCursorPage(rows, query);
+    const page = toCursorPage(rows, query);
+    return { ...page, items: page.items.map(toPublic) };
+  }
+
+  /**
+   * Berilgan nuqtaga (mijoz manzili) kela oladigan ustalar: faol, tasdiqlangan, pauzada emas va nuqta
+   * ularning ish radiusi ichida. Masofa aniq koordinata bo‘yicha hisoblanadi, lekin faqat 0,1 km aniqlikda qaytariladi.
+   */
+  async findCovering(query: CoverageQueryDto) {
+    const rows = await this.db.masterProfile.findMany({
+      where: {
+        status: 'ACTIVE',
+        verification: 'VERIFIED',
+        isPaused: false,
+        latitude: { not: null },
+        longitude: { not: null },
+        workRadiusKm: { gt: 0 },
+        ...(query.serviceId ? { services: { some: { isActive: true, serviceId: query.serviceId, service: { isActive: true } } } } : {}),
+      },
+      select: PUBLIC_MASTER_SELECT,
+      take: 1000,
+    });
+    const items = rows
+      .flatMap((row) => {
+        const distance = haversineKm(query.lat, query.lon, Number(row.latitude), Number(row.longitude));
+        return distance <= Number(row.workRadiusKm) ? [{ ...toPublic(row), distanceKm: Math.round(distance * 10) / 10 }] : [];
+      })
+      .sort((a, b) => a.distanceKm - b.distanceKm || Number(b.ratingAvg) - Number(a.ratingAvg))
+      .slice(0, 50);
+    return { items, total: items.length };
   }
 
   /** Usta ochiq ID si — raqamli (akkaunt raqami); ichki UUID ham qabul qilinadi (backend ichida). */
@@ -248,7 +294,7 @@ export class MasterService {
       select: PUBLIC_MASTER_SELECT,
     });
     if (!master) throw new NotFoundException(ERRORS.MASTER_NOT_FOUND);
-    return master;
+    return toPublic(master);
   }
 
   /**

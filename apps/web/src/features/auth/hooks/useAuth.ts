@@ -34,11 +34,13 @@ export function useVerifyRegistration() {
 export function useLogin() {
   const setPendingPhone = useAuthStore((s) => s.setPendingPhone);
   const setDevCode = useAuthStore((s) => s.setDevCode);
+  const setDeviceLimit = useAuthStore((s) => s.setDeviceLimit);
   return useMutation({
     mutationFn: (input: LoginInput) => authService.login(input),
     onSuccess: (result, variables) => {
       setPendingPhone(variables.phone);
       setDevCode(result.developmentCode ?? null);
+      setDeviceLimit(result.deviceLimit ? { max: result.deviceLimit.max, active: result.deviceLimit.active } : null);
     },
   });
 }
@@ -52,6 +54,7 @@ export function useVerifyOtp() {
       setSession(true);
       setPendingPhone(null);
       useAuthStore.getState().setDevCode(null);
+      useAuthStore.getState().setDeviceLimit(null);
     },
   });
 }

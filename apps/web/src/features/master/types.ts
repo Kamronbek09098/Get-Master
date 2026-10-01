@@ -40,6 +40,10 @@ export interface PublicMaster {
   completedOrders: number;
   verification: MasterVerificationStatus;
   user: { accountNumber?: number; firstName: string | null; lastName: string | null };
+  workRadiusKm?: string | number | null;
+  serviceAreas?: string[] | null;
+  /** Ish hududi: yaxlitlangan markaz (~1 km) va radius. */
+  coverage?: { lat: number; lon: number; radiusKm: number } | null;
   services?: Array<{ serviceId: string; basePrice: string; service: { id: string; name: string } }>;
 }
 
@@ -53,4 +57,9 @@ export interface MasterInput {
   profession: string;
   bio?: string;
   experienceYears?: number;
+}
+
+/** Mijoz manziliga kela oladigan usta. */
+export interface CoveringMaster extends PublicMaster {
+  distanceKm: number;
 }

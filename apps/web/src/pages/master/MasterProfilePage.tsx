@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { accountName } from '@/lib/account-name';
 import { formatDate } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
+import { CoverageDialog } from '@/features/geo/components/CoverageDialog';
 import { CoverageMap } from '@/features/geo/components/CoverageMap';
 import { useMe } from '@/features/session/hooks/useMe';
 import { useMyMasterProfile } from '@/features/master/hooks/useMaster';
@@ -29,6 +30,7 @@ export function MasterProfilePage() {
   const { hash } = useLocation();
   const loaded = !profile.isLoading;
   const [highlightVerification, setHighlightVerification] = useState(false);
+  const [areaOpen, setAreaOpen] = useState<string | null>(null);
 
   const focusVerification = useCallback(() => {
     document.getElementById('tasdiqlash')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -132,13 +134,16 @@ export function MasterProfilePage() {
               <ul className="gm-ptags">
                 {areas.map((area) => (
                   <li key={area}>
-                    <MapPin size={13} aria-hidden="true" /> {area}
+                    <button type="button" className="gm-ptags__btn" onClick={() => setAreaOpen(area)} aria-label={`${area} — xaritada ochish`}>
+                      <MapPin size={13} aria-hidden="true" /> {area}
+                    </button>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="gm-pempty">Hududlar kiritilmagan.</p>
             )}
+            <p className="gm-pnote-muted">Hudud nomini bossangiz, xaritada ish hududingiz va radiusi to‘liq ochiladi.</p>
           </ProfileCard>
         )}
 
@@ -185,6 +190,18 @@ export function MasterProfilePage() {
           </ProfileCard>
         )}
       </div>
+      {data && (
+        <CoverageDialog
+          open={areaOpen !== null}
+          onClose={() => setAreaOpen(null)}
+          title="Ish hududim"
+          area={areaOpen}
+          areas={areas}
+          lat={data.latitude != null ? Number(data.latitude) : null}
+          lon={data.longitude != null ? Number(data.longitude) : null}
+          radiusKm={data.workRadiusKm ? Number(data.workRadiusKm) : null}
+        />
+      )}
     </div>
   );
 }
