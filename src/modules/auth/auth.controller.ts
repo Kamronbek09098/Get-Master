@@ -7,6 +7,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { VerifyOTPDto } from '../otp/dto/verify-otp.dto';
+import { RequestOtpDto } from '../otp/dto/request-otp.dto';
 import { RefreshToken } from '../../common/decorators/get-cookie.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
@@ -18,20 +19,21 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
-  @RateLimit({ policy: 'register', scope: 'ip' })
+  @RateLimit({ policy: 'register', scope: 'ip', escalate: true })
   @Post('register')
   register(@Body() dto: RegisterDto, @Req() req: Request) {
     return this.authService.register(dto, req);
   }
 
   @Public()
-  @RateLimit({ policy: 'login', scope: 'ip+phone' })
+  @RateLimit({ policy: 'login', scope: 'ip+phone', escalate: true })
   @Post('login')
   login(@Body() dto: SignInDto, @Req() req: Request) {
     return this.authService.signIn(dto, req);
   }
 
   @Public()
+  @RateLimit({ scope: 'ip+phone', escalateOnly: true })
   @Post('verify-otp')
   verifyLoginOtp(
     @Body() dto: VerifyOTPDto,
@@ -41,7 +43,16 @@ export class AuthController {
     return this.authService.confirmSignIn(dto, req, res);
   }
 
+  /** Ro‘yxatdan o‘tish kodi eskirgan/yetib kelmagan bo‘lsa yangisini so‘rash. Javob raqam holatidan qat’i nazar bir xil. */
   @Public()
+  @RateLimit({ policy: 'otpRequest', scope: 'ip+phone', escalate: true })
+  @Post('resend-registration')
+  resendRegistration(@Body() dto: RequestOtpDto, @Req() req: Request) {
+    return this.authService.resendRegistration(dto, req);
+  }
+
+  @Public()
+  @RateLimit({ scope: 'ip+phone', escalateOnly: true })
   @Post('verify-registration')
   verifyRegistration(
     @Body() dto: VerifyOTPDto,

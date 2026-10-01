@@ -26,6 +26,16 @@ const USER_NAME_SELECT = { id: true, accountNumber: true, firstName: true, lastN
 const holdsPanel = (roles: string[], panel: Panel | null): boolean =>
   !panel || panel === 'ADMIN' || roles.length === 0 || roles.includes(panel);
 
+type NameUser = { id: string; accountNumber: number; firstName: string | null; lastName: string | null };
+
+/** Oddiy foydalanuvchilar uchun administrator ismi «Admin» deb ko‘rinadi; akkaunt raqami yashiriladi (profilini ochib bo‘lmaydi). */
+const maskAdmin = <T extends { id: string; accountNumber?: number; firstName: string | null; lastName: string | null }>(user: T): T => ({
+  ...user,
+  accountNumber: 0,
+  firstName: 'Admin',
+  lastName: null,
+});
+
 interface StoredAttachment {
   mediaAssetId: string;
   mimeType: string;
@@ -114,6 +124,41 @@ export class CommunicationService {
     }
   }
 
+  /**
+   * Administrator foydalanuvchiga yozadigan suhbat (SUPPORT): foydalanuvchida oddiy chat kabi ko‘rinadi, yuboruvchi «Admin».
+   * Foydalanuvchi bu suhbatga javob yoza olmaydi; administrator esa uni ikkala tomondan butunlay o‘chira oladi.
+   * Suhbat har bir (admin, foydalanuvchi) juftligi uchun bitta; rollar bo‘sh — foydalanuvchining barcha panellarida ko‘rinadi.
+   */
+  async openSupport(adminId: string, targetUserId: string, panel: Panel | null = null) {
+    const target = await this.db.user.findFirst({
+      where: { id: targetUserId, deletedAt: null, status: { not: 'DELETED' }, userRoles: { none: { role: 'ADMIN' } } },
+      select: { id: true },
+    });
+    if (!target) throw new NotFoundException(ERRORS.SUPPORT_TARGET_INVALID);
+    const directKey = `s:${adminId}:${targetUserId}`;
+    const existing = await this.db.conversation.findUnique({ where: { directKey } });
+    if (existing) {
+      await this.db.conversationParticipant.updateMany({ where: { conversationId: existing.id, userId: adminId }, data: { deletedAt: null } });
+      return this.findOne(adminId, existing.id, panel);
+    }
+    try {
+      const created = await this.db.conversation.create({
+        data: {
+          type: 'SUPPORT',
+          directKey,
+          participants: { create: [{ userId: adminId, roles: ['ADMIN'] }, { userId: targetUserId, roles: [] }] },
+        },
+      });
+      return this.findOne(adminId, created.id, panel);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const raced = await this.db.conversation.findUniqueOrThrow({ where: { directKey } });
+        return this.findOne(adminId, raced.id, panel);
+      }
+      throw error;
+    }
+  }
+
   /** Barcha suhbatlar bo‘yicha o‘qilmagan xabarlar soni (menyudagi belgi uchun). */
   async unreadTotal(userId: string, panel: Panel | null = null) {
     const mine = await this.db.conversationParticipant.findMany({
@@ -180,7 +225,7 @@ export class CommunicationService {
         });
         return {
           ...conversation,
-          counterpart: (participants.find((p) => p.userId !== userId) ?? mine)?.user ?? null,
+          counterpart: this.counterpartUser(participants, userId),
           counterpartIsMaster: participants.some((p) => p.userId !== userId && masterUserIds.has(p.userId)),
           counterpartLastReadAt: participants.find((p) => p.userId !== userId)?.lastReadAt ?? null,
           lastMessage: messages[0] ? this.present(messages[0]) : null,
@@ -200,11 +245,15 @@ export class CommunicationService {
         participants: { select: { userId: true, roles: true, lastReadAt: true, user: { select: USER_NAME_SELECT } } },
       },
     });
-    return conversation;
+    const viewerIsAdmin = conversation.participants.some((p) => p.userId === userId && p.roles.includes('ADMIN'));
+    return {
+      ...conversation,
+      participants: conversation.participants.map((p) => (p.roles.includes('ADMIN') && !viewerIsAdmin ? { ...p, user: maskAdmin(p.user) } : p)),
+    };
   }
 
   async findAllMessages(userId: string, conversationId: string, query: CursorQueryDto, panel: Panel | null = null) {
-    await this.requireParticipant(userId, conversationId, panel);
+    const access = await this.requireParticipant(userId, conversationId, panel);
     const rows = await this.db.message.findMany({
       where: { conversationId, hiddenBy: { none: { userId } } },
       select: this.messageSelect(),
@@ -212,11 +261,13 @@ export class CommunicationService {
       ...cursorArgs(query),
     });
     const page = toCursorPage(rows, query);
-    return { items: page.items.map((row) => this.present(row)), nextCursor: page.nextCursor };
+    return { items: page.items.map((row) => this.maskReplySender(this.present(row), access.adminIds, userId)), nextCursor: page.nextCursor };
   }
 
   async createMessage(userId: string, conversationId: string, dto: SendMessageDto, panel: Panel | null = null) {
     const conversation = await this.requireParticipant(userId, conversationId, panel);
+    // Administrator xabari: foydalanuvchi unga javob yoza olmaydi (adminga to‘g‘ridan-to‘g‘ri yozib bo‘lmaydi).
+    if (conversation.type === 'SUPPORT' && !conversation.adminIds.includes(userId)) throw new ForbiddenException(ERRORS.SUPPORT_REPLY_FORBIDDEN);
     if (conversation.order && CLOSED_ORDER_STATUSES.includes(conversation.order.status)) {
       throw new ConflictException(ERRORS.CHAT_READ_ONLY(conversation.order.status));
     }
@@ -251,7 +302,7 @@ export class CommunicationService {
     });
 
     await this.markChatNotificationsRead(userId, conversationId);
-    await this.notifyOthers(userId, conversationId, conversation.participantIds);
+    await this.notifyOthers(userId, conversationId, conversation.participantIds, conversation.adminIds.includes(userId));
     return this.present(message);
   }
 
@@ -321,7 +372,8 @@ export class CommunicationService {
   }
 
   async react(userId: string, conversationId: string, messageId: string, emoji: string | null, panel: Panel | null = null) {
-    await this.requireParticipant(userId, conversationId, panel);
+    const access = await this.requireParticipant(userId, conversationId, panel);
+    if (access.type === 'SUPPORT' && !access.adminIds.includes(userId)) throw new ForbiddenException(ERRORS.SUPPORT_REPLY_FORBIDDEN);
     const message = await this.db.message.findFirst({ where: { id: messageId, conversationId }, select: { deletedAt: true } });
     if (!message || message.deletedAt) throw new NotFoundException(ERRORS.MESSAGE_NOT_FOUND);
     const key = { messageId, userId, panel: panel ?? '' };
@@ -368,7 +420,8 @@ export class CommunicationService {
    * biriktirilgan fayllar butunlay o‘chiriladi. Administrator ham keyin ko‘ra olmaydi (nusxa saqlanmaydi).
    */
   async deleteForEveryone(userId: string, conversationId: string, panel: Panel | null = null) {
-    await this.requireParticipant(userId, conversationId, panel);
+    const access = await this.requireParticipant(userId, conversationId, panel);
+    if (access.type === 'SUPPORT' && !access.adminIds.includes(userId)) throw new ForbiddenException(ERRORS.SUPPORT_DELETE_ADMIN_ONLY);
     const assets = await this.db.mediaAsset.findMany({
       where: { linkedResourceType: 'Conversation', linkedResourceId: conversationId },
       select: { id: true, quarantineKey: true, originalKey: true, thumbnailKey: true, mediumKey: true },
@@ -398,6 +451,7 @@ export class CommunicationService {
       where: { id: conversationId },
       select: {
         id: true,
+        type: true,
         order: { select: { status: true } },
         participants: { select: { userId: true, roles: true } },
       },
@@ -407,7 +461,8 @@ export class CommunicationService {
     if (conversation.participants.length < 2) throw new NotFoundException(ERRORS.CONVERSATION_NOT_FOUND);
     const own = conversation.participants.find((p) => p.userId === userId);
     if (!own || !holdsPanel(own.roles, panel)) throw new ForbiddenException(ERRORS.NOT_CONVERSATION_PARTICIPANT);
-    return { id: conversation.id, order: conversation.order, participantIds };
+    const adminIds = conversation.participants.filter((p) => p.roles.includes('ADMIN')).map((p) => p.userId);
+    return { id: conversation.id, type: conversation.type, order: conversation.order, participantIds, adminIds };
   }
 
   private async requireOwnMessage(userId: string, conversationId: string, messageId: string, panel: Panel | null) {
@@ -491,8 +546,27 @@ export class CommunicationService {
     return { ...shaped, text: null, attachments: null, deleted: true, reactions: [], replyTo: null };
   }
 
-  private async notifyOthers(senderId: string, conversationId: string, participantIds: string[]) {
+  /** Suhbatdosh ma’lumoti: oddiy foydalanuvchi uchun administrator «Admin» deb ko‘rinadi. */
+  private counterpartUser(
+    participants: Array<{ userId: string; roles: string[]; user: NameUser }>,
+    viewerId: string,
+  ): NameUser | null {
+    const viewer = participants.find((p) => p.userId === viewerId);
+    const other = participants.find((p) => p.userId !== viewerId) ?? viewer;
+    if (!other) return null;
+    const viewerIsAdmin = viewer?.roles.includes('ADMIN') ?? false;
+    return other.roles.includes('ADMIN') && !viewerIsAdmin ? maskAdmin(other.user) : other.user;
+  }
+
+  /** Javob (reply) ko‘rinishida administrator ismini yashirish. */
+  private maskReplySender<T extends { replyTo?: { senderId: string; sender?: NameUser | null } | null }>(message: T, adminIds: string[], viewerId: string): T {
+    if (adminIds.includes(viewerId) || !message.replyTo?.sender || !adminIds.includes(message.replyTo.senderId)) return message;
+    return { ...message, replyTo: { ...message.replyTo, sender: maskAdmin(message.replyTo.sender) } };
+  }
+
+  private async notifyOthers(senderId: string, conversationId: string, participantIds: string[], senderIsAdmin = false) {
     const sender = await this.db.user.findUnique({ where: { id: senderId }, select: { firstName: true } });
+    if (senderIsAdmin && sender) sender.firstName = 'Admin';
     await Promise.all(
       participantIds
         .filter((id) => id !== senderId)

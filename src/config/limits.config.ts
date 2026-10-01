@@ -1,5 +1,5 @@
 import { registerAs } from '@nestjs/config';
-import { intEnv } from './env.util';
+import { boolEnv, intEnv, intListEnv } from './env.util';
 
 export default registerAs('limits', () => ({
   rate: {
@@ -13,9 +13,20 @@ export default registerAs('limits', () => ({
       ipLimit: intEnv('RATE_LIMIT_CHAT_IP_MAX', 300),
     },
   },
+  /**
+   * Kuchayib boruvchi blok (auth urinishlari): oynada `limit` dan ko‘p urinish bo‘lsa — `ladder[0]` soniyaga bloklanadi;
+   * `strikeWindowSeconds` (24 soat) ichida takrorlansa, blok muddati zinapoyadan keyingi qiymatga o‘sadi (oxirgisida qoladi).
+   */
+  escalation: {
+    enabled: boolEnv('RATE_LIMIT_ESCALATION', true),
+    limit: intEnv('RATE_LIMIT_ESCALATION_MAX', 3),
+    windowSeconds: intEnv('RATE_LIMIT_ESCALATION_WINDOW_SECONDS', 60),
+    ladder: intListEnv('RATE_LIMIT_BLOCK_LADDER', [300, 900, 3600, 21600, 86400]),
+    strikeWindowSeconds: intEnv('RATE_LIMIT_STRIKE_WINDOW_SECONDS', 86400),
+  },
   otp: {
     ttlSeconds: intEnv('OTP_TTL_SECONDS', 300),
-    resendSeconds: intEnv('OTP_RESEND_SECONDS', 60),
+    resendSeconds: intEnv('OTP_RESEND_SECONDS', 120),
     windowSeconds: intEnv('OTP_WINDOW_SECONDS', 3600),
     maxRequestsPerWindow: intEnv('OTP_MAX_REQUESTS', 5),
     ipMultiplier: intEnv('OTP_IP_MULTIPLIER', 3),

@@ -4,8 +4,11 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { NewCredentialsCard } from '@/features/auth/components/NewCredentialsCard';
 import { OtpForm } from '@/features/auth/components/OtpForm';
 import { useVerifyOtp, useVerifyRegistration } from '@/features/auth/hooks/useAuth';
+import { authService } from '@/features/auth/services/auth.service';
+import { useAppStore } from '@/store/app.store';
 import { useAuthStore } from '@/store/auth.store';
 import { Alert } from '@/components/ui/Alert';
+import { getErrorMessage } from '@/lib/error-messages';
 import { APP_TITLE } from '@/lib/panel';
 import { getNavItems } from '@/components/layout/nav-items';
 
@@ -20,6 +23,9 @@ export function OtpPage() {
   const deviceLimit = useAuthStore((s) => s.deviceLimit);
   const hasNewCredentials = useAuthStore((s) => s.newCredentials !== null);
   const [created, setCreated] = useState(false);
+  const setDevCode = useAuthStore((s) => s.setDevCode);
+  const pushToast = useAppStore((s) => s.pushToast);
+  const [resendError, setResendError] = useState<unknown>(null);
   const flow: Flow = (location.state as { flow?: Flow } | null)?.flow ?? 'login';
 
   const verifyRegistration = useVerifyRegistration();
@@ -43,6 +49,19 @@ export function OtpPage() {
 
   const isRegisterFlow = flow === 'register';
   const mutation = isRegisterFlow ? verifyRegistration : verifyOtp;
+
+  async function handleResend(): Promise<boolean> {
+    setResendError(null);
+    try {
+      const result = await authService.resendRegistration(pendingPhone as string);
+      setDevCode(result.developmentCode ?? null);
+      pushToast('Yangi kod yuborildi.', 'success');
+      return true;
+    } catch (error) {
+      setResendError(error);
+      return false;
+    }
+  }
 
   function handleSubmit(values: { code: string }) {
     if (isRegisterFlow) {
@@ -96,14 +115,16 @@ export function OtpPage() {
           Agar bu telefon raqami bilan avval ro‘yxatdan o‘tgan bo‘lsangiz, <Link to="/login">kirish sahifasidan</Link> foydalaning. Aks holda kodni qayta tekshirib kiriting.
         </Alert>
       )}
+      {isRegisterFlow && !!resendError && <Alert tone="danger">{getErrorMessage(resendError)}</Alert>}
       <OtpForm
         phone={pendingPhone}
         loading={mutation.isPending}
         error={mutation.error}
         onSubmit={handleSubmit}
+        onResend={isRegisterFlow ? handleResend : undefined}
         onExpiredHint={
           isRegisterFlow
-            ? 'Kod eskirdi. Hozircha bu telefon raqami uchun ro‘yxatdan o‘tishni qayta boshlashning iloji yo‘q — bu backend’dagi maʻlum cheklov (hisobotga qarang). Iltimos, qo‘llab-quvvatlash xizmatiga murojaat qiling.'
+            ? 'Kod eskirdi. Yangi kod yuborilishini so‘rang yoki qaytadan urinib ko‘ring.'
             : 'Kod eskirdi. Login sahifasiga qaytib, telefon raqami va parolingizni qayta kiriting — yangi kod shu tarzda yuboriladi.'
         }
       />

@@ -31,6 +31,7 @@ export class TelegramAlertService implements OnModuleInit {
   private credentialsChatId = '';
   private credentialsThreadId: number | undefined;
   private securityThreadId: number | undefined;
+  private sessionsThreadId: number | undefined;
   private minStatus = 500;
   private dedupeWindowMs = 300_000;
   private timeoutMs = 8_000;
@@ -49,6 +50,7 @@ export class TelegramAlertService implements OnModuleInit {
     this.credentialsChatId = this.config.get<string>('telegram.credentialsChatId', '');
     this.credentialsThreadId = this.config.get<number | undefined>('telegram.credentialsThreadId', undefined);
     this.securityThreadId = this.config.get<number | undefined>('telegram.securityThreadId', undefined);
+    this.sessionsThreadId = this.config.get<number | undefined>('telegram.sessionsThreadId', undefined);
     this.minStatus = this.config.get<number>('telegram.minStatus', 500);
     this.dedupeWindowMs = this.config.get<number>('telegram.dedupeWindowMs', 300_000);
     this.timeoutMs = this.config.get<number>('telegram.timeoutMs', 8_000);
@@ -162,23 +164,123 @@ export class TelegramAlertService implements OnModuleInit {
     const locationLine = gps
       ? `📍 Aniq joylashuv (qurilma GPS, foydalanuvchi ruxsati bilan): <a href="${gpsMap}">${gps.latitude.toFixed(6)}, ${gps.longitude.toFixed(6)}</a>${gps.accuracy ? ` (±${Math.round(gps.accuracy)} m)` : ''}`
       : `Joylashuv (taxminiy, IP bo‘yicha): ${escapeHtml(where)}${ipMap ? ` — <a href="${ipMap}">xaritada</a>` : ''}`;
+    const time = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Tashkent', hour12: false });
+    const block = (lines: Array<string | undefined>) => lines.filter((line): line is string => !!line).join('\n');
     const text = [
       `⚠️ <b>${escapeHtml(this.appName)}</b> [${escapeHtml(this.environment)}] — mavjud ma’lumot bilan ro‘yxatdan o‘tishga urinish`,
-      input.reason === 'phone' ? 'Sabab: telefon raqami allaqachon ro‘yxatdan o‘tgan' : 'Sabab: email allaqachon ro‘yxatdan o‘tgan',
-      `Telefon: <code>${escapeHtml(input.phone)}</code>`,
-      input.email ? `Email: <code>${escapeHtml(input.email)}</code>` : undefined,
-      `Kiritilgan ism: ${input.name ? escapeHtml(input.name) : '—'}`,
-      `Qurilma: ${escapeHtml(describeDevice(input.userAgent))}${input.panel ? ` (panel: ${escapeHtml(input.panel)})` : ''}`,
-      `IP manzil: <code>${escapeHtml(input.ip ?? 'noma’lum')}</code>`,
-      locationLine,
-      gps && where !== 'aniqlanmadi' ? `IP bo‘yicha taxminiy joy: ${escapeHtml(where)}` : undefined,
-      location?.provider ? `Internet provayder: ${escapeHtml(location.provider)}` : undefined,
-      `Vaqt: ${escapeHtml(new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' }))}`,
+      `Sabab: ${input.reason === 'phone' ? 'Telefon raqami allaqachon ro‘yxatdan o‘tgan' : 'Email allaqachon ro‘yxatdan o‘tgan'}`,
+      block([
+        `Telefon: <code>${escapeHtml(input.phone)}</code>`,
+        input.email ? `Email: <code>${escapeHtml(input.email)}</code>` : undefined,
+        `Kiritilgan ism: ${input.name ? escapeHtml(input.name) : '—'}`,
+        `Qurilma: ${escapeHtml(describeDevice(input.userAgent))}${input.panel ? ` (panel: ${escapeHtml(input.panel)})` : ''}`,
+      ]),
+      block([
+        `IP manzil: <code>${escapeHtml(input.ip ?? 'noma’lum')}</code>`,
+        locationLine,
+        gps && where !== 'aniqlanmadi' ? `IP bo‘yicha taxminiy joy: ${escapeHtml(where)}` : undefined,
+        location?.provider ? `Internet provayder: ${escapeHtml(location.provider)}` : undefined,
+      ]),
+      `Vaqt: ${escapeHtml(time)}`,
       'Foydalanuvchiga hech narsa bildirilmadi (raqam mavjudligi sir saqlanadi); hisob ochilmadi.',
-    ]
-      .filter((line): line is string => !!line)
-      .join('\n');
+    ].join('\n\n');
     await this.post(this.credentialsChatId, text, 'takroriy ro‘yxatdan o‘tish urinishi', this.securityThreadId ?? this.credentialsThreadId);
+  }
+
+  /** Foydalanuvchi tizimga kirdi / chiqdi (yopiq guruhga). Parol yoki tokenlar bu xabarda hech qachon bo‘lmaydi. */
+  notifySession(input: {
+    event: 'login' | 'logout' | 'logout-all';
+    name: string;
+    accountNumber: number;
+    roles: string;
+    login: string;
+    ip?: string | null;
+    panel?: string | null;
+    userAgent?: string | null;
+  }): void {
+    if (!this.botToken || !this.credentialsChatId) return;
+    void this.sendSession(input);
+  }
+
+  private async sendSession(input: Parameters<TelegramAlertService['notifySession']>[0]): Promise<void> {
+    const location = input.ip ? await lookupIpLocation(input.ip) : null;
+    const where = location
+      ? [location.city, location.region, location.country].filter(Boolean).join(', ')
+      : input.ip && isPrivateIp(input.ip)
+        ? 'lokal tarmoq (joylashuvni aniqlab bo‘lmaydi)'
+        : 'aniqlanmadi';
+    const map = location && (location.latitude || location.longitude) ? ` — <a href="https://www.openstreetmap.org/?mlat=${location.latitude}&mlon=${location.longitude}#map=11/${location.latitude}/${location.longitude}">xaritada</a>` : '';
+    const title =
+      input.event === 'login'
+        ? '🟢 foydalanuvchi tizimga kirdi'
+        : input.event === 'logout'
+          ? '🔴 foydalanuvchi tizimdan chiqdi'
+          : '🔴 foydalanuvchi barcha qurilmalardan chiqdi';
+    const time = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Tashkent', hour12: false });
+    const block = (lines: Array<string | undefined>) => lines.filter((line): line is string => !!line).join('\n');
+    const text = [
+      `<b>${escapeHtml(this.appName)}</b> [${escapeHtml(this.environment)}] — ${title}`,
+      block([
+        `Foydalanuvchi: <b>${escapeHtml(input.name || '—')}</b> (ID ${input.accountNumber})`,
+        `Akkaunt roli: <b>${escapeHtml(input.roles)}</b>`,
+        `Login: <code>${escapeHtml(input.login)}</code>`,
+      ]),
+      `Qurilma: ${escapeHtml(describeDevice(input.userAgent))}${input.panel ? ` (panel: ${escapeHtml(input.panel)})` : ''}`,
+      block([
+        `IP manzil: <code>${escapeHtml(input.ip ?? 'noma’lum')}</code>`,
+        `Joylashuv (taxminiy, IP bo‘yicha): ${escapeHtml(where)}${map}`,
+        location?.provider ? `Internet provayder: ${escapeHtml(location.provider)}` : undefined,
+      ]),
+      `Vaqt: ${escapeHtml(time)}`,
+    ].join('\n\n');
+    await this.post(this.credentialsChatId, text, `kirish/chiqish (${input.event})`, this.sessionsThreadId ?? this.credentialsThreadId);
+  }
+
+  /**
+   * Autentifikatsiya bilan bog‘liq ogohlantirish (yopiq guruh, xavfsizlik mavzusi): masalan, ro‘yxatdan o‘tmagan raqamga
+   * kirishga urinish yoki ro‘yxatdan o‘tish kodini qayta yuborish. Parol hech qachon yuborilmaydi.
+   * Bir xil kalit (`dedupeKey`) uchun takroriy xabarlar `dedupeWindowMs` davomida bostiriladi.
+   */
+  notifyAuthWarning(input: {
+    title: string;
+    reason: string;
+    note?: string;
+    phone: string;
+    ip?: string | null;
+    panel?: string | null;
+    userAgent?: string | null;
+    dedupeKey?: string;
+  }): void {
+    if (!this.botToken || !this.credentialsChatId) return;
+    if (input.dedupeKey && !this.shouldSend(`warn:${input.dedupeKey}`)) return;
+    void this.sendAuthWarning(input);
+  }
+
+  private async sendAuthWarning(input: Parameters<TelegramAlertService['notifyAuthWarning']>[0]): Promise<void> {
+    const location = input.ip ? await lookupIpLocation(input.ip) : null;
+    const where = location
+      ? [location.city, location.region, location.country].filter(Boolean).join(', ')
+      : input.ip && isPrivateIp(input.ip)
+        ? 'lokal tarmoq (joylashuvni aniqlab bo‘lmaydi)'
+        : 'aniqlanmadi';
+    const map = location && (location.latitude || location.longitude) ? ` — <a href="https://www.openstreetmap.org/?mlat=${location.latitude}&mlon=${location.longitude}#map=11/${location.latitude}/${location.longitude}">xaritada</a>` : '';
+    const time = new Date().toLocaleString('en-GB', { timeZone: 'Asia/Tashkent', hour12: false });
+    const block = (lines: Array<string | undefined>) => lines.filter((line): line is string => !!line).join('\n');
+    const text = [
+      `⚠️ <b>${escapeHtml(this.appName)}</b> [${escapeHtml(this.environment)}] — ${escapeHtml(input.title)}`,
+      `Sabab: ${escapeHtml(input.reason)}`,
+      block([`Telefon: <code>${escapeHtml(input.phone)}</code>`, `Qurilma: ${escapeHtml(describeDevice(input.userAgent))}${input.panel ? ` (panel: ${escapeHtml(input.panel)})` : ''}`]),
+      block([
+        `IP manzil: <code>${escapeHtml(input.ip ?? 'noma’lum')}</code>`,
+        `Joylashuv (taxminiy, IP bo‘yicha): ${escapeHtml(where)}${map}`,
+        location?.provider ? `Internet provayder: ${escapeHtml(location.provider)}` : undefined,
+      ]),
+      `Vaqt: ${escapeHtml(time)}`,
+      input.note ? escapeHtml(input.note) : undefined,
+    ]
+      .filter((part): part is string => !!part)
+      .join('\n\n');
+    await this.post(this.credentialsChatId, text, 'autentifikatsiya ogohlantirishi', this.securityThreadId ?? this.credentialsThreadId);
   }
 
   /** Telefon kod bilan tasdiqlangach: hisob haqida xabar (yopiq guruhga). Parol bu xabarda yo‘q — bazada faqat xesh bor. */

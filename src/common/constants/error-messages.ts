@@ -66,6 +66,14 @@ export const ERRORS = {
   OTP_LIMIT_WAIT: (minutes: number) =>
     `Kod so‘rash limiti tugadi. ${minutes} daqiqadan so‘ng qayta urinib ko‘ring`,
   OTP_WAIT: (seconds: number) => `Yangi kod so‘rashdan oldin ${seconds} soniya kuting`,
+  RATE_LIMIT_BLOCKED: (seconds: number) => {
+    const minutes = Math.ceil(seconds / 60);
+    const wait = minutes >= 120 ? `${Math.ceil(minutes / 60)} soat` : minutes >= 2 ? `${minutes} daqiqa` : `${seconds} soniya`;
+    return `Juda ko‘p urinish qilindi. ${wait}dan keyin qayta urinib ko‘ring`;
+  },
+  SUPPORT_REPLY_FORBIDDEN: 'Bu Admin xabari: unga javob yozib bo‘lmaydi',
+  SUPPORT_DELETE_ADMIN_ONLY: 'Admin suhbatini faqat administrator hamma uchun o‘chira oladi',
+  SUPPORT_TARGET_INVALID: 'Foydalanuvchi topilmadi yoki unga xabar yozib bo‘lmaydi',
   RATE_LIMIT_EXCEEDED: 'So‘rovlar soni oshib ketdi, keyinroq urinib ko‘ring',
   TOO_MANY_REQUESTS: 'So‘rovlar juda ko‘p',
 

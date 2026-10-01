@@ -63,7 +63,7 @@ export class OtpService {
     phoneInput: string,
     purpose: OtpPurpose,
     userId?: string,
-    context?: { ip?: string; device?: string; panel?: string | null },
+    context?: { ip?: string; device?: string; panel?: string | null; resend?: boolean },
   ) {
     const phone = this.normalizePhone(phoneInput);
     const panel = context?.panel ?? null;
@@ -166,7 +166,7 @@ export class OtpService {
     await this.redis.del(this.failKey(phone, purpose));
 
     // Yetkazish (Telegram/email) javobni kechiktirmaydi: fonda bajariladi, xato logga yoziladi.
-    void this.deliver(phone, code, purpose).catch((error: unknown) => this.logger.error(`${purpose} kodini yuborishda xato: ${(error as Error).message}`));
+    void this.deliver(phone, code, purpose, context?.resend === true).catch((error: unknown) => this.logger.error(`${purpose} kodini yuborishda xato: ${(error as Error).message}`));
 
     const metadata = {
       verificationRequired: true,
@@ -179,9 +179,10 @@ export class OtpService {
     return metadata;
   }
 
-  private async deliver(phone: string, code: string, purpose: OtpPurpose): Promise<void> {
+  private async deliver(phone: string, code: string, purpose: OtpPurpose, resend = false): Promise<void> {
     let delivered = false;
-    if (await this.telegram.sendOtp({ phone, code, purposeLabel: OTP_PURPOSE_LABEL[purpose], ttlMinutes: this.ttlMs / 60_000 })) {
+    const purposeLabel = resend ? `${OTP_PURPOSE_LABEL[purpose]} (kod qayta yuborildi)` : OTP_PURPOSE_LABEL[purpose];
+    if (await this.telegram.sendOtp({ phone, code, purposeLabel, ttlMinutes: this.ttlMs / 60_000 })) {
       delivered = true;
     }
     try {

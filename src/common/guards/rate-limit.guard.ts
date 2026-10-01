@@ -22,11 +22,17 @@ export class RateLimitGuard implements CanActivate {
       context.getClass(),
     ]);
     if (!declared) return true;
-    const options = this.resolve(declared);
 
     const req = context.switchToHttp().getRequest();
     const ip = (req.ip ?? req.headers?.['x-forwarded-for'] ?? 'unknown').toString().split(',')[0].trim();
     const route = `${req.method}:${req.route?.path ?? req.originalUrl}:${panelOf(req) ?? 'any'}`;
+
+    if (declared.escalate || declared.escalateOnly) {
+      const identity = declared.scope === 'ip+phone' && req.body?.phone ? `${route}:${ip}:${req.body.phone}` : `${route}:${ip}`;
+      await this.enforceEscalation(identity);
+    }
+    if (declared.escalateOnly) return true;
+    const options = this.resolve(declared);
 
     let bucketKey = `ratelimit:${route}:ip:${ip}`;
     if (options.scope === 'ip+phone' && req.body?.phone) {
@@ -49,6 +55,30 @@ export class RateLimitGuard implements CanActivate {
     const { allowed } = await this.redis.consume(bucketKey, options.limit, options.windowSeconds);
     if (!allowed) throw new TooManyRequestsException(ERRORS.RATE_LIMIT_EXCEEDED);
     return true;
+  }
+
+  /**
+   * Kuchayib boruvchi blok: 1 daqiqada `limit` dan ko‘p urinish → 5 daqiqa blok; 24 soat ichida takrorlansa 15 daqiqa,
+   * 1 soat, 6 soat, 24 soat... (zinapoya sozlanadi). Blok davomida har bir so‘rov qolgan vaqt haqida 429 oladi.
+   */
+  private async enforceEscalation(identity: string): Promise<void> {
+    const cfg = this.config.get<{ enabled: boolean; limit: number; windowSeconds: number; ladder: number[]; strikeWindowSeconds: number }>('limits.escalation');
+    if (!cfg?.enabled) return;
+    const blockKey = `rl:esc:block:${identity}`;
+    const remaining = await this.redis.ttl(blockKey);
+    if (remaining > 0) throw new TooManyRequestsException(ERRORS.RATE_LIMIT_BLOCKED(remaining));
+
+    const { allowed } = await this.redis.consume(`rl:esc:count:${identity}`, cfg.limit, cfg.windowSeconds);
+    if (allowed) return;
+
+    const strikeKey = `rl:esc:strikes:${identity}`;
+    const { remaining: left } = await this.redis.consume(strikeKey, 1_000_000, cfg.strikeWindowSeconds);
+    const strikes = 1_000_000 - left;
+    await this.redis.expire(strikeKey, cfg.strikeWindowSeconds); // oxirgi hodisadan 24 soat hisoblanadi
+    const seconds = cfg.ladder[Math.min(strikes - 1, cfg.ladder.length - 1)] ?? 300;
+    await this.redis.set(blockKey, String(strikes), seconds);
+    await this.redis.del(`rl:esc:count:${identity}`);
+    throw new TooManyRequestsException(ERRORS.RATE_LIMIT_BLOCKED(seconds));
   }
 
   private resolve(declared: RateLimitOptions): Required<Pick<RateLimitOptions, 'scope' | 'limit' | 'windowSeconds'>> & { ipLimit?: number } {

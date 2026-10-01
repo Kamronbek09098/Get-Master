@@ -15,10 +15,19 @@ export interface OtpFormProps {
   error: unknown;
   onSubmit: (values: { code: string }) => void;
   onExpiredHint: string;
+  /** Yangi kod so‘rash (faqat ro‘yxatdan o‘tish bosqichida). Muvaffaqiyatli bo‘lsa true qaytaradi. */
+  onResend?: () => Promise<boolean>;
 }
 
-export function OtpForm({ phone, loading, error, onSubmit, onExpiredHint }: OtpFormProps) {
+/** Kodni qayta yuborish 2 daqiqadan keyin mumkin (backend: OTP_RESEND_SECONDS=120 bilan mos). */
+const RESEND_COOLDOWN_SECONDS = 120;
+
+const clock = (total: number) => `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+
+export function OtpForm({ phone, loading, error, onSubmit, onExpiredHint, onResend }: OtpFormProps) {
   const [secondsLeft, setSecondsLeft] = useState(OTP_TTL_SECONDS);
+  const [resendIn, setResendIn] = useState(RESEND_COOLDOWN_SECONDS);
+  const [resending, setResending] = useState(false);
   const {
     register,
     handleSubmit,
@@ -26,11 +35,25 @@ export function OtpForm({ phone, loading, error, onSubmit, onExpiredHint }: OtpF
   } = useForm<OtpFormValues>({ resolver: zodResolver(otpSchema) });
 
   useEffect(() => {
-    const timer = window.setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    const timer = window.setInterval(() => {
+      setSecondsLeft((s) => Math.max(0, s - 1));
+      setResendIn((s) => Math.max(0, s - 1));
+    }, 1000);
     return () => window.clearInterval(timer);
   }, []);
 
   const expired = secondsLeft === 0;
+
+  async function resend() {
+    if (!onResend || resending) return;
+    setResending(true);
+    const ok = await onResend().catch(() => false);
+    setResending(false);
+    if (ok) {
+      setSecondsLeft(OTP_TTL_SECONDS);
+      setResendIn(RESEND_COOLDOWN_SECONDS);
+    }
+  }
   const minutes = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
   const seconds = String(secondsLeft % 60).padStart(2, '0');
 
@@ -62,6 +85,12 @@ export function OtpForm({ phone, loading, error, onSubmit, onExpiredHint }: OtpF
       <Button type="submit" loading={loading} disabled={expired} fullWidth>
         Tasdiqlash
       </Button>
+
+      {onResend && (
+        <Button type="button" variant="secondary" fullWidth loading={resending} disabled={resendIn > 0 && !expired} onClick={() => void resend()}>
+          {expired ? 'Yangi kod yuborish' : resendIn > 0 ? `Kodni qayta yuborish (${clock(resendIn)})` : 'Kod kelmadimi? Qayta yuborish'}
+        </Button>
+      )}
     </form>
   );
 }

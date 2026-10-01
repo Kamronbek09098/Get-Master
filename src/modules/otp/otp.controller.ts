@@ -14,7 +14,7 @@ export class OtpController {
   constructor(private readonly otp: OtpService) {}
 
   @Public()
-  @RateLimit({ policy: 'otpRequest', scope: 'ip+phone' })
+  @RateLimit({ policy: 'otpRequest', scope: 'ip+phone', escalate: true })
   @Post('request')
   request(@Body() dto: RequestOtpDto, @Req() req: Request) {
     return this.otp.issue(dto.phone, OtpPurpose.PHONE_VERIFICATION, undefined, {
@@ -24,7 +24,7 @@ export class OtpController {
   }
 
   @Public()
-  @RateLimit({ policy: 'otpVerify', scope: 'ip+phone' })
+  @RateLimit({ policy: 'otpVerify', scope: 'ip+phone', escalate: true })
   @Post('verify')
   async verify(@Body() dto: VerifyOTPDto) {
     await this.otp.verify(dto.phone, OtpPurpose.PHONE_VERIFICATION, dto.code);

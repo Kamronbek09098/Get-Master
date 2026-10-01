@@ -25,6 +25,13 @@ export class CommunicationController {
     return this.communicationService.openDirect(userId, dto.masterId, panelOf(req));
   }
 
+  /** Administrator foydalanuvchi bilan suhbat ochadi (yoki mavjudini qaytaradi). */
+  @Post('support/:userId')
+  @Roles(Role.ADMIN)
+  openSupport(@CurrentUser('sub') adminId: string, @Param('userId', ParseUUIDPipe) userId: string, @Req() req: Request) {
+    return this.communicationService.openSupport(adminId, userId, panelOf(req));
+  }
+
   @Get()
   findAll(@CurrentUser('sub') userId: string, @Query() query: CursorQueryDto, @Req() req: Request) {
     return this.communicationService.findAll(userId, query, panelOf(req));

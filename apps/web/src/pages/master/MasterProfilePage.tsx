@@ -6,11 +6,10 @@ import { Badge } from '@/components/ui/Badge';
 import { accountName } from '@/lib/account-name';
 import { formatDate } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
-import { CoverageDialog } from '@/features/geo/components/CoverageDialog';
-import { CoverageMap } from '@/features/geo/components/CoverageMap';
 import { useMe } from '@/features/session/hooks/useMe';
 import { useMyMasterProfile } from '@/features/master/hooks/useMaster';
 import { MasterForm } from '@/features/master/components/MasterForm';
+import { WorkAreaEditor } from '@/features/master/components/WorkAreaEditor';
 import { MasterStatusPanel } from '@/features/master/components/MasterStatusPanel';
 import { ServiceList } from '@/features/service/components/ServiceList';
 import { ServiceForm } from '@/features/service/components/ServiceForm';
@@ -30,7 +29,6 @@ export function MasterProfilePage() {
   const { hash } = useLocation();
   const loaded = !profile.isLoading;
   const [highlightVerification, setHighlightVerification] = useState(false);
-  const [areaOpen, setAreaOpen] = useState<string | null>(null);
 
   const focusVerification = useCallback(() => {
     document.getElementById('tasdiqlash')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -58,7 +56,6 @@ export function MasterProfilePage() {
   const data = profile.data ?? null;
   const user = me.data;
   const name = accountName(user);
-  const areas = data?.serviceAreas ?? [];
   const verified = data?.verification === 'VERIFIED';
   const workState = !data
     ? statusLabel(user?.status ?? 'ACTIVE')
@@ -67,7 +64,6 @@ export function MasterProfilePage() {
       : data.isPaused
         ? 'Pauzada'
         : statusLabel(data.status);
-  const radius = data?.workRadiusKm ? `${Number(data.workRadiusKm)} km` : '—';
 
   return (
     <div className="gm-ppage">
@@ -122,28 +118,8 @@ export function MasterProfilePage() {
         )}
 
         {data && (
-          <ProfileCard icon={MapPin} title="Ish hududi">
-            <InfoRows rows={[{ label: 'Ish radiusi', value: radius }]} />
-            <CoverageMap
-              latitude={data.latitude != null ? Number(data.latitude) : null}
-              longitude={data.longitude != null ? Number(data.longitude) : null}
-              radiusKm={data.workRadiusKm ? Number(data.workRadiusKm) : null}
-              height={240}
-            />
-            {areas.length > 0 ? (
-              <ul className="gm-ptags">
-                {areas.map((area) => (
-                  <li key={area}>
-                    <button type="button" className="gm-ptags__btn" onClick={() => setAreaOpen(area)} aria-label={`${area} — xaritada ochish`}>
-                      <MapPin size={13} aria-hidden="true" /> {area}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="gm-pempty">Hududlar kiritilmagan.</p>
-            )}
-            <p className="gm-pnote-muted">Hudud nomini bossangiz, xaritada ish hududingiz va radiusi to‘liq ochiladi.</p>
+          <ProfileCard icon={MapPin} title="Ish hududi" hint="Ish markazi, radius va hududlaringiz — mijozlar shu bo‘yicha sizni topadi.">
+            <WorkAreaEditor profile={data} />
           </ProfileCard>
         )}
 
@@ -190,18 +166,6 @@ export function MasterProfilePage() {
           </ProfileCard>
         )}
       </div>
-      {data && (
-        <CoverageDialog
-          open={areaOpen !== null}
-          onClose={() => setAreaOpen(null)}
-          title="Ish hududim"
-          area={areaOpen}
-          areas={areas}
-          lat={data.latitude != null ? Number(data.latitude) : null}
-          lon={data.longitude != null ? Number(data.longitude) : null}
-          radiusKm={data.workRadiusKm ? Number(data.workRadiusKm) : null}
-        />
-      )}
     </div>
   );
 }

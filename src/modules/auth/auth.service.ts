@@ -18,7 +18,7 @@ import { hashSecret, verifySecret } from '../../common/security/hash';
 import { panelOf } from '../../common/utils/panel';
 import { authCookieNames } from '../../common/utils/panel';
 import { RedisService } from '../../infrastructure/redis/redis.service';
-import { LoginLockedException } from '../../common/exceptions/business.exception';
+import { LoginLockedException, TooManyRequestsException } from '../../common/exceptions/business.exception';
 import { randomUUID } from 'node:crypto';
 import { clientIpOf } from '../../common/utils/client-ip';
 import type { Request, Response } from 'express';
@@ -28,6 +28,7 @@ import { TelegramAlertService } from '../../infrastructure/telegram/telegram-ale
 import { SignInDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyOTPDto } from '../otp/dto/verify-otp.dto';
+import { RequestOtpDto } from '../otp/dto/request-otp.dto';
 import {
   DEVICE_COOKIE_TTL_DAYS,
 } from '../../common/constants/auth.constants';
@@ -187,6 +188,55 @@ export class AuthService {
     return { userId: randomUUID(), verificationRequired: true };
   }
 
+  /**
+   * Tasdiqlanmagan (PENDING) hisob uchun yangi ro‘yxatdan o‘tish kodi. Tashqaridan hamma raqam uchun bir xil javob va
+   * bir xil cheklovlar (Redis'da raqam bo‘yicha: 30 soniyalik kutish va soatiga 5 ta) — raqam holati sezilmaydi.
+   */
+  async resendRegistration(dto: RequestOtpDto, req: Request) {
+    const phone = this.normalizePhone(dto.phone);
+    const cooldown = this.config.get<number>('limits.otp.resendSeconds', 30);
+    if (!(await this.redis.setIfAbsent(`resendreg:cooldown:${phone}`, '1', cooldown))) {
+      throw new TooManyRequestsException(ERRORS.OTP_WAIT(Math.max(1, await this.redis.ttl(`resendreg:cooldown:${phone}`))));
+    }
+    const hourly = await this.redis.consume(`resendreg:hourly:${phone}`, this.config.get<number>('limits.otp.maxRequestsPerWindow', 5), 3600);
+    if (!hourly.allowed) throw new TooManyRequestsException(ERRORS.OTP_LIMIT_EXCEEDED);
+
+    const user = await this.db.user.findUnique({ where: { phone }, select: { id: true, status: true, deletedAt: true } });
+    const pending = !!user && user.deletedAt === null && user.status === UserStatus.PENDING;
+    const existsOther = !!user && user.deletedAt === null && !pending;
+    if (existsOther) {
+      // Mavjud (faol) raqam: «mavjud ma’lumot bilan ro‘yxatdan o‘tishga urinish» ko‘rinishidagi ogohlantirish; foydalanuvchiga hech narsa bildirilmaydi.
+      this.warnAuth(
+        'mavjud ma’lumot bilan ro‘yxatdan o‘tishga urinish',
+        'Telefon raqami allaqachon ro‘yxatdan o‘tgan va kodni qayta yuborish so‘raldi',
+        phone,
+        req,
+        user.status === UserStatus.ACTIVE
+          ? 'Holat: bu raqam allaqachon faol akkauntga tegishli — kod yuborilmadi.'
+          : `Holat: bu raqam mavjud akkauntga tegishli (holati: ${user.status}) — kod yuborilmadi.`,
+      );
+    } else {
+      this.warnAuth(
+        'Ro‘yxatdan o‘tish kodini qayta yuborish so‘raldi',
+        'Foydalanuvchi «Kodni qayta yuborish» tugmasini bosdi',
+        phone,
+        req,
+        pending ? 'Holat: ro‘yxatdan o‘tish tasdiqlanmagan — yangi kod yuborildi.' : 'Holat: bunday raqam bilan ro‘yxatdan o‘tish boshlanmagan — kod yuborilmadi.',
+      );
+    }
+    if (pending && user) {
+      const issued = await this.otp.issue(phone, OtpPurpose.REGISTER, user.id, {
+        ip: this.clientIp(req),
+        device: this.deviceCookie(req),
+        panel: panelOf(req),
+        resend: true,
+      });
+      return { verificationRequired: true, ...this.devCode(issued) };
+    }
+    await hashSecret(randomUUID(), 10); // haqiqiy yuborishdagi xeshlash vaqtiga mos
+    return { verificationRequired: true };
+  }
+
   async confirmRegistration(dto: VerifyOTPDto, req?: Request) {
     const phone = this.normalizePhone(dto.phone);
     const user = await this.db.user.findUnique({
@@ -275,6 +325,10 @@ export class AuthService {
     // Foydalanuvchi bo‘lmasa ham xuddi shuncha vaqt sarflanadi (bcrypt) — javob vaqtiga qarab raqam mavjudligini bilib bo‘lmaydi.
     const validPassword = await verifySecret(dto.password, user?.passwordHash ?? (await this.dummyPasswordHash()));
 
+    if (!user || user.deletedAt !== null) {
+      // Ro‘yxatdan o‘tmagan (yoki o‘chirilgan) akkauntga kirishga urinish: adminga ogohlantirish; foydalanuvchiga baribir umumiy xato.
+      this.warnAuth('Ro‘yxatdan o‘tmagan akkauntga kirishga urinish', 'Bunday telefon raqami tizimda ro‘yxatdan o‘tmagan', phone, req, 'Foydalanuvchiga hech narsa bildirilmadi (raqam mavjudligi sir saqlanadi).', `login-unknown:${phone}:${this.clientIp(req) ?? ''}`);
+    }
     if (!user || user.deletedAt !== null || !validPassword) {
       await this.registerLoginFailure(attemptKey);
       throw new UnauthorizedException(ERRORS.INVALID_CREDENTIALS);
@@ -361,13 +415,50 @@ export class AuthService {
       throw new BadRequestException(ERRORS.INVALID_VERIFICATION_CODE);
     }
 
-    return this.createSession(
+    const session = await this.createSession(
       user.id,
       user.userRoles.map((item) => item.role),
       user.status,
       req,
       res,
     );
+    this.notifySession('login', user, req);
+    return session;
+  }
+
+  private warnAuth(title: string, reason: string, phone: string, req: Request, note?: string, dedupeKey?: string) {
+    const agent = req.headers['user-agent'];
+    this.telegram.notifyAuthWarning({
+      title,
+      reason,
+      note,
+      phone,
+      ip: this.clientIp(req) ?? null,
+      panel: panelOf(req),
+      userAgent: (Array.isArray(agent) ? agent[0] : agent) ?? null,
+      dedupeKey,
+    });
+  }
+
+  /** Kirish/chiqish haqida yopiq guruhga xabar (fonda; xato javobga ta’sir qilmaydi). */
+  private notifySession(
+    event: 'login' | 'logout' | 'logout-all',
+    user: { accountNumber: number; phone: string; firstName: string | null; lastName: string | null; userRoles: Array<{ role: Role }> },
+    req: Request,
+  ) {
+    const labels: Record<string, string> = { CUSTOMER: 'Mijoz', MASTER: 'Usta', ADMIN: 'Admin' };
+    const panel = panelOf(req);
+    const agent = req.headers['user-agent'];
+    this.telegram.notifySession({
+      event,
+      name: [user.firstName, user.lastName].filter(Boolean).join(' '),
+      accountNumber: user.accountNumber,
+      roles: panel ? labels[panel] ?? panel : user.userRoles.map((item) => labels[item.role] ?? item.role).join(', '),
+      login: user.phone,
+      ip: this.clientIp(req) ?? null,
+      panel,
+      userAgent: (Array.isArray(agent) ? agent[0] : agent) ?? null,
+    });
   }
 
   async refresh(refreshToken: string | undefined, req: Request, res: Response) {
@@ -570,6 +661,11 @@ export class AuthService {
             });
           });
         }
+        const account = await this.db.user.findUnique({
+          where: { id: claims.sub },
+          select: { accountNumber: true, phone: true, firstName: true, lastName: true, userRoles: { select: { role: true } } },
+        });
+        if (account) this.notifySession(allDevices ? 'logout-all' : 'logout', account, req);
       } catch {
       }
     }

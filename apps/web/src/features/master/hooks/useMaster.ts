@@ -40,3 +40,14 @@ export function useCoveringMasters(lat: number | null, lon: number | null) {
     staleTime: 60_000,
   });
 }
+
+/** Faqat ish hududi maydonlarini (markaz, radius, hududlar) yangilaydi. */
+export function useUpdateWorkArea() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: Partial<MasterInput>) => masterService.updateMine(input),
+    onSuccess: (profile) => {
+      queryClient.setQueryData(['master', 'me'], profile);
+    },
+  });
+}

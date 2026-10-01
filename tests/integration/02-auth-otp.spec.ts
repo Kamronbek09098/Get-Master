@@ -1,5 +1,6 @@
 import * as bcrypt from 'bcryptjs';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { TelegramAlertService } from '../../src/infrastructure/telegram/telegram-alert.service';
 import { bootHarness, type Harness, uniquePhone } from '../helpers/harness';
 import { RedisService } from '../../src/infrastructure/redis/redis.service';
 
@@ -83,6 +84,78 @@ describe('K02b — phone numbers cannot be enumerated', () => {
     const real = await time(phone, '10.1.0.44');
     const ghost = await time(uniquePhone(), '10.1.0.45');
     expect(ghost).toBeGreaterThan(real * 0.5);
+  });
+});
+
+describe('K02d — OTP messages go to the OTP Telegram topic in every legitimate flow', () => {
+  it('sends a code for: new registration, resend while pending, and login of an existing account — and for nothing else', async () => {
+    const telegram = h.app.get(TelegramAlertService);
+    const spy = vi.spyOn(telegram, 'sendOtp').mockResolvedValue(true);
+    const labels = () => spy.mock.calls.map((call) => call[0].purposeLabel);
+    try {
+      const ip = '10.1.0.70';
+      const phone = uniquePhone();
+      // 1) Yangi raqam bilan ro‘yxatdan o‘tish
+      await h.api('POST', '/auth/register', { ip, body: { phone, password: PASSWORD, firstName: 'Test', lastName: 'User', acceptedPolicyIds: await policyIds() } });
+      await vi.waitFor(() => expect(labels()).toContain('Ro‘yxatdan o‘tish'));
+      // 2) Hali tasdiqlanmagan raqam uchun kodni qayta yuborish
+      await h.db.otpCode.updateMany({ where: { phone }, data: { createdAt: new Date(Date.now() - 600_000) } });
+      await h.api('POST', '/auth/resend-registration', { ip: '10.1.0.71', body: { phone } });
+      await vi.waitFor(() => expect(labels()).toContain('Ro‘yxatdan o‘tish (kod qayta yuborildi)'));
+      // 3) Mavjud (faol) akkauntga kirish
+      await setOtp(phone, 'REGISTER', '123456');
+      await h.api('POST', '/auth/verify-registration', { ip, body: { phone, code: '123456' } });
+      spy.mockClear();
+      await h.api('POST', '/auth/login', { ip: '10.1.0.72', body: { phone, password: PASSWORD } });
+      await vi.waitFor(() => expect(labels()).toEqual(['Tizimga kirish']));
+      // Boshqa holatlar: mavjud raqam bilan ro‘yxatdan o‘tish urinishi (soxta), noto‘g‘ri parol, mavjud bo‘lmagan raqam — kod yuborilmaydi.
+      spy.mockClear();
+      await h.api('POST', '/auth/register', { ip: '10.1.0.73', body: { phone, password: 'Wrong-Pass-123', firstName: 'X', lastName: 'Y', acceptedPolicyIds: await policyIds() } });
+      await h.api('POST', '/auth/login', { ip: '10.1.0.74', body: { phone, password: 'Wrong-Pass-123' } });
+      await h.api('POST', '/auth/login', { ip: '10.1.0.75', body: { phone: uniquePhone(), password: PASSWORD } });
+      await h.api('POST', '/auth/resend-registration', { ip: '10.1.0.76', body: { phone: uniquePhone() } });
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+describe('K02c — resending the registration code', () => {
+  it('a PENDING account gets a fresh code and can then verify; unknown/active phones get the same answer but no code', async () => {
+    const ip = '10.1.0.60';
+    const phone = uniquePhone();
+    await h.api('POST', '/auth/register', { ip, body: { phone, password: PASSWORD, firstName: 'Test', lastName: 'User', acceptedPolicyIds: await policyIds() } });
+    await h.db.otpCode.updateMany({ where: { phone }, data: { status: 'EXPIRED', expiresAt: new Date(Date.now() - 1000), createdAt: new Date(Date.now() - 600_000) } }); // kod eskirdi (kutish vaqti ham o‘tgan)
+    const before = await h.db.otpCode.count({ where: { phone } });
+
+    const resend = await h.api('POST', '/auth/resend-registration', { ip, body: { phone } });
+    expect(resend.status, JSON.stringify(resend.body)).toBe(201);
+    expect(resend.data).toMatchObject({ verificationRequired: true });
+    expect(await h.db.otpCode.count({ where: { phone } })).toBe(before + 1);
+    await setOtp(phone, 'REGISTER', '654321');
+    const verified = await h.api('POST', '/auth/verify-registration', { ip, body: { phone, code: '654321' } });
+    expect(verified.status, JSON.stringify(verified.body)).toBe(201);
+
+    // Tasdiqlangan (faol) va mavjud bo‘lmagan raqam: javob bir xil, kod yaratilmaydi.
+    const ghost = uniquePhone();
+    const active = await registerAndActivate('10.1.0.65');
+    const forActive = await h.api('POST', '/auth/resend-registration', { ip: '10.1.0.61', body: { phone: active } });
+    const forGhost = await h.api('POST', '/auth/resend-registration', { ip: '10.1.0.62', body: { phone: ghost } });
+    expect(forActive.status).toBe(forGhost.status);
+    expect(forActive.data).toEqual(forGhost.data);
+    expect(await h.db.otpCode.count({ where: { phone: ghost } })).toBe(0);
+    expect(await h.db.otpCode.count({ where: { phone: active, status: 'ACTIVE' } })).toBe(0); // faol hisobga yangi kod yuborilmaydi
+  });
+
+  it('applies one cooldown to every phone alike (no way to tell a pending number from an unknown one)', async () => {
+    const ghost = uniquePhone();
+    const first = await h.api('POST', '/auth/resend-registration', { ip: '10.1.0.63', body: { phone: ghost } });
+    const second = await h.api('POST', '/auth/resend-registration', { ip: '10.1.0.64', body: { phone: ghost } });
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(429);
+    expect(second.body.message).toMatch(/\d+ soniya kuting/);
   });
 });
 

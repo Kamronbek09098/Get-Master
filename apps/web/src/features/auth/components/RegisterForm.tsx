@@ -70,9 +70,9 @@ export function RegisterForm() {
         label={
           <>
             <Link to="/shartlar" target="_blank" rel="noopener" onClick={(event) => event.stopPropagation()}>
-              Foydalanish shartlari, Maxfiylik siyosati va Platforma qoidalarini
+              Foydalanish shartlari
             </Link>{' '}
-            o‘qib chiqdim va qabul qilaman
+            ni o‘qib chiqdim va qabul qilaman
           </>
         }
         error={errors.acceptedTerms?.message}

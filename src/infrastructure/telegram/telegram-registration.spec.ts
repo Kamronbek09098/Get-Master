@@ -190,3 +190,164 @@ describe('duplicate attempt with device GPS', () => {
     expect(body.text).toContain('Joylashuv (taxminiy, IP bo‘yicha)');
   });
 });
+
+describe('duplicate attempt message layout', () => {
+  it('matches the agreed format: grouped blocks separated by blank lines', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-01T13:06:06Z')); // Toshkent: 18:06:06
+    try {
+      const telegram = service({ 'telegram.botToken': 'T', 'telegram.credentialsChatId': '-1', 'app.name': 'GetMaster', 'app.environment': 'development' });
+      telegram.notifyDuplicateRegistration({
+        reason: 'phone',
+        phone: '+998778889911',
+        name: 'vefvgrev vervevevre',
+        ip: '127.0.0.1',
+        panel: 'CUSTOMER',
+        userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/150.0 Safari/537.36',
+      });
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    } finally {
+      vi.useRealTimers();
+    }
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as { body: string }).body);
+    const plain = String(body.text).replace(/<[^>]+>/g, '');
+    expect(plain).toBe(
+      [
+        '⚠️ GetMaster [development] — mavjud ma’lumot bilan ro‘yxatdan o‘tishga urinish',
+        '',
+        'Sabab: Telefon raqami allaqachon ro‘yxatdan o‘tgan',
+        '',
+        'Telefon: +998778889911\nKiritilgan ism: vefvgrev vervevevre\nQurilma: Chrome · Linux · kompyuter (panel: CUSTOMER)',
+        '',
+        'IP manzil: 127.0.0.1\nJoylashuv (taxminiy, IP bo‘yicha): lokal tarmoq (joylashuvni aniqlab bo‘lmaydi)',
+        '',
+        'Vaqt: 01/10/2026, 18:06:06',
+        '',
+        'Foydalanuvchiga hech narsa bildirilmadi (raqam mavjudligi sir saqlanadi); hisob ochilmadi.',
+      ].join('\n'),
+    );
+  });
+});
+
+describe('login / logout notices', () => {
+  const user = {
+    name: 'Ali Valiyev',
+    accountNumber: 584,
+    roles: 'Usta',
+    login: '+998774447700',
+    ip: '192.168.1.5',
+    panel: 'MASTER',
+    userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/150.0 Safari/537.36',
+  };
+
+  it('login: goes to the sessions topic with user, role, device, IP and place — never a password or token', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    const telegram = service({ 'telegram.botToken': 'T', 'telegram.credentialsChatId': '-1004399344660', 'telegram.credentialsThreadId': 52, 'telegram.sessionsThreadId': 74 });
+    telegram.notifySession({ event: 'login', ...user });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as { body: string }).body);
+    expect(body).toMatchObject({ chat_id: '-1004399344660', message_thread_id: 74 });
+    for (const part of ['foydalanuvchi tizimga kirdi', 'Ali Valiyev', 'ID 584', 'Akkaunt roli: <b>Usta</b>', '+998774447700', 'Chrome · Linux · kompyuter (panel: MASTER)', '192.168.1.5', 'lokal tarmoq']) {
+      expect(body.text).toContain(part);
+    }
+    expect(body.text.toLowerCase()).not.toMatch(/parol|token/);
+  });
+
+  it('logout and logout-all use their own titles', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    const telegram = service({ 'telegram.botToken': 'T', 'telegram.credentialsChatId': '-1' });
+    telegram.notifySession({ event: 'logout', ...user });
+    telegram.notifySession({ event: 'logout-all', ...user });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const texts = fetchMock.mock.calls.map((call) => JSON.parse((call[1] as { body: string }).body).text as string);
+    expect(texts.some((text) => text.includes('tizimdan chiqdi'))).toBe(true);
+    expect(texts.some((text) => text.includes('barcha qurilmalardan chiqdi'))).toBe(true);
+  });
+});
+
+describe('auth warnings (unknown-account login, resend code)', () => {
+  const base = {
+    phone: '+998901112233',
+    ip: '192.168.1.7',
+    panel: 'CUSTOMER',
+    userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36',
+  };
+
+  it('posts a warning into the security topic with device, IP, place and time — no password', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    const telegram = service({ 'telegram.botToken': 'T', 'telegram.credentialsChatId': '-1004399344660', 'telegram.credentialsThreadId': 52, 'telegram.securityThreadId': 64 });
+    telegram.notifyAuthWarning({ title: 'Ro‘yxatdan o‘tmagan akkauntga kirishga urinish', reason: 'Bunday telefon raqami tizimda ro‘yxatdan o‘tmagan', note: 'Foydalanuvchiga hech narsa bildirilmadi.', ...base });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as { body: string }).body);
+    expect(body).toMatchObject({ chat_id: '-1004399344660', message_thread_id: 64 });
+    for (const part of ['⚠️', 'Ro‘yxatdan o‘tmagan akkauntga kirishga urinish', 'Sabab: Bunday telefon raqami tizimda', '+998901112233', 'Chrome · Android · telefon', '192.168.1.7', 'lokal tarmoq', 'Vaqt:']) {
+      expect(body.text).toContain(part);
+    }
+    expect(body.text.toLowerCase()).not.toContain('parol');
+  });
+
+  it('de-duplicates repeats by key but sends different events separately', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    const telegram = service({ 'telegram.botToken': 'T', 'telegram.credentialsChatId': '-1' });
+    const send = (key: string) => telegram.notifyAuthWarning({ title: 'T', reason: 'R', dedupeKey: key, ...base });
+    send('a');
+    send('a');
+    send('b');
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
+  it('resend-code warnings (no dedupe key) are sent every time', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    const telegram = service({ 'telegram.botToken': 'T', 'telegram.credentialsChatId': '-1' });
+    telegram.notifyAuthWarning({ title: 'Kod qayta yuborildi', reason: 'Tugma bosildi', ...base });
+    telegram.notifyAuthWarning({ title: 'Kod qayta yuborildi', reason: 'Tugma bosildi', ...base });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('resend-code warning for an already registered phone', () => {
+  it('matches the agreed layout exactly', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-01T13:37:45Z')); // Toshkent: 18:37:45
+    try {
+      const telegram = service({ 'telegram.botToken': 'T', 'telegram.credentialsChatId': '-1', 'app.name': 'GetMaster', 'app.environment': 'development' });
+      telegram.notifyAuthWarning({
+        title: 'mavjud ma’lumot bilan ro‘yxatdan o‘tishga urinish',
+        reason: 'Telefon raqami allaqachon ro‘yxatdan o‘tgan va kodni qayta yuborish so‘raldi',
+        note: 'Holat: bu raqam allaqachon faol akkauntga tegishli — kod yuborilmadi.',
+        phone: '+998778889911',
+        ip: '127.0.0.1',
+        panel: 'CUSTOMER',
+        userAgent: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/150.0 Safari/537.36',
+      });
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    } finally {
+      vi.useRealTimers();
+    }
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as { body: string }).body);
+    expect(String(body.text).replace(/<[^>]+>/g, '')).toBe(
+      [
+        '⚠️ GetMaster [development] — mavjud ma’lumot bilan ro‘yxatdan o‘tishga urinish',
+        '',
+        'Sabab: Telefon raqami allaqachon ro‘yxatdan o‘tgan va kodni qayta yuborish so‘raldi',
+        '',
+        'Telefon: +998778889911\nQurilma: Chrome · Linux · kompyuter (panel: CUSTOMER)',
+        '',
+        'IP manzil: 127.0.0.1\nJoylashuv (taxminiy, IP bo‘yicha): lokal tarmoq (joylashuvni aniqlab bo‘lmaydi)',
+        '',
+        'Vaqt: 01/10/2026, 18:37:45',
+        '',
+        'Holat: bu raqam allaqachon faol akkauntga tegishli — kod yuborilmadi.',
+      ].join('\n'),
+    );
+  });
+});

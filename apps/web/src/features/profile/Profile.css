@@ -1070,3 +1070,68 @@
   color: var(--gm-color-text-muted);
   font-size: 12.5px;
 }
+
+/* Ish hududi muharriri: bitta karta, ketma-ket bo‘limlar */
+.gm-workedit {
+  gap: 18px;
+}
+.gm-workedit__block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--gm-color-border);
+  border-radius: 16px;
+  background: var(--gm-color-surface-muted);
+}
+.gm-workedit__block > h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.gm-workedit__expand {
+  align-self: flex-start;
+}
+.gm-workedit__tags li {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+}
+.gm-workedit__tags .gm-ptags__btn {
+  padding-right: 6px;
+}
+.gm-workedit__remove {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: background-color 0.15s, opacity 0.15s;
+}
+.gm-workedit__remove:hover {
+  background: color-mix(in srgb, var(--gm-color-danger) 18%, transparent);
+  color: var(--gm-color-danger);
+  opacity: 1;
+}
+.gm-workedit__add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+.gm-workedit__addbtn {
+  height: 40px;
+}
+@media (max-width: 460px) {
+  .gm-workedit__add {
+    grid-template-columns: 1fr;
+  }
+  .gm-workedit__addbtn {
+    width: 100%;
+  }
+}

@@ -18,6 +18,9 @@ export const authService = {
   verifyRegistration(phone: string, code: string) {
     return apiPost<VerifyRegistrationResult>('/auth/verify-registration', { phone, code });
   },
+  resendRegistration(phone: string) {
+    return apiPost<{ verificationRequired: true; developmentCode?: string }>('/auth/resend-registration', { phone });
+  },
   login(input: LoginInput) {
     return apiPost<LoginResult>('/auth/login', input);
   },
