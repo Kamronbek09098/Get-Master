@@ -18,8 +18,9 @@ const query = (params: Record<string, string | number | undefined>) => {
 };
 
 export const geoService = {
-  suggest(q: string, near?: { lat: number; lon: number }) {
-    return apiGet<{ provider: string; items: GeoPlace[] }>(`/geo/suggest?${query({ q, lat: near?.lat, lon: near?.lon })}`);
+  /** source='local' — serverdagi xotira indeksi (bir zumda); aks holda Yandex/OSM (sekinroq, to‘liqroq). */
+  suggest(q: string, near?: { lat: number; lon: number }, source?: 'local') {
+    return apiGet<{ provider: string; items: GeoPlace[] }>(`/geo/suggest?${query({ q, lat: near?.lat, lon: near?.lon, source })}`);
   },
   geocode(input: { q?: string; uri?: string }) {
     return apiGet<{ provider: string; place: GeoPlace | null }>(`/geo/geocode?${query(input)}`);

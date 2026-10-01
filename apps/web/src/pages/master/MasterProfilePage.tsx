@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Award, BadgeCheck, Briefcase, CalendarClock, ImageIcon, MapPin, Power, ShieldCheck, Smartphone, Star, UserRound, Wrench } from 'lucide-react';
+import { Award, BadgeCheck, ChevronRight, Briefcase, CalendarClock, ImageIcon, MapPin, Power, ShieldCheck, Smartphone, Star, UserRound, Wrench } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { accountName } from '@/lib/account-name';
 import { formatDate } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
+import { CoverageMap } from '@/features/geo/components/CoverageMap';
 import { useMe } from '@/features/session/hooks/useMe';
 import { useMyMasterProfile } from '@/features/master/hooks/useMaster';
 import { MasterForm } from '@/features/master/components/MasterForm';
@@ -95,81 +95,96 @@ export function MasterProfilePage() {
         />
       ) : null}
 
-      <div className="gm-pgrid">
-        <div className="gm-pcol">
-          <ProfileCard icon={UserRound} title={data ? 'Shaxsiy va kasbiy ma’lumotlar' : 'Usta profilini yarating'} hint="Ism, kasb, tajriba va ish hududi mijozlarga ko‘rinadi.">
-            <MasterForm key={data?.id ?? 'new'} profile={data} />
+      <div className="gm-pmasonry">
+        <ProfileCard icon={UserRound} title={data ? 'Shaxsiy va kasbiy ma’lumotlar' : 'Usta profilini yarating'} hint="Ism, kasb, tajriba va ish hududi mijozlarga ko‘rinadi.">
+          <MasterForm key={data?.id ?? 'new'} profile={data} />
+        </ProfileCard>
+
+        {data && (
+          <ProfileCard defaultOpen icon={Power} title="Ish holati" hint="Faol bo‘lsangiz mijozlar sizni topadi va takliflar keladi.">
+            <MasterStatusPanel profile={data} />
           </ProfileCard>
-          {data && (
-            <ProfileCard defaultOpen icon={Power} title="Ish holati" hint="Faol bo‘lsangiz mijozlar sizni topadi va takliflar keladi.">
-              <MasterStatusPanel profile={data} />
-            </ProfileCard>
-          )}
-        </div>
+        )}
 
-        <div className="gm-pcol">
-          {user && (
-            <ProfileCard icon={Smartphone} title="Akkaunt ma’lumotlari">
-              <InfoRows
-                rows={[
-                  { label: 'Akkaunt ID', value: user.accountNumber },
-                  { label: 'Telefon', value: user.phone },
-                  { label: 'Email', value: user.email ?? '—' },
-                  { label: 'Telefon tasdiqlangan', value: user.phoneVerifiedAt ? 'Ha' : 'Yo‘q' },
-                  { label: 'Holat', value: workState },
-                  { label: 'Ro‘yxatdan o‘tgan', value: user.createdAt ? formatDate(user.createdAt) : '—' },
-                ]}
-              />
-            </ProfileCard>
-          )}
-          {data && (
-            <>
-              <ProfileCard icon={Briefcase} title="Kasbiy ko‘rsatkichlar">
-                <InfoRows
-                  rows={[
-                    { label: 'Kasb', value: data.profession ?? '—' },
-                    { label: 'Tajriba', value: data.experienceYears ? `${data.experienceYears} yil` : '—' },
-                    { label: 'Bajarilgan ishlar', value: data.completedOrders },
-                    { label: 'Yakunlash ko‘rsatkichi', value: percent(data.completionRate) },
-                    { label: 'Javob berish', value: percent(data.responseRate) },
-                    { label: 'A’zo bo‘lgan', value: formatDate(data.createdAt) },
-                  ]}
-                />
-                {data.bio && <p className="gm-card__meta" style={{ margin: 0 }}>{data.bio}</p>}
-              </ProfileCard>
-              <ProfileCard icon={MapPin} title="Ish hududi">
-                <InfoRows rows={[{ label: 'Ish radiusi', value: radius }]} />
-                {areas.length > 0 ? (
-                  <ul className="gm-ptags">
-                    {areas.map((area) => (
-                      <li key={area}>{area}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="gm-card__meta" style={{ margin: 0 }}>Hududlar kiritilmagan.</p>
-                )}
-              </ProfileCard>
-              <ProfileCard icon={ImageIcon} title="Portfolio" hint="Ish namunalari admin tasdiqlagach ko‘rinadi.">
-                <Link to="/ustalar/portfolio">
-                  <Button variant="secondary" size="sm">Portfolioni boshqarish</Button>
-                </Link>
-              </ProfileCard>
-            </>
-          )}
-        </div>
-      </div>
-
-      {data && (
-        <div className="gm-pgrid">
+        {data && (
           <ProfileCard icon={Wrench} title="Xizmatlarim" hint="Shu xizmatlar bo‘yicha so‘rovlar sizga keladi.">
             <ServiceList />
             <ServiceForm />
           </ProfileCard>
+        )}
+
+        {data && (
           <ProfileCard icon={ShieldCheck} title="Tasdiqlash (verification)" hint="Tasdiqlangan ustalar ko‘proq ishonch qozonadi." id="tasdiqlash" highlight={highlightVerification}>
             <TrustProfile masterId={data.id} />
           </ProfileCard>
-        </div>
-      )}
+        )}
+
+        {data && (
+          <ProfileCard icon={MapPin} title="Ish hududi">
+            <InfoRows rows={[{ label: 'Ish radiusi', value: radius }]} />
+            <CoverageMap
+              latitude={data.latitude != null ? Number(data.latitude) : null}
+              longitude={data.longitude != null ? Number(data.longitude) : null}
+              radiusKm={data.workRadiusKm ? Number(data.workRadiusKm) : null}
+              height={240}
+            />
+            {areas.length > 0 ? (
+              <ul className="gm-ptags">
+                {areas.map((area) => (
+                  <li key={area}>
+                    <MapPin size={13} aria-hidden="true" /> {area}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="gm-pempty">Hududlar kiritilmagan.</p>
+            )}
+          </ProfileCard>
+        )}
+
+        {user && (
+          <ProfileCard icon={Smartphone} title="Akkaunt ma’lumotlari">
+            <InfoRows
+              rows={[
+                { label: 'Akkaunt ID', value: `#${user.accountNumber}` },
+                { label: 'Telefon', value: user.phone },
+                { label: 'Email', value: user.email ?? <span className="gm-pmuted">Kiritilmagan</span> },
+                { label: 'Telefon tasdiqlangan', value: <Badge tone={user.phoneVerifiedAt ? 'success' : 'warning'}>{user.phoneVerifiedAt ? 'Ha' : 'Yo‘q'}</Badge> },
+                { label: 'Holat', value: workState },
+                { label: 'Ro‘yxatdan o‘tgan', value: user.createdAt ? formatDate(user.createdAt) : '—' },
+              ]}
+            />
+          </ProfileCard>
+        )}
+
+        {data && (
+          <ProfileCard icon={Briefcase} title="Kasbiy ko‘rsatkichlar">
+            <InfoRows
+              rows={[
+                { label: 'Kasb', value: data.profession ?? '—' },
+                { label: 'Tajriba', value: data.experienceYears ? `${data.experienceYears} yil` : '—' },
+                { label: 'Bajarilgan ishlar', value: data.completedOrders },
+                { label: 'Yakunlash ko‘rsatkichi', value: percent(data.completionRate) },
+                { label: 'Javob berish', value: percent(data.responseRate) },
+                { label: 'A’zo bo‘lgan', value: formatDate(data.createdAt) },
+              ]}
+            />
+            {data.bio && <p className="gm-card__meta" style={{ margin: 0 }}>{data.bio}</p>}
+          </ProfileCard>
+        )}
+
+        {data && (
+          <ProfileCard icon={ImageIcon} title="Portfolio" hint="Ish namunalari admin tasdiqlagach ko‘rinadi.">
+            <Link to="/ustalar/portfolio" className="gm-plink">
+              <span className="gm-plink__icon" aria-hidden="true">
+                <ImageIcon size={18} />
+              </span>
+              <span className="gm-plink__label">Portfolioni boshqarish</span>
+              <ChevronRight size={18} className="gm-plink__arrow" aria-hidden="true" />
+            </Link>
+          </ProfileCard>
+        )}
+      </div>
     </div>
   );
 }

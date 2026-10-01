@@ -155,3 +155,43 @@
 .gm-addrpick > .gm-field {
   position: relative;
 }
+
+/* Ish hududi xaritasi */
+.gm-coverage {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--gm-color-border);
+  border-radius: 14px;
+  isolation: isolate;
+}
+
+.gm-coverage__map {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.gm-coverage__empty {
+  position: absolute;
+  inset: 0;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--gm-color-surface) 78%, transparent);
+  color: var(--gm-color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+.gm-coverage__pin span {
+  display: block;
+  width: 22px;
+  height: 22px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: var(--gm-color-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--gm-color-primary) 30%, transparent), 0 2px 8px rgb(0 0 0 / 0.3);
+}

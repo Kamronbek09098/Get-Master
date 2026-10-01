@@ -1,0 +1,121 @@
+/* Tasdiqlash bo‘limi: hujjat kartalari va tugmalar */
+.gm-doc-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--gm-color-border);
+  border-radius: 16px;
+  background: var(--gm-color-surface);
+  box-shadow: var(--gm-shadow-sm);
+  transition: transform 0.18s var(--gm-ease, ease), box-shadow 0.18s var(--gm-ease, ease), border-color 0.18s;
+}
+
+.gm-doc-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--gm-color-primary) 40%, var(--gm-color-border));
+  box-shadow: var(--gm-shadow-md);
+}
+
+.gm-doc-card__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--gm-color-primary-soft);
+  color: var(--gm-color-primary);
+}
+
+.gm-doc-card__icon--verified,
+.gm-doc-card__icon--approved {
+  background: var(--gm-color-success-bg);
+  color: var(--gm-color-success);
+}
+
+.gm-doc-card__icon--rejected {
+  background: var(--gm-color-danger-bg);
+  color: var(--gm-color-danger);
+}
+
+.gm-doc-card__body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.gm-doc-card__body h3 {
+  margin: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.gm-doc-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 6px;
+  color: var(--gm-color-text-muted);
+  font-size: 12.5px;
+}
+
+.gm-doc-card__reason {
+  margin: 6px 0 0;
+  color: var(--gm-color-danger);
+  font-size: 12.5px;
+}
+
+/* O‘chirish: o‘ng tomonda, kartaning vertikal o‘rtasida */
+.gm-doc-card__delete {
+  flex: none;
+  align-self: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+@media (max-width: 360px) {
+  .gm-doc-card {
+    flex-wrap: wrap;
+  }
+
+  .gm-doc-card__delete {
+    width: 100%;
+  }
+}
+
+/* Yuborish tugmasi */
+.gm-trust-submit {
+  min-height: 50px;
+  border-radius: 14px;
+  font-size: 15px;
+}
+
+.gm-trust-submit:disabled {
+  border-color: var(--gm-color-border);
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-text-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.gm-trust-submit__hint {
+  margin: -4px 0 0;
+  color: var(--gm-color-text-muted);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-doc-card {
+    transition: none;
+  }
+
+  .gm-doc-card:hover {
+    transform: none;
+  }
+}

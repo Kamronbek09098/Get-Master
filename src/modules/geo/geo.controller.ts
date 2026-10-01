@@ -12,7 +12,8 @@ export class GeoController {
   constructor(private readonly geo: GeoService) {}
 
   @Get('suggest')
-  async suggest(@Query('q') q = '', @Query('lat') lat?: string, @Query('lon') lon?: string) {
+  async suggest(@Query('q') q = '', @Query('lat') lat?: string, @Query('lon') lon?: string, @Query('source') source?: string) {
+    if (source === 'local') return { provider: 'local', items: this.geo.suggestLocal(q, num(lat), num(lon)) };
     return { provider: this.geo.provider().suggest, items: await this.geo.suggest(q, num(lat), num(lon)) };
   }
 

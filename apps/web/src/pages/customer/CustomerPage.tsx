@@ -91,10 +91,6 @@ export function CustomerPage() {
             ))}
           </div>
           <AddressPicker value={picked} onChange={setPicked} />
-          <div className="gm-form__row">
-            <Input label="Shahar" value={picked.city} onChange={(event) => setPicked({ ...picked, city: event.target.value })} />
-            <Input label="Tuman" value={picked.district} onChange={(event) => setPicked({ ...picked, district: event.target.value })} />
-          </div>
           <Button type="submit" loading={createAddress.isPending} disabled={!picked.addressLine.trim()}>
             Qo‘shish
           </Button>

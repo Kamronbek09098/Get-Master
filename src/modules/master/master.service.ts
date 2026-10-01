@@ -164,6 +164,8 @@ export class MasterService {
 
   async pause(userId: string, dto: PauseMasterDto) {
     const profile = await this.requireOwn(userId);
+    // Nofaol (yoki cheklangan) profil pauzaga o‘ta olmaydi: avval faol bo‘lishi kerak.
+    if (profile.status !== 'ACTIVE' && profile.status !== 'BUSY') throw new BadRequestException(ERRORS.PAUSE_REQUIRES_ACTIVE);
     if (dto.until && dto.until <= new Date()) throw new BadRequestException(ERRORS.UNTIL_IN_FUTURE);
     const updated = await this.db.masterProfile.update({
       where: { id: profile.id },

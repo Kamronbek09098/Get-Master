@@ -94,6 +94,7 @@ export const ERRORS = {
   MAX_AVAILABILITY_WINDOWS: (count: number) => `Ko‘pi bilan ${count} ta ish vaqti oynasi qo‘shish mumkin`,
   AVAILABILITY_OVERLAP: 'Bu oyna shu kundagi boshqa oyna bilan ustma-ust tushadi',
   START_BEFORE_END: 'Boshlanish vaqti tugash vaqtidan oldin bo‘lishi kerak',
+  PAUSE_REQUIRES_ACTIVE: 'Pauzaga qo‘yish uchun avval profilni faollashtiring',
   UNTIL_IN_FUTURE: 'Tugash sanasi kelajakda bo‘lishi kerak',
   EFFECTIVE_RANGE_INVALID: 'Amal qilish boshlanishi tugashidan keyin bo‘lmasligi kerak',
   VERIFICATION_DOCUMENT_NOT_FOUND: 'Tasdiqlash hujjati topilmadi',

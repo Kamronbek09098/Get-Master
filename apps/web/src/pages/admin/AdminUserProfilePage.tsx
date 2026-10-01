@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { Check, Copy, Eye, EyeOff, KeyRound, Ban, CheckCircle2, MapPin, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench } from 'lucide-react';
+import { Check, Copy, Eye, EyeOff, KeyRound, Ban, CheckCircle2, MapPin, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -31,6 +31,12 @@ const STATUS: Record<string, { label: string; tone: BadgeTone }> = {
   SUSPENDED: { label: 'Akkaunt muzlatilgan', tone: 'warning' },
   BLOCKED: { label: 'Akkaunt bloklangan', tone: 'danger' },
   DELETED: { label: 'O‘chirilgan', tone: 'neutral' },
+};
+const orderTone = (status: string): 'success' | 'danger' | 'warning' | 'info' => {
+  if (status === 'COMPLETED') return 'success';
+  if (['CANCELLED', 'EXPIRED', 'DISPUTED'].includes(status)) return 'danger';
+  if (['DRAFT', 'SUBMITTED', 'MATCHING', 'OFFERS_RECEIVED', 'WAITING_CONFIRMATION'].includes(status)) return 'warning';
+  return 'info';
 };
 const ROLE: Record<string, string> = { CUSTOMER: 'Mijoz', MASTER: 'Usta', ADMIN: 'Admin' };
 
@@ -294,13 +300,18 @@ export function AdminUserProfilePage() {
                 <ul className="gm-uprofile__orders">
                   {data.recentOrders.map((order) => (
                     <li key={order.id}>
-                      <Link to={`/admin/buyurtmalar/${order.id}`} className="gm-uprofile__link">
-                        №{order.orderNumber}
+                      <Link to={`/admin/buyurtmalar/${order.id}`} className="gm-order-card" aria-label={`Buyurtma №${order.orderNumber} — ${statusLabel(order.status)}`}>
+                        <span className="gm-order-card__head">
+                          <strong className="gm-order-card__no">№{order.orderNumber}</strong>
+                          <Badge tone="neutral">{order.side === 'MASTER' ? 'Usta sifatida' : 'Mijoz sifatida'}</Badge>
+                        </span>
+                        <span className={`gm-order-card__status gm-order-card__status--${orderTone(order.status)}`}>{statusLabel(order.status)}</span>
+                        <span className="gm-order-card__foot">
+                          <strong>{formatMoney(order.finalAmount, order.currency)}</strong>
+                          <time dateTime={order.createdAt}>{formatDateTime(order.createdAt)}</time>
+                        </span>
+                        <ChevronRight className="gm-order-card__arrow" size={18} aria-hidden="true" />
                       </Link>
-                      <Badge tone="neutral">{order.side === 'MASTER' ? 'Usta sifatida' : 'Mijoz sifatida'}</Badge>
-                      <span>{statusLabel(order.status)}</span>
-                      <strong>{formatMoney(order.finalAmount, order.currency)}</strong>
-                      <time>{formatDateTime(order.createdAt)}</time>
                     </li>
                   ))}
                 </ul>

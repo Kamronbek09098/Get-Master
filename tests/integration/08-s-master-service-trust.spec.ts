@@ -82,6 +82,9 @@ describe('S01 — master profile', () => {
   it('pause/resume: reason required, past dates refused, timed pauses lift themselves', async () => {
     const m = await createMaster(h, service.id);
     expect((await h.post('/masters/me/pause', m.token, {})).status).toBe(400);
+    await h.db.masterProfile.update({ where: { id: m.masterId }, data: { status: 'INACTIVE' } });
+    expect((await h.post('/masters/me/pause', m.token, { reason: 'Vacation' })).status).toBe(400);
+    await h.db.masterProfile.update({ where: { id: m.masterId }, data: { status: 'ACTIVE' } });
     expect((await h.post('/masters/me/pause', m.token, { reason: 'x', until: '2020-01-01T00:00:00Z' })).status).toBe(400);
     const paused = await h.post('/masters/me/pause', m.token, { reason: 'Vacation', until: new Date(Date.now() + 3_600_000).toISOString() });
     expect(paused.data).toMatchObject({ isPaused: true, pauseReason: 'Vacation' });

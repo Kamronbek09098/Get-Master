@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Loader2, LocateFixed, Map as MapIcon, MapPin, Search } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { useDebounce } from '@/hooks/useDebounce';
 import { geoService } from '../geo.service';
 import type { GeoPlace } from '../geo.service';
 import { MapPicker } from './MapPicker';
@@ -39,7 +38,7 @@ export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPick
   const [note, setNote] = useState<string | null>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const skipNext = useRef(false);
-  const debounced = useDebounce(text.trim(), 320);
+  const cache = useRef(new Map<string, GeoPlace[]>());
 
   // Tashqaridan qiymat o‘zgarsa (masalan, forma tozalansa) matnni yangilaymiz.
   useEffect(() => {
@@ -55,27 +54,56 @@ export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPick
       skipNext.current = false;
       return;
     }
-    if (debounced.length < 3) {
+    const query = text.trim();
+    if (query.length < 1) {
       setItems([]);
       return;
     }
+    const key = query.toLowerCase();
+    const known = cache.current.get(key);
+    if (known) {
+      setItems(known);
+      setOpen(true);
+      setBusy(false);
+      return;
+    }
+    const near = value.latitude != null && value.longitude != null ? { lat: value.latitude, lon: value.longitude } : undefined;
     let cancelled = false;
+    let local: GeoPlace[] = [];
     setBusy(true);
+    // 1) Serverdagi indeks: bir zumda (debounce yo‘q).
     geoService
-      .suggest(debounced, value.latitude != null && value.longitude != null ? { lat: value.latitude, lon: value.longitude } : undefined)
+      .suggest(query, near, 'local')
       .then((result) => {
+        local = result.items;
         if (!cancelled) {
-          setItems(result.items);
-          setOpen(true);
+          setItems(local);
+          setOpen(local.length > 0);
         }
       })
-      .catch(() => !cancelled && setItems([]))
-      .finally(() => !cancelled && setBusy(false));
+      .catch(() => undefined);
+    // 2) Yandex: sekinroq, lekin to‘liqroq — kelganda ro‘yxat oxiriga qo‘shiladi.
+    const timer = setTimeout(() => {
+      geoService
+        .suggest(query, near)
+        .then((result) => {
+          const seen = new Set(local.map((item) => item.addressLine.toLowerCase()));
+          const merged = [...local, ...result.items.filter((item) => !seen.has(item.addressLine.toLowerCase()))];
+          cache.current.set(key, merged);
+          if (!cancelled) {
+            setItems(merged);
+            setOpen(merged.length > 0);
+          }
+        })
+        .catch(() => undefined)
+        .finally(() => !cancelled && setBusy(false));
+    }, 250);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debounced]);
+  }, [text]);
 
   useEffect(() => {
     if (!open) return;
@@ -162,7 +190,7 @@ export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPick
               const next = event.target.value;
               setText(next);
               // Qo‘lda o‘zgartirilsa, avvalgi koordinata eskirgan hisoblanadi.
-              onChange({ ...value, addressLine: next, latitude: null, longitude: null });
+              onChange({ addressLine: next, city: '', district: '', latitude: null, longitude: null });
             }}
           />
           <span className="gm-field__reveal gm-addrpick__status" aria-hidden="true" style={{ pointerEvents: 'none' }}>

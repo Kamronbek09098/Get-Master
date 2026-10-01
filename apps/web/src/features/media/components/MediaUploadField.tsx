@@ -1,3 +1,4 @@
+import { Upload } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { Button } from '@/components/ui/Button';
@@ -78,8 +79,8 @@ export function MediaUploadField({ label, accept = 'image/*,video/*', kind, link
         onChange={(e) => void handleFileChange(e)}
         className="gm-visually-hidden"
       />
-      <Button type="button" variant="secondary" size="sm" loading={upload.isPending} onClick={() => inputRef.current?.click()}>
-        Fayl tanlash
+      <Button type="button" variant="secondary" className="gm-media-upload__pick" loading={upload.isPending} onClick={() => inputRef.current?.click()}>
+        <Upload size={18} /> Fayl tanlash
       </Button>
 
       {upload.isError && <Alert tone="danger">{getErrorMessage(upload.error)}</Alert>}

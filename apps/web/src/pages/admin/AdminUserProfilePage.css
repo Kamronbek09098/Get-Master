@@ -258,3 +258,140 @@
   align-items: center;
   gap: 6px;
 }
+
+/* Oxirgi buyurtmalar: bosiladigan kartalar */
+.gm-uprofile__orders {
+  gap: var(--gm-space-2);
+}
+
+.gm-uprofile__orders li {
+  display: block;
+  padding: 0;
+  border-bottom: 0;
+}
+
+.gm-order-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'head status'
+    'foot foot';
+  align-items: center;
+  gap: 8px 10px;
+  padding: 12px 40px 12px 14px;
+  border: 1px solid var(--gm-color-border);
+  border-radius: 14px;
+  background: var(--gm-color-surface);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 0.18s var(--gm-ease, ease),
+    box-shadow 0.18s var(--gm-ease, ease),
+    border-color 0.18s,
+    background-color 0.18s;
+}
+
+.gm-order-card:hover,
+.gm-order-card:focus-visible {
+  transform: translateY(-3px) scale(1.012);
+  border-color: color-mix(in srgb, var(--gm-color-primary) 55%, var(--gm-color-border));
+  background: color-mix(in srgb, var(--gm-color-primary-soft) 55%, var(--gm-color-surface));
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--gm-color-primary) 45%, transparent);
+  outline: none;
+}
+
+.gm-order-card:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gm-color-primary) 30%, transparent);
+}
+
+.gm-order-card:active {
+  transform: translateY(-1px) scale(0.995);
+}
+
+.gm-order-card__head {
+  grid-area: head;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.gm-order-card__no {
+  color: var(--gm-color-primary);
+  font-size: 0.95rem;
+}
+
+.gm-order-card__status {
+  grid-area: status;
+  justify-self: end;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--gm-color-primary-soft);
+  color: var(--gm-color-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.gm-order-card__status--success {
+  background: var(--gm-color-success-bg);
+  color: var(--gm-color-success);
+}
+
+.gm-order-card__status--danger {
+  background: var(--gm-color-danger-bg);
+  color: var(--gm-color-danger);
+}
+
+.gm-order-card__status--warning {
+  background: var(--gm-color-warning-bg);
+  color: var(--gm-color-warning);
+}
+
+.gm-order-card__foot {
+  grid-area: foot;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+
+.gm-order-card__foot strong {
+  font-size: 0.95rem;
+}
+
+.gm-order-card__foot time {
+  color: var(--gm-color-text-muted);
+  font-size: 0.78rem;
+}
+
+.gm-order-card__arrow {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  color: var(--gm-color-text-muted);
+  transform: translateY(-50%);
+  transition: transform 0.18s var(--gm-ease, ease), color 0.18s;
+}
+
+.gm-order-card:hover .gm-order-card__arrow,
+.gm-order-card:focus-visible .gm-order-card__arrow {
+  color: var(--gm-color-primary);
+  transform: translate(4px, -50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-order-card,
+  .gm-order-card__arrow {
+    transition: none;
+  }
+
+  .gm-order-card:hover,
+  .gm-order-card:focus-visible,
+  .gm-order-card:active {
+    transform: none;
+  }
+}

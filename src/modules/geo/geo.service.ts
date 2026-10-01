@@ -1,4 +1,7 @@
-import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { join } from 'node:path';
+import https from 'node:https';
+import { BadRequestException, Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
+import { GeoIndex } from './geo-index';
 
 export interface GeoPlace {
   /** Ro‘yxatda ko‘rinadigan sarlavha (masalan, «Amir Temur ko‘chasi 15»). */
@@ -15,8 +18,8 @@ export interface GeoPlace {
   uri?: string;
 }
 
-const CACHE_TTL_MS = 60_000;
-const CACHE_MAX = 300;
+const CACHE_TTL_MS = 600_000;
+const CACHE_MAX = 2000;
 const UZ_VIEWBOX = '55.9,45.6,73.2,37.1'; // Nominatim: O‘zbekiston atrofi (left,top,right,bottom)
 const UA = 'GetMaster/1.0 (address-picker)';
 
@@ -27,9 +30,23 @@ type Cached = { at: number; value: unknown };
  * aks holda OpenStreetMap Nominatim ishlatiladi. Kalitlar faqat serverda saqlanadi.
  */
 @Injectable()
-export class GeoService {
+export class GeoService implements OnModuleInit {
   private readonly logger = new Logger(GeoService.name);
   private readonly cache = new Map<string, Cached>();
+  private readonly index = new GeoIndex();
+
+  onModuleInit(): void {
+    const path = process.env.GEO_INDEX_PATH?.trim() || join(process.cwd(), 'data', 'geo-uz.json');
+    const started = Date.now();
+    if (this.index.load(path)) {
+      this.logger.log(`Manzillar indeksi yuklandi: ${this.index.size} ta yozuv (${Date.now() - started} ms).`);
+      setImmediate(() => this.index.warmUp());
+    } else {
+      this.logger.warn(`Manzillar indeksi topilmadi (${path}) — qidiruv faqat tashqi xizmat orqali (sekinroq). scripts/build-geo-index.py bilan yarating.`);
+    }
+    // Birinchi qidiruv ham tez bo‘lishi uchun ulanishni oldindan ochamiz.
+    if (this.suggestKey) void this.suggest('a').catch(() => undefined);
+  }
 
   private get geocoderKey() {
     return process.env.YANDEX_GEOCODER_API_KEY?.trim() || '';
@@ -56,24 +73,50 @@ export class GeoService {
     return value;
   }
 
+  /** Doimiy (keep-alive) ulanish: har so‘rovda TLS qo‘l siqishuvi (0,2–0,5 s) takrorlanmaydi. */
+  private readonly agent = new https.Agent({ keepAlive: true, keepAliveMsecs: 30_000, maxSockets: 16 });
+
+  private requestJson(url: string, headers: Record<string, string>): Promise<{ status: number; body: string }> {
+    return new Promise((resolve, reject) => {
+      const req = https.get(url, { agent: this.agent, headers: { 'User-Agent': UA, Accept: 'application/json', ...headers }, timeout: 8000 }, (res) => {
+        const chunks: Buffer[] = [];
+        res.on('data', (chunk: Buffer) => chunks.push(chunk));
+        res.on('end', () => resolve({ status: res.statusCode ?? 0, body: Buffer.concat(chunks).toString('utf8') }));
+        res.on('error', reject);
+      });
+      req.on('timeout', () => req.destroy(new Error('timeout')));
+      req.on('error', reject);
+    });
+  }
+
   private async fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
-    let response: Response;
-    try {
-      response = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'application/json', ...headers }, signal: AbortSignal.timeout(8000) });
-    } catch (error) {
-      this.logger.warn(`Geo so‘rovi bajarilmadi: ${String(error)}`);
-      throw new ServiceUnavailableException('Xarita xizmatiga ulanib bo‘lmadi');
+    let result: { status: number; body: string } | undefined;
+    for (let attempt = 1; attempt <= 2 && !result; attempt += 1) {
+      try {
+        result = await this.requestJson(url, headers);
+      } catch (error) {
+        this.logger.warn(`Geo so‘rovi bajarilmadi (${attempt}-urinish): ${String(error)}`);
+        if (attempt === 2) throw new ServiceUnavailableException('Xarita xizmatiga ulanib bo‘lmadi');
+      }
     }
-    if (!response.ok) {
-      this.logger.warn(`Geo xizmati ${response.status} qaytardi`);
+    if (!result || result.status < 200 || result.status >= 300) {
+      this.logger.warn(`Geo xizmati ${result?.status ?? 0} qaytardi`);
       throw new ServiceUnavailableException('Xarita xizmati vaqtincha ishlamayapti');
     }
-    return response.json();
+    return JSON.parse(result.body);
+  }
+
+  /** Xotiradagi indeks: millisekundlarda. Indeks bo‘lmasa bo‘sh ro‘yxat. */
+  suggestLocal(query: string, lat?: number, lon?: number): GeoPlace[] {
+    const text = query.trim().slice(0, 200);
+    if (!text) return [];
+    const near = lat !== undefined && lon !== undefined ? { lat, lon } : undefined;
+    return this.index.search(text, near, 10);
   }
 
   async suggest(query: string, lat?: number, lon?: number): Promise<GeoPlace[]> {
     const text = query.trim();
-    if (text.length < 2) return [];
+    if (text.length < 1) return [];
     if (text.length > 200) throw new BadRequestException('Qidiruv matni juda uzun');
     return this.cached(`s:${text.toLowerCase()}:${lat?.toFixed(2)}:${lon?.toFixed(2)}:${this.suggestKey ? 'y' : 'o'}`, () =>
       this.suggestKey ? this.yandexSuggest(text, lat, lon) : this.osmSearch(text, 6),
@@ -100,7 +143,7 @@ export class GeoService {
   // ---------------- Yandex ----------------
 
   private async yandexSuggest(text: string, lat?: number, lon?: number): Promise<GeoPlace[]> {
-    const params = new URLSearchParams({ apikey: this.suggestKey, text, lang: this.lang, results: '7', types: 'geo,street,house', print_address: '1' });
+    const params = new URLSearchParams({ apikey: this.suggestKey, text, lang: this.lang, results: '10', types: 'geo,street,house', print_address: '1' });
     if (lat !== undefined && lon !== undefined) {
       params.set('ll', `${lon},${lat}`);
       params.set('spn', '1.0,1.0');

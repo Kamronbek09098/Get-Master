@@ -640,28 +640,119 @@
   color: var(--gm-color-text);
 }
 
+/* Kirish ma’lumotlari: yorliq + qiymat birinchi qatorda, tugmalar ostida — hech qachon kartadan chiqib ketmaydi */
+.gm-uprofile__field > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.gm-cred {
+  width: 100%;
+  min-width: 0;
+}
+
 .gm-cred__row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-areas:
+    'key value'
+    'tools tools';
   align-items: center;
-  gap: 8px 12px;
+  gap: 8px 10px;
+  min-width: 0;
 }
 
 .gm-cred__key {
-  flex: 0 0 48px;
+  grid-area: key;
 }
 
 .gm-cred__value {
-  flex: 1 1 150px;
-  min-width: 150px;
-  overflow-wrap: break-word;
+  grid-area: value;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .gm-cred__tools {
-  flex: 0 0 auto;
-  margin-left: auto;
+  grid-area: tools;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
 }
 
 .gm-cred__tools .gm-button {
+  flex: 0 0 auto;
   white-space: nowrap;
+}
+
+.gm-cred__note {
+  display: block;
+}
+
+/* Sarlavhadagi amal tugmalari: o‘ngda, bir xil balandlikda, qatorga o‘ralganda ham tekis */
+.gm-uprofile__actions {
+  align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.gm-uprofile__actions .gm-button {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .gm-uprofile__actions {
+    width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+
+  .gm-cred__row {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'key'
+      'value'
+      'tools';
+    gap: 6px;
+  }
+}
+
+/* Foydalanuvchilar ro‘yxati: kartalar buyurtma kartalaridagi kabi ko‘tarilib ajraladi */
+.gm-user-card.gm-card--clickable {
+  transition:
+    transform 0.18s var(--gm-ease, ease),
+    box-shadow 0.18s var(--gm-ease, ease),
+    border-color 0.18s,
+    background-color 0.18s;
+}
+
+.gm-user-card.gm-card--clickable:hover,
+.gm-user-card.gm-card--clickable:focus-visible {
+  transform: translateY(-3px) scale(1.012);
+  border-color: color-mix(in srgb, var(--gm-color-primary) 55%, var(--gm-color-border));
+  background: color-mix(in srgb, var(--gm-color-primary-soft) 55%, var(--gm-color-surface));
+  box-shadow: 0 10px 24px -10px color-mix(in srgb, var(--gm-color-primary) 45%, transparent);
+  outline: none;
+}
+
+.gm-user-card.gm-card--clickable:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gm-color-primary) 30%, transparent);
+}
+
+.gm-user-card.gm-card--clickable:active {
+  transform: translateY(-1px) scale(0.995);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-user-card.gm-card--clickable {
+    transition: none;
+  }
+
+  .gm-user-card.gm-card--clickable:hover,
+  .gm-user-card.gm-card--clickable:focus-visible,
+  .gm-user-card.gm-card--clickable:active {
+    transform: none;
+  }
 }

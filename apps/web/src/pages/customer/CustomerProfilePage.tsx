@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom';
-import { CalendarDays, ClipboardList, MapPin, Package, ShieldCheck, UserRound, Smartphone } from 'lucide-react';
+import { CalendarDays, ChevronRight, ClipboardList, MapPin, MapPinPlus, Package, Settings2, ShieldCheck, UserRound, Smartphone } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDate } from '@/lib/utils';
@@ -64,12 +63,27 @@ export function CustomerProfilePage() {
           </ProfileCard>
           <ProfileCard icon={MapPin} title="Manzillarim" hint="So‘rov yaratganda tez tanlash uchun.">
             {addressList.length === 0 ? (
-              <p className="gm-card__meta">Hali manzil qo‘shilmagan.</p>
+              <p className="gm-pempty">Hali manzil qo‘shilmagan.</p>
             ) : (
-              <InfoRows rows={addressList.slice(0, 3).map((address) => ({ label: address.title ?? 'Manzil', value: address.addressLine }))} />
+              <ul className="gm-addrlist">
+                {addressList.slice(0, 3).map((address) => (
+                  <li key={address.id}>
+                    <span className="gm-addrlist__pin" aria-hidden="true">
+                      <MapPin size={16} />
+                    </span>
+                    <span className="gm-addrlist__text">
+                      <strong>{address.title ?? 'Manzil'}</strong>
+                      <span>{address.addressLine}</span>
+                    </span>
+                  </li>
+                ))}
+                {addressList.length > 3 && <li className="gm-addrlist__more">va yana {addressList.length - 3} ta manzil</li>}
+              </ul>
             )}
-            <Link to="/mijozlar/manzillar">
-              <Button variant="secondary" size="sm">{addressList.length === 0 ? 'Manzil qo‘shish' : 'Manzillarni boshqarish'}</Button>
+            <Link to="/mijozlar/manzillar" className="gm-plink">
+              <span className="gm-plink__icon" aria-hidden="true">{addressList.length === 0 ? <MapPinPlus size={18} /> : <MapPin size={18} />}</span>
+              <span className="gm-plink__label">{addressList.length === 0 ? 'Manzil qo‘shish' : 'Manzillarni boshqarish'}</span>
+              <ChevronRight size={18} className="gm-plink__arrow" aria-hidden="true" />
             </Link>
           </ProfileCard>
         </div>
@@ -78,18 +92,22 @@ export function CustomerProfilePage() {
           <ProfileCard icon={Smartphone} title="Akkaunt ma’lumotlari">
             <InfoRows
               rows={[
-                { label: 'Akkaunt ID', value: data.accountNumber },
+                { label: 'Akkaunt ID', value: `#${data.accountNumber}` },
                 { label: 'Telefon', value: data.phone },
-                { label: 'Email', value: data.email ?? '—' },
-                { label: 'Telefon tasdiqlangan', value: data.phoneVerified ? 'Ha' : 'Yo‘q' },
-                { label: 'Holat', value: statusLabel(data.status) },
+                { label: 'Email', value: data.email ?? <span className="gm-pmuted">Kiritilmagan</span> },
+                { label: 'Telefon tasdiqlangan', value: <Badge tone={data.phoneVerified ? 'success' : 'warning'}>{data.phoneVerified ? 'Ha' : 'Yo‘q'}</Badge> },
+                { label: 'Holat', value: <Badge tone={data.status === 'ACTIVE' ? 'success' : 'neutral'}>{statusLabel(data.status)}</Badge> },
                 { label: 'Ro‘yxatdan o‘tgan', value: formatDate(data.createdAt) },
               ]}
             />
           </ProfileCard>
           <ProfileCard icon={ShieldCheck} title="Xavfsizlik" hint="Akkauntingizga ulangan qurilmalarni boshqaring.">
-            <Link to="/sozlamalar">
-              <Button variant="secondary" size="sm">Faol qurilmalar va sozlamalar</Button>
+            <Link to="/sozlamalar" className="gm-plink">
+              <span className="gm-plink__icon" aria-hidden="true">
+                <Settings2 size={18} />
+              </span>
+              <span className="gm-plink__label">Faol qurilmalar va sozlamalar</span>
+              <ChevronRight size={18} className="gm-plink__arrow" aria-hidden="true" />
             </Link>
           </ProfileCard>
         </div>

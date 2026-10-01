@@ -1,8 +1,25 @@
 .gm-media-upload {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: var(--gm-space-2);
+}
+
+.gm-media-upload__pick {
+  width: 100%;
+  min-height: 52px;
+  border-style: dashed;
+  border-width: 1.5px;
+  border-radius: 14px;
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-primary);
+  font-weight: 700;
+}
+
+.gm-media-upload__pick:hover:not(:disabled) {
+  border-color: var(--gm-color-primary);
+  background: var(--gm-color-primary-soft);
+  color: var(--gm-color-primary);
 }
 
 .gm-media-upload__result {

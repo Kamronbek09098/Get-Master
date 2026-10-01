@@ -19,7 +19,10 @@ export interface MasterProfile {
   ratingCount: number;
   completedOrders: number;
   isPaused: boolean;
+  pauseReason?: string | null;
   workRadiusKm?: string | number | null;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
   serviceAreas?: string[] | null;
   completionRate?: string | number;
   responseRate?: string | number;
@@ -42,6 +45,8 @@ export interface PublicMaster {
 
 export interface MasterInput {
   workRadiusKm?: number;
+  latitude?: number;
+  longitude?: number;
   serviceAreas?: string[];
   firstName?: string;
   lastName?: string;

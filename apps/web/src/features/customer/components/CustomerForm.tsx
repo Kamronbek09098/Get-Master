@@ -12,6 +12,8 @@ export function CustomerForm({ profile }: { profile: CustomerProfile }) {
   const [firstName, setFirstName] = useState(profile.firstName ?? '');
   const [lastName, setLastName] = useState(profile.lastName ?? '');
 
+  const dirty = firstName.trim() !== (profile.firstName ?? '') || lastName.trim() !== (profile.lastName ?? '');
+
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     updateProfile.mutate({ firstName: firstName.trim(), lastName: lastName.trim() });
@@ -23,7 +25,7 @@ export function CustomerForm({ profile }: { profile: CustomerProfile }) {
       {updateProfile.isSuccess && <Alert tone="success">Profil muvaffaqiyatli yangilandi</Alert>}
       <Input label="Ism" value={firstName} onChange={(event) => setFirstName(event.target.value)} maxLength={100} />
       <Input label="Familiya" value={lastName} onChange={(event) => setLastName(event.target.value)} maxLength={100} />
-      <Button type="submit" loading={updateProfile.isPending}>
+      <Button type="submit" size="lg" fullWidth className="gm-psave" loading={updateProfile.isPending} disabled={!dirty}>
         Saqlash
       </Button>
     </form>
