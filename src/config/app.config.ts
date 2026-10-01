@@ -8,5 +8,12 @@ export default registerAs('app', () => ({
     .split(',')
     .map((value) => value.trim())
     .filter(Boolean),
-  trustProxy: process.env.TRUST_PROXY === 'true',
+  // TRUST_PROXY: bo‘sh/false — proksi yo‘q; true — barcha proksilarga ishonish (faqat ishonchli muhitda);
+  // son (masalan 1) — shuncha proksi qatlami; 'loopback' — faqat shu kompyuterdagi proksi (masalan, cloudflared tunnel).
+  trustProxy: ((): boolean | number | string => {
+    const raw = (process.env.TRUST_PROXY ?? '').trim();
+    if (!raw || raw === 'false') return false;
+    if (raw === 'true') return true;
+    return /^\d+$/.test(raw) ? Number(raw) : raw;
+  })(),
 }));

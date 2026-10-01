@@ -14,12 +14,13 @@ import {
   SessionStatus,
   UserStatus,
 } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
+import { hashSecret, verifySecret } from '../../common/security/hash';
 import { panelOf } from '../../common/utils/panel';
 import { authCookieNames } from '../../common/utils/panel';
 import { RedisService } from '../../infrastructure/redis/redis.service';
 import { LoginLockedException } from '../../common/exceptions/business.exception';
 import { randomUUID } from 'node:crypto';
+import { clientIpOf } from '../../common/utils/client-ip';
 import type { Request, Response } from 'express';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { OtpService } from '../otp/otp.service';
@@ -75,13 +76,11 @@ export class AuthService {
       select: { id: true, deletedAt: true, status: true, passwordHash: true, accountNumber: true },
     });
     if (existing) {
-      const owner =
-        existing.deletedAt === null &&
-        existing.status === UserStatus.ACTIVE &&
-        !!existing.passwordHash &&
-        (await bcrypt.compare(dto.password, existing.passwordHash));
+      // Har holatda aynan bitta og‘ir (cost 12) amal bajariladi: haqiqiy taqqoslash yoki soxta — vaqtga qarab farqlab bo‘lmasin.
+      const canOwn = existing.deletedAt === null && existing.status === UserStatus.ACTIVE && !!existing.passwordHash;
+      const owner = (await verifySecret(dto.password, canOwn ? (existing.passwordHash as string) : await this.dummyPasswordHash())) && canOwn;
       // Telefon band, lekin parol mos emas: «band» deb aytmaymiz (raqamlarni taxmin qilib aniqlashning oldini olish).
-      if (!owner) return this.decoyRegistration(dto.password);
+      if (!owner) return this.decoyRegistration(dto, req, phone, 'phone', existing.id, false);
       if (panelOf(req) !== 'MASTER') {
         await this.db.userRole.createMany({ data: [{ userId: existing.id, role: Role.CUSTOMER }], skipDuplicates: true });
       }
@@ -95,10 +94,10 @@ export class AuthService {
         select: { id: true },
       });
       // Email band bo‘lsa ham javob yangi ro‘yxatdan o‘tishdan farq qilmaydi (email mavjudligi oshkor bo‘lmaydi).
-      if (emailUser) return this.decoyRegistration(dto.password);
+      if (emailUser) return this.decoyRegistration(dto, req, phone, 'email', emailUser.id, true);
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, 12);
+    const passwordHash = await hashSecret(dto.password, 12);
     const user = await this.withSerializableRetry(async (tx) => {
       const account = await tx.user.create({
         data: {
@@ -157,9 +156,34 @@ export class AuthService {
    * Haqiqiy ro‘yxatdan o‘tishdan tashqaridan ajratib bo‘lmaydigan «soxta» javob: hisob yaratilmaydi, kod yuborilmaydi.
    * Vaqt farqi (bcrypt) ham yashirilishi uchun xuddi shuncha xeshlash bajariladi.
    */
-  private async decoyRegistration(password: string) {
-    await bcrypt.hash(password, 12);
-    await bcrypt.hash(randomUUID(), 12);
+  private async decoyRegistration(dto: RegisterDto, req: Request, phone: string, reason: 'phone' | 'email', targetUserId: string, needsPasswordWork: boolean) {
+    // Haqiqiy ro‘yxatdan o‘tish: parol xeshi (cost 12) + OTP xeshi (cost 10). Soxta javob ham xuddi shuncha ish qiladi.
+    if (needsPasswordWork) await hashSecret(dto.password, 12);
+    await hashSecret(randomUUID(), 10);
+    // Adminga xabar (audit + Telegram); foydalanuvchiga esa hech narsa bildirilmaydi. Xato bo‘lsa ham javob o‘zgarmaydi.
+    const ip = this.clientIp(req) ?? null;
+    void this.db.auditLog
+      .create({
+        data: {
+          action: 'AUTH_REGISTER_DUPLICATE_ATTEMPT',
+          targetType: 'User',
+          targetId: targetUserId,
+          after: { reason, phone, ...(dto.location ? { gps: { latitude: dto.location.latitude, longitude: dto.location.longitude, accuracy: dto.location.accuracy ?? null } } : {}) },
+          ipAddress: ip,
+          requestId: this.requestId(req),
+        },
+      })
+      .catch(() => undefined);
+    this.telegram.notifyDuplicateRegistration({
+      reason,
+      phone,
+      email: reason === 'email' ? dto.email?.trim().toLowerCase() : null,
+      name: [dto.firstName?.trim(), dto.lastName?.trim()].filter(Boolean).join(' '),
+      ip,
+      panel: panelOf(req),
+      location: dto.location ?? null,
+      userAgent: (Array.isArray(req.headers['user-agent']) ? req.headers['user-agent'][0] : req.headers['user-agent']) ?? null,
+    });
     return { userId: randomUUID(), verificationRequired: true };
   }
 
@@ -177,15 +201,16 @@ export class AuthService {
       },
     });
 
+    // Avval kod tekshiriladi (bir xil xato/vaqt): akkaunt holati oshkor bo‘lmasin.
+    await this.otp.verify(phone, OtpPurpose.REGISTER, dto.code);
+
     if (
       !user ||
       user.deletedAt !== null ||
       user.status !== UserStatus.PENDING
     ) {
-      throw new BadRequestException(ERRORS.INVALID_VERIFICATION_REQUEST);
+      throw new BadRequestException(ERRORS.INVALID_VERIFICATION_CODE);
     }
-
-    await this.otp.verify(phone, OtpPurpose.REGISTER, dto.code);
 
     const updated = await this.db.$transaction(async (tx) => {
       const result = await tx.user.updateMany({
@@ -247,9 +272,8 @@ export class AuthService {
       },
     });
 
-    const validPassword =
-      !!user?.passwordHash &&
-      (await bcrypt.compare(dto.password, user.passwordHash));
+    // Foydalanuvchi bo‘lmasa ham xuddi shuncha vaqt sarflanadi (bcrypt) — javob vaqtiga qarab raqam mavjudligini bilib bo‘lmaydi.
+    const validPassword = await verifySecret(dto.password, user?.passwordHash ?? (await this.dummyPasswordHash()));
 
     if (!user || user.deletedAt !== null || !validPassword) {
       await this.registerLoginFailure(attemptKey);
@@ -268,14 +292,16 @@ export class AuthService {
       throw new ForbiddenException(ERRORS.ACCOUNT_VERIFICATION_REQUIRED);
     }
 
-    const issued = await this.otp.issue(phone, OtpPurpose.LOGIN, user.id, {
-      ip: this.clientIp(req),
-      device: this.deviceCookie(req),
-      panel: panelOf(req),
-    });
-
-    // Kod kiritishdan oldin foydalanuvchini ogohlantirish uchun: bu qurilma yangi bo‘lsa va limit to‘lgan bo‘lsa.
-    const deviceLimit = await this.deviceLimitState(user.id, req);
+    // Kod yuborish va qurilmalar limitini tekshirish parallel bajariladi (kutish vaqti qisqaradi).
+    // Limit holati kod kiritishdan oldin foydalanuvchini ogohlantirish uchun: bu qurilma yangi bo‘lsa va limit to‘lgan bo‘lsa.
+    const [issued, deviceLimit] = await Promise.all([
+      this.otp.issue(phone, OtpPurpose.LOGIN, user.id, {
+        ip: this.clientIp(req),
+        device: this.deviceCookie(req),
+        panel: panelOf(req),
+      }),
+      this.deviceLimitState(user.id, req),
+    ]);
     return { verificationRequired: true, ...(deviceLimit ? { deviceLimit } : {}), ...this.devCode(issued) };
   }
 
@@ -289,6 +315,15 @@ export class AuthService {
     }
     const active = await this.db.deviceSession.count({ where: { userId, status: SessionStatus.ACTIVE, panel: panelOf(req) } });
     return active >= max ? { reached: true, max, active } : null;
+  }
+
+  private dummyHash?: Promise<string>;
+
+  /** Mavjud bo‘lmagan akkaunt uchun taqqoslash maqsadidagi (hech qachon mos kelmaydigan) xesh. */
+  private dummyPasswordHash(): Promise<string> {
+    const hash = this.dummyHash ?? hashSecret(randomUUID(), 12);
+    this.dummyHash = hash;
+    return hash;
   }
 
   private async assertLoginNotLocked(attemptKey: string): Promise<void> {
@@ -315,15 +350,16 @@ export class AuthService {
       include: { userRoles: { select: { role: true } } },
     });
 
+    // Avval kod tekshiriladi: bo‘lmagan/nofaol akkaunt ham xuddi noto‘g‘ri kod kabi bir xil xato oladi (raqam mavjudligi sezilmaydi).
+    await this.otp.verify(phone, OtpPurpose.LOGIN, dto.code);
+
     if (
       !user ||
       user.deletedAt !== null ||
       user.status !== UserStatus.ACTIVE
     ) {
-      throw new UnauthorizedException(ERRORS.INVALID_VERIFICATION_REQUEST);
+      throw new BadRequestException(ERRORS.INVALID_VERIFICATION_CODE);
     }
-
-    await this.otp.verify(phone, OtpPurpose.LOGIN, dto.code);
 
     return this.createSession(
       user.id,
@@ -377,7 +413,7 @@ export class AuthService {
         return { failure: ERRORS.AUTHENTICATION_REQUIRED } as const;
       }
 
-      const valid = await bcrypt.compare(refreshToken, stored.tokenHash);
+      const valid = await verifySecret(refreshToken, stored.tokenHash);
       if (!valid) {
         await this.revokeFamily(tx, stored.userId, stored.familyId, stored.deviceId);
         return { failure: ERRORS.AUTHENTICATION_REQUIRED } as const;
@@ -428,7 +464,7 @@ export class AuthService {
           userId: user.id,
           deviceId: claims.deviceId,
           familyId: claims.familyId,
-          tokenHash: await bcrypt.hash(nextRefreshToken, 12),
+          tokenHash: await hashSecret(nextRefreshToken, 12),
           expiresAt: this.refreshExpiry(),
           status: SessionStatus.ACTIVE,
         },
@@ -727,7 +763,7 @@ export class AuthService {
           userId,
           deviceId,
           familyId,
-          tokenHash: await bcrypt.hash(refreshToken, 12),
+          tokenHash: await hashSecret(refreshToken, 12),
           expiresAt: this.refreshExpiry(),
           status: SessionStatus.ACTIVE,
         },
@@ -951,11 +987,7 @@ export class AuthService {
   }
 
   private clientIp(req: Request) {
-    const forwarded = req.headers['x-forwarded-for'];
-    const candidate = Array.isArray(forwarded)
-      ? forwarded[0]
-      : forwarded?.split(',')[0];
-    return (candidate || req.ip || '').slice(0, 64) || undefined;
+    return clientIpOf(req);
   }
 
   private requestId(req: Request) {

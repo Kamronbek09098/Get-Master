@@ -37,6 +37,7 @@ import { MasterPortfolioPage } from '@/pages/master/MasterPortfolioPage';
 import { EarningsPage } from '@/pages/payments/EarningsPage';
 import { PaymentHistoryPage } from '@/pages/payments/PaymentHistoryPage';
 import { LegalPage } from '@/pages/legal/LegalPage';
+import { TermsPage } from '@/pages/legal/TermsPage';
 import { SafetyPage } from '@/pages/safety/SafetyPage';
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
 import { AdminReportsPage } from '@/pages/admin/AdminReportsPage';
@@ -75,6 +76,7 @@ export const router = createBrowserRouter([
     element: <RootShell />,
     children: [
       { path: '/', element: <RoleSelectPage /> },
+      { path: '/shartlar', element: <TermsPage /> },
       {
         element: <AuthLayout />,
         children: [

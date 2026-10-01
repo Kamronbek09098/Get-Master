@@ -129,7 +129,13 @@ export function AuthLayout() {
                 </li>
               ))}
             </ul>
-            <p className="gm-auth-terms">Davom etish orqali xizmat shartlariga rozilik bildirasiz. Raqamingiz faqat kirish uchun ishlatiladi.</p>
+            <p className="gm-auth-terms">
+              Davom etish orqali{' '}
+              <Link to="/shartlar" target="_blank" rel="noopener">
+                xizmat shartlariga
+              </Link>{' '}
+              rozilik bildirasiz. Raqamingiz faqat kirish uchun ishlatiladi.
+            </p>
           </>
         )}
       </main>

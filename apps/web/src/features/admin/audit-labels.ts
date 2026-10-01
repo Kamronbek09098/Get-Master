@@ -64,6 +64,7 @@ export const AUDIT_ACTIONS: Record<string, AuditActionInfo> = {
   ADMIN_USER_SUSPENDED: { label: 'Foydalanuvchi to‘xtatildi', verb: 'foydalanuvchini to‘xtatdi', group: 'users', tone: 'warning' },
   ADMIN_USER_REACTIVATED: { label: 'Foydalanuvchi qayta faollashtirildi', verb: 'foydalanuvchini qayta faollashtirdi', group: 'users', tone: 'success' },
   ADMIN_USER_PASSWORD_VIEWED: { label: 'Parol ko‘rilgan (eski yozuv)', verb: 'foydalanuvchi parolini ko‘rgan (bu imkoniyat bekor qilingan)', group: 'users', tone: 'warning' },
+  AUTH_REGISTER_DUPLICATE_ATTEMPT: { label: 'Takroriy ro‘yxatdan o‘tish urinishi', verb: 'mavjud raqam/email bilan ro‘yxatdan o‘tmoqchi bo‘ldi', group: 'users', tone: 'warning' },
   ADMIN_USER_PASSWORD_RESET: { label: 'Parol o‘zgartirildi', verb: 'foydalanuvchi parolini o‘zgartirdi', group: 'users', tone: 'warning' },
   ADMIN_USER_DELETED: { label: 'Foydalanuvchi o‘chirildi', verb: 'foydalanuvchini o‘chirdi', group: 'users', tone: 'danger' },
   USER_ACTION_CREATED: { label: 'Choralar qo‘llandi', verb: 'foydalanuvchiga chora qo‘lladi', group: 'users', tone: 'warning' },

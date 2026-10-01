@@ -3,6 +3,9 @@ import { z } from 'zod';
 const LOCAL_PHONE_REGEX = /^\d{9}$/;
 const OTP_CODE_REGEX = /^\d{6}$/;
 
+/** O‘zbekistonda mavjud operator/hudud kodlari (backend tekshiruvi bilan bir xil). */
+const UZ_PREFIXES = new Set(['20', '33', '50', '55', '61', '62', '65', '66', '67', '69', '70', '71', '72', '74', '76', '77', '78', '80', '87', '88', '90', '91', '92', '93', '94', '95', '97', '98', '99']);
+
 /** «95 959 49 44» ko‘rinishidagi qiymatdan faqat 9 xonali raqamni ajratadi. */
 export function toLocalDigits(value: string): string {
   let digits = value.replace(/\D/g, '');
@@ -19,7 +22,12 @@ export function formatLocalPhone(value: string): string {
 export const localPhoneSchema = z
   .string()
   .transform((value) => value.replace(/\s/g, ''))
-  .pipe(z.string().regex(LOCAL_PHONE_REGEX, 'Telefon raqami 9 ta raqamdan iborat bo‘lishi kerak (masalan, 90 123 45 67)'));
+  .pipe(
+    z
+      .string()
+      .regex(LOCAL_PHONE_REGEX, 'Telefon raqami 9 ta raqamdan iborat bo‘lishi kerak (masalan, 90 123 45 67)')
+      .refine((value) => UZ_PREFIXES.has(value.slice(0, 2)), 'Operator kodi noto‘g‘ri (masalan: 90, 91, 93, 94, 95, 97, 98, 99, 33, 77, 88)'),
+  );
 
 export const registerSchema = z
   .object({

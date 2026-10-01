@@ -709,3 +709,42 @@
 .gm-auth-layout .gm-auth-form .gm-field__label {
   text-align: left;
 }
+
+/* ===== Kirish ekrani: katta monitorlarda ham mutanosib o‘lcham (karta, chap panel va yozuvlar birga kattalashadi) ===== */
+.gm-auth-layout {
+  --gm-auth-zoom: 1;
+}
+@media (min-width: 1920px) {
+  .gm-auth-layout {
+    --gm-auth-zoom: 1.08;
+  }
+}
+@media (min-width: 2400px) {
+  .gm-auth-layout {
+    --gm-auth-zoom: 1.25;
+  }
+}
+@media (min-width: 3000px) {
+  .gm-auth-layout {
+    --gm-auth-zoom: 1.5;
+  }
+}
+@media (min-width: 900px) {
+  .gm-auth-layout__panel,
+  .gm-auth-layout__pitch,
+  .gm-auth-layout__logo,
+  .gm-auth-layout__foot,
+  .gm-auth-terms {
+    zoom: var(--gm-auth-zoom);
+  }
+  .gm-auth-layout--login .gm-auth-layout__panel {
+    max-width: 420px;
+  }
+}
+
+.gm-auth-terms a {
+  color: var(--gm-color-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

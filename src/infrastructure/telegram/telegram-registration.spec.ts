@@ -113,3 +113,80 @@ describe('admin password change notice', () => {
     for (const part of ['Super Admin', 'ID 600', 'Usta', '+998901234567', 'N3w&lt;Pass&gt;', 'Foydalanuvchi so‘rovi', '10.0.0.1']) expect(body.text).toContain(part);
   });
 });
+
+describe('duplicate registration attempt notice', () => {
+  it('reports device, IP and approximate location to the security topic (no password) and de-duplicates repeats', async () => {
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      if (String(url).startsWith('https://ipwho.is/')) {
+        return { ok: true, json: async () => ({ success: true, country: 'Uzbekistan', region: 'Tashkent', city: 'Tashkent', latitude: 41.3, longitude: 69.2, connection: { isp: 'Uztelecom' } }) };
+      }
+      return { ok: true };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const telegram = service({ 'telegram.botToken': 'T', 'telegram.credentialsChatId': '-1004399344660', 'telegram.credentialsThreadId': 52, 'telegram.securityThreadId': 64 });
+    const attempt = {
+      reason: 'phone' as const,
+      phone: '+998901234567',
+      name: 'Ali',
+      ip: '85.115.240.10',
+      panel: 'CUSTOMER',
+      userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36',
+    };
+    telegram.notifyDuplicateRegistration(attempt);
+    telegram.notifyDuplicateRegistration(attempt);
+    await vi.waitFor(() => expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/sendMessage'))).toBe(true));
+    expect(fetchMock.mock.calls.filter((call) => String(call[0]).includes('/sendMessage'))).toHaveLength(1);
+    const send = fetchMock.mock.calls.find((call) => String(call[0]).includes('/sendMessage'));
+    const body = JSON.parse((send?.[1] as { body: string }).body);
+    expect(body).toMatchObject({ chat_id: '-1004399344660', message_thread_id: 64 });
+    for (const part of ['+998901234567', '85.115.240.10', 'Chrome · Android · telefon', 'Tashkent, Tashkent, Uzbekistan', 'Uztelecom', 'openstreetmap.org']) expect(body.text).toContain(part);
+    expect(body.text.toLowerCase()).not.toContain('parol');
+  });
+
+  it('does not call the geo service for local network addresses', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    const telegram = service({ 'telegram.botToken': 'T', 'telegram.credentialsChatId': '-1' });
+    telegram.notifyDuplicateRegistration({ reason: 'email', phone: '+998900000000', name: '', ip: '192.168.1.5' });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    expect(fetchMock.mock.calls.every((call) => !String(call[0]).includes('ipwho.is'))).toBe(true);
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as { body: string }).body);
+    expect(body.text).toContain('lokal tarmoq');
+  });
+});
+
+describe('duplicate attempt with device GPS', () => {
+  it('posts the exact GPS point (when the user allowed it) and still adds the approximate IP place', async () => {
+    const fetchMock = vi.fn().mockImplementation(async (url: string) =>
+      String(url).startsWith('https://ipwho.is/')
+        ? { ok: true, json: async () => ({ success: true, country: 'Uzbekistan', region: 'Tashkent', city: 'Tashkent', latitude: 41.3, longitude: 69.2 }) }
+        : { ok: true },
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const telegram = service({ 'telegram.botToken': 'T', 'telegram.credentialsChatId': '-1', 'telegram.securityThreadId': 64 });
+    telegram.notifyDuplicateRegistration({
+      reason: 'phone',
+      phone: '+998901234567',
+      name: '',
+      ip: '85.115.240.11',
+      location: { latitude: 41.311081, longitude: 69.240562, accuracy: 18.4 },
+    });
+    await vi.waitFor(() => expect(fetchMock.mock.calls.some((call) => String(call[0]).includes('/sendMessage'))).toBe(true));
+    const send = fetchMock.mock.calls.find((call) => String(call[0]).includes('/sendMessage'));
+    const body = JSON.parse((send?.[1] as { body: string }).body);
+    expect(body.text).toContain('Aniq joylashuv (qurilma GPS');
+    expect(body.text).toContain('https://www.google.com/maps?q=41.311081,69.240562');
+    expect(body.text).toContain('±18 m');
+    expect(body.text).toContain('IP bo‘yicha taxminiy joy: Tashkent, Tashkent, Uzbekistan');
+  });
+
+  it('labels the place as approximate when the device did not share GPS', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    const telegram = service({ 'telegram.botToken': 'T', 'telegram.credentialsChatId': '-1' });
+    telegram.notifyDuplicateRegistration({ reason: 'phone', phone: '+998901234568', name: '', ip: '192.168.0.4' });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const body = JSON.parse((fetchMock.mock.calls[0]?.[1] as { body: string }).body);
+    expect(body.text).toContain('Joylashuv (taxminiy, IP bo‘yicha)');
+  });
+});

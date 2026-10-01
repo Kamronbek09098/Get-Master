@@ -32,8 +32,9 @@ export function configureApp(app: INestApplication): void {
   });
   (app.getHttpAdapter().getInstance() as { disable(key: string): void }).disable('x-powered-by');
   app.enableShutdownHooks();
-  if (config.get<boolean>('app.trustProxy', false)) {
-    (app.getHttpAdapter().getInstance() as { set(key: string, value: boolean): void }).set('trust proxy', true);
+  const trustProxy = config.get<boolean | number | string>('app.trustProxy', false);
+  if (trustProxy !== false) {
+    (app.getHttpAdapter().getInstance() as { set(key: string, value: boolean | number | string): void }).set('trust proxy', trustProxy);
   }
   const requestIdMiddleware = new RequestIdMiddleware();
   app.use(requestIdMiddleware.use.bind(requestIdMiddleware));

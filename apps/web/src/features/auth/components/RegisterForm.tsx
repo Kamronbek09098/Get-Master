@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/Input';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
@@ -67,7 +67,14 @@ export function RegisterForm() {
         {...register('confirmPassword')}
       />
       <Checkbox
-        label="Foydalanish shartlari, Maxfiylik siyosati va Platforma qoidalarini qabul qilaman"
+        label={
+          <>
+            <Link to="/shartlar" target="_blank" rel="noopener" onClick={(event) => event.stopPropagation()}>
+              Foydalanish shartlari, Maxfiylik siyosati va Platforma qoidalarini
+            </Link>{' '}
+            o‘qib chiqdim va qabul qilaman
+          </>
+        }
         error={errors.acceptedTerms?.message}
         {...register('acceptedTerms')}
       />

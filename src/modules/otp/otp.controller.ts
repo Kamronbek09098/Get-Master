@@ -1,3 +1,4 @@
+import { clientIpOf } from '../../common/utils/client-ip';
 import { Body, Controller, Post, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { OtpPurpose } from '@prisma/client';
@@ -31,10 +32,6 @@ export class OtpController {
   }
 
   private clientIp(req: Request) {
-    const forwarded = req.headers['x-forwarded-for'];
-    const candidate = Array.isArray(forwarded)
-      ? forwarded[0]
-      : forwarded?.split(',')[0];
-    return (candidate || req.ip || '').slice(0, 64) || undefined;
+    return clientIpOf(req);
   }
 }

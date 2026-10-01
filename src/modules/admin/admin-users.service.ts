@@ -4,7 +4,7 @@ import type { Request } from 'express';
 import { ERRORS } from '../../common/constants/error-messages';
 import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
-import * as bcrypt from 'bcryptjs';
+import { hashSecret, verifySecret } from '../../common/security/hash';
 import { TelegramAlertService } from '../../infrastructure/telegram/telegram-alert.service';
 import { DeleteUserDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
 import { UserQueryDto } from './dto/user-query.dto';
@@ -240,7 +240,7 @@ export class AdminUsersService {
   async setPassword(adminId: string, userId: string, dto: SetUserPasswordDto, req: Request) {
     const target = await this.loadModerable(adminId, userId);
     if (target.status === UserStatus.DELETED || target.deletedAt) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
-    const passwordHash = await bcrypt.hash(dto.password, 12);
+    const passwordHash = await hashSecret(dto.password, 12);
     await this.db.$transaction(async (tx) => {
       await tx.user.update({ where: { id: userId }, data: { passwordHash } });
       await this.revokeAllSessions(tx, userId);

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OtpPurpose, OtpStatus } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
+import { hashSecret, verifySecret } from '../../common/security/hash';
 import { randomInt } from 'node:crypto';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { TooManyRequestsException } from '../../common/exceptions/business.exception';
@@ -17,7 +17,15 @@ const OTP_PURPOSE_LABEL: Record<OtpPurpose, string> = {
 };
 
 import { MetricsService } from '../../infrastructure/metrics/metrics.service';
+import { RedisService } from '../../infrastructure/redis/redis.service';
 import { TelegramAlertService } from '../../infrastructure/telegram/telegram-alert.service';
+
+/** 6 xonali kod 5 daqiqada eskiradi va 5 urinish bilan cheklangan — shu sabab xesh narxi parolnikidan past (tezroq javob). */
+const OTP_HASH_COST = 10;
+
+let dummyOtpHash: Promise<string> | undefined;
+/** Faol kod topilmaganda xuddi shuncha vaqt sarflash uchun (hech qachon mos kelmaydigan xesh). */
+const dummyHash = (): Promise<string> => (dummyOtpHash ??= hashSecret(randomInt(100000, 1_000_000).toString(), OTP_HASH_COST));
 
 @Injectable()
 export class OtpService {
@@ -29,6 +37,7 @@ export class OtpService {
     private readonly config: ConfigService,
     private readonly metrics: MetricsService,
     private readonly telegram: TelegramAlertService,
+    private readonly redis: RedisService,
   ) {}
 
   private get ttlMs(): number {
@@ -59,6 +68,10 @@ export class OtpService {
     const phone = this.normalizePhone(phoneInput);
     const panel = context?.panel ?? null;
     const now = new Date();
+    // Kod va uning xeshi oldindan, tekshiruvlar bilan parallel tayyorlanadi (kutish vaqti qisqaradi).
+    const code = randomInt(100000, 1_000_000).toString();
+    const codeHashPromise = hashSecret(code, OTP_HASH_COST);
+    codeHashPromise.catch(() => undefined);
     const windowStart = new Date(now.getTime() - this.windowMs);
     const resendStart = new Date(now.getTime() - this.resendMs);
 
@@ -133,8 +146,7 @@ export class OtpService {
       data: { status: OtpStatus.EXPIRED },
     });
 
-    const code = randomInt(100000, 1_000_000).toString();
-    const codeHash = await bcrypt.hash(code, 12);
+    const codeHash = await codeHashPromise;
 
     await this.db.otpCode.create({
       data: {
@@ -151,7 +163,10 @@ export class OtpService {
       },
     });
 
-    await this.deliver(phone, code, purpose);
+    await this.redis.del(this.failKey(phone, purpose));
+
+    // Yetkazish (Telegram/email) javobni kechiktirmaydi: fonda bajariladi, xato logga yoziladi.
+    void this.deliver(phone, code, purpose).catch((error: unknown) => this.logger.error(`${purpose} kodini yuborishda xato: ${(error as Error).message}`));
 
     const metadata = {
       verificationRequired: true,
@@ -183,8 +198,41 @@ export class OtpService {
     }
   }
 
+  private failKey(phone: string, purpose: OtpPurpose): string {
+    return `otpfail:${purpose}:${phone}`;
+  }
+
+  /**
+   * Kodni tekshirish. Xato urinishlar soni telefon bo‘yicha YAGONA hisoblanadi (raqam bazada bor-yo‘qligidan qat’i nazar):
+   * mavjud va mavjud bo‘lmagan raqamlar bir xil javob (400, so‘ng 429) va bir xil vaqt oladi — raqamlarni aniqlab bo‘lmaydi.
+   */
   async verify(phoneInput: string, purpose: OtpPurpose, code: string) {
     const phone = this.normalizePhone(phoneInput);
+    const key = this.failKey(phone, purpose);
+    const max = this.maxAttempts;
+    if (Number((await this.redis.get(key)) ?? 0) >= max) {
+      this.metrics.otpAbused('attempts_exceeded');
+      throw new TooManyRequestsException(ERRORS.VERIFICATION_ATTEMPTS_EXCEEDED);
+    }
+    try {
+      const result = await this.verifyRecord(phone, purpose, code);
+      await this.redis.del(key);
+      return result;
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof TooManyRequestsException) {
+        const limit = 1_000_000;
+        const { remaining } = await this.redis.consume(key, limit, Math.ceil(this.ttlMs / 1000));
+        if (error instanceof TooManyRequestsException || limit - remaining >= max) {
+          this.metrics.otpAbused('attempts_exceeded');
+          throw new TooManyRequestsException(ERRORS.VERIFICATION_ATTEMPTS_EXCEEDED);
+        }
+        throw new BadRequestException(ERRORS.INVALID_VERIFICATION_CODE);
+      }
+      throw error;
+    }
+  }
+
+  private async verifyRecord(phone: string, purpose: OtpPurpose, code: string) {
     const record = await this.db.otpCode.findFirst({
       where: {
         phone,
@@ -195,10 +243,12 @@ export class OtpService {
     });
 
     if (!record) {
+      await verifySecret(code, await dummyHash()); // vaqt farqi bilinmasligi uchun
       throw new BadRequestException(ERRORS.INVALID_VERIFICATION_CODE);
     }
 
     if (record.expiresAt <= new Date()) {
+      await verifySecret(code, await dummyHash());
       await this.db.otpCode.updateMany({
         where: { id: record.id, status: OtpStatus.ACTIVE },
         data: { status: OtpStatus.EXPIRED },
@@ -217,7 +267,7 @@ export class OtpService {
       }
     }
 
-    const valid = await bcrypt.compare(code, record.codeHash);
+    const valid = await verifySecret(code, record.codeHash);
 
     if (!valid) {
       const update = await this.db.otpCode.updateMany({

@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { describeDevice, isPrivateIp, lookupIpLocation } from '../../common/utils/geo-ip';
 
 export interface ErrorAlert {
   status: number;
@@ -29,6 +30,7 @@ export class TelegramAlertService implements OnModuleInit {
   private otpThreadId: number | undefined;
   private credentialsChatId = '';
   private credentialsThreadId: number | undefined;
+  private securityThreadId: number | undefined;
   private minStatus = 500;
   private dedupeWindowMs = 300_000;
   private timeoutMs = 8_000;
@@ -46,6 +48,7 @@ export class TelegramAlertService implements OnModuleInit {
     this.otpThreadId = this.config.get<number | undefined>('telegram.otpThreadId', undefined);
     this.credentialsChatId = this.config.get<string>('telegram.credentialsChatId', '');
     this.credentialsThreadId = this.config.get<number | undefined>('telegram.credentialsThreadId', undefined);
+    this.securityThreadId = this.config.get<number | undefined>('telegram.securityThreadId', undefined);
     this.minStatus = this.config.get<number>('telegram.minStatus', 500);
     this.dedupeWindowMs = this.config.get<number>('telegram.dedupeWindowMs', 300_000);
     this.timeoutMs = this.config.get<number>('telegram.timeoutMs', 8_000);
@@ -124,6 +127,58 @@ export class TelegramAlertService implements OnModuleInit {
       .filter((line): line is string => !!line)
       .join('\n');
     void this.post(this.credentialsChatId, text, 'parol o‘zgartirildi', this.credentialsThreadId);
+  }
+
+  /**
+   * Mavjud telefon/email bilan yangi hisob ochishga urinish haqida adminga xabar (yopiq guruh). Urinishda yozilgan parol yuborilmaydi.
+   * Bir xil raqam+IP uchun takroriy xabarlar `dedupeWindowMs` davomida bostiriladi.
+   */
+  notifyDuplicateRegistration(input: {
+    reason: 'phone' | 'email';
+    phone: string;
+    email?: string | null;
+    name: string;
+    ip?: string | null;
+    panel?: string | null;
+    userAgent?: string | null;
+    /** Qurilma GPS si (foydalanuvchi ruxsat bergan bo‘lsa). */
+    location?: { latitude: number; longitude: number; accuracy?: number } | null;
+  }): void {
+    if (!this.botToken || !this.credentialsChatId) return;
+    if (!this.shouldSend(`dup:${input.reason}:${input.phone}:${input.ip ?? ''}`)) return;
+    void this.sendDuplicateRegistration(input);
+  }
+
+  private async sendDuplicateRegistration(input: Parameters<TelegramAlertService['notifyDuplicateRegistration']>[0]): Promise<void> {
+    const gps = input.location ?? null;
+    const location = input.ip ? await lookupIpLocation(input.ip) : null;
+    const where = location
+      ? [location.city, location.region, location.country].filter(Boolean).join(', ')
+      : input.ip && isPrivateIp(input.ip)
+        ? 'lokal tarmoq (joylashuvni aniqlab bo‘lmaydi)'
+        : 'aniqlanmadi';
+    const ipMap = location && (location.latitude || location.longitude) ? `https://www.openstreetmap.org/?mlat=${location.latitude}&mlon=${location.longitude}#map=11/${location.latitude}/${location.longitude}` : null;
+    const gpsMap = gps ? `https://www.google.com/maps?q=${gps.latitude},${gps.longitude}` : null;
+    const locationLine = gps
+      ? `📍 Aniq joylashuv (qurilma GPS, foydalanuvchi ruxsati bilan): <a href="${gpsMap}">${gps.latitude.toFixed(6)}, ${gps.longitude.toFixed(6)}</a>${gps.accuracy ? ` (±${Math.round(gps.accuracy)} m)` : ''}`
+      : `Joylashuv (taxminiy, IP bo‘yicha): ${escapeHtml(where)}${ipMap ? ` — <a href="${ipMap}">xaritada</a>` : ''}`;
+    const text = [
+      `⚠️ <b>${escapeHtml(this.appName)}</b> [${escapeHtml(this.environment)}] — mavjud ma’lumot bilan ro‘yxatdan o‘tishga urinish`,
+      input.reason === 'phone' ? 'Sabab: telefon raqami allaqachon ro‘yxatdan o‘tgan' : 'Sabab: email allaqachon ro‘yxatdan o‘tgan',
+      `Telefon: <code>${escapeHtml(input.phone)}</code>`,
+      input.email ? `Email: <code>${escapeHtml(input.email)}</code>` : undefined,
+      `Kiritilgan ism: ${input.name ? escapeHtml(input.name) : '—'}`,
+      `Qurilma: ${escapeHtml(describeDevice(input.userAgent))}${input.panel ? ` (panel: ${escapeHtml(input.panel)})` : ''}`,
+      `IP manzil: <code>${escapeHtml(input.ip ?? 'noma’lum')}</code>`,
+      locationLine,
+      gps && where !== 'aniqlanmadi' ? `IP bo‘yicha taxminiy joy: ${escapeHtml(where)}` : undefined,
+      location?.provider ? `Internet provayder: ${escapeHtml(location.provider)}` : undefined,
+      `Vaqt: ${escapeHtml(new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' }))}`,
+      'Foydalanuvchiga hech narsa bildirilmadi (raqam mavjudligi sir saqlanadi); hisob ochilmadi.',
+    ]
+      .filter((line): line is string => !!line)
+      .join('\n');
+    await this.post(this.credentialsChatId, text, 'takroriy ro‘yxatdan o‘tish urinishi', this.securityThreadId ?? this.credentialsThreadId);
   }
 
   /** Telefon kod bilan tasdiqlangach: hisob haqida xabar (yopiq guruhga). Parol bu xabarda yo‘q — bazada faqat xesh bor. */

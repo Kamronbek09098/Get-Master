@@ -1,5 +1,5 @@
 import * as bcrypt from 'bcryptjs';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { bootHarness, type Harness, uniquePhone } from '../helpers/harness';
 import { RedisService } from '../../src/infrastructure/redis/redis.service';
 
@@ -52,6 +52,40 @@ async function login(phone: string, ip: string) {
   return h.api('POST', '/auth/verify-otp', { ip, body: { phone, code: '654321' } });
 }
 
+describe('K02b — phone numbers cannot be enumerated', () => {
+  it('login-OTP verification answers identically for an unknown phone and a real account (same status and message)', async () => {
+    const ip = '10.1.0.40';
+    const phone = await registerAndActivate(ip);
+    const real = await h.api('POST', '/auth/verify-otp', { ip, body: { phone, code: '000000' } });
+    const ghost = await h.api('POST', '/auth/verify-otp', { ip, body: { phone: uniquePhone(), code: '000000' } });
+    expect(ghost.status).toBe(real.status);
+    expect(ghost.body.message).toBe(real.body.message);
+  });
+
+  it('registration-OTP verification answers identically for unknown phones and activated accounts', async () => {
+    const ip = '10.1.0.41';
+    const phone = await registerAndActivate(ip);
+    const active = await h.api('POST', '/auth/verify-registration', { ip, body: { phone, code: '000000' } });
+    const ghost = await h.api('POST', '/auth/verify-registration', { ip, body: { phone: uniquePhone(), code: '000000' } });
+    expect(ghost.status).toBe(active.status);
+    expect(ghost.body.message).toBe(active.body.message);
+  });
+
+  it('login for an unknown phone takes a comparable time to a wrong password on a real account (no instant rejection)', async () => {
+    const ip = '10.1.0.42';
+    const phone = await registerAndActivate(ip);
+    const time = async (p: string, address: string) => {
+      const started = Date.now();
+      await h.api('POST', '/auth/login', { ip: address, body: { phone: p, password: 'WrongPassword-1' } });
+      return Date.now() - started;
+    };
+    await time(phone, '10.1.0.43'); // isinish
+    const real = await time(phone, '10.1.0.44');
+    const ghost = await time(uniquePhone(), '10.1.0.45');
+    expect(ghost).toBeGreaterThan(real * 0.5);
+  });
+});
+
 describe('K02 — registration & login', () => {
   it('rejects registration without the mandatory policies', async () => {
     const res = await h.api('POST', '/auth/register', { ip: '10.1.0.1', body: { phone: uniquePhone(), password: PASSWORD, firstName: 'Test', lastName: 'User', acceptedPolicyIds: [] } });
@@ -87,6 +121,8 @@ describe('K02 — registration & login', () => {
     expect(JSON.stringify(decoy.body)).not.toMatch(/allaqachon|already/i);
     expect(await h.db.otpCode.count({ where: { phone } })).toBe(otpBefore);
     expect(await h.db.user.count({ where: { phone } })).toBe(1);
+    // Admin uchun audit yozuvi qoldiriladi.
+    await vi.waitFor(async () => expect(await h.db.auditLog.count({ where: { action: 'AUTH_REGISTER_DUPLICATE_ATTEMPT', targetId: user.id } })).toBeGreaterThan(0));
     const again = await registerAgain(PASSWORD, '10.1.0.22');
     expect(again.status).toBe(201);
     expect(again.data).toMatchObject({ existingAccount: true, accountNumber: before, verificationRequired: true });
@@ -626,7 +662,7 @@ describe('K03 — OTP', () => {
     const statuses: number[] = [];
     for (let i = 0; i < 5; i += 1) statuses.push((await h.api('POST', '/otp/verify', { ip, body: { phone, code: wrong } })).status);
     expect(statuses).toEqual([400, 400, 400, 400, 429]);
-    expect((await h.api('POST', '/otp/verify', { ip, body: { phone, code: data.developmentCode } })).status).toBe(400);
+    expect((await h.api('POST', '/otp/verify', { ip, body: { phone, code: data.developmentCode } })).status).toBe(429); // raqam bazada bor-yo‘qligidan qat’i nazar bir xil: urinishlar tugagach to‘g‘ri kod ham rad etiladi
   });
 
   it('enforces the 60 s resend cooldown and the hourly cap', async () => {
