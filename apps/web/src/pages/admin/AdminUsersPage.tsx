@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { Ban, CheckCircle2, ChevronRight, Search, Snowflake, Trash2 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Ban, CheckCircle2, Search, Snowflake, Trash2 } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
@@ -55,10 +55,23 @@ function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminU
   const deleted = user.status === 'DELETED';
   const isAdmin = user.roles.includes('ADMIN');
   const workState = masterWorkState(user);
+  const navigate = useNavigate();
+  const profilePath = `/admin/foydalanuvchilar/${user.accountNumber}`;
 
   return (
-    <div className="gm-card gm-user-card">
-      <Link to={`/admin/foydalanuvchilar/${user.accountNumber}`} className="gm-user-card__main gm-user-card__link" aria-label={`${displayName(user)} profilini ochish`}>
+    <div
+      className="gm-card gm-card--clickable gm-user-card"
+      role="link"
+      tabIndex={0}
+      aria-label={`${displayName(user)} profilini ochish`}
+      onClick={() => navigate(profilePath)}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        navigate(profilePath);
+      }}
+    >
+      <div className="gm-user-card__main gm-user-card__link">
         <span className="gm-avatar" aria-hidden="true">
           {initials(displayName(user))}
         </span>
@@ -83,15 +96,14 @@ function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminU
             </p>
           )}
         </div>
-        <ChevronRight size={20} className="gm-user-card__go" aria-hidden="true" />
-      </Link>
+      </div>
 
       {isAdmin && (
         <p className="gm-card__meta">Admin akkauntlarni bu yerdan muzlatish, bloklash yoki o‘chirish mumkin emas.</p>
       )}
 
       {!deleted && !isAdmin && (
-        <div className="gm-action-row">
+        <div className="gm-action-row" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
           {restricted ? (
             <Button size="sm" onClick={() => onAction(user, 'ACTIVATE')}>
               <CheckCircle2 size={16} /> Faollashtirish

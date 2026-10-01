@@ -864,9 +864,33 @@ html {
   outline-offset: 4px;
 }
 
-.gm-user-card__go {
-  flex: none;
-  align-self: center;
-  margin-left: auto;
-  color: var(--gm-color-text-muted);
+
+/* Foydalanuvchi kartochkasi: ustiga borilganda ko‘tariladi, chegarasi rangga kiradi */
+.gm-user-card.gm-card--clickable:hover h3 {
+  color: var(--gm-color-primary);
+}
+
+.gm-user-card .gm-avatar {
+  transition: transform 0.18s var(--gm-ease);
+}
+
+.gm-user-card.gm-card--clickable:hover .gm-avatar {
+  transform: scale(1.06);
+}
+
+.gm-user-card.gm-card--clickable:active {
+  transform: translateY(0);
+  box-shadow: var(--gm-shadow-sm);
+}
+
+/* Boshqa joylardagi foydalanuvchi havolalari (ism · ID) */
+.gm-userref {
+  border-radius: 6px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.gm-userref:hover {
+  background: var(--gm-color-primary-soft);
+  color: var(--gm-color-primary);
+  text-decoration: none;
 }
