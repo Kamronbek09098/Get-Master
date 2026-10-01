@@ -9,6 +9,7 @@ import { panelOf } from '../../common/utils/panel';
 import { CommunicationService } from './communication.service';
 import { OpenConversationDto, OpenDirectConversationDto } from './dto/conversation.dto';
 import { EditMessageDto, ReactMessageDto, SendMessageDto } from './dto/message.dto';
+import { ReplyAccessDto } from './dto/reply-access.dto';
 
 @Controller('conversations')
 export class CommunicationController {
@@ -30,6 +31,18 @@ export class CommunicationController {
   @Roles(Role.ADMIN)
   openSupport(@CurrentUser('sub') adminId: string, @Param('userId', ParseUUIDPipe) userId: string, @Req() req: Request) {
     return this.communicationService.openSupport(adminId, userId, panelOf(req));
+  }
+
+  /** Administrator: foydalanuvchi shu suhbatga yozishi mumkinmi — belgilaydi. */
+  @Patch(':id/reply-access')
+  @Roles(Role.ADMIN)
+  setReplyAccess(
+    @CurrentUser('sub') adminId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ReplyAccessDto,
+    @Req() req: Request,
+  ) {
+    return this.communicationService.setUserCanReply(adminId, id, dto.allowed, panelOf(req));
   }
 
   @Get()

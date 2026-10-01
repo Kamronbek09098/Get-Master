@@ -152,6 +152,7 @@ export const router = createBrowserRouter([
           { path: '/admin/audit', element: admin(<AdminAuditPage />) },
           { path: '/admin/devops', element: admin(<AdminDevOpsPage />) },
           { path: '/admin/suhbatlar', element: admin(<AdminChatsPage />) },
+          { path: '/admin/xabarlar', element: admin(<ChatPage />) },
           { path: '/bildirishnomalar', element: <NotificationsPage /> },
           { path: '/sozlamalar', element: <SettingsPage /> },
         ],

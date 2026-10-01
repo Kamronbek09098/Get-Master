@@ -12,6 +12,14 @@ export const communicationService = {
   openWithMaster(masterId: string) {
     return apiPost<Conversation>('/conversations/direct', { masterId });
   },
+  /** Administrator: foydalanuvchi bilan suhbat ochadi (yoki mavjudini qaytaradi). */
+  openSupport(userId: string) {
+    return apiPost<Conversation>(`/conversations/support/${userId}`);
+  },
+  /** Administrator: foydalanuvchi shu suhbatga yozishi mumkinmi. */
+  setReplyAccess(conversationId: string, allowed: boolean) {
+    return apiPatch<Conversation>(`/conversations/${conversationId}/reply-access`, { allowed });
+  },
   openForOrder(orderId: string) {
     return apiPost<Conversation>('/conversations', { orderId });
   },

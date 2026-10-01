@@ -514,6 +514,8 @@ model MasterProfile {
   userId           String                   @unique @db.Uuid
   bio              String?
   profession       String?                  @db.VarChar(150)
+  /** Ish joyi: ish xona, kompaniya yoki muassasa nomi (oddiy matn). */
+  workPlace        String?                  @map("work_place") @db.VarChar(150)
   experienceYears  Int?                     @map("experience_years")
   status           MasterStatus             @default(INACTIVE)
   verification     MasterVerificationStatus @default(PENDING)
@@ -927,6 +929,8 @@ model Conversation {
   type         ConversationType
   orderId      String?                   @unique @db.Uuid
   directKey    String?                   @unique @map("direct_key") @db.VarChar(80)
+  /** SUPPORT (admin) suhbati: administrator foydalanuvchiga javob yozishga ruxsat berganmi. */
+  userCanReply Boolean                   @default(false) @map("user_can_reply")
   createdAt    DateTime                  @default(now())
   updatedAt    DateTime                  @updatedAt
   order        Order?                    @relation(fields: [orderId], references: [id], onDelete: Cascade)

@@ -27,6 +27,7 @@ const MAX_PORTFOLIO_ITEMS = 20;
 const PUBLIC_MASTER_SELECT = {
   id: true,
   profession: true,
+  workPlace: true,
   bio: true,
   experienceYears: true,
   workRadiusKm: true,
@@ -85,6 +86,10 @@ export class MasterService {
       select: { status: true },
     });
     if (!user || user.status !== 'ACTIVE') throw new ForbiddenException(ERRORS.ONLY_ACTIVE_CAN_BECOME_MASTER);
+    // Radius faqat markaz (manzil) bilan birga: markazsiz radius saqlanmaydi.
+    if (dto.workRadiusKm != null && (dto.latitude == null || dto.longitude == null)) {
+      throw new BadRequestException(ERRORS.MASTER_RADIUS_NEEDS_CENTER);
+    }
 
     try {
       const profile = await this.db.$transaction(async (tx) => {
@@ -94,6 +99,7 @@ export class MasterService {
             userId,
             profession: dto.profession.trim(),
             bio: dto.bio?.trim(),
+            workPlace: dto.workPlace?.trim() || undefined,
             experienceYears: dto.experienceYears,
             workRadiusKm: dto.workRadiusKm,
             latitude: dto.latitude,
@@ -127,12 +133,15 @@ export class MasterService {
 
   async update(userId: string, dto: UpdateMasterDto) {
     const profile = await this.requireOwn(userId);
+    const hasCenter = (dto.latitude ?? profile.latitude) != null && (dto.longitude ?? profile.longitude) != null;
+    if (dto.workRadiusKm != null && !hasCenter) throw new BadRequestException(ERRORS.MASTER_RADIUS_NEEDS_CENTER);
     await this.db.user.update({ where: { id: userId }, data: this.nameData(dto) });
     const updated = await this.db.masterProfile.update({
       where: { id: profile.id },
       data: {
         profession: dto.profession?.trim(),
         bio: dto.bio?.trim(),
+        workPlace: dto.workPlace === undefined ? undefined : dto.workPlace.trim() || null,
         experienceYears: dto.experienceYears,
         workRadiusKm: dto.workRadiusKm,
         latitude: dto.latitude,

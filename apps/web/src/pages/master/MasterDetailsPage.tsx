@@ -38,6 +38,7 @@ export function MasterDetailsPage() {
           <div className="gm-profile-hero__who">
             <h1>{name}</h1>
             <p>{data.profession ?? 'Kasb ko‘rsatilmagan'}</p>
+            {data.workPlace && <p>{data.workPlace}</p>}
             <div className="gm-profile-hero__badges">
               <TrustBadge verification={data.verification} />
             </div>

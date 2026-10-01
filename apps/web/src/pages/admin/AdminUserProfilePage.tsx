@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
-import { Check, Copy, KeyRound, Ban, CheckCircle2, MapPin, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench, ChevronRight } from 'lucide-react';
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Check, Copy, KeyRound, MessageCircle, Ban, CheckCircle2, MapPin, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -18,6 +18,7 @@ import { useAdminUserByNumber } from '@/features/admin/hooks/useAdmin';
 import { accountPath } from '@/features/admin/components/AccountLink';
 import { actionInfo } from '@/features/admin/audit-labels';
 import { useMe } from '@/features/session/hooks/useMe';
+import { useOpenSupportChat } from '@/features/communication/hooks/useCommunication';
 import { UserActionDialog } from '@/features/admin/components/UserActionDialog';
 import { PasswordResetDialog } from '@/features/admin/components/PasswordResetDialog';
 import type { UserAction } from '@/features/admin/user-actions';
@@ -69,6 +70,8 @@ export function AdminUserProfilePage() {
   const [action, setAction] = useState<UserAction | null>(null);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [loginCopied, setLoginCopied] = useState(false);
+  const navigate = useNavigate();
+  const openChat = useOpenSupportChat();
   const number = id && /^\d{1,9}$/.test(id) ? Number(id) : null;
   const user = useAdminUserByNumber(number);
 
@@ -80,6 +83,7 @@ export function AdminUserProfilePage() {
 
   return (
     <div className="gm-uprofile">
+      {openChat.isError && <Alert tone="danger">{getErrorMessage(openChat.error)}</Alert>}
       <Link to="/admin/foydalanuvchilar" className="gm-uprofile__back">
         <ArrowLeft size={16} /> Foydalanuvchilar
       </Link>
@@ -126,6 +130,16 @@ export function AdminUserProfilePage() {
                     <Trash2 size={16} /> O‘chirish
                   </Button>
                 </>
+              )}
+              {!data.roles.includes('ADMIN') && data.status !== 'DELETED' && (
+                <Button
+                  size="sm"
+                  className="gm-btn-chip gm-btn-chip--accent"
+                  loading={openChat.isPending}
+                  onClick={() => openChat.mutate(data.id, { onSuccess: (conversation) => navigate(`/admin/xabarlar?suhbat=${conversation.id}`) })}
+                >
+                  <MessageCircle size={16} /> Chat orqali yozish
+                </Button>
               )}
               <Link to={`/admin/audit?actor=${data.accountNumber}`}>
                 <Button size="sm" variant="secondary">

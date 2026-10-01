@@ -1978,3 +1978,48 @@ body:has(.gm-messenger) .gm-footer {
   color: var(--gm-color-text);
   border-radius: 16px;
 }
+
+/* Administrator suhbati */
+.gm-chat-avatar--admin {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #4338ca, #6366f1);
+  color: #fff;
+}
+.gm-chat-readonly {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 14px 16px;
+  border-top: 1px solid var(--gm-color-border);
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-text-muted);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.gm-messenger__access {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 12px;
+}
+.gm-messenger__access .gm-switch {
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+@media (max-width: 560px) {
+  .gm-messenger__access .gm-toggle__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}

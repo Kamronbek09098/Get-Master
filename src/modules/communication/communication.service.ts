@@ -159,6 +159,37 @@ export class CommunicationService {
     }
   }
 
+  /**
+   * Administrator foydalanuvchiga suhbatda yozish huquqini beradi yoki oladi. Standart holatda foydalanuvchi yoza olmaydi.
+   * O‘zgarish suhbatda tizim xabari sifatida ko‘rinadi, shunda foydalanuvchi buni biladi.
+   */
+  async setUserCanReply(adminId: string, conversationId: string, allowed: boolean, panel: Panel | null = null) {
+    const access = await this.requireParticipant(adminId, conversationId, panel);
+    if (access.type !== 'SUPPORT' || !access.adminIds.includes(adminId)) throw new ForbiddenException(ERRORS.SUPPORT_ADMIN_ONLY);
+    if (access.userCanReply === allowed) return this.findOne(adminId, conversationId, panel);
+    await this.db.$transaction([
+      this.db.conversation.update({ where: { id: conversationId }, data: { userCanReply: allowed, updatedAt: new Date() } }),
+      this.db.message.create({
+        data: {
+          conversationId,
+          senderId: adminId,
+          senderPanel: panel,
+          type: 'SYSTEM',
+          text: allowed ? 'Admin sizga yozishga ruxsat berdi. Endi javob yozishingiz mumkin.' : 'Admin javob yozishni yopdi. Hozircha bu suhbatga yozib bo‘lmaydi.',
+        },
+      }),
+      this.db.auditLog.create({
+        data: {
+          actorId: adminId,
+          action: allowed ? 'ADMIN_CHAT_REPLY_ALLOWED' : 'ADMIN_CHAT_REPLY_DENIED',
+          targetType: 'Conversation',
+          targetId: conversationId,
+        },
+      }),
+    ]);
+    return this.findOne(adminId, conversationId, panel);
+  }
+
   /** Barcha suhbatlar bo‘yicha o‘qilmagan xabarlar soni (menyudagi belgi uchun). */
   async unreadTotal(userId: string, panel: Panel | null = null) {
     const mine = await this.db.conversationParticipant.findMany({
@@ -267,7 +298,7 @@ export class CommunicationService {
   async createMessage(userId: string, conversationId: string, dto: SendMessageDto, panel: Panel | null = null) {
     const conversation = await this.requireParticipant(userId, conversationId, panel);
     // Administrator xabari: foydalanuvchi unga javob yoza olmaydi (adminga to‘g‘ridan-to‘g‘ri yozib bo‘lmaydi).
-    if (conversation.type === 'SUPPORT' && !conversation.adminIds.includes(userId)) throw new ForbiddenException(ERRORS.SUPPORT_REPLY_FORBIDDEN);
+    if (conversation.type === 'SUPPORT' && !conversation.adminIds.includes(userId) && !conversation.userCanReply) throw new ForbiddenException(ERRORS.SUPPORT_REPLY_FORBIDDEN);
     if (conversation.order && CLOSED_ORDER_STATUSES.includes(conversation.order.status)) {
       throw new ConflictException(ERRORS.CHAT_READ_ONLY(conversation.order.status));
     }
@@ -373,7 +404,7 @@ export class CommunicationService {
 
   async react(userId: string, conversationId: string, messageId: string, emoji: string | null, panel: Panel | null = null) {
     const access = await this.requireParticipant(userId, conversationId, panel);
-    if (access.type === 'SUPPORT' && !access.adminIds.includes(userId)) throw new ForbiddenException(ERRORS.SUPPORT_REPLY_FORBIDDEN);
+    if (access.type === 'SUPPORT' && !access.adminIds.includes(userId) && !access.userCanReply) throw new ForbiddenException(ERRORS.SUPPORT_REPLY_FORBIDDEN);
     const message = await this.db.message.findFirst({ where: { id: messageId, conversationId }, select: { deletedAt: true } });
     if (!message || message.deletedAt) throw new NotFoundException(ERRORS.MESSAGE_NOT_FOUND);
     const key = { messageId, userId, panel: panel ?? '' };
@@ -452,6 +483,7 @@ export class CommunicationService {
       select: {
         id: true,
         type: true,
+        userCanReply: true,
         order: { select: { status: true } },
         participants: { select: { userId: true, roles: true } },
       },
@@ -462,7 +494,7 @@ export class CommunicationService {
     const own = conversation.participants.find((p) => p.userId === userId);
     if (!own || !holdsPanel(own.roles, panel)) throw new ForbiddenException(ERRORS.NOT_CONVERSATION_PARTICIPANT);
     const adminIds = conversation.participants.filter((p) => p.roles.includes('ADMIN')).map((p) => p.userId);
-    return { id: conversation.id, type: conversation.type, order: conversation.order, participantIds, adminIds };
+    return { id: conversation.id, type: conversation.type, userCanReply: conversation.userCanReply, order: conversation.order, participantIds, adminIds };
   }
 
   private async requireOwnMessage(userId: string, conversationId: string, messageId: string, panel: Panel | null) {

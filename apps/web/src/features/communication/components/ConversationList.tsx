@@ -21,7 +21,8 @@ export function ConversationList({ selectedId, onSelect }: { selectedId: string 
   const [query, setQuery] = useState('');
   const [onlyUnread, setOnlyUnread] = useState(false);
   const deleteConversation = useDeleteConversation();
-  const [toDelete, setToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [toDelete, setToDelete] = useState<{ id: string; name: string; support: boolean } | null>(null);
+  const isAdmin = (env.appRole ?? role) === 'ADMIN';
   const [forEveryone, setForEveryone] = useState(false);
 
   const items = useMemo(() => conversations.data?.items ?? [], [conversations.data]);
@@ -105,10 +106,10 @@ export function ConversationList({ selectedId, onSelect }: { selectedId: string 
                   onClick={() => onSelect(conversation.id)}
                   onContextMenu={(event) => {
                     event.preventDefault();
-                    setToDelete({ id: conversation.id, name });
+                    setToDelete({ id: conversation.id, name, support: conversation.type === 'SUPPORT' });
                   }}
                 >
-                  <ChatAvatar name={name} seed={conversation.counterpart?.id ?? conversation.id} />
+                  <ChatAvatar name={name} seed={conversation.counterpart?.id ?? conversation.id} admin={conversation.type === 'SUPPORT' && !isAdmin} />
                   <span className="gm-convo__body">
                     <span className="gm-convo__top">
                       <strong>{name}</strong>
@@ -130,7 +131,7 @@ export function ConversationList({ selectedId, onSelect }: { selectedId: string 
                   aria-label={`${name} bilan suhbatni o‘chirish`}
                   onClick={(event) => {
                     event.stopPropagation();
-                    setToDelete({ id: conversation.id, name });
+                    setToDelete({ id: conversation.id, name, support: conversation.type === 'SUPPORT' });
                   }}
                 >
                   <Trash2 size={16} />
@@ -170,7 +171,7 @@ export function ConversationList({ selectedId, onSelect }: { selectedId: string 
           });
         }}
       >
-        {toDelete && (
+        {toDelete && (!toDelete.support || isAdmin) && (
           <label className="gm-delete-both">
             <input type="checkbox" checked={forEveryone} onChange={(event) => setForEveryone(event.target.checked)} />
             <span>{toDelete.name} uchun ham o‘chirish</span>

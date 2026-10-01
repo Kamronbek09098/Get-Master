@@ -51,6 +51,8 @@ export interface Conversation {
   id: string;
   type: 'ORDER' | 'SUPPORT' | 'DIRECT';
   orderId: string | null;
+  /** SUPPORT (admin) suhbati: foydalanuvchi yoza oladimi — administrator belgilaydi. */
+  userCanReply?: boolean;
   order: { id: string; status: OrderStatus } | null;
   counterpart: ChatUser | null;
   /** Suhbatdoshi usta bo‘lsa, mijoz chatdan unga buyurtma yubora oladi. */

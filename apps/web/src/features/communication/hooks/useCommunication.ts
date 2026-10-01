@@ -133,6 +133,27 @@ export function useOpenMasterChat() {
   });
 }
 
+/** Administrator foydalanuvchiga yozish uchun suhbat ochadi. */
+export function useOpenSupportChat() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => communicationService.openSupport(userId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
+  });
+}
+
+/** Administrator: foydalanuvchiga suhbatda yozishga ruxsat beradi yoki oladi. */
+export function useSetReplyAccess(conversationId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (allowed: boolean) => communicationService.setReplyAccess(conversationId, allowed),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      void queryClient.invalidateQueries({ queryKey: messagesKey(conversationId) });
+    },
+  });
+}
+
 export function useMarkRead(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({

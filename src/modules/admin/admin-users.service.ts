@@ -143,7 +143,7 @@ export class AdminUsersService {
     });
     if (!user) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
 
-    const [activeDevices, lastSession, recent] = await Promise.all([
+    const [activeDevices, lastSession, recent, ordersAsMaster] = await Promise.all([
       this.db.deviceSession.count({ where: { userId, status: SessionStatus.ACTIVE } }),
       this.db.deviceSession.findFirst({ where: { userId }, orderBy: { lastSeenAt: 'desc' }, select: { lastSeenAt: true, ipAddress: true, userAgent: true, panel: true } }),
       this.db.auditLog.findMany({
@@ -152,12 +152,14 @@ export class AdminUsersService {
         take: 10,
         select: { id: true, action: true, reason: true, actorId: true, createdAt: true, actor: { select: { accountNumber: true } } },
       }),
+      // «Buyurtmalar» soni «Oxirgi buyurtmalar» ro‘yxati bilan bir xil bo‘lishi uchun usta sifatidagilari ham sanaladi.
+      user.masterProfile ? this.db.order.count({ where: { masterId: user.masterProfile.id } }) : Promise.resolve(0),
     ]);
     const { userRoles, _count, ...rest } = user;
     return {
       ...rest,
       roles: userRoles.map((item) => item.role),
-      stats: { orders: _count.ordersAsCustomer, requests: _count.requests, messages: _count.sentMessages, reviews: _count.reviews, activeDevices },
+      stats: { orders: _count.ordersAsCustomer + ordersAsMaster, requests: _count.requests, messages: _count.sentMessages, reviews: _count.reviews, activeDevices },
       lastSession,
       recentActivity: recent,
     };

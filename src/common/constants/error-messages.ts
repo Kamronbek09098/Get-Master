@@ -71,7 +71,8 @@ export const ERRORS = {
     const wait = minutes >= 120 ? `${Math.ceil(minutes / 60)} soat` : minutes >= 2 ? `${minutes} daqiqa` : `${seconds} soniya`;
     return `Juda ko‘p urinish qilindi. ${wait}dan keyin qayta urinib ko‘ring`;
   },
-  SUPPORT_REPLY_FORBIDDEN: 'Bu Admin xabari: unga javob yozib bo‘lmaydi',
+  SUPPORT_REPLY_FORBIDDEN: 'Admin hozircha sizga javob yozishga ruxsat bermagan',
+  SUPPORT_ADMIN_ONLY: 'Bu amalni faqat suhbatdagi administrator bajara oladi',
   SUPPORT_DELETE_ADMIN_ONLY: 'Admin suhbatini faqat administrator hamma uchun o‘chira oladi',
   SUPPORT_TARGET_INVALID: 'Foydalanuvchi topilmadi yoki unga xabar yozib bo‘lmaydi',
   RATE_LIMIT_EXCEEDED: 'So‘rovlar soni oshib ketdi, keyinroq urinib ko‘ring',
@@ -86,6 +87,7 @@ export const ERRORS = {
   MASTER_NOT_FOUND: 'Usta topilmadi',
   MASTER_PROFILE_NOT_FOUND: 'Usta profili topilmadi',
   MASTER_PROFILE_REQUIRED: 'Usta profili talab qilinadi',
+  MASTER_RADIUS_NEEDS_CENTER: 'Ish radiusi uchun avval ish hududi manzilini tanlang',
   MASTER_PROFILE_EXISTS: 'Usta profili allaqachon mavjud',
   NOT_MASTER_PROFILE_OWNER: 'Bu usta profili sizga tegishli emas',
   ONLY_ACTIVE_CAN_BECOME_MASTER: 'Faqat faol hisob usta bo‘lishi mumkin',

@@ -34,6 +34,11 @@ export class CreateMasterDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(150)
+  workPlace?: string;
+
+  @IsOptional()
+  @IsString()
   @MaxLength(2000)
   bio?: string;
 

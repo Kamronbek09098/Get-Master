@@ -11,6 +11,8 @@ export interface MasterProfile {
   id: string;
   userId: string;
   profession: string | null;
+  /** Ish joyi: ish xona, kompaniya yoki muassasa nomi. */
+  workPlace?: string | null;
   bio: string | null;
   experienceYears: number | null;
   status: MasterStatus;
@@ -33,6 +35,7 @@ export interface MasterProfile {
 export interface PublicMaster {
   id: string;
   profession: string | null;
+  workPlace?: string | null;
   bio: string | null;
   experienceYears: number | null;
   ratingAvg: string;
@@ -55,6 +58,7 @@ export interface MasterInput {
   firstName?: string;
   lastName?: string;
   profession: string;
+  workPlace?: string;
   bio?: string;
   experienceYears?: number;
 }

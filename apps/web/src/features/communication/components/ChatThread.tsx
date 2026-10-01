@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ShieldCheck } from 'lucide-react';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
@@ -27,6 +28,9 @@ export function ChatThread({ conversation }: { conversation: Conversation }) {
   const [orderOpen, setOrderOpen] = useState(false);
   const preferredRole = useAuthStore((state) => state.preferredRole);
   const isCustomerPanel = (env.appRole ?? preferredRole) === 'CUSTOMER';
+  const isAdmin = (env.appRole ?? preferredRole) === 'ADMIN';
+  // Administrator xabari: admin ruxsat bermaguncha foydalanuvchi javob yoza olmaydi (yozish maydoni, javob va reaksiya yo‘q).
+  const readOnly = conversation.type === 'SUPPORT' && !isAdmin && !conversation.userCanReply;
   const canOrder = isCustomerPanel && !!conversation.counterpartIsMaster;
 
   const messages = useMessages(conversation.id);
@@ -55,13 +59,22 @@ export function ChatThread({ conversation }: { conversation: Conversation }) {
           setDeleting(message);
         }}
         onRetry={(message) => send.mutate({ text: message.text ?? '', tempId: message.id, attachments: message.attachments ?? undefined })}
-        onReply={(message) => {
-          setEditing(null);
-          setReplyTo(message);
-        }}
-        onReact={(message, emoji) => react.mutate({ messageId: message.id, emoji })}
+        onReply={
+          readOnly
+            ? undefined
+            : (message) => {
+                setEditing(null);
+                setReplyTo(message);
+              }
+        }
+        onReact={readOnly ? undefined : (message, emoji) => react.mutate({ messageId: message.id, emoji })}
       />
       {error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
+      {readOnly ? (
+        <p className="gm-chat-readonly" role="note">
+          <ShieldCheck size={16} aria-hidden="true" /> Bu Admin xabari. Hozircha javob yozish yopiq — Admin ruxsat bersa, yozishingiz mumkin bo‘ladi.
+        </p>
+      ) : (
       <Composer
         conversationId={conversation.id}
         editing={editing}
@@ -76,6 +89,7 @@ export function ChatThread({ conversation }: { conversation: Conversation }) {
         onEditLast={lastEditable ? () => setEditing(lastEditable) : undefined}
         onOrder={canOrder ? () => setOrderOpen(true) : undefined}
       />
+      )}
       {orderOpen && <DirectOrderDialog conversationId={conversation.id} masterName={accountName(conversation.counterpart)} onClose={() => setOrderOpen(false)} />}
       <ConfirmDialog
         open={!!deleting}

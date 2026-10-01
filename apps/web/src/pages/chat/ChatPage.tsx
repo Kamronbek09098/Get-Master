@@ -1,15 +1,26 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, CornerDownLeft, ImagePlus, Keyboard, MessageCircle, Pencil, Reply } from 'lucide-react';
+import { ArrowLeft, CornerDownLeft, ImagePlus, Keyboard, MessageCircle, Pencil, Reply, Users } from 'lucide-react';
 import { env } from '@/lib/env';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { ChatThread } from '@/features/communication/components/ChatThread';
 import { ConversationList } from '@/features/communication/components/ConversationList';
-import { useConversations } from '@/features/communication/hooks/useCommunication';
+import { useConversations, useSetReplyAccess } from '@/features/communication/hooks/useCommunication';
+import { Switch } from '@/components/ui/Switch';
 import { counterpartName } from '@/features/communication/names';
 import { useAuthStore } from '@/store/auth.store';
 import { cx } from '@/lib/utils';
 import '@/features/communication/chat.css';
+
+/** Administrator: foydalanuvchi shu suhbatga yozishi mumkinmi — belgilaydi. */
+function ReplyAccessSwitch({ conversationId, allowed }: { conversationId: string; allowed: boolean }) {
+  const setAccess = useSetReplyAccess(conversationId);
+  return (
+    <div className="gm-messenger__access" title="Yoqilsa, foydalanuvchi shu suhbatga javob yoza oladi">
+      <Switch label="Foydalanuvchi yoza oladi" checked={allowed} disabled={setAccess.isPending} onChange={(checked) => setAccess.mutate(checked)} />
+    </div>
+  );
+}
 
 export function ChatPage() {
   const [params, setParams] = useSearchParams();
@@ -26,6 +37,24 @@ export function ChatPage() {
 
   const noConversations = conversations.isSuccess && conversations.data.items.length === 0;
   const asMaster = (env.appRole ?? role) === 'MASTER';
+  const isAdmin = (env.appRole ?? role) === 'ADMIN';
+
+  if (noConversations && isAdmin) {
+    return (
+      <div className="gm-messenger gm-messenger--blank">
+        <div className="gm-blank">
+          <span className="gm-blank__icon">
+            <MessageCircle size={40} strokeWidth={1.5} />
+          </span>
+          <h1>Xabarlar hali yo‘q</h1>
+          <p>Foydalanuvchiga yozish uchun «Foydalanuvchilar» bo‘limida kerakli akkauntni oching va «Chat orqali yozish» tugmasini bosing. Xabar foydalanuvchida oddiy chat kabi, «Admin» nomi bilan ko‘rinadi.</p>
+          <Link to="/admin/foydalanuvchilar" className="gm-blank__cta">
+            <Users size={16} aria-hidden="true" /> Foydalanuvchilar
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (noConversations) {
     return (
@@ -69,7 +98,7 @@ export function ChatPage() {
     <div className={cx('gm-messenger', selectedId && 'gm-messenger--open')}>
       <aside className="gm-messenger__list" aria-label="Suhbatlar">
         <header className="gm-messenger__title">
-          <h1>Chat</h1>
+          <h1>{isAdmin ? 'Xabarlar' : 'Chat'}</h1>
         </header>
         <div className="gm-messenger__scroll">
           <ConversationList selectedId={selectedId} onSelect={select} />
@@ -83,11 +112,12 @@ export function ChatPage() {
               <button type="button" className="gm-messenger__back" onClick={() => select(null)} aria-label="Suhbatlarga qaytish">
                 <ArrowLeft size={20} />
               </button>
-              <ChatAvatar name={name} seed={selected.counterpart?.id ?? selected.id} />
+              <ChatAvatar name={name} seed={selected.counterpart?.id ?? selected.id} admin={selected.type === 'SUPPORT' && !isAdmin} />
               <div className="gm-messenger__who">
                 <strong>{name}</strong>
-                <span>{selected.type === 'DIRECT' ? 'Buyurtmadan oldingi suhbat' : 'Buyurtma suhbati'}</span>
+                <span>{selected.type === 'SUPPORT' ? (isAdmin ? 'Administrator xabarlari' : 'Administrator') : selected.type === 'DIRECT' ? 'Buyurtmadan oldingi suhbat' : 'Buyurtma suhbati'}</span>
               </div>
+              {isAdmin && selected.type === 'SUPPORT' && <ReplyAccessSwitch conversationId={selected.id} allowed={selected.userCanReply === true} />}
             </header>
             <ChatThread key={selected.id} conversation={selected} />
           </>
