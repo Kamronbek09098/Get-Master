@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
@@ -41,8 +42,8 @@ export function LoginForm() {
         {...register('phoneLocal')}
       />
       <Input label="Parol" type="password" required error={errors.password?.message} {...register('password')} />
-      <Button type="submit" loading={login.isPending} fullWidth>
-        Kirish
+      <Button type="submit" loading={login.isPending} fullWidth className="gm-auth-submit">
+        Kirish <ArrowRight size={18} />
       </Button>
     </form>
   );

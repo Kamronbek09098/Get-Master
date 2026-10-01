@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { createHash } from 'node:crypto';
 import { fileURLToPath, URL } from 'node:url';
 
 const PANELS: Record<string, { label: string; color: string }> = {
@@ -8,13 +9,49 @@ const PANELS: Record<string, { label: string; color: string }> = {
   ADMIN: { label: 'Admin paneli', color: '#B42318' },
 };
 
+/** Frontend uchun Content-Security-Policy: faqat o‘z manbalar, API va kerakli tashqi xizmatlar (xarita, shriftlar). */
+function buildCsp(html: string, apiBase: string | undefined): string {
+  let apiOrigin = '';
+  try {
+    if (apiBase) apiOrigin = new URL(apiBase).origin;
+  } catch {
+    /* noto‘g‘ri URL — faqat 'self' */
+  }
+  // Index.html ichidagi inline mavzu skripti hash bilan ruxsat etiladi (unsafe-inline kerak emas).
+  const inlineHashes = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => `'sha256-${createHash('sha256').update(m[1] ?? '').digest('base64')}'`);
+  return [
+    "default-src 'self'",
+    `script-src 'self' ${inlineHashes.join(' ')}`.trim(),
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    `img-src 'self' data: blob: https: ${apiOrigin}`.trim(),
+    `media-src 'self' blob: https: ${apiOrigin}`.trim(),
+    `connect-src 'self' ${apiOrigin}`.trim(),
+    "worker-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ');
+}
+
 export default defineConfig(({ mode }) => {
-  const role = loadEnv(mode, process.cwd(), '').VITE_APP_ROLE;
+  const env = loadEnv(mode, process.cwd(), '');
+  const role = env.VITE_APP_ROLE;
   const panel = PANELS[role];
 
   return {
     plugins: [
       react(),
+      {
+        // Faqat production build: dev serverda HMR uchun CSP qo‘yilmaydi.
+        name: 'getmaster-csp',
+        apply: 'build',
+        transformIndexHtml: {
+          order: 'post',
+          handler: (html: string) =>
+            html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${buildCsp(html, env.VITE_API_BASE_URL)}" />`),
+        },
+      },
       {
         name: 'getmaster-panel',
         transformIndexHtml: (html: string) =>
@@ -41,9 +78,12 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       strictPort: true,
     },
+    // Production'da kod minifikatsiya qilinadi, source map chiqarilmaydi, console/debugger olib tashlanadi.
+    esbuild: mode === 'development' ? undefined : { drop: ['console', 'debugger'], legalComments: 'none' },
     build: {
       outDir: 'dist',
-      sourcemap: true,
+      sourcemap: false,
+      minify: 'esbuild',
     },
     test: {
       environment: 'jsdom',

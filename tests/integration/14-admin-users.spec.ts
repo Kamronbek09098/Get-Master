@@ -179,3 +179,26 @@ describe('PATCH /users/me/name', () => {
     expect((await h.patch('/users/me/name', undefined, { firstName: 'A', lastName: 'B' })).status).toBe(401);
   });
 });
+
+describe('admin and passwords — write-only, hashed only', () => {
+  it('no endpoint reveals a password; an admin can only set a new one, stored as a bcrypt hash, and the user is signed out everywhere', async () => {
+    const user = await createUser(h, ['CUSTOMER']);
+    expect((await h.get(`/admin/users/${user.id}/password`, admin.token)).status).toBe(404);
+
+    const fresh = 'Br4nd-New-Passw0rd!';
+    const set = await h.post(`/admin/users/${user.id}/password`, admin.token, { password: fresh, reason: 'Foydalanuvchi so‘rovi' });
+    expect(set.status).toBe(201);
+    expect(set.data).toEqual({ updated: true });
+    expect(JSON.stringify(set.body)).not.toContain(fresh);
+
+    const row = await h.db.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(row.passwordHash).not.toContain(fresh);
+    expect(await bcrypt.compare(fresh, row.passwordHash as string)).toBe(true);
+    expect(Object.keys(row)).not.toContain('passwordEnc');
+
+    const audit = await h.db.auditLog.findFirst({ where: { targetId: user.id, action: 'ADMIN_USER_PASSWORD_RESET' } });
+    expect(audit).toMatchObject({ actorId: admin.id });
+    expect(JSON.stringify(audit)).not.toContain(fresh);
+    expect((await h.get('/customers/me', user.token)).status).toBe(401);
+  });
+});

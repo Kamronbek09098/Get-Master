@@ -246,6 +246,11 @@ export const ERRORS = {
   REDIS_URL_REQUIRED: 'Production muhitida REDIS_URL majburiy',
   SMTP_FROM_REQUIRED: 'SMTP_HOST berilgan bo‘lsa, SMTP_FROM ham majburiy',
   PAYMENT_URL_INVALID: 'PAYMENT_PROVIDER_BASE_URL http(s) manzil bo‘lishi kerak',
+  PROD_OTP_ECHO_FORBIDDEN: 'Production’da OTP_DEV_ECHO yoqilmasligi kerak',
+  PROD_CORS_REQUIRED: 'Production’da CORS_ORIGINS aniq ko‘rsatilishi kerak',
+  PROD_CORS_UNSAFE: 'Production’da CORS_ORIGINS da “*” yoki oddiy http manzil bo‘lmasligi kerak',
+  PROD_SECRET_WEAK: 'Production’da JWT_SECRET namunaviy/oddiy qiymat bo‘lmasligi kerak',
+  PROD_ADMIN_PASSWORD_WEAK: 'Production’da ADMIN_PASSWORD kamida 12 belgi bo‘lishi kerak',
   COOKIE_SECURE_REQUIRED: 'Production muhitida AUTH_COOKIE_SECURE true bo‘lishi kerak',
 } as const;
 

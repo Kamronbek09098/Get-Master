@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Lock } from 'lucide-react';
 import { LoginForm } from '@/features/auth/components/LoginForm';
 import { env } from '@/lib/env';
 import { useAuthStore } from '@/store/auth.store';
@@ -12,11 +13,16 @@ export function LoginPage() {
       <p className="gm-auth-page__subtitle">Telefon raqami va parolingiz bilan kiring.</p>
       <LoginForm />
       {isAdmin ? (
-        !env.appRole && (
-          <p className="gm-auth-page__switch">
-            <Link to="/">Boshqa rolni tanlash</Link>
+        <>
+          <p className="gm-auth-page__note">
+            <Lock size={14} aria-hidden="true" /> Faqat vakolatli xodimlar uchun. Har bir kirish audit jurnaliga yoziladi.
           </p>
-        )
+          {!env.appRole && (
+            <p className="gm-auth-page__switch">
+              <Link to="/">Boshqa rolni tanlash</Link>
+            </p>
+          )}
+        </>
       ) : (
         <p className="gm-auth-page__switch">
           Akkauntingiz yo‘qmi? <Link to="/register">Ro‘yxatdan o‘tish</Link>

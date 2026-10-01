@@ -15,6 +15,8 @@ export function useRegister() {
     onSuccess: (result, variables) => {
       setPendingPhone(variables.phone);
       setDevCode(result.developmentCode ?? null);
+      // Parol faqat xotirada va faqat bir marta ko‘rsatish uchun; mavjud akkaunt bo‘lsa — umuman saqlanmaydi.
+      useAuthStore.getState().setNewCredentials(result.existingAccount ? null : { phone: variables.phone, password: variables.password });
     },
   });
 }

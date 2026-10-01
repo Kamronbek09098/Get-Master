@@ -16,7 +16,6 @@ import {
   UserStatus,
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-import { openPassword, sealPassword } from '../../common/security/password-vault';
 import { panelOf } from '../../common/utils/panel';
 import { authCookieNames } from '../../common/utils/panel';
 import { RedisService } from '../../infrastructure/redis/redis.service';
@@ -25,6 +24,7 @@ import { randomUUID } from 'node:crypto';
 import type { Request, Response } from 'express';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { OtpService } from '../otp/otp.service';
+import { TelegramAlertService } from '../../infrastructure/telegram/telegram-alert.service';
 import { SignInDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyOTPDto } from '../otp/dto/verify-otp.dto';
@@ -47,6 +47,7 @@ export class AuthService {
     private readonly otp: OtpService,
     private readonly config: ConfigService,
     private readonly redis: RedisService,
+    private readonly telegram: TelegramAlertService,
   ) {}
 
   async register(dto: RegisterDto, req: Request) {
@@ -99,14 +100,12 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
-    const passwordEnc = sealPassword(dto.password);
     const user = await this.withSerializableRetry(async (tx) => {
       const account = await tx.user.create({
         data: {
           phone,
           email,
           passwordHash,
-          passwordEnc,
           firstName: dto.firstName?.trim() || null,
           lastName: dto.lastName?.trim() || null,
           status: UserStatus.PENDING,
@@ -154,6 +153,8 @@ export class AuthService {
       select: {
         id: true,
         phone: true,
+        firstName: true,
+        lastName: true,
         status: true,
         deletedAt: true,
       },
@@ -204,6 +205,9 @@ export class AuthService {
       });
     });
 
+    // Yangi foydalanuvchi haqida xabar: faqat telefon va ism. Parol HECH QACHON yuborilmaydi.
+    this.telegram.notifyRegistration({ phone, name: [user.firstName, user.lastName].filter(Boolean).join(' ') });
+
     return updated;
   }
 
@@ -217,7 +221,6 @@ export class AuthService {
         id: true,
         phone: true,
         passwordHash: true,
-        passwordEnc: true,
         status: true,
         deletedAt: true,
       },
@@ -232,12 +235,6 @@ export class AuthService {
       throw new UnauthorizedException(ERRORS.INVALID_CREDENTIALS);
     }
     await this.redis.del(`loginfail:${attemptKey}`);
-    // Eski akkauntlarda shifrlangan nusxa yo‘q: to‘g‘ri parol kiritilganda bir marta saqlab qo‘yiladi.
-    if (user && !openPassword(user.passwordEnc)) {
-      const sealed = sealPassword(dto.password);
-      if (sealed) await this.db.user.update({ where: { id: user.id }, data: { passwordEnc: sealed } }).catch(() => undefined);
-    }
-
     if (
       user.status === UserStatus.BLOCKED ||
       user.status === UserStatus.SUSPENDED ||

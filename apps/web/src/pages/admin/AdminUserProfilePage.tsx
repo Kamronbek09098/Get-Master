@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
-import { Check, Copy, Eye, EyeOff, KeyRound, Ban, CheckCircle2, MapPin, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench, ChevronRight } from 'lucide-react';
+import { Check, Copy, KeyRound, Ban, CheckCircle2, MapPin, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -20,7 +20,6 @@ import { actionInfo } from '@/features/admin/audit-labels';
 import { useMe } from '@/features/session/hooks/useMe';
 import { UserActionDialog } from '@/features/admin/components/UserActionDialog';
 import { PasswordResetDialog } from '@/features/admin/components/PasswordResetDialog';
-import { useRevealUserPassword } from '@/features/admin/hooks/useAdmin';
 import type { UserAction } from '@/features/admin/user-actions';
 import type { AdminUser } from '@/features/admin/types';
 import './AdminUserProfilePage.css';
@@ -70,9 +69,6 @@ export function AdminUserProfilePage() {
   const [action, setAction] = useState<UserAction | null>(null);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [loginCopied, setLoginCopied] = useState(false);
-  const reveal = useRevealUserPassword();
-  const [passwordCopied, setPasswordCopied] = useState(false);
-  const revealed = reveal.data;
   const number = id && /^\d{1,9}$/.test(id) ? Number(id) : null;
   const user = useAdminUserByNumber(number);
 
@@ -177,49 +173,18 @@ export function AdminUserProfilePage() {
                   <span className="gm-cred__row">
                     <span className="gm-cred__key">Parol</span>
                     <span className="gm-cred__value">
-                      {revealed?.password ? (
-                        <strong className="gm-uprofile__pw">{revealed.password}</strong>
-                      ) : (
-                        <strong className="gm-cred__dots">••••••••••</strong>
-                      )}
+                      <strong className="gm-cred__dots">••••••••••</strong>
                     </span>
                     {!data.roles.includes('ADMIN') && data.status !== 'DELETED' && (
                       <span className="gm-cred__tools">
-                        {revealed?.password ? (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              className="gm-btn-chip"
-                              onClick={() => {
-                                void navigator.clipboard?.writeText(revealed.password ?? '');
-                                setPasswordCopied(true);
-                                window.setTimeout(() => setPasswordCopied(false), 1500);
-                              }}
-                            >
-                              {passwordCopied ? <Check size={15} /> : <Copy size={15} />} {passwordCopied ? 'Nusxalandi' : 'Nusxalash'}
-                            </Button>
-                            <Button size="sm" variant="secondary" className="gm-btn-chip" onClick={() => reveal.reset()}>
-                              <EyeOff size={15} /> Yashirish
-                            </Button>
-                          </>
-                        ) : (
-                          <Button size="sm" variant="secondary" className="gm-btn-chip" loading={reveal.isPending} onClick={() => reveal.mutate(data.id)}>
-                            <Eye size={15} /> Ko‘rsatish
-                          </Button>
-                        )}
                         <Button size="sm" className="gm-btn-chip gm-btn-chip--accent" onClick={() => setPasswordOpen(true)}>
-                          <KeyRound size={15} /> O‘zgartirish
+                          <KeyRound size={15} /> Yangi parol belgilash
                         </Button>
                       </span>
                     )}
                   </span>
                   <small className="gm-cred__note">
-                    {revealed && !revealed.password
-                      ? revealed.vaultEnabled
-                        ? 'Parol hali saqlanmagan — foydalanuvchi keyingi kirishida yoki parol o‘zgartirilganda paydo bo‘ladi.'
-                        : 'Ko‘rsatish o‘chirilgan (server kaliti sozlanmagan).'
-                      : 'Parol shifrlangan holda saqlanadi, uni faqat administrator ko‘ra oladi. Har bir ko‘rish auditga yoziladi.'}
+                    Parol faqat xeshlangan (qaytarib bo‘lmaydigan) ko‘rinishda saqlanadi — uni hech kim, jumladan administrator ham ko‘ra olmaydi. Faqat yangisini belgilash mumkin; bunda foydalanuvchi barcha qurilmalardan chiqariladi.
                   </small>
                 </span>
               </Field>

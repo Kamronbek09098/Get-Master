@@ -4,6 +4,11 @@ const config: CapacitorConfig = {
   appId: 'uz.getmaster.customer',
   appName: 'GetMaster',
   webDir: 'dist',
+  loggingBehavior: 'none',
+  android: {
+    allowMixedContent: false,
+    webContentsDebuggingEnabled: false
+  },
   plugins: {
     SystemBars: {
       insetsHandling: 'native',

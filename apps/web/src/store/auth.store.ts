@@ -8,6 +8,9 @@ interface AuthState {
   preferredRole: Role | null;
   pendingPhone: string | null;
   devCode: string | null;
+  /** Ro‘yxatdan o‘tgan foydalanuvchiga bir marta ko‘rsatish uchun (faqat xotirada, hech qayerda saqlanmaydi). */
+  newCredentials: { phone: string; password: string } | null;
+  setNewCredentials: (value: { phone: string; password: string } | null) => void;
   deviceLimit: { max: number; active: number } | null;
   setDeviceLimit: (limit: { max: number; active: number } | null) => void;
   setDevCode: (code: string | null) => void;
@@ -24,13 +27,15 @@ export const useAuthStore = create<AuthState>()(
       preferredRole: null,
       pendingPhone: null,
       devCode: null,
+      newCredentials: null,
+      setNewCredentials: (newCredentials) => set({ newCredentials }),
       deviceLimit: null,
       setDeviceLimit: (deviceLimit) => set({ deviceLimit }),
       setDevCode: (devCode) => set({ devCode }),
       setSession: (hasSession) => set({ hasSession }),
       setPreferredRole: (preferredRole) => set({ preferredRole: env.appRole ?? preferredRole }),
       setPendingPhone: (pendingPhone) => set({ pendingPhone }),
-      clear: () => set({ hasSession: false, pendingPhone: null, devCode: null, deviceLimit: null }),
+      clear: () => set({ hasSession: false, pendingPhone: null, devCode: null, deviceLimit: null, newCredentials: null }),
     }),
     {
       name: 'getmaster.auth-ui',

@@ -20,6 +20,9 @@ export function configureApp(app: INestApplication): void {
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+    res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+    res.setHeader('X-DNS-Prefetch-Control', 'off');
     // Shaxsiy ma'lumotli javoblar brauzer/proksi keshida qolmasin (fayl uzatish yo'li o'z Cache-Control'ini qo'yadi).
     res.setHeader('Cache-Control', 'no-store');
     if (config.get<string>('app.environment') === 'production') {

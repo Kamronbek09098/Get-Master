@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { MonitorSmartphone } from 'lucide-react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { NewCredentialsCard } from '@/features/auth/components/NewCredentialsCard';
 import { OtpForm } from '@/features/auth/components/OtpForm';
 import { useVerifyOtp, useVerifyRegistration } from '@/features/auth/hooks/useAuth';
 import { useAuthStore } from '@/store/auth.store';
@@ -17,6 +18,8 @@ export function OtpPage() {
   const preferredRole = useAuthStore((s) => s.preferredRole);
   const devCode = useAuthStore((s) => s.devCode);
   const deviceLimit = useAuthStore((s) => s.deviceLimit);
+  const hasNewCredentials = useAuthStore((s) => s.newCredentials !== null);
+  const [created, setCreated] = useState(false);
   const flow: Flow = (location.state as { flow?: Flow } | null)?.flow ?? 'login';
 
   const verifyRegistration = useVerifyRegistration();
@@ -25,6 +28,14 @@ export function OtpPage() {
   useEffect(() => {
     document.title = flow === 'register' ? `Ro‘yxatdan o‘tishni tasdiqlash — ${APP_TITLE}` : `Kirishni tasdiqlash — ${APP_TITLE}`;
   }, [flow]);
+
+  if (created) {
+    return (
+      <div className="gm-auth-page">
+        <NewCredentialsCard onContinue={() => navigate('/login', { replace: true })} />
+      </div>
+    );
+  }
 
   if (!pendingPhone) {
     return <Navigate to={flow === 'register' ? '/register' : '/login'} replace />;
@@ -37,7 +48,13 @@ export function OtpPage() {
     if (isRegisterFlow) {
       verifyRegistration.mutate(
         { phone: pendingPhone as string, code: values.code },
-        { onSuccess: () => navigate('/login', { replace: true }) },
+        {
+          onSuccess: () => {
+            // Login va parol bir marta ko‘rsatiladi; ko‘rsatiladigan narsa bo‘lmasa — to‘g‘ridan-to‘g‘ri kirishga.
+            if (hasNewCredentials) setCreated(true);
+            else navigate('/login', { replace: true });
+          },
+        },
       );
       return;
     }

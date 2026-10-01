@@ -39,10 +39,6 @@ export function useSetUserStatus() {
 }
 
 /** Faqat administrator: saqlangan parolni ko‘rsatadi (har bir ko‘rish auditga yoziladi). */
-export function useRevealUserPassword() {
-  return useMutation({ mutationFn: (id: string) => adminService.revealUserPassword(id) });
-}
-
 export function useSetUserPassword() {
   const queryClient = useQueryClient();
   return useMutation({

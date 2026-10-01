@@ -103,5 +103,35 @@ export function validate(config: Record<string, unknown>) {
     throw new Error(ERRORS.COOKIE_SECURE_REQUIRED);
   }
 
+  if (values.NODE_ENV === 'production') assertProductionHardening(config, values.JWT_SECRET);
+
   return values;
+}
+
+/**
+ * Production'da xavfli sozlamalar bilan server umuman ishga tushmasin (fail-fast):
+ * dev OTP aks-sadosi, ochiq CORS, oddiy JWT kaliti, kuchsiz admin paroli.
+ */
+function assertProductionHardening(config: Record<string, unknown>, jwtSecret: string): void {
+  if (config.OTP_DEV_ECHO === 'true' || config.OTP_DEV_ECHO_AUTH === 'true') {
+    throw new Error(ERRORS.PROD_OTP_ECHO_FORBIDDEN);
+  }
+
+  const origins = String(config.CORS_ORIGINS ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+  if (origins.length === 0) throw new Error(ERRORS.PROD_CORS_REQUIRED);
+  // Faqat https (va mobil ilova uchun capacitor://) ruxsat; «*» va har qanday oddiy http — yo‘q.
+  const unsafe = origins.some((origin) => origin === '*' || /^http:\/\//i.test(origin));
+  if (unsafe) throw new Error(ERRORS.PROD_CORS_UNSAFE);
+
+  if (/(change|secret|example|password|default|12345|test)/i.test(jwtSecret) || new Set(jwtSecret).size < 10) {
+    throw new Error(ERRORS.PROD_SECRET_WEAK);
+  }
+
+  const adminPassword = config.ADMIN_PASSWORD;
+  if (typeof adminPassword === 'string' && adminPassword.length > 0 && adminPassword.length < 12) {
+    throw new Error(ERRORS.PROD_ADMIN_PASSWORD_WEAK);
+  }
 }

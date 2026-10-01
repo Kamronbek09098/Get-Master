@@ -110,11 +110,6 @@ export class AdminController {
     return this.users.setStatus(adminId, id, dto, req);
   }
 
-  @Get('users/:id/password')
-  revealUserPassword(@CurrentUser('sub') adminId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
-    return this.users.revealPassword(adminId, id, req);
-  }
-
   @Post('users/:id/password')
   setUserPassword(
     @CurrentUser('sub') adminId: string,

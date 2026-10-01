@@ -605,3 +605,107 @@
     opacity: 0.85;
   }
 }
+
+/* ===== Kirish kartasi: yagona, tartibli ko‘rinish (Mijoz / Usta / Admin) ===== */
+.gm-auth-page__switch {
+  margin: 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--gm-color-border);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.gm-auth-page__note {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-text-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.gm-auth-page__note svg {
+  flex: none;
+  margin-top: 2px;
+}
+.gm-auth-submit {
+  min-height: 48px;
+  border-radius: 14px;
+  font-size: 15px;
+}
+
+@media (min-width: 900px) {
+  .gm-auth-layout--login .gm-auth-layout__panel {
+    max-width: 440px;
+    gap: 18px;
+    padding: 32px 32px 28px;
+    border: 1px solid var(--gm-color-border);
+    border-radius: 24px;
+    background: var(--gm-color-surface);
+    box-shadow: var(--gm-shadow-lg);
+  }
+  .gm-auth-layout--login .gm-auth-page {
+    gap: 18px;
+  }
+  .gm-auth-layout--login .gm-auth-page h1 {
+    font-size: 28px;
+    line-height: 1.15;
+  }
+  .gm-auth-layout--login .gm-auth-page__subtitle {
+    margin-top: -10px;
+    font-size: 14.5px;
+  }
+  .gm-auth-layout--login .gm-auth-form {
+    gap: 16px;
+  }
+  .gm-auth-layout--login .gm-auth-form .gm-field {
+    gap: 6px;
+  }
+  .gm-auth-layout--login .gm-auth-form .gm-field__label {
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .gm-auth-layout--login .gm-auth-submit {
+    margin-top: 4px;
+  }
+  .gm-auth-layout--login .gm-auth-layout__panel .gm-panel-badge {
+    margin-bottom: -2px;
+  }
+}
+
+@media (max-width: 899px) {
+  .gm-auth-layout .gm-auth-page__switch {
+    padding-top: 14px;
+  }
+  .gm-auth-layout .gm-auth-submit {
+    min-height: 48px;
+  }
+}
+
+/* Admin eslatmasi chap paneldagi matn bilan takrorlanmasligi uchun faqat telefon/planshetda ko‘rsatiladi */
+@media (min-width: 900px) {
+  .gm-auth-page__note {
+    display: none;
+  }
+}
+
+/* ===== Kirish kartasi: sarlavha qismi va yozuvlar o‘rtaga tekislangan ===== */
+.gm-auth-layout .gm-auth-layout__panel .gm-panel-badge {
+  align-self: center;
+}
+.gm-auth-layout .gm-auth-page {
+  text-align: center;
+}
+.gm-auth-layout .gm-auth-page__subtitle {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 34ch;
+}
+/* Maydon yorliqlari va kiritiladigan matn qulaylik uchun chapdan boshlanadi */
+.gm-auth-layout .gm-auth-form,
+.gm-auth-layout .gm-auth-form .gm-field__label {
+  text-align: left;
+}

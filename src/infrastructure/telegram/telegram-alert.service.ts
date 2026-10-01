@@ -69,6 +69,19 @@ export class TelegramAlertService implements OnModuleInit {
     return this.post(this.otpChatId, text, `OTP (${input.purposeLabel})`);
   }
 
+  /** Yangi ro‘yxatdan o‘tish haqida xabar (OTP guruhiga). Maxfiy ma’lumot — parol — bu yerga hech qachon berilmaydi. */
+  notifyRegistration(input: { phone: string; name: string }): void {
+    if (!this.isOtpEnabled()) return;
+    const text = [
+      `🆕 <b>${escapeHtml(this.appName)}</b> [${escapeHtml(this.environment)}] — yangi foydalanuvchi ro‘yxatdan o‘tdi`,
+      `Telefon: <code>${escapeHtml(input.phone)}</code>`,
+      input.name ? `Ism: ${escapeHtml(input.name)}` : undefined,
+    ]
+      .filter((line): line is string => !!line)
+      .join('\n');
+    void this.post(this.otpChatId, text, 'yangi foydalanuvchi');
+  }
+
   isEnabled(): boolean {
     return !!this.botToken && !!this.chatId;
   }
