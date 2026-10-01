@@ -77,7 +77,16 @@ describe('K02 — registration & login', () => {
     const before = user.accountNumber;
     const registerAgain = async (password: string, extraIp: string) =>
       h.api('POST', '/auth/register', { ip: extraIp, body: { phone, password, firstName: 'Test', lastName: 'User', acceptedPolicyIds: await policyIds() } });
-    expect((await registerAgain('WrongPassword-1', ip)).status).toBe(409);
+    // Parol mos kelmasa: «band» deb aytilmaydi — yangi ro‘yxatdan o‘tishdan farq qilmaydigan javob, hisob ham, kod ham yaratilmaydi.
+    const otpBefore = await h.db.otpCode.count({ where: { phone } });
+    const decoy = await registerAgain('WrongPassword-1', ip);
+    expect(decoy.status).toBe(201);
+    expect(decoy.data).toMatchObject({ verificationRequired: true });
+    expect(Object.keys(decoy.data).sort()).toEqual(['userId', 'verificationRequired']);
+    expect(decoy.data.existingAccount).toBeUndefined();
+    expect(JSON.stringify(decoy.body)).not.toMatch(/allaqachon|already/i);
+    expect(await h.db.otpCode.count({ where: { phone } })).toBe(otpBefore);
+    expect(await h.db.user.count({ where: { phone } })).toBe(1);
     const again = await registerAgain(PASSWORD, '10.1.0.22');
     expect(again.status).toBe(201);
     expect(again.data).toMatchObject({ existingAccount: true, accountNumber: before, verificationRequired: true });

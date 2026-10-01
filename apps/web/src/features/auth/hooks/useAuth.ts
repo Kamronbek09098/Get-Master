@@ -12,6 +12,8 @@ export function useRegister() {
   const setDevCode = useAuthStore((s) => s.setDevCode);
   return useMutation({
     mutationFn: (input: RegisterInput) => authService.register(input),
+    // Parol (variables) mutatsiya keshida qolib ketmasin.
+    gcTime: 0,
     onSuccess: (result, variables) => {
       setPendingPhone(variables.phone);
       setDevCode(result.developmentCode ?? null);
@@ -39,6 +41,7 @@ export function useLogin() {
   const setDeviceLimit = useAuthStore((s) => s.setDeviceLimit);
   return useMutation({
     mutationFn: (input: LoginInput) => authService.login(input),
+    gcTime: 0,
     onSuccess: (result, variables) => {
       setPendingPhone(variables.phone);
       setDevCode(result.developmentCode ?? null);

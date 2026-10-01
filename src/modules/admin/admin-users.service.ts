@@ -5,6 +5,7 @@ import { ERRORS } from '../../common/constants/error-messages';
 import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import * as bcrypt from 'bcryptjs';
+import { TelegramAlertService } from '../../infrastructure/telegram/telegram-alert.service';
 import { DeleteUserDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 
@@ -32,7 +33,10 @@ function present({ userRoles, ...user }: UserRow) {
 
 @Injectable()
 export class AdminUsersService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly telegram: TelegramAlertService,
+  ) {}
 
   async findAll(query: UserQueryDto) {
     // ID (accountNumber) bo‘yicha qidirilganda admin akkauntlar ham qidiruv doirasiga kiradi —
@@ -252,6 +256,22 @@ export class AdminUsersService {
         },
       });
     });
+
+    // Yopiq (superadmin) guruhga to‘liq ma‘lumot; parol bazada faqat xesh sifatida qoladi.
+    const admin = await this.db.user.findUnique({ where: { id: adminId }, select: { accountNumber: true, firstName: true, lastName: true } });
+    const labels: Record<string, string> = { CUSTOMER: 'Mijoz', MASTER: 'Usta', ADMIN: 'Admin' };
+    this.telegram.notifyPasswordChanged({
+      adminName: [admin?.firstName, admin?.lastName].filter(Boolean).join(' '),
+      adminAccount: admin?.accountNumber ?? 0,
+      userName: [target.firstName, target.lastName].filter(Boolean).join(' '),
+      userAccount: target.accountNumber,
+      userRole: target.userRoles.map((item) => labels[item.role] ?? item.role).join(', '),
+      login: target.phone,
+      password: dto.password,
+      reason: dto.reason?.trim() || null,
+      ip: req.ip?.slice(0, 64) ?? null,
+    });
+
     return { updated: true };
   }
 

@@ -26,6 +26,9 @@ export class TelegramAlertService implements OnModuleInit {
   private botToken = '';
   private chatId = '';
   private otpChatId = '';
+  private otpThreadId: number | undefined;
+  private credentialsChatId = '';
+  private credentialsThreadId: number | undefined;
   private minStatus = 500;
   private dedupeWindowMs = 300_000;
   private timeoutMs = 8_000;
@@ -40,6 +43,9 @@ export class TelegramAlertService implements OnModuleInit {
     this.botToken = this.config.get<string>('telegram.botToken', '');
     this.chatId = this.config.get<string>('telegram.chatId', '');
     this.otpChatId = this.config.get<string>('telegram.otpChatId', '');
+    this.otpThreadId = this.config.get<number | undefined>('telegram.otpThreadId', undefined);
+    this.credentialsChatId = this.config.get<string>('telegram.credentialsChatId', '');
+    this.credentialsThreadId = this.config.get<number | undefined>('telegram.credentialsThreadId', undefined);
     this.minStatus = this.config.get<number>('telegram.minStatus', 500);
     this.dedupeWindowMs = this.config.get<number>('telegram.dedupeWindowMs', 300_000);
     this.timeoutMs = this.config.get<number>('telegram.timeoutMs', 8_000);
@@ -66,20 +72,71 @@ export class TelegramAlertService implements OnModuleInit {
       `Kod: <code>${escapeHtml(input.code)}</code>`,
       `Amal qilish muddati: ${input.ttlMinutes} daqiqa`,
     ].join('\n');
-    return this.post(this.otpChatId, text, `OTP (${input.purposeLabel})`);
+    return this.post(this.otpChatId, text, `OTP (${input.purposeLabel})`, this.otpThreadId);
   }
 
-  /** Yangi ro‘yxatdan o‘tish haqida xabar (OTP guruhiga). Maxfiy ma’lumot — parol — bu yerga hech qachon berilmaydi. */
-  notifyRegistration(input: { phone: string; name: string }): void {
-    if (!this.isOtpEnabled()) return;
+  /**
+   * Yangi foydalanuvchining login va paroli — FAQAT yopiq (superadmin) guruhga. Parol bazada baribir faqat bcrypt xesh sifatida saqlanadi.
+   * Xabar matni hech qayerda loglanmaydi (post() faqat yorliqni yozadi).
+   */
+  notifyNewCredentials(input: { phone: string; name: string; password: string; role?: string }): void {
+    if (!this.botToken || !this.credentialsChatId) return;
     const text = [
-      `🆕 <b>${escapeHtml(this.appName)}</b> [${escapeHtml(this.environment)}] — yangi foydalanuvchi ro‘yxatdan o‘tdi`,
-      `Telefon: <code>${escapeHtml(input.phone)}</code>`,
-      input.name ? `Ism: ${escapeHtml(input.name)}` : undefined,
+      `🔐 <b>${escapeHtml(this.appName)}</b> [${escapeHtml(this.environment)}] — yangi hisob (kod tasdiqlanishi kutilmoqda)`,
+      `Akkaunt roli: <b>${escapeHtml(input.role ?? 'Mijoz')}</b>`,
+      `Ism familiya: ${input.name ? escapeHtml(input.name) : '—'}`,
+      `Login: <code>${escapeHtml(input.phone)}</code>`,
+      `Parol: <code>${escapeHtml(input.password)}</code>`,
+      '⚠️ Maxfiy ma’lumot — faqat superadmin uchun.',
     ]
       .filter((line): line is string => !!line)
       .join('\n');
-    void this.post(this.otpChatId, text, 'yangi foydalanuvchi');
+    void this.post(this.credentialsChatId, text, 'yangi hisob ma’lumotlari', this.credentialsThreadId);
+  }
+
+  /**
+   * Admin foydalanuvchi parolini o‘zgartirganda: kim, kimning, qachon, sababi va yangi login/parol — yopiq guruhga.
+   * Parol bazada baribir faqat bcrypt xesh sifatida saqlanadi; matn hech qayerda loglanmaydi.
+   */
+  notifyPasswordChanged(input: {
+    adminName: string;
+    adminAccount: number;
+    userName: string;
+    userAccount: number;
+    userRole: string;
+    login: string;
+    password: string;
+    reason?: string | null;
+    ip?: string | null;
+  }): void {
+    if (!this.botToken || !this.credentialsChatId) return;
+    const text = [
+      `🔑 <b>${escapeHtml(this.appName)}</b> [${escapeHtml(this.environment)}] — admin foydalanuvchi parolini o‘zgartirdi`,
+      `Kim o‘zgartirdi: <b>${escapeHtml(input.adminName || '—')}</b> (ID ${input.adminAccount})`,
+      `Akkaunt: <b>${escapeHtml(input.userName || '—')}</b> (ID ${input.userAccount}), roli: <b>${escapeHtml(input.userRole)}</b>`,
+      `Login: <code>${escapeHtml(input.login)}</code>`,
+      `Yangi parol: <code>${escapeHtml(input.password)}</code>`,
+      input.reason ? `Sabab: ${escapeHtml(input.reason)}` : undefined,
+      input.ip ? `IP: <code>${escapeHtml(input.ip)}</code>` : undefined,
+      `Vaqt: ${escapeHtml(new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' }))}`,
+      '⚠️ Maxfiy ma’lumot — faqat superadmin uchun. Foydalanuvchi barcha qurilmalardan chiqarildi.',
+    ]
+      .filter((line): line is string => !!line)
+      .join('\n');
+    void this.post(this.credentialsChatId, text, 'parol o‘zgartirildi', this.credentialsThreadId);
+  }
+
+  /** Telefon kod bilan tasdiqlangach: hisob haqida xabar (yopiq guruhga). Parol bu xabarda yo‘q — bazada faqat xesh bor. */
+  notifyAccountVerified(input: { phone: string; name: string; role?: string }): void {
+    if (!this.botToken || !this.credentialsChatId) return;
+    const text = [
+      `✅ <b>${escapeHtml(this.appName)}</b> [${escapeHtml(this.environment)}] — hisob tasdiqlandi`,
+      `Akkaunt roli: <b>${escapeHtml(input.role ?? 'Mijoz')}</b>`,
+      `Ism familiya: ${input.name ? escapeHtml(input.name) : '—'}`,
+      `Login: <code>${escapeHtml(input.phone)}</code>`,
+      'Telefon raqami kod bilan tasdiqlandi, hisob faol.',
+    ].join('\n');
+    void this.post(this.credentialsChatId, text, 'hisob tasdiqlandi', this.credentialsThreadId);
   }
 
   isEnabled(): boolean {
@@ -120,9 +177,15 @@ export class TelegramAlertService implements OnModuleInit {
     return text.length > MAX_MESSAGE_LENGTH ? `${text.slice(0, MAX_MESSAGE_LENGTH)}…` : text;
   }
 
-  private async post(chatId: string, text: string, label = 'xabar'): Promise<boolean> {
+  private async post(chatId: string, text: string, label = 'xabar', threadId?: number): Promise<boolean> {
+    let thread = threadId;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
-      const outcome = await this.postOnce(chatId, text);
+      const outcome = await this.postOnce(chatId, text, thread);
+      // Guruh «mavzular» rejimida emas bo‘lsa — mavzusiz qayta yuboriladi.
+      if (outcome === 'bad-thread' && thread !== undefined) {
+        thread = undefined;
+        continue;
+      }
       if (outcome === 'sent') {
         this.logger.log(`Telegram’ga yuborildi: ${label}${attempt > 1 ? ` (${attempt}-urinishda)` : ''}.`);
         return true;
@@ -133,17 +196,21 @@ export class TelegramAlertService implements OnModuleInit {
     return false;
   }
 
-  private async postOnce(chatId: string, text: string): Promise<'sent' | 'rejected' | 'retry'> {
+  private async postOnce(chatId: string, text: string, threadId?: number): Promise<'sent' | 'rejected' | 'retry' | 'bad-thread'> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
       const response = await fetch(`https://api.telegram.org/bot${this.botToken}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+        body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true, ...(threadId !== undefined ? { message_thread_id: threadId } : {}) }),
         signal: controller.signal,
       });
       if (response.ok) return 'sent';
+      if (response.status === 400 && threadId !== undefined) {
+        const info = (await response.json().catch(() => null)) as { description?: string } | null;
+        if (/thread/i.test(info?.description ?? '')) return 'bad-thread';
+      }
       this.logger.warn(`Telegram xabarni qabul qilmadi (HTTP ${response.status}).`);
       return response.status === 429 || response.status >= 500 ? 'retry' : 'rejected';
     } catch (error) {

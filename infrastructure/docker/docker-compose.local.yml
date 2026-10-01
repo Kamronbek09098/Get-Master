@@ -1,0 +1,82 @@
+# Mahalliy ishlab chiqish stack'i — BARCHA portlar faqat 127.0.0.1 ga bog‘langan (tarmoqdagi boshqa qurilmalar ulana olmaydi).
+# Ishga tushirish: docker compose -p getmaster --env-file ../../.env -f docker-compose.local.yml up -d
+# MinIO ma'lumotlari .env dagi STORAGE_ACCESS_KEY_ID / STORAGE_SECRET_ACCESS_KEY dan olinadi (standart parol ishlatilmaydi).
+name: getmaster
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: getmaster
+      POSTGRES_USER: getmaster
+      # Mavjud ma'lumotlar katalogi uchun ishlatilmaydi (parol bazada saqlangan); yangi katalog bo'lsa .env dagi qiymat kerak.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env da berilishi kerak}
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U getmaster -d getmaster"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:56379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY_ID:?STORAGE_ACCESS_KEY_ID kerak}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_ACCESS_KEY:?STORAGE_SECRET_ACCESS_KEY kerak}
+    ports:
+      - "127.0.0.1:59000:9000"
+      - "127.0.0.1:59001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  clamav:
+    image: clamav/clamav:stable
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:53310:3310"
+    volumes:
+      - clamav-data:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdcheck.sh || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+volumes:
+  postgres-data:
+    external: true
+    name: getmaster_postgres-data
+  redis-data:
+    external: true
+    name: getmaster_redis-data
+  minio-data:
+    external: true
+    name: getmaster_minio-data
+  clamav-data:
+    external: true
+    name: getmaster_clamav-data

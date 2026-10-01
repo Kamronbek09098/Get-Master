@@ -1,7 +1,24 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+/** Mahalliy .env dagi (git'ga tushmaydigan) haqiqiy parollarni o‘qiydi; standart parollar endi ishlamaydi. */
+function localEnv(): Record<string, string> {
+  const file = resolve(__dirname, '../../.env');
+  if (!existsSync(file)) return {};
+  const values: Record<string, string> = {};
+  for (const line of readFileSync(file, 'utf8').split('\n')) {
+    const match = /^([A-Z0-9_]+)=(.*)$/.exec(line.trim());
+    if (match) values[match[1] as string] = (match[2] as string).replace(/^"|"$/g, '');
+  }
+  return values;
+}
+const LOCAL = localEnv();
+const localDatabaseBase = /^(postgres(?:ql)?:\/\/[^/]+)\//.exec(LOCAL.DATABASE_URL ?? '')?.[1];
+
 export const TEST_ENV = {
   NODE_ENV: 'test',
   PORT: '3999',
-  DATABASE_BASE_URL: process.env.TEST_DATABASE_BASE_URL || 'postgresql://getmaster:getmaster_dev_only@localhost:55432',
+  DATABASE_BASE_URL: process.env.TEST_DATABASE_BASE_URL || localDatabaseBase || 'postgresql://getmaster:getmaster_dev_only@localhost:55432',
   DATABASE_NAME: process.env.TEST_DATABASE_NAME || 'getmaster_test',
   REDIS_URL: process.env.TEST_REDIS_URL || 'redis://localhost:56379/15',
   JWT_SECRET: 'test-only-jwt-secret-0123456789abcdef0123456789',
@@ -10,7 +27,7 @@ export const TEST_ENV = {
   STORAGE_REGION: 'us-east-1',
   STORAGE_BUCKET: process.env.TEST_STORAGE_BUCKET || 'getmaster-test',
   STORAGE_ACCESS_KEY_ID: process.env.TEST_STORAGE_ACCESS_KEY_ID || 'getmaster',
-  STORAGE_SECRET_ACCESS_KEY: process.env.TEST_STORAGE_SECRET_ACCESS_KEY || 'getmaster_dev_only',
+  STORAGE_SECRET_ACCESS_KEY: process.env.TEST_STORAGE_SECRET_ACCESS_KEY || LOCAL.STORAGE_SECRET_ACCESS_KEY || 'getmaster_dev_only',
   STORAGE_FORCE_PATH_STYLE: 'true',
   CLAMAV_HOST: process.env.TEST_CLAMAV_HOST || 'localhost',
   CLAMAV_PORT: process.env.TEST_CLAMAV_PORT || '53310',

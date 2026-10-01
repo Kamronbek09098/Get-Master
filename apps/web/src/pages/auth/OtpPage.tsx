@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { MonitorSmartphone } from 'lucide-react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { NewCredentialsCard } from '@/features/auth/components/NewCredentialsCard';
 import { OtpForm } from '@/features/auth/components/OtpForm';
 import { useVerifyOtp, useVerifyRegistration } from '@/features/auth/hooks/useAuth';
@@ -90,6 +90,11 @@ export function OtpPage() {
             </p>
           </div>
         </div>
+      )}
+      {isRegisterFlow && verifyRegistration.isError && (
+        <Alert tone="info" title="Kod mos kelmadimi?">
+          Agar bu telefon raqami bilan avval ro‘yxatdan o‘tgan bo‘lsangiz, <Link to="/login">kirish sahifasidan</Link> foydalaning. Aks holda kodni qayta tekshirib kiriting.
+        </Alert>
       )}
       <OtpForm
         phone={pendingPhone}
