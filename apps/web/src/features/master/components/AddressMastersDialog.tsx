@@ -12,12 +12,13 @@ import { CoverageMap } from '@/features/geo/components/CoverageMap';
 import type { CoverageZone } from '@/features/geo/components/CoverageMap';
 import { useCoveringMasters } from '../hooks/useMaster';
 import './AddressMastersDialog.css';
+import { t } from '@/i18n';
 
 /** Inline qisqa xulosa: «Bu manzilga N ta usta kela oladi» + ko‘rish tugmasi. */
 export function CoverageSummary({ lat, lon, onOpen }: { lat: number | null; lon: number | null; onOpen: () => void }) {
   const covering = useCoveringMasters(lat, lon);
   if (lat == null || lon == null) return null;
-  if (covering.isLoading) return <p className="gm-covsum gm-covsum--muted">Manzilga kela oladigan ustalar tekshirilmoqda…</p>;
+  if (covering.isLoading) return <p className="gm-covsum gm-covsum--muted">{t('Manzilga kela oladigan ustalar tekshirilmoqda…')}</p>;
   if (covering.isError || !covering.data) return null;
   const total = covering.data.total;
   return (
@@ -27,15 +28,12 @@ export function CoverageSummary({ lat, lon, onOpen }: { lat: number | null; lon:
       </span>
       <span className="gm-covsum__text">
         {total > 0 ? (
-          <>
-            Bu manzilga <strong>{total} ta usta</strong> kela oladi
-          </>
+          <>{t('Bu manzilga')}{' '}<strong>{total}{' '}{t('ta usta')}</strong>{' '}{t('kela oladi')}</>
         ) : (
-          'Hozircha bu manzilga kela oladigan usta topilmadi'
+          t('Hozircha bu manzilga kela oladigan usta topilmadi')
         )}
       </span>
-      <span className="gm-covsum__cta">
-        Xaritada ko‘rish <ChevronRight size={16} aria-hidden="true" />
+      <span className="gm-covsum__cta">{t('Xaritada ko‘rish')}{' '}<ChevronRight size={16} aria-hidden="true" />
       </span>
     </button>
   );
@@ -50,10 +48,10 @@ export function CoverageButton({ lat, lon, onOpen }: { lat: number; lon: number;
       <span className="gm-covbtn__icon" aria-hidden="true">
         <Users size={17} />
       </span>
-      <span className="gm-covbtn__label">Qaysi ustalar yetib keladi</span>
+      <span className="gm-covbtn__label">{t('Qaysi ustalar yetib keladi')}</span>
       <span className="gm-covbtn__end">
         {covering.isLoading ? (
-          <span className="gm-covbtn__count gm-covbtn__count--wait" aria-label="Tekshirilmoqda">…</span>
+          <span className="gm-covbtn__count gm-covbtn__count--wait" aria-label={t('Tekshirilmoqda')}>…</span>
         ) : total !== undefined ? (
           <span className={total > 0 ? 'gm-covbtn__count' : 'gm-covbtn__count gm-covbtn__count--zero'}>{total}</span>
         ) : null}
@@ -90,19 +88,18 @@ export function AddressMastersDialog({
   const point = useMemo(() => (lat != null && lon != null ? { lat, lon } : null), [lat, lon]);
 
   return (
-    <Modal open={open} onClose={onClose} title="Manzilga kela oladigan ustalar" wide footer={<Button onClick={onClose}>Yopish</Button>}>
+    <Modal open={open} onClose={onClose} title={t('Manzilga kela oladigan ustalar')} wide footer={<Button onClick={onClose}>{t('Yopish')}</Button>}>
       <div className="gm-addrm">
         {addressLine && <p className="gm-addrm__addr">{addressLine}</p>}
-        {covering.isLoading && <PageLoader label="Ustalar qidirilmoqda…" />}
+        {covering.isLoading && <PageLoader label={t('Ustalar qidirilmoqda…')} />}
         {covering.isError && <Alert tone="danger">{getErrorMessage(covering.error)}</Alert>}
         {covering.data && (
           <>
             <CoverageMap latitude={null} longitude={null} point={point} zones={zones} height="min(46dvh, 380px)" wheelZoom />
             <p className="gm-addrm__legend">
-              <span className="gm-addrm__dot gm-addrm__dot--home" /> Sizning manzilingiz <span className="gm-addrm__dot" /> Usta ish hududi (doira)
-            </p>
+              <span className="gm-addrm__dot gm-addrm__dot--home" />{' '}{t('Sizning manzilingiz')}{' '}<span className="gm-addrm__dot" />{' '}{t('Usta ish hududi (doira)')}</p>
             {items.length === 0 ? (
-              <p className="gm-pempty">Bu manzil hozircha birorta faol ustaning ish hududiga kirmaydi.</p>
+              <p className="gm-pempty">{t('Bu manzil hozircha birorta faol ustaning ish hududiga kirmaydi.')}</p>
             ) : (
               <ul className="gm-addrm__list">
                 {items.map((master) => {
@@ -113,11 +110,11 @@ export function AddressMastersDialog({
                         <ChatAvatar name={name} seed={master.id} size="md" />
                         <span className="gm-addrm__info">
                           <strong>{name}</strong>
-                          <span>{master.profession ?? 'Kasb ko‘rsatilmagan'}</span>
+                          <span>{master.profession ?? t('Kasb ko‘rsatilmagan')}</span>
                         </span>
                         <span className="gm-addrm__meta">
                           <span className="gm-addrm__rating">
-                            <Star size={13} fill="currentColor" aria-hidden="true" /> {master.ratingCount > 0 ? Number(master.ratingAvg).toFixed(1) : 'Yangi'}
+                            <Star size={13} fill="currentColor" aria-hidden="true" /> {master.ratingCount > 0 ? Number(master.ratingAvg).toFixed(1) : t('Yangi')}
                           </span>
                           <span className="gm-addrm__dist">{master.distanceKm} km</span>
                         </span>

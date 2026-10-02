@@ -8,13 +8,14 @@ import { Textarea } from '@/components/ui/Textarea';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDate } from '@/lib/utils';
 import { useCreateReview } from '../hooks/useReviews';
+import { t } from '@/i18n';
 
 const RATING_OPTIONS = [
-  { value: '5', label: '5 — A’lo' },
-  { value: '4', label: '4 — Yaxshi' },
-  { value: '3', label: '3 — O‘rtacha' },
-  { value: '2', label: '2 — Yomon' },
-  { value: '1', label: '1 — Juda yomon' },
+  { value: '5', label: t('5 — A’lo') },
+  { value: '4', label: t('4 — Yaxshi') },
+  { value: '3', label: t('3 — O‘rtacha') },
+  { value: '2', label: t('2 — Yomon') },
+  { value: '1', label: t('1 — Juda yomon') },
 ];
 
 export function ReviewForm({ orderId, existing }: { orderId: string; existing?: { rating: number; comment: string | null; createdAt: string } | null }) {
@@ -33,19 +34,17 @@ export function ReviewForm({ orderId, existing }: { orderId: string; existing?: 
     return (
       <div className="gm-review-done" role="status">
         <p className="gm-review-done__title">
-          <CheckCircle2 size={18} aria-hidden="true" /> Sharhingiz qoldirilgan. Rahmat!
-        </p>
+          <CheckCircle2 size={18} aria-hidden="true" />{' '}{t('Sharhingiz qoldirilgan. Rahmat!')}</p>
         <div className="gm-review-done__body">
           <span className="gm-review-stars" aria-label={`${done.rating} / 5`}>
             {'★'.repeat(done.rating)}
             <span className="gm-review-stars__off">{'★'.repeat(5 - done.rating)}</span>
           </span>
-          {done.comment ? <p>{done.comment}</p> : <p className="gm-card__meta">Izoh qoldirilmagan</p>}
+          {done.comment ? <p>{done.comment}</p> : <p className="gm-card__meta">{t('Izoh qoldirilmagan')}</p>}
           <small>{formatDate(done.createdAt)}</small>
         </div>
         <Button type="button" disabled aria-disabled="true">
-          <CheckCircle2 size={16} aria-hidden="true" /> Sharh qoldirilgan
-        </Button>
+          <CheckCircle2 size={16} aria-hidden="true" />{' '}{t('Sharh qoldirilgan')}</Button>
       </div>
     );
   }
@@ -53,11 +52,9 @@ export function ReviewForm({ orderId, existing }: { orderId: string; existing?: 
   return (
     <form className="gm-form" onSubmit={handleSubmit}>
       {createReview.isError && <Alert tone="danger">{getErrorMessage(createReview.error)}</Alert>}
-      <Select label="Baho" options={RATING_OPTIONS} value={rating} onChange={(event) => setRating(event.target.value)} />
-      <Textarea label="Izoh" value={comment} onChange={(event) => setComment(event.target.value)} rows={3} />
-      <Button type="submit" loading={createReview.isPending}>
-        Sharh qoldirish
-      </Button>
+      <Select label={t('Baho')} options={RATING_OPTIONS} value={rating} onChange={(event) => setRating(event.target.value)} />
+      <Textarea label={t('Izoh')} value={comment} onChange={(event) => setComment(event.target.value)} rows={3} />
+      <Button type="submit" loading={createReview.isPending}>{t('Sharh qoldirish')}</Button>
     </form>
   );
 }

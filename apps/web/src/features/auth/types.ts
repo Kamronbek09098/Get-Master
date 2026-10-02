@@ -3,7 +3,6 @@ export interface RegisterInput {
   password: string;
   firstName?: string;
   lastName?: string;
-  email?: string;
 }
 
 export interface RegisterResult {
@@ -13,6 +12,10 @@ export interface RegisterResult {
   existingAccount?: boolean;
   accountNumber?: number;
 }
+
+export type GoogleSignInResult =
+  | ({ needsPhone: false; verificationRequired: false } & Record<string, unknown>)
+  | { needsPhone: true; signupToken: string; firstName: string | null; lastName: string | null };
 
 export interface LoginInput {
   phone: string;

@@ -1,5 +1,6 @@
 import { env } from '@/lib/env';
 import type { ChatMessage, Conversation } from './types';
+import { t } from '@/i18n';
 
 const MONTHS_FULL = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
 const MONTHS_SHORT = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
@@ -48,8 +49,8 @@ function daysBetween(a: string | Date, b: string | Date): number {
 /** Kun ajratgichi: «Bugun», «Kecha» yoki «24 sentabr» (boshqa yil bo‘lsa yili bilan). */
 export function dayLabel(value: string | Date, now: Date = new Date()): string {
   const diff = daysBetween(value, now);
-  if (diff === 0) return 'Bugun';
-  if (diff === 1) return 'Kecha';
+  if (diff === 0) return t('Bugun');
+  if (diff === 1) return t('Kecha');
   const p = parts(value);
   const base = `${p.day} ${MONTHS_FULL[p.month - 1]}`;
   return p.year === parts(now).year ? base : `${base} ${p.year}`;
@@ -59,7 +60,7 @@ export function dayLabel(value: string | Date, now: Date = new Date()): string {
 export function listTime(value: string | Date, now: Date = new Date()): string {
   const diff = daysBetween(value, now);
   if (diff === 0) return clock(value);
-  if (diff === 1) return 'Kecha';
+  if (diff === 1) return t('Kecha');
   const p = parts(value);
   return `${p.day} ${MONTHS_SHORT[p.month - 1]}`;
 }
@@ -121,9 +122,9 @@ export function isRead(message: ChatMessage, counterpartLastReadAt: string | nul
 
 export function previewText(conversation: Conversation, meId: string | undefined): string {
   const last = conversation.lastMessage;
-  if (!last) return 'Xabar yo‘q';
-  const text = last.deleted ? 'Xabar o‘chirilgan' : (last.text ?? replySnippet(last));
-  return isOwnMessage(last, meId) ? `Siz: ${text}` : text;
+  if (!last) return t('Xabar yo‘q');
+  const text = last.deleted ? t('Xabar o‘chirilgan') : (last.text ?? replySnippet(last));
+  return isOwnMessage(last, meId) ? t('Siz: {text}', { text }) : text;
 }
 
 /** Telegramdagidek: xabarni yuborilganidan keyingi 48 soat ichida tahrirlash mumkin (backend qoidasi). */
@@ -151,11 +152,11 @@ export function replySnippet(message: {
   deletedAt?: string | null;
   attachments?: Array<{ name: string; mimeType: string }> | null;
 }): string {
-  if (message.deleted || message.deletedAt) return 'Xabar o‘chirilgan';
+  if (message.deleted || message.deletedAt) return t('Xabar o‘chirilgan');
   if (message.text) return message.text;
-  if (message.attachments?.some((a) => /^voice-/i.test(a.name) || a.mimeType.startsWith('audio/'))) return '🎤 Ovozli xabar';
-  if (message.type === 'IMAGE') return '📷 Rasm';
-  if (message.type === 'VIDEO') return '🎬 Video';
-  if (message.type === 'FILE') return '📎 Fayl';
-  return 'Xabar';
+  if (message.attachments?.some((a) => /^voice-/i.test(a.name) || a.mimeType.startsWith('audio/'))) return t('🎤 Ovozli xabar');
+  if (message.type === 'IMAGE') return t('📷 Rasm');
+  if (message.type === 'VIDEO') return t('🎬 Video');
+  if (message.type === 'FILE') return t('📎 Fayl');
+  return t('Xabar');
 }

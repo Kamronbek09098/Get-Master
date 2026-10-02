@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useLogin } from '../hooks/useAuth';
 import { formatLocalPhone, toLocalDigits, loginSchema, toFullPhone, type LoginFormValues } from '../validation';
+import { t } from '@/i18n';
 
 export function LoginForm() {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ export function LoginForm() {
       {login.isError && <Alert tone="danger">{getErrorMessage(login.error)}</Alert>}
 
       <Input
-        label="Telefon raqami"
+        label={t('Telefon raqami')}
         prefix="+998"
         inputMode="numeric"
         placeholder="90 123 45 67"
@@ -52,9 +53,9 @@ export function LoginForm() {
         error={errors.phoneLocal?.message}
         {...register('phoneLocal')}
       />
-      <Input label="Parol" type="password" required error={errors.password?.message} {...register('password')} />
+      <Input label={t('Parol')} type="password" required error={errors.password?.message} {...register('password')} />
       <Button type="submit" loading={login.isPending} fullWidth className="gm-auth-submit">
-        Kirish <ArrowRight size={18} />
+        {t('Kirish')} <ArrowRight size={18} />
       </Button>
     </form>
   );

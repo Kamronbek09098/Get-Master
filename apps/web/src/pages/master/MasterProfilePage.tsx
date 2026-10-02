@@ -19,6 +19,7 @@ import { FOCUS_VERIFICATION_EVENT } from '@/features/trust/components/Verificati
 import { ProfileHero } from '@/features/profile/ProfileHero';
 import { InfoRows, ProfileCard } from '@/features/profile/ProfileCard';
 import '@/features/profile/Profile.css';
+import { t } from '@/i18n';
 
 const STATUS_TONE = { ACTIVE: 'success', INACTIVE: 'neutral', BUSY: 'warning', RESTRICTED: 'danger', SUSPENDED: 'danger' } as const;
 const percent = (value: string | number | undefined) => `${Math.round(Number(value ?? 0))}%`;
@@ -51,7 +52,7 @@ export function MasterProfilePage() {
     return () => window.clearTimeout(timer);
   }, [highlightVerification]);
 
-  if (profile.isLoading) return <PageLoader label="Profil yuklanmoqda…" />;
+  if (profile.isLoading) return <PageLoader label={t('Profil yuklanmoqda…')} />;
 
   const data = profile.data ?? null;
   const user = me.data;
@@ -60,7 +61,7 @@ export function MasterProfilePage() {
   const workState = !data
     ? statusLabel(user?.status ?? 'ACTIVE')
     : !verified
-      ? 'Nofaol — admin tasdig‘i kutilmoqda'
+      ? t('Nofaol — admin tasdig‘i kutilmoqda')
       : data.isPaused
         ? 'Pauzada'
         : statusLabel(data.status);
@@ -68,7 +69,7 @@ export function MasterProfilePage() {
   return (
     <div className="gm-ppage">
       <div className="gm-page-header" style={{ marginBottom: 0 }}>
-        <h1>Usta profili</h1>
+        <h1>{t('Usta profili')}</h1>
       </div>
 
       {data && user ? (
@@ -76,78 +77,78 @@ export function MasterProfilePage() {
           name={name}
           seed={user.id}
           accountNumber={user.accountNumber}
-          subtitle={data.profession ?? 'Kasb ko‘rsatilmagan'}
+          subtitle={data.profession ?? t('Kasb ko‘rsatilmagan')}
           badges={
             <>
-              <Badge tone="primary">Usta</Badge>
+              <Badge tone="primary">{t('Usta')}</Badge>
               <TrustBadge verification={data.verification} />
-              <Badge tone={data.isPaused ? 'warning' : STATUS_TONE[data.status]}>{data.isPaused ? 'Pauzada' : statusLabel(data.status)}</Badge>
+              <Badge tone={data.isPaused ? 'warning' : STATUS_TONE[data.status]}>{data.isPaused ? t('Pauzada') : statusLabel(data.status)}</Badge>
             </>
           }
           stats={[
-            { icon: Star, label: 'Reyting', value: Number(data.ratingAvg).toFixed(1), hint: `${data.ratingCount} ta sharh` },
-            { icon: Award, label: 'Bajarilgan ishlar', value: data.completedOrders },
-            { icon: CalendarClock, label: 'Tajriba', value: data.experienceYears ? `${data.experienceYears} yil` : '—' },
-            { icon: BadgeCheck, label: 'Ishonchlilik', value: percent(data.completionRate), hint: 'yakunlash' },
+            { icon: Star, label: t('Reyting'), value: Number(data.ratingAvg).toFixed(1), hint: t('{ratingCount} ta sharh', { ratingCount: data.ratingCount }) },
+            { icon: Award, label: t('Bajarilgan ishlar'), value: data.completedOrders },
+            { icon: CalendarClock, label: t('Tajriba'), value: data.experienceYears ? `${data.experienceYears} yil` : '—' },
+            { icon: BadgeCheck, label: t('Ishonchlilik'), value: percent(data.completionRate), hint: 'yakunlash' },
           ]}
         />
       ) : null}
 
       <div className="gm-pmasonry">
-        <ProfileCard icon={UserRound} title={data ? 'Shaxsiy va kasbiy ma’lumotlar' : 'Usta profilini yarating'} hint="Ism, kasb, tajriba va ish hududi mijozlarga ko‘rinadi.">
+        <ProfileCard icon={UserRound} title={data ? t('Shaxsiy va kasbiy ma’lumotlar') : t('Usta profilini yarating')} hint={t('Ism, kasb, tajriba va ish hududi mijozlarga ko‘rinadi.')}>
           <MasterForm key={data?.id ?? 'new'} profile={data} />
         </ProfileCard>
 
         {data && (
-          <ProfileCard defaultOpen icon={Power} title="Ish holati" hint="Faol bo‘lsangiz mijozlar sizni topadi va takliflar keladi.">
+          <ProfileCard defaultOpen icon={Power} title={t('Ish holati')} hint={t('Faol bo‘lsangiz mijozlar sizni topadi va takliflar keladi.')}>
             <MasterStatusPanel profile={data} />
           </ProfileCard>
         )}
 
         {data && (
-          <ProfileCard icon={Wrench} title="Xizmatlarim" hint="Shu xizmatlar bo‘yicha so‘rovlar sizga keladi.">
+          <ProfileCard icon={Wrench} title={t('Xizmatlarim')} hint={t('Shu xizmatlar bo‘yicha so‘rovlar sizga keladi.')}>
             <ServiceList />
             <ServiceForm />
           </ProfileCard>
         )}
 
         {data && (
-          <ProfileCard icon={ShieldCheck} title="Tasdiqlash (verification)" hint="Tasdiqlangan ustalar ko‘proq ishonch qozonadi." id="tasdiqlash" highlight={highlightVerification}>
+          <ProfileCard icon={ShieldCheck} title={t('Tasdiqlash (verification)')} hint={t('Tasdiqlangan ustalar ko‘proq ishonch qozonadi.')} id="tasdiqlash" highlight={highlightVerification}>
             <TrustProfile masterId={data.id} />
           </ProfileCard>
         )}
 
         {data && (
-          <ProfileCard icon={MapPin} title="Ish hududi" hint="Ish markazi, radius va hududlaringiz — mijozlar shu bo‘yicha sizni topadi.">
+          <ProfileCard icon={MapPin} title={t('Ish hududi')} hint={t('Ish markazi, radius va hududlaringiz — mijozlar shu bo‘yicha sizni topadi.')}>
             <WorkAreaEditor profile={data} />
           </ProfileCard>
         )}
 
         {user && (
-          <ProfileCard icon={Smartphone} title="Akkaunt ma’lumotlari">
+          <ProfileCard icon={Smartphone} title={t('Akkaunt ma’lumotlari')}>
             <InfoRows
               rows={[
-                { label: 'Akkaunt ID', value: `#${user.accountNumber}` },
-                { label: 'Telefon', value: user.phone },
-                { label: 'Email', value: user.email ?? <span className="gm-pmuted">Kiritilmagan</span> },
-                { label: 'Telefon tasdiqlangan', value: <Badge tone={user.phoneVerifiedAt ? 'success' : 'warning'}>{user.phoneVerifiedAt ? 'Ha' : 'Yo‘q'}</Badge> },
-                { label: 'Holat', value: workState },
-                { label: 'Ro‘yxatdan o‘tgan', value: user.createdAt ? formatDate(user.createdAt) : '—' },
+                { label: t('Akkaunt ID'), value: `#${user.accountNumber}` },
+                { label: t('Telefon'), value: user.phone },
+                { label: t('Email'), value: user.email ?? <span className="gm-pmuted">{t('Kiritilmagan')}</span> },
+                { label: t('Telefon tasdiqlangan'), value: <Badge tone={user.phoneVerifiedAt ? 'success' : 'warning'}>{user.phoneVerifiedAt ? 'Ha' : t('Yo‘q')}</Badge> },
+                { label: t('Holat'), value: workState },
+                { label: t('Ro‘yxatdan o‘tgan'), value: user.createdAt ? formatDate(user.createdAt) : '—' },
               ]}
             />
           </ProfileCard>
         )}
 
         {data && (
-          <ProfileCard icon={Briefcase} title="Kasbiy ko‘rsatkichlar">
+          <ProfileCard icon={Briefcase} title={t('Kasbiy ko‘rsatkichlar')}>
             <InfoRows
               rows={[
-                { label: 'Kasb', value: data.profession ?? '—' },
-                { label: 'Tajriba', value: data.experienceYears ? `${data.experienceYears} yil` : '—' },
-                { label: 'Bajarilgan ishlar', value: data.completedOrders },
-                { label: 'Yakunlash ko‘rsatkichi', value: percent(data.completionRate) },
-                { label: 'Javob berish', value: percent(data.responseRate) },
-                { label: 'A’zo bo‘lgan', value: formatDate(data.createdAt) },
+                { label: t('Kasb'), value: data.profession ?? '—' },
+                { label: t('Tajriba'), value: data.experienceYears ? `${data.experienceYears} yil` : '—' },
+                { label: t('Bajarilgan ishlar'), value: data.completedOrders },
+                { label: t('Yakunlash ko‘rsatkichi'), value: percent(data.completionRate) },
+                { label: t('Javob berish'), value: percent(data.responseRate) },
+                { label: t('A’zo bo‘lgan'), value: formatDate(data.createdAt) },
               ]}
             />
             {data.bio && <p className="gm-card__meta" style={{ margin: 0 }}>{data.bio}</p>}
@@ -155,12 +156,12 @@ export function MasterProfilePage() {
         )}
 
         {data && (
-          <ProfileCard icon={ImageIcon} title="Portfolio" hint="Ish namunalari admin tasdiqlagach ko‘rinadi.">
+          <ProfileCard icon={ImageIcon} title={t('Portfolio')} hint={t('Ish namunalari admin tasdiqlagach ko‘rinadi.')}>
             <Link to="/ustalar/portfolio" className="gm-plink">
               <span className="gm-plink__icon" aria-hidden="true">
                 <ImageIcon size={18} />
               </span>
-              <span className="gm-plink__label">Portfolioni boshqarish</span>
+              <span className="gm-plink__label">{t('Portfolioni boshqarish')}</span>
               <ChevronRight size={18} className="gm-plink__arrow" aria-hidden="true" />
             </Link>
           </ProfileCard>

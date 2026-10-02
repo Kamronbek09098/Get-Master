@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './geo.css';
+import { t } from '@/i18n';
 
 export interface CoverageZone {
   id: string;
@@ -87,7 +88,7 @@ export function CoverageMap({ latitude, longitude, radiusKm, point, zones, heigh
   return (
     <div className="gm-coverage" style={{ height }}>
       <div ref={holder} className="gm-coverage__map" />
-      {empty && <div className="gm-coverage__empty">Manzilni tanlang — ish hududi shu yerda ko‘rinadi</div>}
+      {empty && <div className="gm-coverage__empty">{t('Manzilni tanlang — ish hududi shu yerda ko‘rinadi')}</div>}
     </div>
   );
 }

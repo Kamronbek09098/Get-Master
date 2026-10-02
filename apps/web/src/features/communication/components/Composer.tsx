@@ -6,6 +6,7 @@ import { uploadAttachment, useAttachments } from '../hooks/useAttachments';
 import { useVoiceRecorder, voiceSupported } from '../hooks/useVoiceRecorder';
 import { replySnippet } from '../format';
 import type { ChatAttachment, ChatMessage } from '../types';
+import { t } from '@/i18n';
 
 const MAX_LENGTH = 2000;
 const EMOJIS = ['😀', '😂', '😊', '😍', '🥰', '😉', '😎', '🤝', '👍', '👌', '🙏', '👏', '🔥', '❤️', '✅', '❌', '⏰', '📍', '🔧', '🛠️', '💧', '⚡', '🏠', '💰', '📞', '📷', '😅', '🤔', '😢', '🎉', '👋', '🙌'];
@@ -98,7 +99,7 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
       const attachment = await uploadAttachment(recorded.file, conversationId);
       onSend('', [attachment]);
     } catch (error) {
-      setVoiceError(error instanceof Error ? error.message : 'Ovozli xabarni yuborib bo‘lmadi');
+      setVoiceError(error instanceof Error ? error.message : t('Ovozli xabarni yuborib bo‘lmadi'));
     } finally {
       setVoiceBusy(false);
     }
@@ -140,23 +141,23 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
         <div className="gm-composer__editing gm-composer__reply">
           <CornerUpLeft size={15} aria-hidden="true" />
           <div>
-            <strong>Javob berish</strong>
+            <strong>{t('Javob berish')}</strong>
             <span>{replySnippet(replyTo)}</span>
           </div>
-          <button type="button" className="gm-composer__icon" aria-label="Javobni bekor qilish" onClick={onCancelReply}>
+          <button type="button" className="gm-composer__icon" aria-label={t('Javobni bekor qilish')} onClick={onCancelReply}>
             <X size={16} />
           </button>
         </div>
       )}
       {files.items.length > 0 && !editing && (
-        <ul className="gm-composer__files" aria-label="Biriktirilgan fayllar">
+        <ul className="gm-composer__files" aria-label={t('Biriktirilgan fayllar')}>
           {files.items.map((item) => (
             <li key={item.key} className={`gm-composer__file gm-composer__file--${item.status}`} title={item.error}>
               {item.status === 'uploading' && <Loader2 size={15} className="gm-spin" aria-hidden="true" />}
               {item.status === 'error' && <AlertCircle size={15} aria-hidden="true" />}
               {item.status === 'ready' && <FileText size={15} aria-hidden="true" />}
               <span>{item.name}</span>
-              <button type="button" aria-label="Faylni olib tashlash" onClick={() => files.remove(item.key)}>
+              <button type="button" aria-label={t('Faylni olib tashlash')} onClick={() => files.remove(item.key)}>
                 <X size={13} />
               </button>
             </li>
@@ -167,10 +168,10 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
         <div className="gm-composer__editing">
           <Pencil size={15} aria-hidden="true" />
           <div>
-            <strong>Xabarni tahrirlash</strong>
+            <strong>{t('Xabarni tahrirlash')}</strong>
             <span>{editing.text}</span>
           </div>
-          <button type="button" className="gm-composer__icon" aria-label="Tahrirlashni bekor qilish" onClick={onCancelEdit}>
+          <button type="button" className="gm-composer__icon" aria-label={t('Tahrirlashni bekor qilish')} onClick={onCancelEdit}>
             <X size={16} />
           </button>
         </div>
@@ -183,7 +184,7 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
       <div className="gm-composer__row">
         {recording ? (
           <div className="gm-composer__rec" role="status" aria-live="polite">
-            <button type="button" className="gm-composer__icon" aria-label="Yozishni bekor qilish" onClick={voice.cancel}>
+            <button type="button" className="gm-composer__icon" aria-label={t('Yozishni bekor qilish')} onClick={voice.cancel}>
               <Trash2 size={22} />
             </button>
             <span className="gm-composer__rec-dot" aria-hidden="true" />
@@ -198,14 +199,14 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
             <button
               type="button"
               className="gm-composer__icon"
-              aria-label="Emoji"
+              aria-label={t('Emoji')}
               aria-expanded={emojiOpen}
               onClick={() => setEmojiOpen((open) => !open)}
             >
               <Smile size={24} />
             </button>
             {emojiOpen && (
-              <div className="gm-composer__emoji-grid" role="listbox" aria-label="Emoji tanlash">
+              <div className="gm-composer__emoji-grid" role="listbox" aria-label={t('Emoji tanlash')}>
                 {EMOJIS.map((emoji) => (
                   <button key={emoji} type="button" role="option" aria-selected={false} onClick={() => insertEmoji(emoji)}>
                     {emoji}
@@ -218,8 +219,8 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
           <textarea
             ref={areaRef}
             className="gm-composer__input"
-            aria-label="Xabar"
-            placeholder={editing ? 'Xabarni tahrirlang…' : 'Xabar'}
+            aria-label={t('Xabar')}
+            placeholder={editing ? t('Xabarni tahrirlang…') : t('Xabar')}
             rows={1}
             value={text}
             maxLength={MAX_LENGTH}
@@ -236,7 +237,7 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
           />
 
           {onOrder && !editing && (
-            <button type="button" className="gm-composer__icon" aria-label="Ustaga buyurtma yuborish" title="Ustaga buyurtma yuborish" onClick={onOrder}>
+            <button type="button" className="gm-composer__icon" aria-label={t('Ustaga buyurtma yuborish')} title={t('Ustaga buyurtma yuborish')} onClick={onOrder}>
               <Package size={22} />
             </button>
           )}
@@ -252,7 +253,7 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
                   event.target.value = '';
                 }}
               />
-              <button type="button" className="gm-composer__icon" aria-label="Fayl biriktirish" onClick={() => fileInput.current?.click()}>
+              <button type="button" className="gm-composer__icon" aria-label={t('Fayl biriktirish')} onClick={() => fileInput.current?.click()}>
                 <Paperclip size={22} />
               </button>
             </>
@@ -264,7 +265,7 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
           <button
             type="button"
             className="gm-composer__send gm-composer__send--ready"
-            aria-label={recording ? 'Ovozli xabarni yuborish' : 'Ovozli xabar yozish'}
+            aria-label={recording ? t('Ovozli xabarni yuborish') : t('Ovozli xabar yozish')}
             disabled={voiceBusy}
             onClick={() => (recording ? void sendVoice() : void voice.start())}
           >
@@ -274,7 +275,7 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
         <button
           type="button"
           className={cx('gm-composer__send', !empty && 'gm-composer__send--ready')}
-          aria-label={editing ? 'Saqlash' : 'Yuborish'}
+          aria-label={editing ? t('Saqlash') : t('Yuborish')}
           disabled={empty}
           onClick={submit}
         >

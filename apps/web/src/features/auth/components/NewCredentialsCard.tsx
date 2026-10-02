@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Check, CheckCircle2, Copy, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/store/auth.store';
+import { t } from '@/i18n';
 
 /** Clipboard API bo‘lmasa (eski brauzer / ruxsatsiz muhit) — matnni belgilab, eski usulda nusxalaydi. */
 async function copyText(text: string, fallbackTarget: HTMLElement | null): Promise<boolean> {
@@ -30,7 +31,7 @@ function CopyButton({ text, label, target, onCopied }: { text: string; label: st
 
   async function handleClick() {
     const ok = await copyText(text, target.current);
-    onCopied(ok ? `${label}: nusxalandi` : 'Nusxalab bo‘lmadi, matnni qo‘lda belgilab nusxalang');
+    onCopied(ok ? t('{label}: nusxalandi', { label }) : t('Nusxalab bo‘lmadi, matnni qo‘lda belgilab nusxalang'));
     if (!ok) return;
     setDone(true);
     window.clearTimeout(timer.current);
@@ -40,7 +41,7 @@ function CopyButton({ text, label, target, onCopied }: { text: string; label: st
   return (
     <button type="button" className={done ? 'gm-save__btn gm-save__btn--done' : 'gm-save__btn'} aria-label={label} onClick={() => void handleClick()}>
       {done ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
-      <span>{done ? 'Nusxalandi' : 'Nusxa'}</span>
+      <span>{done ? t('Nusxalandi') : t('Nusxa')}</span>
     </button>
   );
 }
@@ -79,30 +80,30 @@ export function NewCredentialsCard({ onContinue }: { onContinue: () => void }) {
   return (
     <section className="gm-save" aria-labelledby={titleId}>
       <span className="gm-save__ok">
-        <CheckCircle2 size={16} aria-hidden="true" /> Hisobingiz yaratildi
+        <CheckCircle2 size={16} aria-hidden="true" /> {t('Hisobingiz yaratildi')}
       </span>
       <header className="gm-save__head">
-        <h2 id={titleId}>Login va parolingizni saqlang</h2>
+        <h2 id={titleId}>{t('Login va parolingizni saqlang')}</h2>
         <p role="note">
-          Iltimos, login va parolni ishonchli joyda saqlang, chunki <strong>parolni keyin qayta ko‘ra olmaysiz</strong>. Uni yo‘qotsangiz, yangi parol o‘rnatish uchun administratorga murojaat qilishingiz kerak bo‘ladi.
+          {t('Iltimos, login va parolni ishonchli joyda saqlang, chunki')} <strong>{t('parolni keyin qayta ko‘ra olmaysiz')}</strong>. {t('Uni yo‘qotsangiz, yangi parol o‘rnatish uchun administratorga murojaat qilishingiz kerak bo‘ladi.')}
         </p>
       </header>
 
       <div className="gm-save__field">
         <span className="gm-save__label" id={loginLabelId}>
-          Login (telefon)
+          {t('Login (telefon)')}
         </span>
         <div className="gm-save__box">
           <span ref={loginRef} className="gm-save__value" role="textbox" aria-readonly="true" aria-labelledby={loginLabelId} tabIndex={0}>
             {credentials.phone}
           </span>
-          <CopyButton text={credentials.phone} label="Loginni nusxalash" target={loginRef} onCopied={setAnnouncement} />
+          <CopyButton text={credentials.phone} label={t('Loginni nusxalash')} target={loginRef} onCopied={setAnnouncement} />
         </div>
       </div>
 
       <div className="gm-save__field">
         <span className="gm-save__label" id={passwordLabelId}>
-          Parol
+          {t('Parol')}
         </span>
         <div className="gm-save__box">
           <span
@@ -111,7 +112,7 @@ export function NewCredentialsCard({ onContinue }: { onContinue: () => void }) {
             role="textbox"
             aria-readonly="true"
             aria-labelledby={passwordLabelId}
-            aria-description={shown ? undefined : 'Parol yashirilgan'}
+            aria-description={shown ? undefined : t('Parol yashirilgan')}
             tabIndex={0}
           >
             {shown ? credentials.password : '•'.repeat(Math.min(credentials.password.length, 14))}
@@ -120,22 +121,22 @@ export function NewCredentialsCard({ onContinue }: { onContinue: () => void }) {
             type="button"
             className="gm-save__btn gm-save__btn--icon"
             aria-pressed={shown}
-            aria-label={shown ? 'Parolni yashirish' : 'Parolni ko‘rsatish'}
+            aria-label={shown ? t('Parolni yashirish') : t('Parolni ko‘rsatish')}
             onClick={() => setShown((value) => !value)}
           >
             {shown ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
           </button>
-          <CopyButton text={credentials.password} label="Parolni nusxalash" target={passwordRef} onCopied={setAnnouncement} />
+          <CopyButton text={credentials.password} label={t('Parolni nusxalash')} target={passwordRef} onCopied={setAnnouncement} />
         </div>
       </div>
 
       <label className="gm-save__confirm" htmlFor={checkId}>
         <input id={checkId} type="checkbox" required checked={saved} onChange={(event) => setSaved(event.target.checked)} />
-        <span>Login va parolni saqlab oldim</span>
+        <span>{t('Login va parolni saqlab oldim')}</span>
       </label>
 
       <Button fullWidth className="gm-save__cta" disabled={!saved} onClick={onContinue}>
-        Kirishga o‘tish
+        {t('Kirishga o‘tish')}
       </Button>
 
       <p className="gm-save__sr" role="status" aria-live="polite">

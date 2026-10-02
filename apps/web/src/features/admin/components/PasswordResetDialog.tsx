@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useSetUserPassword } from '../hooks/useAdmin';
+import { t } from '@/i18n';
 
 /** Tasodifiy, o‘qish oson (o‘xshash belgilarsiz) parol. */
 function generatePassword(length = 12): string {
@@ -35,22 +36,19 @@ export function PasswordResetDialog({ userId, name, phone, onClose }: { userId: 
     <Modal
       open
       onClose={setPassword.isPending ? () => undefined : onClose}
-      title="Parolni o‘zgartirish"
+      title={t('Parolni o‘zgartirish')}
       footer={
         doneWith ? (
-          <Button onClick={onClose}>Yopish</Button>
+          <Button onClick={onClose}>{t('Yopish')}</Button>
         ) : (
           <>
-            <Button variant="ghost" onClick={onClose} disabled={setPassword.isPending}>
-              Bekor qilish
-            </Button>
+            <Button variant="ghost" onClick={onClose} disabled={setPassword.isPending}>{t('Bekor qilish')}</Button>
             <Button
               loading={setPassword.isPending}
               disabled={!valid}
               onClick={() => setPassword.mutate({ id: userId, password, reason: reason.trim() }, { onSuccess: () => setDoneWith(password) })}
             >
-              <KeyRound size={16} /> Parolni saqlash
-            </Button>
+              <KeyRound size={16} />{' '}{t('Parolni saqlash')}</Button>
           </>
         )
       }
@@ -61,35 +59,33 @@ export function PasswordResetDialog({ userId, name, phone, onClose }: { userId: 
         </p>
         {doneWith ? (
           <>
-            <Alert tone="success">Parol o‘zgartirildi. Foydalanuvchi barcha qurilmalardan chiqarildi.</Alert>
-            <p className="gm-card__meta">Yangi parolni foydalanuvchiga xavfsiz yo‘l bilan yetkazing. Bu oynani yopgach uni qayta ko‘rib bo‘lmaydi.</p>
+            <Alert tone="success">{t('Parol o‘zgartirildi. Foydalanuvchi barcha qurilmalardan chiqarildi.')}</Alert>
+            <p className="gm-card__meta">{t('Yangi parolni foydalanuvchiga xavfsiz yo‘l bilan yetkazing. Bu oynani yopgach uni qayta ko‘rib bo‘lmaydi.')}</p>
             <div className="gm-pwreveal">
               <code>{doneWith}</code>
               <Button size="sm" variant="secondary" onClick={() => copy(doneWith)}>
-                {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? 'Nusxalandi' : 'Nusxalash'}
+                {copied ? <Check size={16} /> : <Copy size={16} />} {copied ? t('Nusxalandi') : t('Nusxalash')}
               </Button>
             </div>
           </>
         ) : (
           <>
-            <Alert tone="warning">
-              Yangi parol belgilasangiz, foydalanuvchi hamma qurilmalardan chiqariladi va eski parol ishlamaydi.
-            </Alert>
+            <Alert tone="warning">{t('Yangi parol belgilasangiz, foydalanuvchi hamma qurilmalardan chiqariladi va eski parol ishlamaydi.')}</Alert>
             {setPassword.isError && <Alert tone="danger">{getErrorMessage(setPassword.error)}</Alert>}
             <div className="gm-pwfield">
               <Input
-                label="Yangi parol"
+                label={t('Yangi parol')}
                 type={shown ? 'text' : 'password'}
                 value={password}
                 minLength={8}
                 maxLength={128}
                 autoComplete="new-password"
-                hint="Kamida 8 ta belgi"
+                hint={t('Kamida 8 ta belgi')}
                 onChange={(event) => setPasswordText(event.target.value)}
               />
               <div className="gm-pwfield__tools">
                 <Button type="button" size="sm" variant="secondary" onClick={() => setShown((value) => !value)}>
-                  {shown ? <EyeOff size={16} /> : <Eye size={16} />} {shown ? 'Yashirish' : 'Ko‘rsatish'}
+                  {shown ? <EyeOff size={16} /> : <Eye size={16} />} {shown ? t('Yashirish') : t('Ko‘rsatish')}
                 </Button>
                 <Button
                   type="button"
@@ -100,11 +96,10 @@ export function PasswordResetDialog({ userId, name, phone, onClose }: { userId: 
                     setShown(true);
                   }}
                 >
-                  <RefreshCw size={16} /> Tasodifiy yaratish
-                </Button>
+                  <RefreshCw size={16} />{' '}{t('Tasodifiy yaratish')}</Button>
               </div>
             </div>
-            <Input label="Sabab (ixtiyoriy)" value={reason} maxLength={500} onChange={(event) => setReason(event.target.value)} />
+            <Input label={t('Sabab (ixtiyoriy)')} value={reason} maxLength={500} onChange={(event) => setReason(event.target.value)} />
           </>
         )}
       </div>

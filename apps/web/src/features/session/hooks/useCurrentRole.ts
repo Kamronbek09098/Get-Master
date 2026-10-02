@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/app.store';
 import { useAuthStore } from '@/store/auth.store';
 import type { Role } from '@/types/common';
 import { useMe } from './useMe';
+import { t } from '@/i18n';
 
 export interface CurrentRole {
   role: Role | null;
@@ -18,9 +19,9 @@ export interface CurrentRole {
 }
 
 const WRONG_APP_MESSAGE: Record<Role, string> = {
-  CUSTOMER: 'Bu akkaunt mijoz sifatida kira olmaydi.',
-  MASTER: 'Bu akkaunt usta ilovasiga kira olmaydi.',
-  ADMIN: 'Bu akkaunt administrator emas.',
+  CUSTOMER: t('Bu akkaunt mijoz sifatida kira olmaydi.'),
+  MASTER: t('Bu akkaunt usta ilovasiga kira olmaydi.'),
+  ADMIN: t('Bu akkaunt administrator emas.'),
 };
 
 export function useCurrentRole(): CurrentRole {

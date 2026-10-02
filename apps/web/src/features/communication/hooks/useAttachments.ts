@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { mediaService } from '@/features/media/services/media.service';
 import type { ChatAttachment } from '../types';
+import { t } from '@/i18n';
 
 export interface PendingAttachment {
   key: string;
@@ -50,7 +51,7 @@ export function useAttachments(conversationId: string) {
         const key = crypto.randomUUID();
         const entry: PendingAttachment = { key, name: file.name, mimeType: file.type || 'application/octet-stream', status: 'uploading' };
         if (file.size > MAX_BYTES) {
-          setItems((current) => [...current, { ...entry, status: 'error', error: 'Fayl 25 MB dan katta' }]);
+          setItems((current) => [...current, { ...entry, status: 'error', error: t('Fayl 25 MB dan katta') }]);
           continue;
         }
         setItems((current) => [...current, entry]);
@@ -68,9 +69,9 @@ export function useAttachments(conversationId: string) {
             }
             if (removed.current.has(key)) return;
             if (status === 'READY') patch(key, { status: 'ready', assetId: asset.id, mimeType: mime });
-            else patch(key, { status: 'error', error: status === 'REJECTED' ? 'Fayl rad etildi' : 'Fayl qayta ishlanmadi' });
+            else patch(key, { status: 'error', error: status === 'REJECTED' ? t('Fayl rad etildi') : t('Fayl qayta ishlanmadi') });
           } catch (error) {
-            patch(key, { status: 'error', error: error instanceof Error ? error.message : 'Yuklab bo‘lmadi' });
+            patch(key, { status: 'error', error: error instanceof Error ? error.message : t('Yuklab bo‘lmadi') });
           }
         })();
       }

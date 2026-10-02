@@ -5,5 +5,6 @@ const configuredRole = import.meta.env.VITE_APP_ROLE as string | undefined;
 
 export const env = {
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1',
+  googleClientId: (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ?? '',
   appRole: ROLES.find((role) => role === configuredRole) ?? null,
 } as const;

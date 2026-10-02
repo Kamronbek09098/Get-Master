@@ -23,28 +23,29 @@ import { STATUS_TEXT } from '@/features/order/order-flow';
 import { useConfirmCash } from '@/features/payment/hooks/usePayment';
 import { providerLabel } from '@/features/payment/labels';
 import './AdminOrderDetailPage.css';
+import { t } from '@/i18n';
 
 const STAGES: Array<{ key: 'BEFORE' | 'DURING' | 'AFTER'; label: string }> = [
-  { key: 'BEFORE', label: 'Ishdan oldin' },
-  { key: 'DURING', label: 'Ish jarayonida' },
-  { key: 'AFTER', label: 'Ishdan keyin' },
+  { key: 'BEFORE', label: t('Ishdan oldin') },
+  { key: 'DURING', label: t('Ish jarayonida') },
+  { key: 'AFTER', label: t('Ishdan keyin') },
 ];
 const ACTOR: Record<string, string> = { CUSTOMER: 'Mijoz', MASTER: 'Usta', ADMIN: 'Administrator', SYSTEM: 'Tizim' };
 const PAYMENT: Record<string, { label: string; tone: BadgeTone }> = {
-  PENDING: { label: 'Kutilmoqda', tone: 'neutral' },
-  PROCESSING: { label: 'Jarayonda', tone: 'warning' },
-  SUCCEEDED: { label: 'To‘langan', tone: 'success' },
-  FAILED: { label: 'Muvaffaqiyatsiz', tone: 'danger' },
-  CANCELLED: { label: 'Bekor qilingan', tone: 'neutral' },
-  REFUNDED: { label: 'Qaytarilgan', tone: 'warning' },
-  PARTIALLY_REFUNDED: { label: 'Qisman qaytarilgan', tone: 'warning' },
+  PENDING: { label: t('Kutilmoqda'), tone: 'neutral' },
+  PROCESSING: { label: t('Jarayonda'), tone: 'warning' },
+  SUCCEEDED: { label: t('To‘langan'), tone: 'success' },
+  FAILED: { label: t('Muvaffaqiyatsiz'), tone: 'danger' },
+  CANCELLED: { label: t('Bekor qilingan'), tone: 'neutral' },
+  REFUNDED: { label: t('Qaytarilgan'), tone: 'warning' },
+  PARTIALLY_REFUNDED: { label: t('Qisman qaytarilgan'), tone: 'warning' },
 };
 const EXTRA: Record<string, { label: string; tone: BadgeTone }> = {
-  PENDING: { label: 'Javob kutilmoqda', tone: 'warning' },
-  APPROVED: { label: 'Mijoz kelishdi', tone: 'success' },
-  REJECTED: { label: 'Mijoz rad etdi', tone: 'danger' },
-  CANCELLED: { label: 'Bekor qilingan', tone: 'neutral' },
-  EXPIRED: { label: 'Muddati tugagan', tone: 'neutral' },
+  PENDING: { label: t('Javob kutilmoqda'), tone: 'warning' },
+  APPROVED: { label: t('Mijoz kelishdi'), tone: 'success' },
+  REJECTED: { label: t('Mijoz rad etdi'), tone: 'danger' },
+  CANCELLED: { label: t('Bekor qilingan'), tone: 'neutral' },
+  EXPIRED: { label: t('Muddati tugagan'), tone: 'neutral' },
 };
 
 function Card({ title, children, aside }: { title: string; children: ReactNode; aside?: ReactNode }) {
@@ -75,9 +76,7 @@ function Party({ role, person, extra }: { role: string; person: AdminOrderPerson
       <AccountLink accountNumber={person.accountNumber} className="gm-aordd__link">
         {accountName(person)}
       </AccountLink>
-      <span>
-        ID {person.accountNumber} · {person.phone}
-      </span>
+      <span>{t('ID {accountNumber} · {phone}', { accountNumber: person.accountNumber, phone: person.phone })}</span>
       {extra && <span>{extra}</span>}
     </div>
   );
@@ -97,9 +96,7 @@ function CashConfirm({ paymentId }: { paymentId: string }) {
   return (
     <div>
       {confirm.isError && <Alert tone="danger">{getErrorMessage(confirm.error)}</Alert>}
-      <Button size="sm" variant="secondary" loading={confirm.isPending} onClick={() => confirm.mutate(paymentId)}>
-        Naqd pul olinganini tasdiqlash
-      </Button>
+      <Button size="sm" variant="secondary" loading={confirm.isPending} onClick={() => confirm.mutate(paymentId)}>{t('Naqd pul olinganini tasdiqlash')}</Button>
     </div>
   );
 }
@@ -111,9 +108,9 @@ function ActionDialog({ order, mode, onClose }: { order: AdminOrderDetail; mode:
   const pending = cancel.isPending || resolve.isPending;
   const error = cancel.error ?? resolve.error;
   const copy = {
-    cancel: { title: 'Buyurtmani bekor qilish', text: 'Buyurtma bekor qilinadi va mijoz bilan usta xabardor qilinadi.', confirm: 'Bekor qilish', variant: 'danger' as const },
-    COMPLETE: { title: 'Nizoni yakunlash (buyurtma bajarilgan)', text: 'Buyurtma «Yakunlandi» holatiga o‘tadi. Mijoz va usta xabardor qilinadi.', confirm: 'Yakunlash', variant: 'primary' as const },
-    CANCEL: { title: 'Nizoni bekor qilish bilan hal qilish', text: 'Buyurtma bekor qilinadi. Mijoz va usta xabardor qilinadi.', confirm: 'Bekor qilish', variant: 'danger' as const },
+    cancel: { title: t('Buyurtmani bekor qilish'), text: t('Buyurtma bekor qilinadi va mijoz bilan usta xabardor qilinadi.'), confirm: t('Bekor qilish'), variant: 'danger' as const },
+    COMPLETE: { title: t('Nizoni yakunlash (buyurtma bajarilgan)'), text: t('Buyurtma «Yakunlandi» holatiga o‘tadi. Mijoz va usta xabardor qilinadi.'), confirm: t('Yakunlash'), variant: 'primary' as const },
+    CANCEL: { title: t('Nizoni bekor qilish bilan hal qilish'), text: t('Buyurtma bekor qilinadi. Mijoz va usta xabardor qilinadi.'), confirm: t('Bekor qilish'), variant: 'danger' as const },
   }[mode];
   const submit = () => {
     const done = { onSuccess: onClose };
@@ -128,9 +125,7 @@ function ActionDialog({ order, mode, onClose }: { order: AdminOrderDetail; mode:
       title={copy.title}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} disabled={pending}>
-            Ortga
-          </Button>
+          <Button variant="ghost" onClick={onClose} disabled={pending}>{t('Ortga')}</Button>
           <Button variant={copy.variant} loading={pending} disabled={reason.trim().length < 3} onClick={submit}>
             {copy.confirm}
           </Button>
@@ -140,7 +135,7 @@ function ActionDialog({ order, mode, onClose }: { order: AdminOrderDetail; mode:
       <div className="gm-form">
         <Alert tone={copy.variant === 'danger' ? 'warning' : 'info'}>{copy.text}</Alert>
         {error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
-        <Textarea label="Sabab / qaror izohi" required rows={3} maxLength={1000} hint="Audit jurnaliga va tomonlarga yoziladi (kamida 3 ta belgi)" value={reason} onChange={(event) => setReason(event.target.value)} />
+        <Textarea label={t('Sabab / qaror izohi')} required rows={3} maxLength={1000} hint={t('Audit jurnaliga va tomonlarga yoziladi (kamida 3 ta belgi)')} value={reason} onChange={(event) => setReason(event.target.value)} />
       </div>
     </Modal>
   );
@@ -155,8 +150,7 @@ export function AdminOrderDetailPage() {
   return (
     <div className="gm-aordd">
       <Link to="/admin/buyurtmalar" className="gm-aordd__back">
-        <ArrowLeft size={16} /> Buyurtmalar
-      </Link>
+        <ArrowLeft size={16} />{' '}{t('Buyurtmalar')}</Link>
       {query.isLoading && <PageLoader />}
       {query.isError && <Alert tone="danger">{getErrorMessage(query.error)}</Alert>}
       {order && (
@@ -167,76 +161,69 @@ export function AdminOrderDetailPage() {
                 <h1>{order.booking.request.title}</h1>
                 <OrderStatus status={order.status} />
               </div>
-              <p>
-                Buyurtma <strong>№{order.orderNumber}</strong> (mijozning {order.customerOrderIndex}-, ustaning {order.masterOrderIndex}-buyurtmasi) · yaratilgan {formatDateTime(order.createdAt)}
-                {order.booking.request.category && ` · ${order.booking.request.category.name}`}
-              </p>
+              <p>{t('Buyurtma')}{' '}<strong>№{order.orderNumber}</strong>{' '}{t('(mijozning {customerOrderIndex}-, ustaning {masterOrderIndex}-buyurtmasi) · yaratilgan {dateTime} {p}', { customerOrderIndex: order.customerOrderIndex, masterOrderIndex: order.masterOrderIndex, dateTime: formatDateTime(order.createdAt), p: order.booking.request.category && ` · ${order.booking.request.category.name}` })}</p>
             </div>
             <div className="gm-aordd__actions">
               {order.conversationId && (
                 <Link to={`/admin/suhbatlar?suhbat=${order.conversationId}`}>
                   <Button size="sm" variant="secondary">
-                    <MessageSquare size={14} /> Suhbatni ko‘rish
-                  </Button>
+                    <MessageSquare size={14} />{' '}{t('Suhbatni ko‘rish')}</Button>
                 </Link>
               )}
               {order.allowedActions.cancel && (
                 <Button size="sm" variant="danger" onClick={() => setDialog('cancel')}>
-                  <Ban size={14} /> Bekor qilish
-                </Button>
+                  <Ban size={14} />{' '}{t('Bekor qilish')}</Button>
               )}
               {order.allowedActions.resolve && (
                 <>
                   <Button size="sm" onClick={() => setDialog('COMPLETE')}>
-                    <CheckCircle2 size={14} /> Yakunlash
-                  </Button>
+                    <CheckCircle2 size={14} />{' '}{t('Yakunlash')}</Button>
                   <Button size="sm" variant="danger" onClick={() => setDialog('CANCEL')}>
-                    <Ban size={14} /> Bekor qilish
-                  </Button>
+                    <Ban size={14} />{' '}{t('Bekor qilish')}</Button>
                 </>
               )}
             </div>
           </header>
 
-          {order.status === 'DISPUTED' && <Alert tone="warning">Buyurtma bo‘yicha nizo ochilgan. Ishning rasmlari va suhbatni ko‘rib chiqib, qaror qabul qiling.</Alert>}
-          {order.cancellationReason && <Alert tone="info">Bekor qilish sababi: {order.cancellationReason}</Alert>}
+          {order.status === 'DISPUTED' && <Alert tone="warning">{t('Buyurtma bo‘yicha nizo ochilgan. Ishning rasmlari va suhbatni ko‘rib chiqib, qaror qabul qiling.')}</Alert>}
+          {order.cancellationReason && <Alert tone="info">{t('Bekor qilish sababi:')}{' '}{order.cancellationReason}</Alert>}
 
-          <section className="gm-aordd__money" aria-label="Summalar">
+          <section className="gm-aordd__money" aria-label={t('Summalar')}>
             <div>
-              <small>Kelishilgan narx</small>
+              <small>{t('Kelishilgan narx')}</small>
               <strong>{formatMoney(order.originalAmount, order.currency)}</strong>
             </div>
             <div>
-              <small>Qo‘shimcha ish</small>
+              <small>{t('Qo‘shimcha ish')}</small>
               <strong>{formatMoney(order.additionalAmount, order.currency)}</strong>
             </div>
             <div>
-              <small>Yakuniy summa</small>
+              <small>{t('Yakuniy summa')}</small>
               <strong>{formatMoney(order.finalAmount, order.currency)}</strong>
             </div>
             <div>
-              <small>Platforma ulushi</small>
+              <small>{t('Platforma ulushi')}</small>
               <strong>{order.platformFee ? formatMoney(order.platformFee, order.currency) : '—'}</strong>
             </div>
             <div>
-              <small>Usta ulushi</small>
+              <small>{t('Usta ulushi')}</small>
               <strong>{order.masterAmount ? formatMoney(order.masterAmount, order.currency) : '—'}</strong>
             </div>
           </section>
 
           <div className="gm-aordd__grid">
-            <Card title="Tomonlar">
+            <Card title={t('Tomonlar')}>
               <div className="gm-aordd__parties">
                 <Party role="Mijoz" person={order.customer} />
-                <Party role="Usta" person={order.master.user} extra={`${order.master.profession ?? 'Kasb ko‘rsatilmagan'} · reyting ${Number(order.master.ratingAvg).toFixed(1)} · ${order.master.completedOrders} ish`} />
+                <Party role={t('Usta')} person={order.master.user} extra={t('{profession} · reyting {rating} · {jobs} ish', { profession: order.master.profession ?? t('Kasb ko‘rsatilmagan'), rating: Number(order.master.ratingAvg).toFixed(1), jobs: order.master.completedOrders })} />
               </div>
             </Card>
 
-            <Card title="Jadval va manzil">
+            <Card title={t('Jadval va manzil')}>
               <dl>
-                <Row label="Boshlanish">{order.booking.scheduledStartAt ? formatDateTime(order.booking.scheduledStartAt) : '—'}</Row>
-                <Row label="Tugash">{order.booking.scheduledEndAt ? formatDateTime(order.booking.scheduledEndAt) : '—'}</Row>
-                <Row label="Manzil">
+                <Row label={t('Boshlanish')}>{order.booking.scheduledStartAt ? formatDateTime(order.booking.scheduledStartAt) : '—'}</Row>
+                <Row label={t('Tugash')}>{order.booking.scheduledEndAt ? formatDateTime(order.booking.scheduledEndAt) : '—'}</Row>
+                <Row label={t('Manzil')}>
                   {order.booking.request.address ? (
                     <>
                       <MapPin size={13} aria-hidden="true" /> {[order.booking.request.address.city, order.booking.request.address.district, order.booking.request.address.addressLine].filter(Boolean).join(', ')}
@@ -245,24 +232,24 @@ export function AdminOrderDetailPage() {
                     '—'
                   )}
                 </Row>
-                <Row label="Ish boshlangan">{order.startedAt ? formatDateTime(order.startedAt) : '—'}</Row>
-                <Row label="Ish topshirilgan">{order.completionSubmittedAt ? formatDateTime(order.completionSubmittedAt) : '—'}</Row>
-                <Row label="Yakunlangan">{order.completedAt ? formatDateTime(order.completedAt) : '—'}</Row>
+                <Row label={t('Ish boshlangan')}>{order.startedAt ? formatDateTime(order.startedAt) : '—'}</Row>
+                <Row label={t('Ish topshirilgan')}>{order.completionSubmittedAt ? formatDateTime(order.completionSubmittedAt) : '—'}</Row>
+                <Row label={t('Yakunlangan')}>{order.completedAt ? formatDateTime(order.completedAt) : '—'}</Row>
               </dl>
             </Card>
           </div>
 
-          <Card title="Mijoz so‘rovi">
+          <Card title={t('Mijoz so‘rovi')}>
             <p className="gm-aordd__text">{order.booking.request.description}</p>
             <dl>
-              <Row label="Usta taklifi">
+              <Row label={t('Usta taklifi')}>
                 {formatMoney(order.booking.offer.price, order.currency)}
-                {order.booking.offer.estimatedMinutes ? ` · taxminan ${order.booking.offer.estimatedMinutes} daqiqa` : ''}
+                {order.booking.offer.estimatedMinutes ? t(' · taxminan {estimatedMinutes} daqiqa', { estimatedMinutes: order.booking.offer.estimatedMinutes }) : ''}
               </Row>
-              {order.booking.offer.message && <Row label="Usta izohi">{order.booking.offer.message}</Row>}
+              {order.booking.offer.message && <Row label={t('Usta izohi')}>{order.booking.offer.message}</Row>}
             </dl>
             {order.requestAssets.length > 0 && (
-              <div className="gm-aordd__gallery" aria-label="Mijoz yuklagan rasmlar">
+              <div className="gm-aordd__gallery" aria-label={t('Mijoz yuklagan rasmlar')}>
                 {order.requestAssets.map((asset) => (
                   <figure key={asset.id}>
                     <MediaViewer assetId={asset.id} alt={fixFilename(asset.originalName)} label={fixFilename(asset.originalName)} size="lg" />
@@ -273,9 +260,9 @@ export function AdminOrderDetailPage() {
             )}
           </Card>
 
-          <Card title="Usta yuklagan ish rasmlari" aside={<Badge tone="primary">{order.workProofs.length} ta</Badge>}>
+          <Card title={t('Usta yuklagan ish rasmlari')} aside={<Badge tone="primary">{order.workProofs.length} ta</Badge>}>
             {order.workProofs.length === 0 ? (
-              <EmptyState title="Rasm yuklanmagan" />
+              <EmptyState title={t('Rasm yuklanmagan')} />
             ) : (
               STAGES.map((stage) => {
                 const proofs = order.workProofs.filter((proof) => proof.stage === stage.key);
@@ -291,7 +278,7 @@ export function AdminOrderDetailPage() {
                           {proof.mediaAssetId ? (
                             <MediaViewer assetId={proof.mediaAssetId} alt={stage.label} label={`${stage.label}: ${proof.asset ? fixFilename(proof.asset.originalName) : 'fayl'}`} size="lg" />
                           ) : (
-                            <span className="gm-aordd__nofile">Fayl saqlanmagan</span>
+                            <span className="gm-aordd__nofile">{t('Fayl saqlanmagan')}</span>
                           )}
                           <FileInfo asset={proof.asset} />
                           <small>
@@ -307,7 +294,7 @@ export function AdminOrderDetailPage() {
           </Card>
 
           <div className="gm-aordd__grid">
-            <Card title="Holatlar tarixi">
+            <Card title={t('Holatlar tarixi')}>
               <ol className="gm-aordd__timeline">
                 {order.statusHistory.map((step) => (
                   <li key={step.id}>
@@ -321,16 +308,16 @@ export function AdminOrderDetailPage() {
                       {ACTOR[step.actorType] ?? step.actorType}
                       {step.actor && ` · ${accountName(step.actor)}`}
                     </span>
-                    {step.reason && step.reason !== 'Offer accepted' && <em>Sabab: {step.reason}</em>}
+                    {step.reason && step.reason !== 'Offer accepted' && <em>{t('Sabab:')}{' '}{step.reason}</em>}
                     <time>{formatDateTime(step.createdAt)}</time>
                   </li>
                 ))}
               </ol>
             </Card>
 
-            <Card title="To‘lovlar" aside={<Badge tone="primary">{order.payments.length} ta</Badge>}>
+            <Card title={t('To‘lovlar')} aside={<Badge tone="primary">{order.payments.length} ta</Badge>}>
               {order.payments.length === 0 ? (
-                <EmptyState title="To‘lov usuli kiritilmagan" description={order.status === 'COMPLETED' ? 'Mijoz buyurtmani yakunlagan, lekin to‘lov usulini tanlamagan.' : 'Mijoz ishni tasdiqlaganda to‘lov usulini tanlaydi.'} />
+                <EmptyState title={t('To‘lov usuli kiritilmagan')} description={order.status === 'COMPLETED' ? t('Mijoz buyurtmani yakunlagan, lekin to‘lov usulini tanlamagan.') : t('Mijoz ishni tasdiqlaganda to‘lov usulini tanlaydi.')} />
               ) : (
                 <ul className="gm-aordd__plain">
                   {order.payments.map((payment) => {
@@ -343,14 +330,12 @@ export function AdminOrderDetailPage() {
                         </div>
                         <small>
                           {formatDateTime(payment.succeededAt ?? payment.createdAt)}
-                          {Number(payment.refundedAmount) > 0 && ` · qaytarilgan ${formatMoney(payment.refundedAmount, payment.currency)}`}
+                          {Number(payment.refundedAmount) > 0 && t(' · qaytarilgan {money}', { money: formatMoney(payment.refundedAmount, payment.currency) })}
                           {payment.failureReason && ` · ${payment.failureReason}`}
                         </small>
                         {payment.provider === 'CASH' && payment.status === 'PENDING' && <CashConfirm paymentId={payment.id} />}
                         {payment.refunds.map((refund) => (
-                          <small key={refund.id}>
-                            Qaytarish: {formatMoney(refund.amount, payment.currency)} · {refund.status} · {refund.reason}
-                          </small>
+                          <small key={refund.id}>{t('Qaytarish: {money} · {status} · {reason}', { money: formatMoney(refund.amount, payment.currency), status: refund.status, reason: refund.reason })}</small>
                         ))}
                       </li>
                     );
@@ -361,7 +346,7 @@ export function AdminOrderDetailPage() {
           </div>
 
           {order.additionalWork.length > 0 && (
-            <Card title="Qo‘shimcha ish so‘rovlari">
+            <Card title={t('Qo‘shimcha ish so‘rovlari')}>
               <ul className="gm-aordd__plain">
                 {order.additionalWork.map((work) => {
                   const info = EXTRA[work.status] ?? { label: work.status, tone: 'neutral' as BadgeTone };
@@ -384,29 +369,29 @@ export function AdminOrderDetailPage() {
           {(order.review || order.warranty || order.cases.length > 0) && (
             <div className="gm-aordd__grid">
               {order.review && (
-                <Card title="Mijoz sharhi">
+                <Card title={t('Mijoz sharhi')}>
                   <div className="gm-aordd__stars" aria-label={`${order.review.rating} baho`}>
                     {Array.from({ length: 5 }, (_, index) => (
                       <Star key={index} size={18} fill={index < order.review!.rating ? 'currentColor' : 'none'} />
                     ))}
                   </div>
-                  <p className="gm-aordd__text">{order.review.comment ?? 'Izoh qoldirilmagan.'}</p>
+                  <p className="gm-aordd__text">{order.review.comment ?? t('Izoh qoldirilmagan.')}</p>
                   <small>
                     {accountName(order.review.author)} · {formatDateTime(order.review.createdAt)} · {order.review.status}
                   </small>
                 </Card>
               )}
               {order.warranty && (
-                <Card title="Kafolat">
+                <Card title={t('Kafolat')}>
                   <dl>
-                    <Row label="Holati">{order.warranty.status}</Row>
-                    <Row label="Boshlanishi">{formatDateTime(order.warranty.startsAt)}</Row>
-                    <Row label="Tugashi">{formatDateTime(order.warranty.expiresAt)}</Row>
+                    <Row label={t('Holati')}>{order.warranty.status}</Row>
+                    <Row label={t('Boshlanishi')}>{formatDateTime(order.warranty.startsAt)}</Row>
+                    <Row label={t('Tugashi')}>{formatDateTime(order.warranty.expiresAt)}</Row>
                   </dl>
                 </Card>
               )}
               {order.cases.length > 0 && (
-                <Card title="Shikoyat va nizolar">
+                <Card title={t('Shikoyat va nizolar')}>
                   <ul className="gm-aordd__plain">
                     {order.cases.map((item) => (
                       <li key={item.id}>
@@ -419,9 +404,7 @@ export function AdminOrderDetailPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link to="/admin/shikoyatlar" className="gm-aordd__link">
-                    Shikoyat va nizolar bo‘limi →
-                  </Link>
+                  <Link to="/admin/shikoyatlar" className="gm-aordd__link">{t('Shikoyat va nizolar bo‘limi →')}</Link>
                 </Card>
               )}
             </div>

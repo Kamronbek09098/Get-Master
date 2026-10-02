@@ -13,6 +13,7 @@ import { PAYMENT_STATUS_LABEL, PROVIDER_LABEL, providerLabel } from '@/features/
 import type { PaymentProvider } from '@/types/common';
 import '@/features/payment/components/Payment.css';
 import type { OrderDetailsData } from '../types';
+import { t } from '@/i18n';
 
 type Tone = 'success' | 'warning' | 'danger' | 'neutral';
 const BADGE: Record<Tone, BadgeTone> = { success: 'success', warning: 'warning', danger: 'danger', neutral: 'neutral' };
@@ -41,41 +42,41 @@ export function OrderPaymentCard({
   const completed = order.status === 'COMPLETED';
 
   let tone: Tone = 'neutral';
-  let title = 'To‘lov usuli tanlanmagan';
-  let hint = 'Mijoz ishni tasdiqlaganda to‘lov usulini tanlaydi.';
+  let title = t('To‘lov usuli tanlanmagan');
+  let hint = t('Mijoz ishni tasdiqlaganda to‘lov usulini tanlaydi.');
   let Icon = CreditCard;
 
   if (!payment) {
     if (completed) {
       tone = 'warning';
-      hint = isMaster ? 'Mijoz hali to‘lov usulini tanlamagan.' : 'Buyurtma yakunlandi. To‘lov usulini tanlang va to‘lovni rasmiylashtiring.';
+      hint = isMaster ? t('Mijoz hali to‘lov usulini tanlamagan.') : t('Buyurtma yakunlandi. To‘lov usulini tanlang va to‘lovni rasmiylashtiring.');
     } else if (!isMaster) {
-      hint = 'Ish tugagach to‘lov usulini tanlaysiz. Hozirdan ham tanlab qo‘yishingiz mumkin.';
+      hint = t('Ish tugagach to‘lov usulini tanlaysiz. Hozirdan ham tanlab qo‘yishingiz mumkin.');
     }
   } else if (payment.status === 'SUCCEEDED' || payment.status === 'PARTIALLY_REFUNDED' || payment.status === 'REFUNDED') {
     tone = 'success';
-    title = 'To‘lov qabul qilindi';
-    hint = payment.provider === 'CASH' ? 'Usta naqd pulni qabul qilganini tasdiqladi.' : 'To‘lov muvaffaqiyatli yakunlangan.';
+    title = t('To‘lov qabul qilindi');
+    hint = payment.provider === 'CASH' ? t('Usta naqd pulni qabul qilganini tasdiqladi.') : t('To‘lov muvaffaqiyatli yakunlangan.');
     Icon = CheckCircle2;
   } else if (payment.status === 'FAILED' || payment.status === 'CANCELLED') {
     tone = 'danger';
-    title = 'To‘lov amalga oshmadi';
-    hint = isMaster ? 'Mijozning to‘lovi amalga oshmadi.' : 'To‘lov amalga oshmadi. Qayta urinib ko‘ring yoki boshqa usulni tanlang.';
+    title = t('To‘lov amalga oshmadi');
+    hint = isMaster ? t('Mijozning to‘lovi amalga oshmadi.') : t('To‘lov amalga oshmadi. Qayta urinib ko‘ring yoki boshqa usulni tanlang.');
     Icon = AlertCircle;
   } else if (payment.provider === 'CASH') {
     tone = 'warning';
-    title = 'Naqd to‘lov kutilmoqda';
+    title = t('Naqd to‘lov kutilmoqda');
     Icon = Banknote;
     hint = isMaster
       ? completed
-        ? 'Mijoz naqd pul bilan to‘laydi. Pulni olgach, pastdagi tugma bilan tasdiqlang.'
-        : 'Mijoz ishni tasdiqlagach, naqd pulni olganingizni shu yerdan tasdiqlaysiz.'
-      : 'Pulni ustaga qo‘lda topshiring. Usta olganini tasdiqlagach, to‘lov yakunlanadi.';
+        ? t('Mijoz naqd pul bilan to‘laydi. Pulni olgach, pastdagi tugma bilan tasdiqlang.')
+        : t('Mijoz ishni tasdiqlagach, naqd pulni olganingizni shu yerdan tasdiqlaysiz.')
+      : t('Pulni ustaga qo‘lda topshiring. Usta olganini tasdiqlagach, to‘lov yakunlanadi.');
   } else {
     tone = 'warning';
-    title = `${providerLabel(payment.provider)} to‘lovi kutilmoqda`;
+    title = t('{providerLabel} to‘lovi kutilmoqda', { providerLabel: providerLabel(payment.provider) });
     Icon = Clock;
-    hint = isMaster ? 'Mijoz onlayn to‘lov qilishi kutilmoqda.' : 'To‘lov hali yakunlanmagan. To‘lovni davom ettiring yoki boshqa usulni tanlang.';
+    hint = isMaster ? t('Mijoz onlayn to‘lov qilishi kutilmoqda.') : t('To‘lov hali yakunlanmagan. To‘lovni davom ettiring yoki boshqa usulni tanlang.');
   }
 
   const canConfirmCash = isMaster && payment?.provider === 'CASH' && payment.status === 'PENDING' && completed;
@@ -89,7 +90,7 @@ export function OrderPaymentCard({
   const resumeOnline = !!pendingProvider && pendingProvider !== 'CASH' && selected === pendingProvider;
   const showPay = canChoose && !!selected && (changed || resumeOnline);
   const amountText = formatMoney(order.finalAmount, order.currency);
-  const payLabel = selected === 'CASH' ? 'Naqd to‘lovni tanlash' : selected ? `${PROVIDER_LABEL[selected]} orqali ${amountText} to‘lash` : '';
+  const payLabel = selected === 'CASH' ? t('Naqd to‘lovni tanlash') : selected ? t('{item} orqali {amountText} to‘lash', { item: PROVIDER_LABEL[selected], amountText }) : '';
   function startPayment() {
     if (!selected) return;
     createPayment.mutate(
@@ -107,7 +108,7 @@ export function OrderPaymentCard({
   }
 
   return (
-    <section id="tolov" className={`gm-opaycard gm-opaycard--${tone}`} aria-label="To‘lov">
+    <section id="tolov" className={`gm-opaycard gm-opaycard--${tone}`} aria-label={t('To‘lov')}>
       <header className="gm-opaycard__head">
         <h2>
           <Icon size={20} aria-hidden="true" /> {title}
@@ -120,8 +121,8 @@ export function OrderPaymentCard({
             {payment?.provider === 'CASH' ? <Banknote size={20} /> : <CreditCard size={20} />}
           </span>
           <div>
-            <strong>{payment ? providerLabel(payment.provider) : 'Usul tanlanmagan'}</strong>
-            <small>To‘lov usuli</small>
+            <strong>{payment ? providerLabel(payment.provider) : t('Usul tanlanmagan')}</strong>
+            <small>{t('To‘lov usuli')}</small>
           </div>
         </div>
         <span className="gm-opaycard__amount">{formatMoney(payment?.amount ?? order.finalAmount, payment?.currency ?? order.currency)}</span>
@@ -129,16 +130,14 @@ export function OrderPaymentCard({
       <p className="gm-opaycard__hint">{hint}</p>
       {canChoose && (
         <div className="gm-opaycard__choose">
-          <h3 className="gm-opaycard__choose-title">{pendingProvider ? 'To‘lov usuli' : 'To‘lov usulini tanlang'}</h3>
+          <h3 className="gm-opaycard__choose-title">{pendingProvider ? t('To‘lov usuli') : t('To‘lov usulini tanlang')}</h3>
           <PaymentMethodCards value={selected} onChange={(method) => onSelectMethod?.(method)} current={pendingProvider} compact disabled={createPayment.isPending} />
         </div>
       )}
       {confirmCash.isError && <Alert tone="danger">{getErrorMessage(confirmCash.error)}</Alert>}
       {createPayment.isError && <Alert tone="danger">{getErrorMessage(createPayment.error)}</Alert>}
       {testNote && (
-        <Alert tone="warning" title="Sinov rejimi">
-          Haqiqiy to‘lov provayderi hali ulanmagan, shuning uchun real to‘lov sahifasiga o‘tilmaydi.
-        </Alert>
+        <Alert tone="warning" title={t('Sinov rejimi')}>{t('Haqiqiy to‘lov provayderi hali ulanmagan, shuning uchun real to‘lov sahifasiga o‘tilmaydi.')}</Alert>
       )}
       {(showPay || canConfirmCash) && (
         <div className="gm-opaycard__actions">
@@ -149,8 +148,7 @@ export function OrderPaymentCard({
           )}
           {canConfirmCash && payment && (
             <Button loading={confirmCash.isPending} onClick={() => confirmCash.mutate(payment.id)}>
-              <Banknote size={16} /> Naqd pulni qabul qildim
-            </Button>
+              <Banknote size={16} />{' '}{t('Naqd pulni qabul qildim')}</Button>
           )}
         </div>
       )}

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
+import { t } from '@/i18n';
 
 export interface ConfirmDialogProps {
   open: boolean;
@@ -20,8 +21,8 @@ export function ConfirmDialog({
   open,
   title,
   description,
-  confirmLabel = 'Tasdiqlash',
-  cancelLabel = 'Bekor qilish',
+  confirmLabel = t('Tasdiqlash'),
+  cancelLabel = t('Bekor qilish'),
   tone = 'default',
   loading = false,
   confirmDisabled = false,

@@ -1,6 +1,7 @@
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('auth', () => ({
+  googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
   jwtSecret: process.env.JWT_SECRET ?? '',
   accessTtlSeconds: Number(process.env.ACCESS_TOKEN_TTL_SECONDS ?? 900),
   refreshTtlSeconds: Number(process.env.REFRESH_TOKEN_TTL_MINUTES ?? 60) * 60,

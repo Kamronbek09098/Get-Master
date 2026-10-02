@@ -12,10 +12,11 @@ import { PaymentStatus } from '@/features/payment/components/PaymentStatus';
 import { providerLabel } from '@/features/payment/labels';
 import type { EarningsDay } from '@/features/payment/types';
 import './Earnings.css';
+import { t } from '@/i18n';
 
 const RANGES = [7, 30, 90] as const;
 const MONTHS = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
-const WEEKDAYS = ['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'];
+const WEEKDAYS = [t('Yak'), t('Dush'), t('Sesh'), t('Chor'), t('Pay'), t('Jum'), t('Shan')];
 
 const shortDate = (key: string) => `${Number(key.slice(8))} ${MONTHS[Number(key.slice(5, 7)) - 1]}`;
 const weekday = (key: string) => WEEKDAYS[new Date(`${key}T00:00:00Z`).getUTCDay()];
@@ -72,14 +73,14 @@ function Chart({ daily, currency }: { daily: EarningsDay[]; currency: string }) 
           <span className="gm-chart__grid" style={{ bottom: '100%' }} aria-hidden="true" />
           <span className="gm-chart__grid" style={{ bottom: '50%' }} aria-hidden="true" />
           <span className="gm-chart__grid gm-chart__grid--base" style={{ bottom: '0%' }} aria-hidden="true" />
-          <div className="gm-chart__bars" role="list" aria-label="Kunlik daromad grafigi">
+          <div className="gm-chart__bars" role="list" aria-label={t('Kunlik daromad grafigi')}>
             {daily.map((day, index) => (
               <button
                 key={day.date}
                 type="button"
                 role="listitem"
                 className={cx('gm-chart__col', active === index && 'gm-chart__col--on')}
-                aria-label={`${shortDate(day.date)}, ${weekday(day.date)}: ${formatMoney(day.net, currency)}, ${day.count} ta to‘lov`}
+                aria-label={t('{shortDate}, {weekday}: {money}, {count} ta to‘lov', { shortDate: shortDate(day.date), weekday: weekday(day.date), money: formatMoney(day.net, currency), count: day.count })}
                 onMouseEnter={() => setActive(index)}
                 onFocus={() => setActive(index)}
                 onBlur={() => setActive(null)}
@@ -98,19 +99,19 @@ function Chart({ daily, currency }: { daily: EarningsDay[]; currency: string }) 
               <span>
                 {shortDate(shown.date)}, {weekday(shown.date)}
               </span>
-              <span>{shown.count > 0 ? `${shown.count} ta to‘lov` : 'To‘lov bo‘lmagan'}</span>
+              <span>{shown.count > 0 ? t('{count} ta to‘lov', { count: shown.count }) : t('To‘lov bo‘lmagan')}</span>
             </div>
           )}
           <div className="gm-chart__x" aria-hidden="true">
             {daily.map((day, index) => {
               const isLast = index === count - 1;
               const show = isLast || (index % tickEvery === 0 && count - 1 - index >= Math.ceil(tickEvery / 2));
-              return <span key={day.date}>{show ? <em>{isLast ? 'Bugun' : shortDate(day.date)}</em> : null}</span>;
+              return <span key={day.date}>{show ? <em>{isLast ? t('Bugun') : shortDate(day.date)}</em> : null}</span>;
             })}
           </div>
         </div>
       </div>
-      <p className="gm-chart__hint">Kunni ko‘rish uchun ustuniga bosing yoki ustiga boring</p>
+      <p className="gm-chart__hint">{t('Kunni ko‘rish uchun ustuniga bosing yoki ustiga boring')}</p>
     </div>
   );
 }
@@ -130,9 +131,9 @@ export function EarningsPage() {
     if (!data) return null;
     const { net, yesterday } = data.today;
     if (yesterday === 0 && net === 0) return null;
-    if (yesterday === 0) return { tone: 'up' as const, text: 'Kecha daromad bo‘lmagan' };
+    if (yesterday === 0) return { tone: 'up' as const, text: t('Kecha daromad bo‘lmagan') };
     const percent = Math.round(((net - yesterday) / yesterday) * 100);
-    return { tone: percent > 0 ? ('up' as const) : percent < 0 ? ('down' as const) : ('flat' as const), text: `${percent > 0 ? '+' : ''}${percent}% kechagiga nisbatan` };
+    return { tone: percent > 0 ? ('up' as const) : percent < 0 ? ('down' as const) : ('flat' as const), text: t('{p}{percent}% kechagiga nisbatan', { p: percent > 0 ? '+' : '', percent }) };
   }, [data]);
   const providerTotal = data?.providers.reduce((sum, item) => sum + item.net, 0) ?? 0;
 
@@ -140,10 +141,10 @@ export function EarningsPage() {
     <div className="gm-earn">
       <div className="gm-page-header">
         <div>
-          <h1>Daromad</h1>
-          <p className="gm-page-lead">Bugungi daromadingiz, kunlik dinamika va to‘lovlar bir joyda.</p>
+          <h1>{t('Daromad')}</h1>
+          <p className="gm-page-lead">{t('Bugungi daromadingiz, kunlik dinamika va to‘lovlar bir joyda.')}</p>
         </div>
-        <div className="gm-earn__ranges" role="group" aria-label="Grafik davri">
+        <div className="gm-earn__ranges" role="group" aria-label={t('Grafik davri')}>
           {RANGES.map((value) => (
             <button key={value} type="button" aria-pressed={days === value} className={cx('gm-otab', days === value && 'gm-otab--active')} onClick={() => setDays(value)}>
               {value} kun
@@ -152,19 +153,18 @@ export function EarningsPage() {
         </div>
       </div>
 
-      {overview.isLoading && <PageLoader label="Daromad yuklanmoqda…" />}
+      {overview.isLoading && <PageLoader label={t('Daromad yuklanmoqda…')} />}
       {overview.isError && <Alert tone="danger">{getErrorMessage(overview.error)}</Alert>}
 
       {data && (
         <>
-          <section className="gm-earn__hero" aria-label="Bugungi daromad">
+          <section className="gm-earn__hero" aria-label={t('Bugungi daromad')}>
             <div className="gm-earn__hero-main">
               <span className="gm-earn__hero-label">
-                <CalendarDays size={16} aria-hidden="true" /> Bugungi daromad · {shortDate(data.today.date)}
-              </span>
+                <CalendarDays size={16} aria-hidden="true" />{' '}{t('Bugungi daromad · {shortDate}', { shortDate: shortDate(data.today.date) })}</span>
               <strong className="gm-earn__hero-value">{formatMoney(data.today.net, data.currency)}</strong>
               <span className="gm-earn__hero-sub">
-                {data.today.count > 0 ? `${data.today.count} ta to‘lov qabul qilindi` : 'Bugun hali to‘lov qabul qilinmagan'}
+                {data.today.count > 0 ? t('{count} ta to‘lov qabul qilindi', { count: data.today.count }) : t('Bugun hali to‘lov qabul qilinmagan')}
               </span>
               {delta && (
                 <span className={cx('gm-earn__delta', `gm-earn__delta--${delta.tone}`)}>
@@ -174,48 +174,45 @@ export function EarningsPage() {
             </div>
             <div className="gm-earn__hero-side">
               <div>
-                <small>Kecha</small>
+                <small>{t('Kecha')}</small>
                 <strong>{formatMoney(data.today.yesterday, data.currency)}</strong>
               </div>
               <div>
-                <small>Kunlik o‘rtacha ({days} kun)</small>
+                <small>{t('Kunlik o‘rtacha ({days} kun)', { days })}</small>
                 <strong>{formatMoney(data.range.average, data.currency)}</strong>
               </div>
             </div>
           </section>
 
-          <section className="gm-earn__kpis" aria-label="Umumiy ko‘rsatkichlar">
-            <Kpi icon={<TrendingUp size={18} />} label="Shu hafta" value={formatMoney(data.week.net, data.currency)} note={`${data.week.count} ta to‘lov`} />
-            <Kpi icon={<CalendarDays size={18} />} label="Shu oy" value={formatMoney(data.month.net, data.currency)} note={`${data.month.count} ta to‘lov`} />
-            <Kpi icon={<Wallet size={18} />} label="Jami daromad" value={formatMoney(data.all.net, data.currency)} note={`${data.all.count} ta to‘lov`} />
+          <section className="gm-earn__kpis" aria-label={t('Umumiy ko‘rsatkichlar')}>
+            <Kpi icon={<TrendingUp size={18} />} label={t('Shu hafta')} value={formatMoney(data.week.net, data.currency)} note={`${data.week.count} ta to‘lov`} />
+            <Kpi icon={<CalendarDays size={18} />} label={t('Shu oy')} value={formatMoney(data.month.net, data.currency)} note={`${data.month.count} ta to‘lov`} />
+            <Kpi icon={<Wallet size={18} />} label={t('Jami daromad')} value={formatMoney(data.all.net, data.currency)} note={`${data.all.count} ta to‘lov`} />
             <Kpi
               icon={<Clock size={18} />}
-              label="Kutilayotgan to‘lovlar"
+              label={t('Kutilayotgan to‘lovlar')}
               value={formatMoney(data.pending.amount, data.currency)}
-              note={data.pending.count > 0 ? `${data.pending.count} ta hali tasdiqlanmagan` : 'Kutilayotgani yo‘q'}
+              note={data.pending.count > 0 ? t('{count} ta hali tasdiqlanmagan', { count: data.pending.count }) : t('Kutilayotgani yo‘q')}
               tone={data.pending.count > 0 ? 'warn' : undefined}
             />
           </section>
 
           <section className="gm-earn__panel">
             <header>
-              <h2>Kunlik daromad</h2>
-              <span>
-                Oxirgi {days} kun: <strong>{formatMoney(data.range.net, data.currency)}</strong>
+              <h2>{t('Kunlik daromad')}</h2>
+              <span>{t('Oxirgi {days} kun:', { days })}{' '}<strong>{formatMoney(data.range.net, data.currency)}</strong>
               </span>
             </header>
             <Chart daily={data.daily} currency={data.currency} />
             <div className="gm-earn__facts">
               <div>
                 <Trophy size={16} aria-hidden="true" />
-                <span>
-                  Eng yaxshi kun: <strong>{data.range.bestDay ? `${shortDate(data.range.bestDay.date)} · ${formatMoney(data.range.bestDay.net, data.currency)}` : '—'}</strong>
+                <span>{t('Eng yaxshi kun:')}{' '}<strong>{data.range.bestDay ? `${shortDate(data.range.bestDay.date)} · ${formatMoney(data.range.bestDay.net, data.currency)}` : '—'}</strong>
                 </span>
               </div>
               <div>
                 <Banknote size={16} aria-hidden="true" />
-                <span>
-                  Kunlik o‘rtacha: <strong>{formatMoney(data.range.average, data.currency)}</strong>
+                <span>{t('Kunlik o‘rtacha:')}{' '}<strong>{formatMoney(data.range.average, data.currency)}</strong>
                 </span>
               </div>
             </div>
@@ -224,8 +221,8 @@ export function EarningsPage() {
           {data.providers.length > 0 && (
             <section className="gm-earn__panel">
               <header>
-                <h2>To‘lov usullari</h2>
-                <span>Oxirgi {days} kun</span>
+                <h2>{t('To‘lov usullari')}</h2>
+                <span>{t('Oxirgi {days} kun', { days })}</span>
               </header>
               <ul className="gm-earn__methods">
                 {data.providers.map((item) => (
@@ -242,13 +239,13 @@ export function EarningsPage() {
             </section>
           )}
 
-          <Collapse title="Kunlar bo‘yicha jadval" hint="Har kunning daromadi va to‘lovlar soni">
+          <Collapse title={t('Kunlar bo‘yicha jadval')} hint={t('Har kunning daromadi va to‘lovlar soni')}>
             <table className="gm-earn__table">
               <thead>
                 <tr>
-                  <th>Sana</th>
-                  <th>To‘lovlar</th>
-                  <th>Daromad</th>
+                  <th>{t('Sana')}</th>
+                  <th>{t('To‘lovlar')}</th>
+                  <th>{t('Daromad')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -268,23 +265,20 @@ export function EarningsPage() {
                   ))}
               </tbody>
             </table>
-            {data.daily.every((day) => day.count === 0) && <EmptyState title="Bu davrda daromad yo‘q" />}
+            {data.daily.every((day) => day.count === 0) && <EmptyState title={t('Bu davrda daromad yo‘q')} />}
           </Collapse>
 
-          <Collapse title="To‘lovlar tarixi" hint="Sana bo‘yicha saralash va har bir to‘lov">
+          <Collapse title={t('To‘lovlar tarixi')} hint={t('Sana bo‘yicha saralash va har bir to‘lov')}>
             <div className="gm-toolbar">
-              <Input label="Boshlanish sanasi" type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => setDateFrom(event.target.value)} />
-              <Input label="Tugash sanasi" type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => setDateTo(event.target.value)} />
+              <Input label={t('Boshlanish sanasi')} type="date" value={dateFrom} max={dateTo || undefined} onChange={(event) => setDateFrom(event.target.value)} />
+              <Input label={t('Tugash sanasi')} type="date" value={dateTo} min={dateFrom || undefined} onChange={(event) => setDateTo(event.target.value)} />
             </div>
-            {history.isLoading && <PageLoader label="To‘lovlar yuklanmoqda…" />}
+            {history.isLoading && <PageLoader label={t('To‘lovlar yuklanmoqda…')} />}
             {history.isError && <Alert tone="danger">{getErrorMessage(history.error)}</Alert>}
             {history.data && (
               <>
-                <p className="gm-earn__summary">
-                  Tanlangan davrda: sof <strong>{formatMoney(history.data.summary.netAmount, data.currency)}</strong> · jami tushum {formatMoney(history.data.summary.grossAmount, data.currency)} · qaytarilgan{' '}
-                  {formatMoney(history.data.summary.refundedAmount, data.currency)} · {history.data.summary.paymentCount} ta to‘lov
-                </p>
-                {history.data.items.length === 0 && <EmptyState title="Bu davrda to‘lovlar yo‘q" />}
+                <p className="gm-earn__summary">{t('Tanlangan davrda: sof')}{' '}<strong>{formatMoney(history.data.summary.netAmount, data.currency)}</strong>{' '}{t('· jami tushum {money} · qaytarilgan {money2} · {paymentCount} ta to‘lov', { money: formatMoney(history.data.summary.grossAmount, data.currency), money2: formatMoney(history.data.summary.refundedAmount, data.currency), paymentCount: history.data.summary.paymentCount })}</p>
+                {history.data.items.length === 0 && <EmptyState title={t('Bu davrda to‘lovlar yo‘q')} />}
                 <div className="gm-list">
                   {history.data.items.map((payment) => (
                     <div key={payment.id} className="gm-card">

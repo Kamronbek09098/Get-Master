@@ -4,14 +4,15 @@ import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDate } from '@/lib/utils';
 import { useMasterReviews } from '../hooks/useReviews';
+import { t } from '@/i18n';
 
 export function ReviewList({ masterId }: { masterId: string }) {
   const reviews = useMasterReviews(masterId);
   const items = reviews.data?.items ?? [];
 
-  if (reviews.isLoading) return <PageLoader label="Sharhlar yuklanmoqda…" />;
+  if (reviews.isLoading) return <PageLoader label={t('Sharhlar yuklanmoqda…')} />;
   if (reviews.isError) return <Alert tone="danger">{getErrorMessage(reviews.error)}</Alert>;
-  if (items.length === 0) return <EmptyState title="Hali sharh yo‘q" />;
+  if (items.length === 0) return <EmptyState title={t('Hali sharh yo‘q')} />;
 
   return (
     <div className="gm-list">
@@ -24,7 +25,7 @@ export function ReviewList({ masterId }: { masterId: string }) {
             </h3>
             <span className="gm-card__meta">{formatDate(review.createdAt)}</span>
           </div>
-          {review.comment ? <p>{review.comment}</p> : <p className="gm-card__meta gm-review-nocomment">Izoh qoldirilmagan</p>}
+          {review.comment ? <p>{review.comment}</p> : <p className="gm-card__meta gm-review-nocomment">{t('Izoh qoldirilmagan')}</p>}
         </div>
       ))}
     </div>

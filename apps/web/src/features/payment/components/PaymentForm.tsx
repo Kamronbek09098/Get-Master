@@ -12,6 +12,7 @@ import { useCreatePayment } from '../hooks/usePayment';
 import { PAYMENT_STATUS_LABEL, PROVIDER_LABEL, providerLabel } from '../labels';
 import { PaymentMethodCards } from './PaymentMethodCards';
 import './Payment.css';
+import { t } from '@/i18n';
 
 const SETTLED = ['SUCCEEDED', 'PARTIALLY_REFUNDED', 'REFUNDED'];
 
@@ -38,7 +39,7 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
   const amount = formatMoney(order.finalAmount, order.currency);
 
   if (order.status === 'CANCELLED' || order.status === 'EXPIRED') {
-    return <Alert tone="warning">Bu buyurtma bekor qilingan, shuning uchun to‘lov qilinmaydi.</Alert>;
+    return <Alert tone="warning">{t('Bu buyurtma bekor qilingan, shuning uchun to‘lov qilinmaydi.')}</Alert>;
   }
 
   const result = createPayment.data?.payment ?? (current && SETTLED.includes(current.status) ? { ...current, succeededAt: null } : null);
@@ -56,15 +57,15 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
         <span className="gm-pay__result-icon">
           <CheckCircle2 size={28} />
         </span>
-        <h2>To‘lov qabul qilindi</h2>
-        <p>Buyurtma bo‘yicha to‘lov muvaffaqiyatli yakunlangan. Rahmat!</p>
+        <h2>{t('To‘lov qabul qilindi')}</h2>
+        <p>{t('Buyurtma bo‘yicha to‘lov muvaffaqiyatli yakunlangan. Rahmat!')}</p>
         <Facts items={[['Usul', providerLabel(result.provider)], ['Summa', formatMoney(result.amount, result.currency)], ['Holat', PAYMENT_STATUS_LABEL[result.status]]]} />
         <div className="gm-pay__actions">
           <Link to={back}>
-            <Button>Buyurtmaga qaytish</Button>
+            <Button>{t('Buyurtmaga qaytish')}</Button>
           </Link>
           <Link to="/mijozlar/tolovlar">
-            <Button variant="secondary">To‘lovlar tarixi</Button>
+            <Button variant="secondary">{t('To‘lovlar tarixi')}</Button>
           </Link>
         </div>
       </section>
@@ -77,26 +78,22 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
     return (
       <section className="gm-pay__result gm-pay__result--wait">
         <span className="gm-pay__result-icon">{cash ? <Banknote size={26} /> : <Clock size={26} />}</span>
-        <h2>{cash ? 'Naqd to‘lov tanlandi' : `${PROVIDER_LABEL[payment.provider]} to‘lovi yaratildi`}</h2>
+        <h2>{cash ? t('Naqd to‘lov tanlandi') : t('{item} to‘lovi yaratildi', { item: PROVIDER_LABEL[payment.provider] })}</h2>
         <p>
           {cash
-            ? 'Ish tugagach pulni ustaga qo‘lda topshirasiz. Usta pulni olganini tasdiqlagach, to‘lov «To‘langan» holatiga o‘tadi.'
-            : 'To‘lov kutilmoqda. To‘lov provayderi tasdiqlagach, holat avtomatik yangilanadi.'}
+            ? t('Ish tugagach pulni ustaga qo‘lda topshirasiz. Usta pulni olganini tasdiqlagach, to‘lov «To‘langan» holatiga o‘tadi.')
+            : t('To‘lov kutilmoqda. To‘lov provayderi tasdiqlagach, holat avtomatik yangilanadi.')}
         </p>
-        <Facts items={[['Usul', PROVIDER_LABEL[payment.provider]], ['Summa', formatMoney(payment.amount, payment.currency)], ['Holat', cash ? 'Usta tasdiqlashi kutilmoqda' : PAYMENT_STATUS_LABEL[payment.status]]]} />
+        <Facts items={[[t('Usul'), PROVIDER_LABEL[payment.provider]], [t('Summa'), formatMoney(payment.amount, payment.currency)], [t('Holat'), cash ? t('Usta tasdiqlashi kutilmoqda') : PAYMENT_STATUS_LABEL[payment.status]]]} />
         {isTestCheckout && (
-          <Alert tone="warning" title="Sinov rejimi">
-            Haqiqiy to‘lov provayderi hali ulanmagan, shuning uchun bu real to‘lov sahifasiga olib bormaydi.
-          </Alert>
+          <Alert tone="warning" title={t('Sinov rejimi')}>{t('Haqiqiy to‘lov provayderi hali ulanmagan, shuning uchun bu real to‘lov sahifasiga olib bormaydi.')}</Alert>
         )}
         {isRealCheckout && (
-          <Alert tone="info" title="To‘lov sahifasiga yo‘naltirilmoqda">
-            Bir necha soniyada {PROVIDER_LABEL[payment.provider]} to‘lov sahifasiga o‘tasiz.
-          </Alert>
+          <Alert tone="info" title={t('To‘lov sahifasiga yo‘naltirilmoqda')}>{t('Bir necha soniyada {item} to‘lov sahifasiga o‘tasiz.', { item: PROVIDER_LABEL[payment.provider] })}</Alert>
         )}
         <div className="gm-pay__actions">
           <Link to={back}>
-            <Button>Buyurtmaga qaytish</Button>
+            <Button>{t('Buyurtmaga qaytish')}</Button>
           </Link>
         </div>
       </section>
@@ -106,8 +103,8 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
   const cash = method === 'CASH';
   return (
     <section className="gm-pay__panel">
-      <h2>To‘lov usulini tanlang</h2>
-      <p>{current && current.status === 'PENDING' ? `Hozir «${providerLabel(current.provider)}» tanlangan. Xohlasangiz, boshqa usulga almashtiring.` : 'Qulay usulni tanlang: naqd pul yoki onlayn to‘lov.'}</p>
+      <h2>{t('To‘lov usulini tanlang')}</h2>
+      <p>{current && current.status === 'PENDING' ? t('Hozir «{providerLabel}» tanlangan. Xohlasangiz, boshqa usulga almashtiring.', { providerLabel: providerLabel(current.provider) }) : t('Qulay usulni tanlang: naqd pul yoki onlayn to‘lov.')}</p>
       {createPayment.isError && <Alert tone="danger">{getErrorMessage(createPayment.error)}</Alert>}
       <PaymentMethodCards value={method} onChange={setMethod} current={current?.status === 'PENDING' ? current.provider : null} disabled={createPayment.isPending} />
       <div className="gm-pay__cta">
@@ -121,11 +118,11 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
             )
           }
         >
-          {cash ? <Banknote size={18} /> : <Lock size={18} />} {cash ? 'Naqd to‘lovni tanlash' : `${PROVIDER_LABEL[method]} orqali ${amount} to‘lash`}
+          {cash ? <Banknote size={18} /> : <Lock size={18} />} {cash ? t('Naqd to‘lovni tanlash') : t('{item} orqali {amount} to‘lash', { item: PROVIDER_LABEL[method], amount })}
         </Button>
         <p className="gm-pay__note">
           <ShieldCheck size={16} aria-hidden="true" />
-          {cash ? 'Naqd to‘lovda pul ustaga qo‘lda topshiriladi. Usta olganini tasdiqlamaguncha to‘lov «Kutilmoqda» holatida turadi.' : 'To‘lov ma’lumotlaringiz himoyalangan. Karta ma’lumotlari bizda saqlanmaydi.'}
+          {cash ? t('Naqd to‘lovda pul ustaga qo‘lda topshiriladi. Usta olganini tasdiqlamaguncha to‘lov «Kutilmoqda» holatida turadi.') : t('To‘lov ma’lumotlaringiz himoyalangan. Karta ma’lumotlari bizda saqlanmaydi.')}
         </p>
       </div>
     </section>

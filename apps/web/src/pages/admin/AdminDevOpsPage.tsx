@@ -12,11 +12,12 @@ import { useDevOps } from '@/features/admin/hooks/useAdmin';
 import { TrafficChart } from '@/features/admin/components/TrafficChart';
 import type { DevOpsWindow } from '@/features/admin/types';
 import './AdminDevOpsPage.css';
+import { t } from '@/i18n';
 
 const WINDOW_TABS: Array<{ value: DevOpsWindow; label: string }> = [
-  { value: '1h', label: '1 soat' },
-  { value: '24h', label: '24 soat' },
-  { value: '7d', label: '7 kun' },
+  { value: '1h', label: t('1 soat') },
+  { value: '24h', label: t('24 soat') },
+  { value: '7d', label: t('7 kun') },
 ];
 
 function usageTone(percent: number): 'good' | 'warning' | 'danger' {
@@ -45,8 +46,8 @@ function formatDuration(totalSeconds: number): string {
   const days = Math.floor(totalSeconds / 86_400);
   const hours = Math.floor((totalSeconds % 86_400) / 3_600);
   const minutes = Math.floor((totalSeconds % 3_600) / 60);
-  if (days > 0) return `${days} kun ${hours} soat`;
-  if (hours > 0) return `${hours} soat ${minutes} daq`;
+  if (days > 0) return t('{days} kun {hours} soat', { days, hours });
+  if (hours > 0) return t('{hours} soat {minutes} daq', { hours, minutes });
   return `${minutes} daq`;
 }
 
@@ -55,7 +56,7 @@ function PingBadge({ label, ok, latencyMs }: { label: string; ok: boolean; laten
   return (
     <div className="gm-devops-row">
       <span className="gm-devops-row__label">{label}</span>
-      <Badge tone={tone}>{ok ? `Ulangan${latencyMs !== null ? ` · ${latencyMs} ms` : ''}` : 'Ulanmagan'}</Badge>
+      <Badge tone={tone}>{ok ? t('Ulangan{p}', { p: latencyMs !== null ? ` · ${latencyMs} ms` : '' }) : t('Ulanmagan')}</Badge>
     </div>
   );
 }
@@ -82,20 +83,19 @@ export function AdminDevOpsPage() {
       <div className="gm-page-header">
         <div>
           <h1>DevOps</h1>
-          {data && <p className="gm-page-lead">Tekshirildi: {formatDateTime(data.checkedAt)}</p>}
+          {data && <p className="gm-page-lead">{t('Tekshirildi:')}{' '}{formatDateTime(data.checkedAt)}</p>}
         </div>
         <Button variant="secondary" size="sm" loading={devops.isFetching} onClick={() => void devops.refetch()}>
-          <RefreshCw size={16} /> Yangilash
-        </Button>
+          <RefreshCw size={16} />{' '}{t('Yangilash')}</Button>
       </div>
 
-      {devops.isLoading && <PageLoader label="Tizim holati yuklanmoqda…" />}
+      {devops.isLoading && <PageLoader label={t('Tizim holati yuklanmoqda…')} />}
       {devops.isError && <Alert tone="danger">{getErrorMessage(devops.error)}</Alert>}
 
       {data && (
         <>
           {data.issues.length > 0 ? (
-            <Alert tone={data.issues.some((issue) => issue.level === 'danger') ? 'danger' : 'warning'} title="Muammolar bor">
+            <Alert tone={data.issues.some((issue) => issue.level === 'danger') ? 'danger' : 'warning'} title={t('Muammolar bor')}>
               <ul className="gm-devops-issues">
                 {data.issues.map((issue) => (
                   <li key={issue.message}>{issue.message}</li>
@@ -103,43 +103,40 @@ export function AdminDevOpsPage() {
               </ul>
             </Alert>
           ) : (
-            <Alert tone="success" title="Hammasi joyida">
-              Muammo topilmadi.
-            </Alert>
+            <Alert tone="success" title={t('Hammasi joyida')}>{t('Muammo topilmadi.')}</Alert>
           )}
 
           <div className="gm-devops-grid">
             <div className="gm-card">
-              <UsageBar label="CPU" percent={data.system.cpuPercent} hint={`Yuklama ${data.system.loadAvg.join(' · ')} · ${data.system.cpuCount} yadro`} />
+              <UsageBar label="CPU" percent={data.system.cpuPercent} hint={t('Yuklama {join} · {cpuCount} yadro', { join: data.system.loadAvg.join(' · '), cpuCount: data.system.cpuCount })} />
             </div>
             <div className="gm-card">
               <UsageBar
-                label="Xotira (RAM)"
+                label={t('Xotira (RAM)')}
                 percent={data.system.usedMemPercent}
-                hint={`${data.system.freeMemMB.toLocaleString('ru-RU')} MB bo‘sh / ${data.system.totalMemMB.toLocaleString('ru-RU')} MB`}
+                hint={t('{toLocaleString} MB bo‘sh / {toLocaleString2} MB', { toLocaleString: data.system.freeMemMB.toLocaleString('ru-RU'), toLocaleString2: data.system.totalMemMB.toLocaleString('ru-RU') })}
               />
             </div>
             <div className="gm-card">
               {data.system.disk ? (
                 <UsageBar
-                  label="Disk"
+                  label={t('Disk')}
                   percent={data.system.disk.usedPercent}
-                  hint={`${data.system.disk.freeGB} GB bo‘sh / ${data.system.disk.totalGB} GB`}
+                  hint={t('{freeGB} GB bo‘sh / {totalGB} GB', { freeGB: data.system.disk.freeGB, totalGB: data.system.disk.totalGB })}
                 />
               ) : (
                 <>
                   <div className="gm-usage__head">
-                    <span>Disk</span>
+                    <span>{t('Disk')}</span>
                   </div>
-                  <p className="gm-card__meta">Disk ma’lumoti o‘qib bo‘lmadi.</p>
+                  <p className="gm-card__meta">{t('Disk ma’lumoti o‘qib bo‘lmadi.')}</p>
                 </>
               )}
             </div>
             <div className="gm-card">
               <div className="gm-usage__head">
                 <span>
-                  <Timer size={14} /> Server ishlash vaqti
-                </span>
+                  <Timer size={14} />{' '}{t('Server ishlash vaqti')}</span>
               </div>
               <p className="gm-devops-big">{formatDuration(data.system.uptimeSeconds)}</p>
               <p className="gm-card__meta">{data.system.hostname}</p>
@@ -149,42 +146,38 @@ export function AdminDevOpsPage() {
           <div className="gm-devops-cols">
             <section className="gm-detail-section">
               <h2>
-                <Server size={18} /> Node jarayoni
-              </h2>
+                <Server size={18} />{' '}{t('Node jarayoni')}</h2>
               <div className="gm-devops-rows">
                 <div className="gm-devops-row">
-                  <span className="gm-devops-row__label">Holat</span>
+                  <span className="gm-devops-row__label">{t('Holat')}</span>
                   <Badge tone="success">online</Badge>
                 </div>
                 <InfoRow label="PID" value={data.process.pid} />
-                <InfoRow label="Jarayon ishlash vaqti" value={formatDuration(data.process.uptimeSeconds)} />
-                <InfoRow label="Xotira (RSS)" value={`${data.process.rssMB} MB`} />
-                <InfoRow label="Heap" value={`${data.process.heapUsedMB} / ${data.process.heapTotalMB} MB`} />
-                <InfoRow label="CPU vaqti" value={`${data.process.cpuUserMs} ms user · ${data.process.cpuSystemMs} ms sys`} />
+                <InfoRow label={t('Jarayon ishlash vaqti')} value={formatDuration(data.process.uptimeSeconds)} />
+                <InfoRow label={t('Xotira (RSS)')} value={`${data.process.rssMB} MB`} />
+                <InfoRow label={t('Heap')} value={`${data.process.heapUsedMB} / ${data.process.heapTotalMB} MB`} />
+                <InfoRow label={t('CPU vaqti')} value={`${data.process.cpuUserMs} ms user · ${data.process.cpuSystemMs} ms sys`} />
               </div>
               <p className="gm-devops-note">
-                <strong>Nazoratchi:</strong> yo‘q — Docker konteynerida to‘g‘ridan-to‘g‘ri jarayon sifatida ishlaydi (PM2/systemd ishlatilmaydi).
-              </p>
+                <strong>{t('Nazoratchi:')}</strong>{' '}{t('yo‘q — Docker konteynerida to‘g‘ridan-to‘g‘ri jarayon sifatida ishlaydi (PM2/systemd ishlatilmaydi).')}</p>
             </section>
 
             <section className="gm-detail-section">
               <h2>
-                <Tag size={18} /> Versiya va bog‘liqliklar
-              </h2>
+                <Tag size={18} />{' '}{t('Versiya va bog‘liqliklar')}</h2>
               <div className="gm-devops-rows">
-                <InfoRow icon={<GitCommit size={14} />} label="Commit" value={data.version.commit ?? '—'} />
-                <InfoRow label="Versiya" value={`v${data.version.appVersion} · ${data.version.environment}`} />
-                <InfoRow label="Ishga tushgan" value={formatDateTime(data.version.startedAt)} />
+                <InfoRow icon={<GitCommit size={14} />} label={t('Commit')} value={data.version.commit ?? '—'} />
+                <InfoRow label={t('Versiya')} value={`v${data.version.appVersion} · ${data.version.environment}`} />
+                <InfoRow label={t('Ishga tushgan')} value={formatDateTime(data.version.startedAt)} />
                 <InfoRow label="Node.js" value={data.version.nodeVersion} />
-                <InfoRow label="Tizim" value={data.system.platform} />
-                <PingBadge label="Ma’lumotlar bazasi" ok={data.dependencies.database.ok} latencyMs={data.dependencies.database.latencyMs} />
-                <PingBadge label="Redis" ok={data.dependencies.redis.ok} latencyMs={data.dependencies.redis.latencyMs} />
+                <InfoRow label={t('Tizim')} value={data.system.platform} />
+                <PingBadge label={t('Ma’lumotlar bazasi')} ok={data.dependencies.database.ok} latencyMs={data.dependencies.database.latencyMs} />
+                <PingBadge label={t('Redis')} ok={data.dependencies.redis.ok} latencyMs={data.dependencies.redis.latencyMs} />
                 <div className="gm-devops-row">
                   <span className="gm-devops-row__label">
-                    <Bell size={14} /> Telegram ogohlantirish
-                  </span>
+                    <Bell size={14} />{' '}{t('Telegram ogohlantirish')}</span>
                   <Badge tone={data.dependencies.telegramAlerting ? 'success' : 'neutral'}>
-                    {data.dependencies.telegramAlerting ? 'Sozlangan' : 'Sozlanmagan'}
+                    {data.dependencies.telegramAlerting ? t('Sozlangan') : t('Sozlanmagan')}
                   </Badge>
                 </div>
               </div>
@@ -193,15 +186,14 @@ export function AdminDevOpsPage() {
 
           <section className="gm-detail-section">
             <h2>
-              <Database size={18} /> Zaxira nusxa
-            </h2>
+              <Database size={18} />{' '}{t('Zaxira nusxa')}</h2>
             <Alert tone={data.backup.configured ? 'success' : 'warning'}>{data.backup.message}</Alert>
           </section>
 
           <section className="gm-detail-section">
             <div className="gm-devops-traffic-head">
-              <h2>API trafigi</h2>
-              <div className="gm-tabs" role="tablist" aria-label="Vaqt oralig‘i">
+              <h2>{t('API trafigi')}</h2>
+              <div className="gm-tabs" role="tablist" aria-label={t('Vaqt oralig‘i')}>
                 {WINDOW_TABS.map((tab) => (
                   <Button
                     key={tab.value}

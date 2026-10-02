@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useUpdateProfile } from '../hooks/useCustomer';
 import type { CustomerProfile } from '../types';
+import { t } from '@/i18n';
 
 export function CustomerForm({ profile }: { profile: CustomerProfile }) {
   const updateProfile = useUpdateProfile();
@@ -22,12 +23,10 @@ export function CustomerForm({ profile }: { profile: CustomerProfile }) {
   return (
     <form className="gm-form" onSubmit={handleSubmit}>
       {updateProfile.isError && <Alert tone="danger">{getErrorMessage(updateProfile.error)}</Alert>}
-      {updateProfile.isSuccess && <Alert tone="success">Profil muvaffaqiyatli yangilandi</Alert>}
-      <Input label="Ism" value={firstName} onChange={(event) => setFirstName(event.target.value)} maxLength={100} />
-      <Input label="Familiya" value={lastName} onChange={(event) => setLastName(event.target.value)} maxLength={100} />
-      <Button type="submit" size="lg" fullWidth className="gm-psave" loading={updateProfile.isPending} disabled={!dirty}>
-        Saqlash
-      </Button>
+      {updateProfile.isSuccess && <Alert tone="success">{t('Profil muvaffaqiyatli yangilandi')}</Alert>}
+      <Input label={t('Ism')} value={firstName} onChange={(event) => setFirstName(event.target.value)} maxLength={100} />
+      <Input label={t('Familiya')} value={lastName} onChange={(event) => setLastName(event.target.value)} maxLength={100} />
+      <Button type="submit" size="lg" fullWidth className="gm-psave" loading={updateProfile.isPending} disabled={!dirty}>{t('Saqlash')}</Button>
     </form>
   );
 }

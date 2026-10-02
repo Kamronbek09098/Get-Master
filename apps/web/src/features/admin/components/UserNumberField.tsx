@@ -5,6 +5,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
 import { adminService } from '../services/admin.service';
+import { t } from '@/i18n';
 
 /**
  * Foydalanuvchini raqamli ID (masalan, 584) bilan tanlash. Topilsa ismi ko‘rsatiladi,
@@ -26,11 +27,11 @@ export function UserNumberField({ label, onResolve }: { label: string; onResolve
       label={label}
       required
       inputMode="numeric"
-      placeholder="Masalan, 584"
+      placeholder={t('Masalan, 584')}
       value={text}
       onChange={(event) => setText(event.target.value.replace(/\s/g, ''))}
-      error={invalid ? 'Faqat raqam kiriting' : user.isError ? getErrorMessage(user.error) : undefined}
-      hint={user.data ? `${accountName(user.data)} · ${user.data.phone}` : 'Foydalanuvchining raqamli ID si'}
+      error={invalid ? t('Faqat raqam kiriting') : user.isError ? getErrorMessage(user.error) : undefined}
+      hint={user.data ? `${accountName(user.data)} · ${user.data.phone}` : t('Foydalanuvchining raqamli ID si')}
     />
   );
 }

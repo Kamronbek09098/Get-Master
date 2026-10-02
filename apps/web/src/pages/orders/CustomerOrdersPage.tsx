@@ -15,12 +15,13 @@ import { useMyRequests } from '@/features/request/hooks/useRequests';
 import type { RequestStatus } from '@/types/common';
 import '@/features/order/components/Order.css';
 import '@/features/order/components/MyOrders.css';
+import { t } from '@/i18n';
 
 type Tab = 'active' | 'done' | 'closed';
 const TABS: Array<{ value: Tab; label: string }> = [
-  { value: 'active', label: 'Faol' },
-  { value: 'done', label: 'Yakunlangan' },
-  { value: 'closed', label: 'Bekor qilingan' },
+  { value: 'active', label: t('Faol') },
+  { value: 'done', label: t('Yakunlangan') },
+  { value: 'closed', label: t('Bekor qilingan') },
 ];
 const OPEN_REQUEST: readonly RequestStatus[] = ['DRAFT', 'SUBMITTED', 'MATCHING', 'OFFERS_RECEIVED'];
 const CLOSED_REQUEST: readonly RequestStatus[] = ['CANCELLED', 'EXPIRED'];
@@ -93,14 +94,13 @@ export function CustomerOrdersPage() {
     <div className="gm-opage gm-mopage">
       <div className="gm-page-header" style={{ marginBottom: 0 }}>
         <div>
-          <h1>Buyurtmalar</h1>
-          <p className="gm-page-lead">Barcha so‘rov va buyurtmalaringiz bir joyda: takliflar, ish jarayoni va to‘lovlar.</p>
+          <h1>{t('Buyurtmalar')}</h1>
+          <p className="gm-page-lead">{t('Barcha so‘rov va buyurtmalaringiz bir joyda: takliflar, ish jarayoni va to‘lovlar.')}</p>
         </div>
         {!empty && (
           <Link to="/mijozlar/sorov-yaratish">
             <Button size="sm">
-              <Plus size={16} /> Yangi buyurtma
-            </Button>
+              <Plus size={16} />{' '}{t('Yangi buyurtma')}</Button>
           </Link>
         )}
       </div>
@@ -110,11 +110,9 @@ export function CustomerOrdersPage() {
       {(attention.offers > 0 || attention.confirm > 0) && (
         <div className="gm-mopage__attention" role="status">
           <AlertCircle size={18} aria-hidden="true" />
-          <span>
-            Sizdan harakat kutilmoqda:
-            {attention.offers > 0 && ` ${attention.offers} ta so‘rovga takliflar keldi`}
+          <span>{t('Sizdan harakat kutilmoqda:')}{attention.offers > 0 && t(' {offers} ta so‘rovga takliflar keldi', { offers: attention.offers })}
             {attention.offers > 0 && attention.confirm > 0 && ','}
-            {attention.confirm > 0 && ` ${attention.confirm} ta ish tasdig‘ingizni kutyapti`}
+            {attention.confirm > 0 && t(' {confirm} ta ish tasdig‘ingizni kutyapti', { confirm: attention.confirm })}
           </span>
         </div>
       )}
@@ -130,18 +128,17 @@ export function CustomerOrdersPage() {
       {empty && (
         <EmptyState
           icon={<ClipboardList size={34} strokeWidth={1.8} />}
-          title="Hali buyurtma yo‘q"
-          description="Muammoingizni tasvirlab, birinchi buyurtmangizni yarating. Mos ustalar sizga narx bilan taklif yuboradi."
+          title={t('Hali buyurtma yo‘q')}
+          description={t('Muammoingizni tasvirlab, birinchi buyurtmangizni yarating. Mos ustalar sizga narx bilan taklif yuboradi.')}
           steps={[
-            { title: 'Muammoni tasvirlang', text: 'Nima buzilganini yozing va kerak bo‘lsa rasm qo‘shing.' },
-            { title: 'Takliflarni oling', text: 'Mos ustalar narx va muddat bilan taklif yuboradi.' },
-            { title: 'Ustani tanlang', text: 'Reyting va narxni solishtirib, o‘zingizga qulayini tanlang.' },
+            { title: t('Muammoni tasvirlang'), text: t('Nima buzilganini yozing va kerak bo‘lsa rasm qo‘shing.') },
+            { title: t('Takliflarni oling'), text: t('Mos ustalar narx va muddat bilan taklif yuboradi.') },
+            { title: t('Ustani tanlang'), text: t('Reyting va narxni solishtirib, o‘zingizga qulayini tanlang.') },
           ]}
           action={
             <Link to="/mijozlar/sorov-yaratish">
               <Button>
-                <Plus size={18} /> Yangi buyurtma yaratish
-              </Button>
+                <Plus size={18} />{' '}{t('Yangi buyurtma yaratish')}</Button>
             </Link>
           }
         />
@@ -150,7 +147,7 @@ export function CustomerOrdersPage() {
       {items.length > 0 && (
         <>
           <div className="gm-mopage__toolbar">
-            <div className="gm-olist-tabs" role="tablist" aria-label="Buyurtmalar">
+            <div className="gm-olist-tabs" role="tablist" aria-label={t('Buyurtmalar')}>
               {TABS.map((item) => (
                 <button key={item.value} type="button" role="tab" aria-selected={tab === item.value} className={cx('gm-otab', tab === item.value && 'gm-otab--active')} onClick={() => setTab(item.value)}>
                   {item.label}
@@ -160,12 +157,12 @@ export function CustomerOrdersPage() {
             </div>
             <div className="gm-mopage__search">
               <Search size={16} aria-hidden="true" />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nomi, xizmat, usta yoki № bo‘yicha qidirish" aria-label="Qidirish" />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Nomi, xizmat, usta yoki № bo‘yicha qidirish')} aria-label={t('Qidirish')} />
             </div>
           </div>
 
           {visible.length === 0 ? (
-            <EmptyState icon={<ClipboardList size={28} />} title={needle ? 'Hech narsa topilmadi' : 'Bu bo‘limda buyurtma yo‘q'} description={needle ? 'Qidiruvni o‘zgartirib ko‘ring.' : 'Boshqa bo‘limni tanlang.'} />
+            <EmptyState icon={<ClipboardList size={28} />} title={needle ? t('Hech narsa topilmadi') : t('Bu bo‘limda buyurtma yo‘q')} description={needle ? t('Qidiruvni o‘zgartirib ko‘ring.') : t('Boshqa bo‘limni tanlang.')} />
           ) : (
             <div className="gm-mopage__list">
               {visible.map((item) => (

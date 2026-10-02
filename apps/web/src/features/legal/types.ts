@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 export type PolicyType =
   | 'TERMS'
   | 'PRIVACY'
@@ -10,14 +11,14 @@ export type PolicyType =
 export type PolicyStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
 export const POLICY_TYPE_LABEL: Record<PolicyType, string> = {
-  TERMS: 'Foydalanish shartlari',
-  PRIVACY: 'Maxfiylik siyosati',
-  PUBLIC_OFFER: 'Ommaviy oferta',
-  PLATFORM_RULES: 'Platforma qoidalari',
-  PAYMENT: 'To‘lov shartlari',
-  REFUND: 'Qaytarish shartlari',
-  CANCELLATION: 'Bekor qilish shartlari',
-  WARRANTY: 'Kafolat shartlari',
+  TERMS: t('Foydalanish shartlari'),
+  PRIVACY: t('Maxfiylik siyosati'),
+  PUBLIC_OFFER: t('Ommaviy oferta'),
+  PLATFORM_RULES: t('Platforma qoidalari'),
+  PAYMENT: t('To‘lov shartlari'),
+  REFUND: t('Qaytarish shartlari'),
+  CANCELLATION: t('Bekor qilish shartlari'),
+  WARRANTY: t('Kafolat shartlari'),
 };
 
 export interface Policy {

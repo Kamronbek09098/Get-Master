@@ -13,12 +13,13 @@ import { useRemoveVerification, useSubmitVerification, useTrustStatus } from '..
 import type { VerificationDocument, VerificationDocumentType } from '../types';
 import { TrustBadge } from './TrustBadge';
 import './TrustProfile.css';
+import { t } from '@/i18n';
 
 const DOCUMENT_OPTIONS = [
-  { value: 'IDENTITY', label: 'Shaxsni tasdiqlovchi hujjat' },
-  { value: 'CERTIFICATE', label: 'Sertifikat' },
-  { value: 'LICENSE', label: 'Litsenziya' },
-  { value: 'OTHER', label: 'Boshqa' },
+  { value: 'IDENTITY', label: t('Shaxsni tasdiqlovchi hujjat') },
+  { value: 'CERTIFICATE', label: t('Sertifikat') },
+  { value: 'LICENSE', label: t('Litsenziya') },
+  { value: 'OTHER', label: t('Boshqa') },
 ];
 
 const SINGLE_TYPES: VerificationDocumentType[] = ['IDENTITY', 'LICENSE'];
@@ -32,7 +33,7 @@ export function TrustProfile({ masterId }: { masterId: string }) {
   const [uploadKey, setUploadKey] = useState(0);
   const [toDelete, setToDelete] = useState<VerificationDocument | null>(null);
 
-  if (trust.isLoading) return <PageLoader label="Tasdiqlash holati yuklanmoqda…" />;
+  if (trust.isLoading) return <PageLoader label={t('Tasdiqlash holati yuklanmoqda…')} />;
   if (trust.isError) return <Alert tone="danger">{getErrorMessage(trust.error)}</Alert>;
   if (!trust.data) return null;
 
@@ -70,10 +71,9 @@ export function TrustProfile({ masterId }: { masterId: string }) {
 
   return (
     <div className="gm-form gm-trustp">
-      <p className="gm-trustp__status">
-        Holat: <TrustBadge verification={trust.data.verification} />
+      <p className="gm-trustp__status">{t('Holat:')}{' '}<TrustBadge verification={trust.data.verification} />
       </p>
-      {documents.length === 0 && <EmptyState title="Hali hujjat yuborilmagan" />}
+      {documents.length === 0 && <EmptyState title={t('Hali hujjat yuborilmagan')} />}
       <div className="gm-list">
         {documents.map((document) => {
           const status = String(document.status);
@@ -87,14 +87,13 @@ export function TrustProfile({ masterId }: { masterId: string }) {
                 <h3>{DOCUMENT_OPTIONS.find((option) => option.value === document.documentType)?.label}</h3>
                 <div className="gm-doc-card__meta">
                   <TrustBadge verification={document.status} />
-                  <span>Yuborildi: {formatDate(document.createdAt)}</span>
+                  <span>{t('Yuborildi:')}{' '}{formatDate(document.createdAt)}</span>
                 </div>
-                {document.rejectionReason && status !== 'INACTIVE' && <p className="gm-doc-card__reason">Sabab: {document.rejectionReason}</p>}
+                {document.rejectionReason && status !== 'INACTIVE' && <p className="gm-doc-card__reason">{t('Sabab:')}{' '}{document.rejectionReason}</p>}
               </div>
               {status !== 'INACTIVE' && (
                 <Button size="sm" variant="secondary" className="gm-btn-tone gm-btn-tone--danger gm-doc-card__delete" onClick={() => setToDelete(document)}>
-                  <Trash2 size={15} /> O‘chirish
-                </Button>
+                  <Trash2 size={15} />{' '}{t('O‘chirish')}</Button>
               )}
             </div>
           );
@@ -102,30 +101,24 @@ export function TrustProfile({ masterId }: { masterId: string }) {
       </div>
 
       <section className="gm-trustp__new">
-      <h3>Yangi hujjat yuborish</h3>
-      <p className="gm-trustp__lead">Hujjat turini tanlang va fayl yuklang — administrator tekshirib chiqadi.</p>
+      <h3>{t('Yangi hujjat yuborish')}</h3>
+      <p className="gm-trustp__lead">{t('Hujjat turini tanlang va fayl yuklang — administrator tekshirib chiqadi.')}</p>
       {lockedTypes.length > 0 && (
-        <Alert tone="info">
-          {lockedTypes.map((type) => DOCUMENT_OPTIONS.find((option) => option.value === type)?.label).join(' va ')} yuklangan. Almashtirish uchun avval yuqoridan
-          o‘chiring, keyin yangisini yuklang.
-        </Alert>
+        <Alert tone="info">{t('{join} yuklangan. Almashtirish uchun avval yuqoridan o‘chiring, keyin yangisini yuklang.', { join: lockedTypes.map((type) => DOCUMENT_OPTIONS.find((option) => option.value === type)?.label).join(' va ') })}</Alert>
       )}
       {replaceableTypes.length > 0 && (
-        <Alert tone="warning">
-          {replaceableTypes.map((type) => DOCUMENT_OPTIONS.find((option) => option.value === type)?.label).join(' va ')} qayta yuborilishi kerak. Shu hujjat turini tanlab yangisini yuklang —
-          oldingisi nofaol holatga o‘tadi.
-        </Alert>
+        <Alert tone="warning">{t('{join} qayta yuborilishi kerak. Shu hujjat turini tanlab yangisini yuklang — oldingisi nofaol holatga o‘tadi.', { join: replaceableTypes.map((type) => DOCUMENT_OPTIONS.find((option) => option.value === type)?.label).join(' va ') })}</Alert>
       )}
       {submit.isError && <Alert tone="danger">{getErrorMessage(submit.error)}</Alert>}
       <Select
-        label="Hujjat turi"
+        label={t('Hujjat turi')}
         options={options}
         value={selectedType}
         onChange={(event) => setDocumentType(event.target.value as VerificationDocumentType)}
       />
       <MediaUploadField
         key={uploadKey}
-        label="Hujjat fayli"
+        label={t('Hujjat fayli')}
         accept="image/*"
         kind="MASTER_VERIFICATION_DOCUMENT"
         linkType="MasterProfile"
@@ -133,21 +126,20 @@ export function TrustProfile({ masterId }: { masterId: string }) {
         onReady={setMediaAssetId}
       />
       <Button size="lg" fullWidth className="gm-trust-submit" onClick={handleSubmit} disabled={!mediaAssetId} loading={submit.isPending}>
-        <ShieldCheck size={18} /> Tasdiqlashga yuborish
-      </Button>
-      {!mediaAssetId && <p className="gm-trust-submit__hint">Avval hujjat faylini yuklang — shundan keyin yuborish mumkin bo‘ladi.</p>}
+        <ShieldCheck size={18} />{' '}{t('Tasdiqlashga yuborish')}</Button>
+      {!mediaAssetId && <p className="gm-trust-submit__hint">{t('Avval hujjat faylini yuklang — shundan keyin yuborish mumkin bo‘ladi.')}</p>}
       </section>
 
       <ConfirmDialog
         open={!!toDelete}
-        title="Hujjatni o‘chirish"
+        title={t('Hujjatni o‘chirish')}
         description={
           deletingIdentity
-            ? 'Shaxsni tasdiqlovchi hujjat o‘chirilsa, profilingiz “Tasdiqlanmagan” holatga o‘tadi va nofaol bo‘ladi. Qayta faollashish uchun hujjatni yangidan yuklab, tasdiqlatishingiz kerak.'
-            : 'Hujjat o‘chiriladi. Bu amalni qaytarib bo‘lmaydi.'
+            ? t('Shaxsni tasdiqlovchi hujjat o‘chirilsa, profilingiz “Tasdiqlanmagan” holatga o‘tadi va nofaol bo‘ladi. Qayta faollashish uchun hujjatni yangidan yuklab, tasdiqlatishingiz kerak.')
+            : t('Hujjat o‘chiriladi. Bu amalni qaytarib bo‘lmaydi.')
         }
-        confirmLabel="O‘chirish"
-        cancelLabel="Yopish"
+        confirmLabel={t('O‘chirish')}
+        cancelLabel={t('Yopish')}
         tone="danger"
         loading={remove.isPending}
         onCancel={() => setToDelete(null)}

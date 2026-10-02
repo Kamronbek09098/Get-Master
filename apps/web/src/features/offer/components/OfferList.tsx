@@ -9,6 +9,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime, formatMoney, newIdempotencyKey } from '@/lib/utils';
 import { useAcceptOffer, useRequestOffers } from '../hooks/useOffers';
 import { OfferBadge } from './OfferBadge';
+import { t } from '@/i18n';
 
 export function OfferList({ requestId }: { requestId: string }) {
   const offers = useRequestOffers(requestId);
@@ -17,11 +18,11 @@ export function OfferList({ requestId }: { requestId: string }) {
   const [idempotencyKey, setIdempotencyKey] = useState(() => newIdempotencyKey());
   const [pendingId, setPendingId] = useState<string | null>(null);
 
-  if (offers.isLoading) return <PageLoader label="Takliflar yuklanmoqda…" />;
+  if (offers.isLoading) return <PageLoader label={t('Takliflar yuklanmoqda…')} />;
   if (offers.isError) return <Alert tone="danger">{getErrorMessage(offers.error)}</Alert>;
   const items = offers.data?.items ?? [];
   if (items.length === 0) {
-    return <EmptyState title="Hozircha takliflar yo‘q" description="Ustalar taklif yuborganda shu yerda paydo bo‘ladi." />;
+    return <EmptyState title={t('Hozircha takliflar yo‘q')} description={t('Ustalar taklif yuborganda shu yerda paydo bo‘ladi.')} />;
   }
 
   function handleAccept(offerId: string) {
@@ -50,7 +51,7 @@ export function OfferList({ requestId }: { requestId: string }) {
                 <h3>{name}</h3>
                 {offer.master && (
                   <span className="gm-offer__rating">
-                    ★ {Number(offer.master.ratingAvg).toFixed(1)} <small>({offer.master.ratingCount} ta sharh)</small>
+                    ★ {Number(offer.master.ratingAvg).toFixed(1)} <small>{t('({ratingCount} ta sharh)', { ratingCount: offer.master.ratingCount })}</small>
                   </span>
                 )}
               </div>
@@ -59,16 +60,14 @@ export function OfferList({ requestId }: { requestId: string }) {
             <div className="gm-offer__price">{formatMoney(offer.price, offer.currency)}</div>
             {(offer.estimatedMinutes || offer.message) && (
               <div className="gm-offer__details">
-                {offer.estimatedMinutes && <p>Taxminiy davomiylik: <strong>{offer.estimatedMinutes} daqiqa</strong></p>}
+                {offer.estimatedMinutes && <p>{t('Taxminiy davomiylik:')}{' '}<strong>{offer.estimatedMinutes} daqiqa</strong></p>}
                 {offer.message && <p>{offer.message}</p>}
               </div>
             )}
             <div className="gm-offer__foot">
-              <span className="gm-card__meta">Amal qilish muddati: {formatDateTime(offer.expiresAt)}</span>
+              <span className="gm-card__meta">{t('Amal qilish muddati:')}{' '}{formatDateTime(offer.expiresAt)}</span>
               {offer.status === 'PENDING' && (
-                <Button size="sm" loading={accept.isPending && pendingId === offer.id} onClick={() => handleAccept(offer.id)}>
-                  Qabul qilish
-                </Button>
+                <Button size="sm" loading={accept.isPending && pendingId === offer.id} onClick={() => handleAccept(offer.id)}>{t('Qabul qilish')}</Button>
               )}
             </div>
           </article>

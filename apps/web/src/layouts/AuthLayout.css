@@ -820,3 +820,63 @@
     border-radius: 20px;
   }
 }
+
+/* Google orqali kirish / ro‘yxatdan o‘tish */
+.gm-google {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  width: 100%;
+}
+.gm-google__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--gm-text-muted, #6b7280);
+  font-size: 0.875rem;
+}
+.gm-google__divider::before,
+.gm-google__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--gm-border, #e5e7eb);
+}
+.gm-google__button {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+  color-scheme: light;
+}
+.gm-google--phone {
+  margin-top: 0;
+  gap: 14px;
+}
+.gm-google__title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.gm-google__hint {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--gm-text-muted, #6b7280);
+}
+.gm-google__fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid var(--gm-border, #dadce0);
+  border-radius: 999px;
+  background: #fff;
+  color: #3c4043;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gm-google__fallback:hover {
+  background: #f8f9fa;
+}

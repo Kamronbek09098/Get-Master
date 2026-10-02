@@ -13,6 +13,7 @@ import { MapPin, MapPinPlus, Plus, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import './CustomerPage.css';
 import { useAddresses, useCreateAddress, useDeleteAddress } from '@/features/customer/hooks/useCustomer';
+import { t } from '@/i18n';
 
 export function CustomerPage() {
   const addresses = useAddresses();
@@ -49,14 +50,14 @@ export function CustomerPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>Manzillarim</h1>
-          <p className="gm-page-lead">So‘rov yaratganda tez tanlash uchun manzillaringiz.</p>
+          <h1>{t('Manzillarim')}</h1>
+          <p className="gm-page-lead">{t('So‘rov yaratganda tez tanlash uchun manzillaringiz.')}</p>
         </div>
       </div>
-      {addresses.isLoading && <PageLoader label="Manzillar yuklanmoqda…" />}
+      {addresses.isLoading && <PageLoader label={t('Manzillar yuklanmoqda…')} />}
       {addresses.isError && <Alert tone="danger">{getErrorMessage(addresses.error)}</Alert>}
       {deleteAddress.isError && <Alert tone="danger">{getErrorMessage(deleteAddress.error)}</Alert>}
-      {!addresses.isLoading && items.length === 0 && <EmptyState title="Hali manzil qo‘shilmagan" />}
+      {!addresses.isLoading && items.length === 0 && <EmptyState title={t('Hali manzil qo‘shilmagan')} />}
       <div className="gm-list">
         {items.map((address) => {
           const place = [address.district, address.city].filter(Boolean).join(', ');
@@ -67,7 +68,7 @@ export function CustomerPage() {
                 <MapPin size={20} />
               </span>
               <div className="gm-addr-card__body">
-                <h3>{address.title ?? 'Manzil'}</h3>
+                <h3>{address.title ?? t('Manzil')}</h3>
                 <p className="gm-addr-card__line">{address.addressLine}</p>
                 <div className="gm-addr-card__chips">
                   {place && <span className="gm-addr-chip">{place}</span>}
@@ -78,8 +79,7 @@ export function CustomerPage() {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      <MapPin size={13} aria-hidden="true" /> Xaritada ochish
-                    </a>
+                      <MapPin size={13} aria-hidden="true" />{' '}{t('Xaritada ochish')}</a>
                   )}
                 </div>
               </div>
@@ -88,10 +88,9 @@ export function CustomerPage() {
                 variant="secondary"
                 className="gm-btn-tone gm-btn-tone--danger gm-addr-card__delete"
                 onClick={() => setToDelete(address)}
-                aria-label={`${address.title ?? 'Manzil'}ni o‘chirish`}
+                aria-label={t('{p}ni o‘chirish', { p: address.title ?? 'Manzil' })}
               >
-                <Trash2 size={15} /> O‘chirish
-              </Button>
+                <Trash2 size={15} />{' '}{t('O‘chirish')}</Button>
               {located && (
                 <div className="gm-addr-card__foot">
                   <CoverageButton
@@ -111,8 +110,8 @@ export function CustomerPage() {
             <MapPinPlus size={20} />
           </span>
           <div>
-            <h2>Yangi manzil</h2>
-            <p>Manzilni yozing, xaritadan tanlang yoki joriy joylashuvingizni aniqlang.</p>
+            <h2>{t('Yangi manzil')}</h2>
+            <p>{t('Manzilni yozing, xaritadan tanlang yoki joriy joylashuvingizni aniqlang.')}</p>
           </div>
         </header>
         <form className="gm-form gm-addrform__form" onSubmit={handleSubmit}>
@@ -121,18 +120,17 @@ export function CustomerPage() {
           {picked.latitude != null && picked.longitude != null && (
             <CoverageSummary lat={picked.latitude} lon={picked.longitude} onOpen={() => setCoverageFor({ lat: picked.latitude as number, lon: picked.longitude as number, addressLine: picked.addressLine })} />
           )}
-          <Input label="Nomi (ixtiyoriy)" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Masalan: Uy, Ish" maxLength={100} />
+          <Input label={t('Nomi (ixtiyoriy)')} value={title} onChange={(event) => setTitle(event.target.value)} placeholder={t('Masalan: Uy, Ish')} maxLength={100} />
           <Button type="submit" className="gm-addrform__submit" loading={createAddress.isPending} disabled={!picked.addressLine.trim()}>
-            <Plus size={18} /> Manzilni qo‘shish
-          </Button>
+            <Plus size={18} />{' '}{t('Manzilni qo‘shish')}</Button>
         </form>
       </section>
       <ConfirmDialog
         open={toDelete !== null}
-        title="Manzilni o‘chirish"
-        description={`“${toDelete?.title ?? toDelete?.addressLine ?? ''}” manzili ro‘yxatingizdan o‘chiriladi.`}
-        confirmLabel="O‘chirish"
-        cancelLabel="Bekor qilish"
+        title={t('Manzilni o‘chirish')}
+        description={t('“{p}” manzili ro‘yxatingizdan o‘chiriladi.', { p: toDelete?.title ?? toDelete?.addressLine ?? '' })}
+        confirmLabel={t('O‘chirish')}
+        cancelLabel={t('Bekor qilish')}
         tone="danger"
         loading={deleteAddress.isPending}
         onCancel={() => setToDelete(null)}

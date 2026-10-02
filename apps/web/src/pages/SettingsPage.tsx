@@ -3,7 +3,9 @@ import { useState } from 'react';
 import { UI_SIZES, getUiSize, setUiSize, type UiSize } from '@/lib/ui-size';
 import { Button } from '@/components/ui/Button';
 import { TwoFactorSettings } from '@/features/session/components/TwoFactorSettings';
+import { LanguageSettings } from '@/features/session/components/LanguageSettings';
 import './SettingsPage.css';
+import { t } from '@/i18n';
 
 export function SettingsPage() {
   const [size, setSize] = useState<UiSize>(getUiSize);
@@ -17,14 +19,14 @@ export function SettingsPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>Sozlamalar</h1>
-          <p className="gm-page-lead">Akkauntingiz xavfsizligi va ulangan qurilmalarni boshqaring.</p>
+          <h1>{t('Sozlamalar')}</h1>
+          <p className="gm-page-lead">{t('Akkauntingiz xavfsizligi va ulangan qurilmalarni boshqaring.')}</p>
         </div>
       </div>
 
       <section className="gm-detail-section" style={{ marginTop: 0 }}>
-        <h2>Tugmalar o‘lchami</h2>
-        <div className="gm-size-picker" role="radiogroup" aria-label="Tugmalar o‘lchami">
+        <h2>{t('Tugmalar o‘lchami')}</h2>
+        <div className="gm-size-picker" role="radiogroup" aria-label={t('Tugmalar o‘lchami')}>
           {UI_SIZES.map((option) => (
             <button
               key={option.value}
@@ -39,16 +41,18 @@ export function SettingsPage() {
           ))}
         </div>
         <div className="gm-size-preview">
-          <Button size="sm">Kichik tugma</Button>
-          <Button>O‘rtacha tugma</Button>
-          <Button size="lg">Katta tugma</Button>
+          <Button size="sm">{t('Kichik tugma')}</Button>
+          <Button>{t('O‘rtacha tugma')}</Button>
+          <Button size="lg">{t('Katta tugma')}</Button>
         </div>
       </section>
+
+      <LanguageSettings />
 
       <TwoFactorSettings />
 
       <section className="gm-detail-section">
-        <h2>Faol qurilmalar</h2>
+        <h2>{t('Faol qurilmalar')}</h2>
         <DeviceList />
       </section>
     </div>

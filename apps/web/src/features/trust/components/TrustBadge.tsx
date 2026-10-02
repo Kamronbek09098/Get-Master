@@ -1,15 +1,16 @@
 import { Badge } from '@/components/ui/Badge';
 import type { BadgeTone } from '@/components/ui/Badge';
 import type { MasterVerificationStatus } from '@/features/master/types';
+import { t } from '@/i18n';
 
 const LABEL: Record<MasterVerificationStatus, string> = {
-  PENDING: 'Tasdiqlanmagan',
-  UNDER_REVIEW: 'Ko‘rib chiqilmoqda',
-  CORRECTION_REQUESTED: 'Tuzatish so‘ralgan',
-  VERIFIED: 'Tasdiqlangan',
-  REJECTED: 'Rad etilgan',
-  EXPIRED: 'Muddati tugagan',
-  INACTIVE: 'Nofaol',
+  PENDING: t('Tasdiqlanmagan'),
+  UNDER_REVIEW: t('Ko‘rib chiqilmoqda'),
+  CORRECTION_REQUESTED: t('Tuzatish so‘ralgan'),
+  VERIFIED: t('Tasdiqlangan'),
+  REJECTED: t('Rad etilgan'),
+  EXPIRED: t('Muddati tugagan'),
+  INACTIVE: t('Nofaol'),
 };
 
 const TONE: Record<MasterVerificationStatus, BadgeTone> = {

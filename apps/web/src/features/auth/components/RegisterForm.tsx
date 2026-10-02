@@ -8,6 +8,7 @@ import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useRegister } from '../hooks/useAuth';
 import { formatLocalPhone, toLocalDigits, registerSchema, toFullPhone, type RegisterFormValues } from '../validation';
+import { t } from '@/i18n';
 
 export function RegisterForm() {
   const navigate = useNavigate();
@@ -25,7 +26,6 @@ export function RegisterForm() {
         password: values.password,
         firstName: values.firstName,
         lastName: values.lastName,
-        email: values.email || undefined,
       },
       { onSuccess: (result) => navigate('/otp', { state: { flow: result.existingAccount ? 'login' : 'register' } }) },
     );
@@ -36,7 +36,7 @@ export function RegisterForm() {
       {register_.isError && <Alert tone="danger">{getErrorMessage(register_.error)}</Alert>}
 
       <Input
-        label="Telefon raqami"
+        label={t('Telefon raqami')}
         prefix="+998"
         inputMode="numeric"
         placeholder="90 123 45 67"
@@ -47,11 +47,10 @@ export function RegisterForm() {
         error={errors.phoneLocal?.message}
         {...register('phoneLocal')}
       />
-      <Input label="Ism" required {...register('firstName')} error={errors.firstName?.message} />
-      <Input label="Familiya" required {...register('lastName')} error={errors.lastName?.message} />
-      <Input label="Email (ixtiyoriy)" type="email" {...register('email')} error={errors.email?.message} />
+      <Input label={t('Ism')} required {...register('firstName')} error={errors.firstName?.message} />
+      <Input label={t('Familiya')} required {...register('lastName')} error={errors.lastName?.message} />
       <Input
-        label="Parol"
+        label={t('Parol')}
         type="password"
         autoComplete="new-password"
         required
@@ -59,7 +58,7 @@ export function RegisterForm() {
         {...register('password')}
       />
       <Input
-        label="Parolni takrorlang"
+        label={t('Parolni takrorlang')}
         type="password"
         autoComplete="new-password"
         required
@@ -70,16 +69,16 @@ export function RegisterForm() {
         label={
           <>
             <Link to="/shartlar" target="_blank" rel="noopener" onClick={(event) => event.stopPropagation()}>
-              Foydalanish shartlari
+              {t('Foydalanish shartlari')}
             </Link>{' '}
-            ni o‘qib chiqdim va qabul qilaman
+            {t('ni o‘qib chiqdim va qabul qilaman')}
           </>
         }
         error={errors.acceptedTerms?.message}
         {...register('acceptedTerms')}
       />
       <Button type="submit" loading={register_.isPending} fullWidth>
-        Ro‘yxatdan o‘tish
+        {t('Ro‘yxatdan o‘tish')}
       </Button>
     </form>
   );

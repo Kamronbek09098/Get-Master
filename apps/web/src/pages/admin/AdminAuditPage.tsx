@@ -43,6 +43,7 @@ import { AUDIT_ACTIONS, DOCUMENT_LABEL, FIELD_LABEL, GROUP_INFO, TARGET_LABEL, a
 import type { AuditGroup } from '@/features/admin/audit-labels';
 import type { AuditActorRole, AuditFilters, AuditLog } from '@/features/admin/types';
 import './AdminAuditPage.css';
+import { t } from '@/i18n';
 
 const GROUP_ICON: Record<AuditGroup, ReactNode> = {
   auth: <LogIn size={18} />,
@@ -65,13 +66,13 @@ const CATEGORY_CHIPS = (Object.keys(GROUP_INFO) as AuditGroup[]).filter((key) =>
 const ACTION_OPTIONS = Object.entries(AUDIT_ACTIONS).sort((a, b) => a[1].label.localeCompare(b[1].label));
 
 const ROLE_TABS: Array<{ value: AuditActorRole | ''; label: string; hint: string; icon: ReactNode }> = [
-  { value: '', label: 'Hammasi', hint: 'Barcha amallar', icon: <ScrollText size={18} /> },
-  { value: 'ADMIN', label: 'Adminlar', hint: 'Administratorlar qilgan amallar', icon: <Shield size={18} /> },
-  { value: 'MASTER', label: 'Ustalar', hint: 'Ustalar qilgan amallar', icon: <Wrench size={18} /> },
-  { value: 'CUSTOMER', label: 'Mijozlar', hint: 'Mijozlar qilgan amallar', icon: <User size={18} /> },
-  { value: 'SYSTEM', label: 'Tizim', hint: 'Bajaruvchisiz (avtomatik) amallar', icon: <Bot size={18} /> },
+  { value: '', label: t('Hammasi'), hint: t('Barcha amallar'), icon: <ScrollText size={18} /> },
+  { value: 'ADMIN', label: t('Adminlar'), hint: t('Administratorlar qilgan amallar'), icon: <Shield size={18} /> },
+  { value: 'MASTER', label: t('Ustalar'), hint: t('Ustalar qilgan amallar'), icon: <Wrench size={18} /> },
+  { value: 'CUSTOMER', label: t('Mijozlar'), hint: t('Mijozlar qilgan amallar'), icon: <User size={18} /> },
+  { value: 'SYSTEM', label: t('Tizim'), hint: t('Bajaruvchisiz (avtomatik) amallar'), icon: <Bot size={18} /> },
 ];
-const ROLE_NAME: Record<AuditActorRole, string> = { ADMIN: 'Admin', MASTER: 'Usta', CUSTOMER: 'Mijoz', SYSTEM: 'Tizim' };
+const ROLE_NAME: Record<AuditActorRole, string> = { ADMIN: t('Admin'), MASTER: t('Usta'), CUSTOMER: t('Mijoz'), SYSTEM: t('Tizim') };
 
 const dayStart = (value: string) => (value ? new Date(`${value}T00:00:00`).toISOString() : undefined);
 const dayEnd = (value: string) => (value ? new Date(`${value}T23:59:59.999`).toISOString() : undefined);
@@ -143,7 +144,7 @@ function AuditEntry({ log }: { log: AuditLog }) {
         </header>
 
         <p className="gm-audit__sentence">
-          <Person user={actorUser} fallback={log.actorId || info.group === 'auth' ? 'Noma’lum foydalanuvchi' : 'Tizim'} /> <span>{info.verb}</span>
+          <Person user={actorUser} fallback={log.actorId || info.group === 'auth' ? t('Noma’lum foydalanuvchi') : t('Tizim')} /> <span>{info.verb}</span>
           {log.targetUser && !selfAction && (
             <>
               {' '}
@@ -155,13 +156,13 @@ function AuditEntry({ log }: { log: AuditLog }) {
 
         {log.reason && (
           <blockquote className="gm-audit__reason">
-            <small>Sabab</small>
+            <small>{t('Sabab')}</small>
             {log.reason}
           </blockquote>
         )}
 
         {changes.length > 0 && (
-          <ul className="gm-audit__changes" aria-label="O‘zgarishlar">
+          <ul className="gm-audit__changes" aria-label={t('O‘zgarishlar')}>
             {changes.map((change) => (
               <li key={change.key}>
                 <span className="gm-audit__field">{FIELD_LABEL[change.key] ?? change.key}</span>
@@ -174,36 +175,32 @@ function AuditEntry({ log }: { log: AuditLog }) {
         )}
 
         <button type="button" className="gm-audit__toggle" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />} {open ? 'Yashirish' : 'Batafsil ma’lumot'}
+          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />} {open ? t('Yashirish') : t('Batafsil ma’lumot')}
         </button>
 
         {open && (
           <dl className="gm-audit__details">
-            <Detail label="Aniq vaqt">{formatDateTime(log.createdAt)}</Detail>
-            <Detail label="Amal kodi">
+            <Detail label={t('Aniq vaqt')}>{formatDateTime(log.createdAt)}</Detail>
+            <Detail label={t('Amal kodi')}>
               <code>{log.action}</code>
             </Detail>
             {log.actor && (
-              <Detail label="Bajaruvchi">
+              <Detail label={t('Bajaruvchi')}>
                 <AccountLink accountNumber={log.actor.accountNumber} className="gm-audit__link">
                   {accountName(log.actor)}
-                </AccountLink>{' '}
-                · ID {log.actor.accountNumber} · {log.actor.phone}
-              </Detail>
+                </AccountLink>{' '}{t('· ID {accountNumber} · {phone}', { accountNumber: log.actor.accountNumber, phone: log.actor.phone })}</Detail>
             )}
             {log.targetUser && (
-              <Detail label="Kimga nisbatan">
+              <Detail label={t('Kimga nisbatan')}>
                 <AccountLink accountNumber={log.targetUser.accountNumber} className="gm-audit__link">
                   {accountName(log.targetUser)}
-                </AccountLink>{' '}
-                · ID {log.targetUser.accountNumber} · {log.targetUser.phone}
-              </Detail>
+                </AccountLink>{' '}{t('· ID {accountNumber} · {phone}', { accountNumber: log.targetUser.accountNumber, phone: log.targetUser.phone })}</Detail>
             )}
-            {targetName && !log.targetUser && <Detail label="Obyekt turi">{targetName}</Detail>}
-            {log.ipAddress && <Detail label="IP manzil">{log.ipAddress}</Detail>}
-            {log.device && <Detail label="Qurilma">{log.device}</Detail>}
+            {targetName && !log.targetUser && <Detail label={t('Obyekt turi')}>{targetName}</Detail>}
+            {log.ipAddress && <Detail label={t('IP manzil')}>{log.ipAddress}</Detail>}
+            {log.device && <Detail label={t('Qurilma')}>{log.device}</Detail>}
             {(log.before !== null && log.before !== undefined) || (log.after !== null && log.after !== undefined) ? (
-              <Detail label="Xom ma’lumot (JSON)">
+              <Detail label={t('Xom ma’lumot (JSON)')}>
                 <pre>{JSON.stringify({ oldin: log.before ?? null, keyin: log.after ?? null }, null, 2)}</pre>
               </Detail>
             ) : null}
@@ -253,12 +250,12 @@ export function AdminAuditPage() {
     <div className="gm-audit">
       <div className="gm-page-header">
         <div>
-          <h1>Audit jurnali</h1>
-          <p className="gm-page-lead">Tizimda kim, qachon va nima qilgani: har bir muhim amal, uning sababi va o‘zgarishlari bilan.</p>
+          <h1>{t('Audit jurnali')}</h1>
+          <p className="gm-page-lead">{t('Tizimda kim, qachon va nima qilgani: har bir muhim amal, uning sababi va o‘zgarishlari bilan.')}</p>
         </div>
       </div>
 
-      <section className="gm-audit__roles" role="tablist" aria-label="Amalni kim bajargani">
+      <section className="gm-audit__roles" role="tablist" aria-label={t('Amalni kim bajargani')}>
         {ROLE_TABS.map((tab) => {
           const count = tab.value ? summary.data?.[tab.value] : summary.data?.ALL;
           const selected = role === tab.value;
@@ -285,15 +282,13 @@ export function AdminAuditPage() {
         })}
       </section>
 
-      <section className="gm-audit__filters" aria-label="Filtrlar">
+      <section className="gm-audit__filters" aria-label={t('Filtrlar')}>
         <div className="gm-audit__search">
           <Search size={16} aria-hidden="true" />
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Amal yoki sabab bo‘yicha qidirish" aria-label="Qidirish" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Amal yoki sabab bo‘yicha qidirish')} aria-label={t('Qidirish')} />
         </div>
-        <div className="gm-audit__chips" role="group" aria-label="Bo‘lim">
-          <button type="button" aria-pressed={!category} className={cx('gm-otab', !category && 'gm-otab--active')} onClick={() => setCategory('')}>
-            Hammasi
-          </button>
+        <div className="gm-audit__chips" role="group" aria-label={t('Bo‘lim')}>
+          <button type="button" aria-pressed={!category} className={cx('gm-otab', !category && 'gm-otab--active')} onClick={() => setCategory('')}>{t('Hammasi')}</button>
           {CATEGORY_CHIPS.map((key) => (
             <button
               key={key}
@@ -311,9 +306,9 @@ export function AdminAuditPage() {
         </div>
         <div className="gm-audit__row">
           <label>
-            <span>Aniq amal</span>
+            <span>{t('Aniq amal')}</span>
             <select value={action} onChange={(event) => setAction(event.target.value)}>
-              <option value="">Barcha amallar</option>
+              <option value="">{t('Barcha amallar')}</option>
               {ACTION_OPTIONS.map(([code, info]) => (
                 <option key={code} value={code}>
                   {info.label}
@@ -322,33 +317,31 @@ export function AdminAuditPage() {
             </select>
           </label>
           <label>
-            <span>Sanadan</span>
+            <span>{t('Sanadan')}</span>
             <input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} />
           </label>
           <label>
-            <span>Sanagacha</span>
+            <span>{t('Sanagacha')}</span>
             <input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} />
           </label>
           <label className="gm-audit__grow">
-            <span>Bajaruvchi ID (raqam)</span>
-            <input value={actorId} inputMode="numeric" onChange={(event) => setActorId(event.target.value.replace(/\D/g, ''))} placeholder="Masalan, 578" aria-invalid={!!actorId && !actorValid} />
+            <span>{t('Bajaruvchi ID (raqam)')}</span>
+            <input value={actorId} inputMode="numeric" onChange={(event) => setActorId(event.target.value.replace(/\D/g, ''))} placeholder={t('Masalan, 578')} aria-invalid={!!actorId && !actorValid} />
           </label>
           {active && (
             <Button size="sm" variant="secondary" onClick={reset}>
-              <X size={14} /> Tozalash
-            </Button>
+              <X size={14} />{' '}{t('Tozalash')}</Button>
           )}
         </div>
       </section>
 
       {logs.isLoading && <PageLoader />}
       {logs.isError && <Alert tone="danger">{getErrorMessage(logs.error)}</Alert>}
-      {logs.data && items.length === 0 && <EmptyState icon={<Sparkles size={26} />} title="Yozuvlar topilmadi" description={active ? 'Filtrlarni o‘zgartirib ko‘ring.' : undefined} />}
+      {logs.data && items.length === 0 && <EmptyState icon={<Sparkles size={26} />} title={t('Yozuvlar topilmadi')} description={active ? t('Filtrlarni o‘zgartirib ko‘ring.') : undefined} />}
 
       {items.length > 0 && (
         <>
-          <p className="gm-audit__count">
-            {items.length} ta yozuv ko‘rsatilmoqda{logs.hasNextPage ? ' (yana bor)' : ''}
+          <p className="gm-audit__count">{t('{length} ta yozuv ko‘rsatilmoqda', { length: items.length })}{logs.hasNextPage ? t(' (yana bor)') : ''}
           </p>
           <ol className="gm-audit__timeline">
             {items.map((log, index) => (
@@ -364,9 +357,7 @@ export function AdminAuditPage() {
           </ol>
           {logs.hasNextPage && (
             <div className="gm-audit__more">
-              <Button variant="secondary" loading={logs.isFetchingNextPage} onClick={() => void logs.fetchNextPage()}>
-                Ko‘proq yuklash
-              </Button>
+              <Button variant="secondary" loading={logs.isFetchingNextPage} onClick={() => void logs.fetchNextPage()}>{t('Ko‘proq yuklash')}</Button>
             </div>
           )}
         </>

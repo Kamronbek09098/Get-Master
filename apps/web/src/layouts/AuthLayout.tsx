@@ -6,6 +6,8 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { env } from '@/lib/env';
 import { currentPanelLabel } from '@/lib/panel';
 import type { Role } from '@/types/common';
+import { t } from '@/i18n';
+import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher';
 import '@/features/auth/auth.css';
 import './AuthLayout.css';
 
@@ -19,48 +21,48 @@ interface Pitch {
 
 const PITCH: Record<Role, Pitch> = {
   CUSTOMER: {
-    tagline: 'Tasdiqlangan ustalar, aniq narx va kafolat — bir joyda',
+    tagline: t('Tasdiqlangan ustalar, aniq narx va kafolat — bir joyda'),
     tiles: [
-      { icon: BadgeCheck, text: 'Tasdiqlangan ustalar' },
-      { icon: Camera, text: 'Foto isbot' },
-      { icon: ShieldCheck, text: 'Xavfsiz to‘lov' },
+      { icon: BadgeCheck, text: t('Tasdiqlangan ustalar') },
+      { icon: Camera, text: t('Foto isbot') },
+      { icon: ShieldCheck, text: t('Xavfsiz to‘lov') },
     ],
-    title: 'Muammoni ayting — mos ustani biz topamiz',
-    text: 'Tasdiqlangan ustalar, aniq narx va ish kafolati. Hammasi bir joyda.',
+    title: t('Muammoni ayting — mos ustani biz topamiz'),
+    text: t('Tasdiqlangan ustalar, aniq narx va ish kafolati. Hammasi bir joyda.'),
     points: [
-      { icon: BadgeCheck, text: 'Shaxsi tasdiqlangan ustalar' },
-      { icon: Camera, text: 'Ish oldidan va keyingi surat isboti' },
-      { icon: ShieldCheck, text: 'Xavfsiz to‘lov va kafolat' },
+      { icon: BadgeCheck, text: t('Shaxsi tasdiqlangan ustalar') },
+      { icon: Camera, text: t('Ish oldidan va keyingi surat isboti') },
+      { icon: ShieldCheck, text: t('Xavfsiz to‘lov va kafolat') },
     ],
   },
   MASTER: {
-    tagline: 'Mijozlar o‘zi topadi — siz ishlaysiz',
+    tagline: t('Mijozlar o‘zi topadi — siz ishlaysiz'),
     tiles: [
-      { icon: ClipboardCheck, text: 'Mos so‘rovlar' },
-      { icon: Wallet, text: 'Shaffof daromad' },
-      { icon: Star, text: 'Reyting' },
+      { icon: ClipboardCheck, text: t('Mos so‘rovlar') },
+      { icon: Wallet, text: t('Shaffof daromad') },
+      { icon: Star, text: t('Reyting') },
     ],
-    title: 'Mijozlar o‘zi topadi — siz ishlaysiz',
-    text: 'Profilingizni to‘ldiring, tasdiqlating va yaqin atrofdagi so‘rovlarga taklif bering.',
+    title: t('Mijozlar o‘zi topadi — siz ishlaysiz'),
+    text: t('Profilingizni to‘ldiring, tasdiqlating va yaqin atrofdagi so‘rovlarga taklif bering.'),
     points: [
-      { icon: ClipboardCheck, text: 'Sizga mos so‘rovlar avtomatik keladi' },
-      { icon: Wallet, text: 'Daromad va to‘lovlar shaffof' },
-      { icon: Star, text: 'Reyting va sharhlar sizga ishlaydi' },
+      { icon: ClipboardCheck, text: t('Sizga mos so‘rovlar avtomatik keladi') },
+      { icon: Wallet, text: t('Daromad va to‘lovlar shaffof') },
+      { icon: Star, text: t('Reyting va sharhlar sizga ishlaydi') },
     ],
   },
   ADMIN: {
-    tagline: 'Platformani boshqarish paneli',
+    tagline: t('Platformani boshqarish paneli'),
     tiles: [
-      { icon: BarChart3, text: 'Hisobotlar' },
-      { icon: BadgeCheck, text: 'Tasdiqlash' },
-      { icon: ScrollText, text: 'Audit' },
+      { icon: BarChart3, text: t('Hisobotlar') },
+      { icon: BadgeCheck, text: t('Tasdiqlash') },
+      { icon: ScrollText, text: t('Audit') },
     ],
-    title: 'Platformani boshqarish paneli',
-    text: 'Faqat vakolatli xodimlar uchun. Har bir harakat audit jurnaliga yoziladi.',
+    title: t('Platformani boshqarish paneli'),
+    text: t('Faqat vakolatli xodimlar uchun. Har bir harakat audit jurnaliga yoziladi.'),
     points: [
-      { icon: BarChart3, text: 'Statistika va hisobotlar' },
-      { icon: BadgeCheck, text: 'Ustalarni tasdiqlash va moderatsiya' },
-      { icon: ScrollText, text: 'To‘liq audit jurnali' },
+      { icon: BarChart3, text: t('Statistika va hisobotlar') },
+      { icon: BadgeCheck, text: t('Ustalarni tasdiqlash va moderatsiya') },
+      { icon: ScrollText, text: t('To‘liq audit jurnali') },
     ],
   },
 };
@@ -73,7 +75,7 @@ export function AuthLayout() {
   return (
     <div className={isLogin ? 'gm-auth-layout gm-auth-layout--login' : 'gm-auth-layout'}>
       <aside className="gm-auth-layout__brand" aria-hidden={false}>
-        <Link to="/" className="gm-auth-layout__logo" aria-label="GetMaster — bosh sahifa">
+        <Link to="/" className="gm-auth-layout__logo" aria-label={t('GetMaster — bosh sahifa')}>
           <Logo />
         </Link>
         <div className="gm-auth-layout__pitch">
@@ -94,23 +96,23 @@ export function AuthLayout() {
           </ul>
         </div>
         <p className="gm-auth-layout__foot">
-          <Lock size={14} /> Ma’lumotlaringiz himoyalangan
+          <Lock size={14} /> {t('Ma’lumotlaringiz himoyalangan')}
         </p>
       </aside>
 
       <main className="gm-auth-layout__main">
         <div className="gm-auth-layout__topbar">
-          <Link to="/" className="gm-auth-layout__mobile-logo" aria-label="GetMaster — bosh sahifa">
+          <Link to="/" className="gm-auth-layout__mobile-logo" aria-label={t('GetMaster — bosh sahifa')}>
             <Logo />
           </Link>
+          <LanguageSwitcher />
           <ThemeToggle />
         </div>
         <div className="gm-auth-hero">
-          <Link to="/" className="gm-auth-hero__mark" aria-label="GetMaster — bosh sahifa">
+          <Link to="/" className="gm-auth-hero__mark" aria-label={t('GetMaster — bosh sahifa')}>
             <Wrench size={isLogin ? 34 : 26} strokeWidth={2.3} />
           </Link>
-          <div className="gm-auth-hero__name">
-            Get<b>Master</b>
+          <div className="gm-auth-hero__name">{t('Get')}<b>{t('Master')}</b>
           </div>
           {currentPanelLabel && <span className="gm-auth-hero__panel">{currentPanelLabel}</span>}
           <p className="gm-auth-hero__tagline">{pitch.tagline}</p>
@@ -130,11 +132,11 @@ export function AuthLayout() {
               ))}
             </ul>
             <p className="gm-auth-terms">
-              Davom etish orqali{' '}
+              {t('Davom etish orqali')}{' '}
               <Link to="/shartlar" target="_blank" rel="noopener">
-                xizmat shartlariga
-              </Link>{' '}
-              rozilik bildirasiz. Raqamingiz faqat kirish uchun ishlatiladi.
+                {t('xizmat shartlariga')}
+              </Link>
+              {t(' rozilik bildirasiz. Raqamingiz faqat kirish uchun ishlatiladi.')}
             </p>
           </>
         )}

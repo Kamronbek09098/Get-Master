@@ -16,15 +16,16 @@ import { DateRangeFilter } from '@/features/admin/components/DateRangeFilter';
 import { toRange } from '@/features/admin/range';
 import type { RefundReason } from '@/types/common';
 import './AdminReportsPage.css';
+import { t } from '@/i18n';
 
 const REASONS: Array<{ value: RefundReason; label: string }> = [
-  { value: 'CUSTOMER_REQUEST', label: 'Mijoz talabi' },
-  { value: 'DISPUTE', label: 'Nizo' },
-  { value: 'CANCELLATION', label: 'Bekor qilish' },
-  { value: 'WARRANTY', label: 'Kafolat' },
-  { value: 'ADMIN_DECISION', label: 'Admin qarori' },
-  { value: 'PAYMENT_ERROR', label: 'To‘lov xatosi' },
-  { value: 'OTHER', label: 'Boshqa' },
+  { value: 'CUSTOMER_REQUEST', label: t('Mijoz talabi') },
+  { value: 'DISPUTE', label: t('Nizo') },
+  { value: 'CANCELLATION', label: t('Bekor qilish') },
+  { value: 'WARRANTY', label: t('Kafolat') },
+  { value: 'ADMIN_DECISION', label: t('Admin qarori') },
+  { value: 'PAYMENT_ERROR', label: t('To‘lov xatosi') },
+  { value: 'OTHER', label: t('Boshqa') },
 ];
 
 export function AdminReportsPage() {
@@ -57,35 +58,35 @@ export function AdminReportsPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>Hisobotlar</h1>
-          <p className="gm-page-lead">Daromad va faoliyat hisobotlari.</p>
+          <h1>{t('Hisobotlar')}</h1>
+          <p className="gm-page-lead">{t('Daromad va faoliyat hisobotlari.')}</p>
         </div>
       </div>
       <DateRangeFilter value={range} onChange={setRange} />
-      {report.isLoading && <PageLoader label="Hisobot yuklanmoqda…" />}
+      {report.isLoading && <PageLoader label={t('Hisobot yuklanmoqda…')} />}
       {report.isError && <Alert tone="danger">{getErrorMessage(report.error)}</Alert>}
       {summary && (
         <>
           <StatGrid
             items={[
-              { label: 'Jami tushum', value: formatMoney(summary.totalRevenue) },
-              { label: 'Qaytarilgan', value: formatMoney(summary.totalRefunded) },
-              { label: 'Sof tushum', value: formatMoney(summary.netRevenue) },
+              { label: t('Jami tushum'), value: formatMoney(summary.totalRevenue) },
+              { label: t('Qaytarilgan'), value: formatMoney(summary.totalRefunded) },
+              { label: t('Sof tushum'), value: formatMoney(summary.netRevenue) },
               {
-                label: `Ilova sof foydasi (${(summary.commissionRate * 100).toFixed(0)}%)`,
+                label: t('Ilova sof foydasi ({toFixed}%)', { toFixed: (summary.commissionRate * 100).toFixed(0) }),
                 value: formatMoney(summary.platformProfit),
               },
-              { label: 'To‘lovlar', value: summary.totalPayments },
-              { label: 'Buyurtmalar', value: summary.totalOrders },
-              { label: 'Yakunlangan', value: summary.completedOrders },
-              { label: 'Bekor qilingan', value: summary.cancelledOrders },
-              { label: 'Nizolar', value: summary.disputeCount },
+              { label: t('To‘lovlar'), value: summary.totalPayments },
+              { label: t('Buyurtmalar'), value: summary.totalOrders },
+              { label: t('Yakunlangan'), value: summary.completedOrders },
+              { label: t('Bekor qilingan'), value: summary.cancelledOrders },
+              { label: t('Nizolar'), value: summary.disputeCount },
             ]}
           />
           <section className="gm-detail-section">
-            <h2>To‘lovlar</h2>
-            {refund.isSuccess && <Alert tone="success">Qaytarish amalga oshirildi.</Alert>}
-            {report.data && report.data.items.length === 0 && <EmptyState title="Bu davrda to‘lovlar yo‘q" />}
+            <h2>{t('To‘lovlar')}</h2>
+            {refund.isSuccess && <Alert tone="success">{t('Qaytarish amalga oshirildi.')}</Alert>}
+            {report.data && report.data.items.length === 0 && <EmptyState title={t('Bu davrda to‘lovlar yo‘q')} />}
             <div className="gm-list">
               {report.data?.items.map((row) => (
                 <div
@@ -104,7 +105,7 @@ export function AdminReportsPage() {
                     <h3>{formatMoney(row.amount, row.currency)}</h3>
                     <p className="gm-card__meta">
                       {providerLabel(row.provider)} · {formatDateTime(row.succeededAt)}
-                      {Number(row.refundedAmount) > 0 && ` · Qaytarilgan: ${formatMoney(row.refundedAmount, row.currency)}`}
+                      {Number(row.refundedAmount) > 0 && t(' · Qaytarilgan: {money}', { money: formatMoney(row.refundedAmount, row.currency) })}
                     </p>
                   </div>
                   <Button
@@ -115,9 +116,7 @@ export function AdminReportsPage() {
                       setTarget({ id: row.id, max: Number(row.amount) - Number(row.refundedAmount) });
                       setAmount('');
                     }}
-                  >
-                    Qaytarish
-                  </Button>
+                  >{t('Qaytarish')}</Button>
                 </div>
               ))}
             </div>
@@ -128,25 +127,23 @@ export function AdminReportsPage() {
       <Modal
         open={!!target}
         onClose={() => setTarget(null)}
-        title="To‘lovni qaytarish"
+        title={t('To‘lovni qaytarish')}
         footer={
-          <Button loading={refund.isPending} disabled={!amount || !note.trim()} onClick={submitRefund}>
-            Qaytarish
-          </Button>
+          <Button loading={refund.isPending} disabled={!amount || !note.trim()} onClick={submitRefund}>{t('Qaytarish')}</Button>
         }
       >
         <div className="gm-form">
           {refund.isError && <Alert tone="danger">{getErrorMessage(refund.error)}</Alert>}
           <Input
-            label={`Summa (maks. ${target?.max ?? 0})`}
+            label={t('Summa (maks. {p})', { p: target?.max ?? 0 })}
             type="number"
             min={1}
             max={target?.max}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
-          <Select label="Sabab" options={REASONS} value={reason} onChange={(e) => setReason(e.target.value as RefundReason)} />
-          <Input label="Izoh" value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
+          <Select label={t('Sabab')} options={REASONS} value={reason} onChange={(e) => setReason(e.target.value as RefundReason)} />
+          <Input label={t('Izoh')} value={note} maxLength={500} onChange={(e) => setNote(e.target.value)} />
         </div>
       </Modal>
     </div>

@@ -13,6 +13,7 @@ import { formatDate } from '@/lib/utils';
 import { useAdminPolicies, useCreatePolicy, usePublishPolicy } from '@/features/legal/hooks/useLegal';
 import { POLICY_TYPE_LABEL } from '@/features/legal/types';
 import type { PolicyType } from '@/features/legal/types';
+import { t } from '@/i18n';
 
 const TYPE_OPTIONS = (Object.keys(POLICY_TYPE_LABEL) as PolicyType[]).map((value) => ({ value, label: POLICY_TYPE_LABEL[value] }));
 const STATUS_TONE = { DRAFT: 'warning', PUBLISHED: 'success', ARCHIVED: 'neutral' } as const;
@@ -44,30 +45,28 @@ export function AdminPoliciesPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>Siyosatlar va shartlar</h1>
-          <p className="gm-page-lead">Foydalanuvchilar qabul qiladigan shartlar.</p>
+          <h1>{t('Siyosatlar va shartlar')}</h1>
+          <p className="gm-page-lead">{t('Foydalanuvchilar qabul qiladigan shartlar.')}</p>
         </div>
       </div>
       <form className="gm-form" onSubmit={handleSubmit}>
-        <h2>Yangi versiya (qoralama)</h2>
+        <h2>{t('Yangi versiya (qoralama)')}</h2>
         {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
-        <Select label="Turi" options={TYPE_OPTIONS} value={type} onChange={(e) => setType(e.target.value as PolicyType)} />
-        <Input label="Versiya" required maxLength={50} placeholder="1.1" value={version} onChange={(e) => setVersion(e.target.value)} />
-        <Input label="Sarlavha" required maxLength={255} value={title} onChange={(e) => setTitle(e.target.value)} />
-        <Textarea label="Matn" required rows={8} value={content} onChange={(e) => setContent(e.target.value)} />
+        <Select label={t('Turi')} options={TYPE_OPTIONS} value={type} onChange={(e) => setType(e.target.value as PolicyType)} />
+        <Input label={t('Versiya')} required maxLength={50} placeholder="1.1" value={version} onChange={(e) => setVersion(e.target.value)} />
+        <Input label={t('Sarlavha')} required maxLength={255} value={title} onChange={(e) => setTitle(e.target.value)} />
+        <Textarea label={t('Matn')} required rows={8} value={content} onChange={(e) => setContent(e.target.value)} />
         <div>
-          <Button type="submit" loading={create.isPending} disabled={!version.trim() || !title.trim() || !content.trim()}>
-            Qoralama yaratish
-          </Button>
+          <Button type="submit" loading={create.isPending} disabled={!version.trim() || !title.trim() || !content.trim()}>{t('Qoralama yaratish')}</Button>
         </div>
       </form>
 
       <section className="gm-detail-section">
-        <h2>Mavjud versiyalar</h2>
+        <h2>{t('Mavjud versiyalar')}</h2>
         {publish.isError && <Alert tone="danger">{getErrorMessage(publish.error)}</Alert>}
         {policies.isLoading && <PageLoader />}
         {policies.isError && <Alert tone="danger">{getErrorMessage(policies.error)}</Alert>}
-        {policies.data && policies.data.length === 0 && <EmptyState title="Siyosatlar yo‘q" />}
+        {policies.data && policies.data.length === 0 && <EmptyState title={t('Siyosatlar yo‘q')} />}
         <div className="gm-list">
           {(policies.data ?? []).map((policy) => (
             <div key={policy.id} className="gm-card">
@@ -79,12 +78,10 @@ export function AdminPoliciesPage() {
               </div>
               <p className="gm-card__meta">
                 {POLICY_TYPE_LABEL[policy.type]}
-                {policy.publishedAt && ` · E’lon qilingan: ${formatDate(policy.publishedAt)}`}
+                {policy.publishedAt && t(' · E’lon qilingan: {date}', { date: formatDate(policy.publishedAt) })}
               </p>
               {policy.status === 'DRAFT' && (
-                <Button size="sm" loading={publish.isPending} onClick={() => publish.mutate(policy.id)}>
-                  E’lon qilish
-                </Button>
+                <Button size="sm" loading={publish.isPending} onClick={() => publish.mutate(policy.id)}>{t('E’lon qilish')}</Button>
               )}
             </div>
           ))}

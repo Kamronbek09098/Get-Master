@@ -1,5 +1,6 @@
 import { env } from '@/lib/env';
 import { ApiError, type ApiEnvelope } from '@/types/api';
+import { t } from '@/i18n';
 
 const AUTH_PATH_PREFIX = '/auth/';
 
@@ -64,7 +65,7 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
     throw new ApiError({
       statusCode: 0,
       code: 'NETWORK_ERROR',
-      message: 'Internet aloqasi yo’q yoki server javob bermayapti.',
+      message: t('Internet aloqasi yo’q yoki server javob bermayapti.'),
       requestId: null,
     });
   }
@@ -88,7 +89,7 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
     throw new ApiError({
       statusCode: response.status,
       code: 'UNKNOWN_ERROR',
-      message: `Server kutilmagan javob qaytardi (${response.status}).`,
+      message: t('Server kutilmagan javob qaytardi ({status}).', { status: response.status }),
       requestId: null,
     });
   }

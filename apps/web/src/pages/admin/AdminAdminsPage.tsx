@@ -20,12 +20,13 @@ import type { UserAction } from '@/features/admin/user-actions';
 import type { AdminAccount, AdminUser } from '@/features/admin/types';
 import { useMe } from '@/features/session/hooks/useMe';
 import './AdminAdminsPage.css';
+import { t } from '@/i18n';
 
 const STATUS: Record<string, { label: string; tone: BadgeTone }> = {
-  ACTIVE: { label: 'Faol', tone: 'success' },
-  SUSPENDED: { label: 'Muzlatilgan', tone: 'warning' },
-  BLOCKED: { label: 'Bloklangan', tone: 'danger' },
-  PENDING: { label: 'Tasdiqlanmagan', tone: 'neutral' },
+  ACTIVE: { label: t('Faol'), tone: 'success' },
+  SUSPENDED: { label: t('Muzlatilgan'), tone: 'warning' },
+  BLOCKED: { label: t('Bloklangan'), tone: 'danger' },
+  PENDING: { label: t('Tasdiqlanmagan'), tone: 'neutral' },
 };
 
 const nameOf = (admin: AdminAccount) => [admin.firstName, admin.lastName].filter(Boolean).join(' ') || admin.phone;
@@ -64,22 +65,20 @@ export function AdminAdminsPage() {
     <div className="gm-adm">
       <div className="gm-page-header">
         <div>
-          <h1>Adminlar</h1>
-          <p className="gm-page-lead">Yangi adminlar yarating, ularning huquqlari va akkauntlarini boshqaring.</p>
+          <h1>{t('Adminlar')}</h1>
+          <p className="gm-page-lead">{t('Yangi adminlar yarating, ularning huquqlari va akkauntlarini boshqaring.')}</p>
         </div>
         <Button onClick={() => setCreating(true)}>
-          <UserPlus size={17} aria-hidden="true" /> Yangi admin yaratish
-        </Button>
+          <UserPlus size={17} aria-hidden="true" />{' '}{t('Yangi admin yaratish')}</Button>
       </div>
 
-      <Alert tone="info" title="Huquqlar">
-        <strong>Superadmin</strong> — barcha amallar va adminlarni boshqarish. <strong>Admin</strong> — faqat siz tanlagan bo‘limlar (masalan, buyurtmalar yoki ustalarni tasdiqlash); boshqa adminlarni boshqara olmaydi.
-      </Alert>
+      <Alert tone="info" title={t('Huquqlar')}>
+        <strong>{t('Superadmin')}</strong>{' '}{t('— barcha amallar va adminlarni boshqarish.')}{' '}<strong>{t('Admin')}</strong>{' '}{t('— faqat siz tanlagan bo‘limlar (masalan, buyurtmalar yoki ustalarni tasdiqlash); boshqa adminlarni boshqara olmaydi.')}</Alert>
 
-      {admins.isLoading && <PageLoader label="Adminlar yuklanmoqda…" />}
+      {admins.isLoading && <PageLoader label={t('Adminlar yuklanmoqda…')} />}
       {admins.isError && <Alert tone="danger">{getErrorMessage(admins.error)}</Alert>}
       {setSuper.isError && <Alert tone="danger">{getErrorMessage(setSuper.error)}</Alert>}
-      {admins.data && items.length === 0 && <EmptyState title="Adminlar yo‘q" />}
+      {admins.data && items.length === 0 && <EmptyState title={t('Adminlar yo‘q')} />}
 
       <div className="gm-adm__list">
         {items.map((admin) => {
@@ -93,25 +92,21 @@ export function AdminAdminsPage() {
                   <h2>
                     <Link to={`/admin/foydalanuvchilar/${admin.accountNumber}`}>{nameOf(admin)}</Link>
                   </h2>
-                  <p>
-                    ID {admin.accountNumber} · {admin.phone}
-                  </p>
-                  <p className="gm-adm__meta">
-                    Qo‘shilgan: {formatDateTime(admin.createdAt)}
-                    {admin.lastLoginAt && ` · Oxirgi kirish: ${formatDateTime(admin.lastLoginAt)}`}
+                  <p>{t('ID {accountNumber} · {phone}', { accountNumber: admin.accountNumber, phone: admin.phone })}</p>
+                  <p className="gm-adm__meta">{t('Qo‘shilgan: {dateTime}', { dateTime: formatDateTime(admin.createdAt) })}{admin.lastLoginAt && t(' · Oxirgi kirish: {dateTime}', { dateTime: formatDateTime(admin.lastLoginAt) })}
                   </p>
                 </div>
                 <div className="gm-adm__badges">
-                  <Badge tone={admin.isSuperAdmin ? 'primary' : 'neutral'}>{admin.isSuperAdmin ? 'Superadmin' : 'Admin'}</Badge>
+                  <Badge tone={admin.isSuperAdmin ? 'primary' : 'neutral'}>{admin.isSuperAdmin ? t('Superadmin') : t('Admin')}</Badge>
                   <Badge tone={status.tone}>{status.label}</Badge>
-                  {admin.isSelf && <Badge tone="success">Siz</Badge>}
+                  {admin.isSelf && <Badge tone="success">{t('Siz')}</Badge>}
                 </div>
               </div>
 
               <div className="gm-adm__perms">
-                <span className="gm-adm__perms-title">Ruxsat berilgan bo‘limlar:</span>
+                <span className="gm-adm__perms-title">{t('Ruxsat berilgan bo‘limlar:')}</span>
                 {admin.isSuperAdmin ? (
-                  <Badge tone="primary">Barcha bo‘limlar</Badge>
+                  <Badge tone="primary">{t('Barcha bo‘limlar')}</Badge>
                 ) : (admin.adminPermissions ?? []).length > 0 ? (
                   (admin.adminPermissions ?? []).map((key) => (
                     <Badge key={key} tone="neutral">
@@ -119,7 +114,7 @@ export function AdminAdminsPage() {
                     </Badge>
                   ))
                 ) : (
-                  <Badge tone="warning">Hech qaysi</Badge>
+                  <Badge tone="warning">{t('Hech qaysi')}</Badge>
                 )}
               </div>
 
@@ -127,33 +122,27 @@ export function AdminAdminsPage() {
                 <div className="gm-adm__actions">
                   {!admin.isSuperAdmin && (
                     <Button size="sm" variant="secondary" onClick={() => setPermissionsFor(admin)}>
-                      <ListChecks size={15} aria-hidden="true" /> Huquqlar
-                    </Button>
+                      <ListChecks size={15} aria-hidden="true" />{' '}{t('Huquqlar')}</Button>
                   )}
                   <Button size="sm" variant="secondary" onClick={() => setPasswordFor(admin)}>
-                    <KeyRound size={15} aria-hidden="true" /> Yangi parol
-                  </Button>
+                    <KeyRound size={15} aria-hidden="true" />{' '}{t('Yangi parol')}</Button>
                   <Button size="sm" variant="secondary" loading={setSuper.isPending && setSuper.variables?.id === admin.id} onClick={() => setSuper.mutate({ id: admin.id, value: !admin.isSuperAdmin })}>
                     {admin.isSuperAdmin ? <ShieldOff size={15} aria-hidden="true" /> : <ShieldCheck size={15} aria-hidden="true" />}
-                    {admin.isSuperAdmin ? 'Oddiy admin qilish' : 'Superadmin qilish'}
+                    {admin.isSuperAdmin ? t('Oddiy admin qilish') : t('Superadmin qilish')}
                   </Button>
                   {restricted ? (
                     <Button size="sm" onClick={() => setDialog({ admin, action: 'ACTIVATE' })}>
-                      <CheckCircle2 size={15} aria-hidden="true" /> Faollashtirish
-                    </Button>
+                      <CheckCircle2 size={15} aria-hidden="true" />{' '}{t('Faollashtirish')}</Button>
                   ) : (
                     <>
                       <Button size="sm" variant="secondary" className="gm-btn-tone gm-btn-tone--warn" onClick={() => setDialog({ admin, action: 'SUSPEND' })}>
-                        <Snowflake size={15} aria-hidden="true" /> Muzlatish
-                      </Button>
+                        <Snowflake size={15} aria-hidden="true" />{' '}{t('Muzlatish')}</Button>
                       <Button size="sm" variant="secondary" className="gm-btn-tone gm-btn-tone--danger" onClick={() => setDialog({ admin, action: 'BLOCK' })}>
-                        <Ban size={15} aria-hidden="true" /> Bloklash
-                      </Button>
+                        <Ban size={15} aria-hidden="true" />{' '}{t('Bloklash')}</Button>
                     </>
                   )}
                   <Button size="sm" variant="ghost" className="gm-btn-danger-text" onClick={() => setDialog({ admin, action: 'DELETE' })}>
-                    <Trash2 size={15} aria-hidden="true" /> O‘chirish
-                  </Button>
+                    <Trash2 size={15} aria-hidden="true" />{' '}{t('O‘chirish')}</Button>
                 </div>
               )}
             </article>

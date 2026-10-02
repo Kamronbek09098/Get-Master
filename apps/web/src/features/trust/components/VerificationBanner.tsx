@@ -4,39 +4,40 @@ import { Alert } from '@/components/ui/Alert';
 import type { AlertTone } from '@/components/ui/Alert';
 import { useMyMasterProfile } from '@/features/master/hooks/useMaster';
 import type { MasterVerificationStatus } from '@/features/master/types';
+import { t } from '@/i18n';
 
 type Unverified = Exclude<MasterVerificationStatus, 'VERIFIED' | 'INACTIVE'>;
 
 const NOTICE: Record<Unverified, { tone: AlertTone; title: string; text: string; action: string | null }> = {
   PENDING: {
     tone: 'warning',
-    title: 'Profilingiz hali tasdiqlanmagan',
-    text: 'Buyurtma va so‘rovlar olishni boshlash uchun profilingizni tasdiqlatishingiz kerak: shaxsingizni tasdiqlovchi hujjatni yuboring. Tasdiqlanmaguncha profilni faollashtirib bo‘lmaydi.',
-    action: 'Hujjat yuborish',
+    title: t('Profilingiz hali tasdiqlanmagan'),
+    text: t('Buyurtma va so‘rovlar olishni boshlash uchun profilingizni tasdiqlatishingiz kerak: shaxsingizni tasdiqlovchi hujjatni yuboring. Tasdiqlanmaguncha profilni faollashtirib bo‘lmaydi.'),
+    action: t('Hujjat yuborish'),
   },
   UNDER_REVIEW: {
     tone: 'info',
-    title: 'Hujjatlaringiz ko‘rib chiqilmoqda',
-    text: 'Administrator hujjatlaringizni tekshirmoqda. Natija bildirishnomalar bo‘limida ko‘rinadi. Tasdiqlanmaguncha profilni faollashtirib bo‘lmaydi.',
+    title: t('Hujjatlaringiz ko‘rib chiqilmoqda'),
+    text: t('Administrator hujjatlaringizni tekshirmoqda. Natija bildirishnomalar bo‘limida ko‘rinadi. Tasdiqlanmaguncha profilni faollashtirib bo‘lmaydi.'),
     action: null,
   },
   CORRECTION_REQUESTED: {
     tone: 'warning',
-    title: 'Hujjatlarni tuzatish so‘ralgan',
-    text: 'Administrator hujjatlaringizda kamchilik topdi. Sababini ko‘rib, to‘g‘irlangan hujjatni qayta yuboring.',
-    action: 'Hujjatni qayta yuborish',
+    title: t('Hujjatlarni tuzatish so‘ralgan'),
+    text: t('Administrator hujjatlaringizda kamchilik topdi. Sababini ko‘rib, to‘g‘irlangan hujjatni qayta yuboring.'),
+    action: t('Hujjatni qayta yuborish'),
   },
   REJECTED: {
     tone: 'danger',
-    title: 'Tasdiqlash rad etildi',
-    text: 'Hujjatlaringiz qabul qilinmadi. Sababini ko‘rib, yangi hujjat yuborishingiz mumkin.',
-    action: 'Hujjatni qayta yuborish',
+    title: t('Tasdiqlash rad etildi'),
+    text: t('Hujjatlaringiz qabul qilinmadi. Sababini ko‘rib, yangi hujjat yuborishingiz mumkin.'),
+    action: t('Hujjatni qayta yuborish'),
   },
   EXPIRED: {
     tone: 'danger',
-    title: 'Tasdiqlash muddati tugagan',
-    text: 'Hujjatingiz muddati tugadi. Ishni davom ettirish uchun yangi hujjat yuboring.',
-    action: 'Hujjat yuborish',
+    title: t('Tasdiqlash muddati tugagan'),
+    text: t('Hujjatingiz muddati tugadi. Ishni davom ettirish uchun yangi hujjat yuboring.'),
+    action: t('Hujjat yuborish'),
   },
 };
 

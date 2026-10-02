@@ -1,4 +1,5 @@
 import { ADMIN_PERMISSION_OPTIONS } from "../permissions";
+import { t } from '@/i18n';
 
 const GROUPS = ["Boshqaruv", "Kontent", "Tizim"] as const;
 
@@ -24,17 +25,13 @@ export function PermissionPicker({
   return (
     <fieldset className="gm-perm" disabled={disabled}>
       <legend className="gm-perm__legend">
-        <span>
-          Ruxsat beriladigan bo‘limlar{" "}
-          <small
+        <span>{t('Ruxsat beriladigan bo‘limlar')}<small
             className={
               value.length === 0
                 ? "gm-perm__count gm-perm__count--empty"
                 : "gm-perm__count"
             }
-          >
-            {value.length} / {total} tanlandi
-          </small>
+          >{t('{length} / {total} tanlandi', { length: value.length, total })}</small>
         </span>
         <button
           type="button"
@@ -45,7 +42,7 @@ export function PermissionPicker({
             )
           }
         >
-          {all ? "Hammasini olib tashlash" : "Hammasini tanlash"}
+          {all ? t('Hammasini olib tashlash') : t('Hammasini tanlash')}
         </button>
       </legend>
       <div className="gm-perm__groups">

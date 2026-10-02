@@ -7,6 +7,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { useMyServices, useRemoveMyService } from '../hooks/useServices';
 import type { MasterServiceItem } from '../types';
 import { ServiceCard } from './ServiceCard';
+import { t } from '@/i18n';
 
 export function ServiceList() {
   const services = useMyServices();
@@ -14,9 +15,9 @@ export function ServiceList() {
   const [toRemove, setToRemove] = useState<MasterServiceItem | null>(null);
   const items = services.data ?? [];
 
-  if (services.isLoading) return <PageLoader label="Xizmatlar yuklanmoqda…" />;
+  if (services.isLoading) return <PageLoader label={t('Xizmatlar yuklanmoqda…')} />;
   if (services.isError) return <Alert tone="danger">{getErrorMessage(services.error)}</Alert>;
-  if (items.length === 0) return <EmptyState title="Hali xizmat qo‘shilmagan" />;
+  if (items.length === 0) return <EmptyState title={t('Hali xizmat qo‘shilmagan')} />;
 
   return (
     <div className="gm-list">
@@ -26,10 +27,10 @@ export function ServiceList() {
       ))}
       <ConfirmDialog
         open={!!toRemove}
-        title="Xizmatni o‘chirish"
-        description={`“${toRemove?.service.name ?? ''}” xizmati ro‘yxatingizdan olib tashlanadi va shu bo‘yicha so‘rovlar kelmaydi.`}
-        confirmLabel="O‘chirish"
-        cancelLabel="Bekor qilish"
+        title={t('Xizmatni o‘chirish')}
+        description={t('“{p}” xizmati ro‘yxatingizdan olib tashlanadi va shu bo‘yicha so‘rovlar kelmaydi.', { p: toRemove?.service.name ?? '' })}
+        confirmLabel={t('O‘chirish')}
+        cancelLabel={t('Bekor qilish')}
         tone="danger"
         loading={removeService.isPending}
         onCancel={() => setToRemove(null)}

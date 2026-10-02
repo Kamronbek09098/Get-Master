@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useMe } from '../hooks/useMe';
 import { sessionService } from '../services/session.service';
+import { t } from '@/i18n';
 
 const noop = () => undefined;
 
@@ -36,20 +37,20 @@ export function NameRequiredDialog() {
       open
       dismissible={false}
       onClose={noop}
-      title="Ism va familiyangizni kiriting"
+      title={t('Ism va familiyangizni kiriting')}
       footer={
         <Button type="submit" form="gm-name-form" loading={save.isPending} disabled={!firstName.trim() || !lastName.trim()}>
-          Saqlash
+          {t('Saqlash')}
         </Button>
       }
     >
       <form id="gm-name-form" className="gm-form" onSubmit={handleSubmit}>
         <p style={{ margin: 0, color: 'var(--gm-color-text-muted)' }}>
-          Boshqa foydalanuvchilar sizni ism va familiyangiz bilan ko‘radi. Davom etish uchun ularni kiriting.
+          {t('Boshqa foydalanuvchilar sizni ism va familiyangiz bilan ko‘radi. Davom etish uchun ularni kiriting.')}
         </p>
         {save.isError && <Alert tone="danger">{getErrorMessage(save.error)}</Alert>}
-        <Input label="Ism" required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} />
-        <Input label="Familiya" required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} />
+        <Input label={t('Ism')} required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} />
+        <Input label={t('Familiya')} required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} />
       </form>
     </Modal>
   );

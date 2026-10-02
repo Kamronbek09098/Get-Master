@@ -1,13 +1,14 @@
 import { Check } from 'lucide-react';
 import { cx } from '@/lib/utils';
 import './RequestSteps.css';
+import { t } from '@/i18n';
 
-const STEPS = ['Muammo', 'Rasm', 'Yuborish'];
+const STEPS = [t('Muammo'), t('Rasm'), t('Yuborish')];
 
 /** So‘rov yaratish bosqichlari: 1 — muammo, 2 — rasm biriktirish, 3 — yuborish. */
 export function RequestSteps({ current }: { current: 1 | 2 | 3 }) {
   return (
-    <ol className="gm-steps" aria-label="Bosqichlar">
+    <ol className="gm-steps" aria-label={t('Bosqichlar')}>
       {STEPS.map((label, index) => {
         const number = index + 1;
         const state = number < current ? 'done' : number === current ? 'current' : 'todo';

@@ -7,22 +7,23 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime } from '@/lib/utils';
 import { CASE_STATUS_LABEL } from '@/features/dispute/types';
 import { useMyComplaints } from '../hooks/useComplaints';
+import { t } from '@/i18n';
 
 export function ComplaintList() {
   const complaints = useMyComplaints();
   const items = complaints.data?.items ?? [];
 
-  if (complaints.isLoading) return <PageLoader label="Shikoyatlar yuklanmoqda…" />;
+  if (complaints.isLoading) return <PageLoader label={t('Shikoyatlar yuklanmoqda…')} />;
   if (complaints.isError) return <Alert tone="danger">{getErrorMessage(complaints.error)}</Alert>;
   if (items.length === 0) return (
       <EmptyState
         icon={<ShieldAlert size={34} strokeWidth={1.8} />}
-        title="Shikoyatlar yo‘q"
-        description="Xizmat sifatidan norozi bo‘lsangiz, quyidagi shakl orqali shikoyat yuboring. Yuborilganlar shu yerda ko‘rinadi."
+        title={t('Shikoyatlar yo‘q')}
+        description={t('Xizmat sifatidan norozi bo‘lsangiz, quyidagi shakl orqali shikoyat yuboring. Yuborilganlar shu yerda ko‘rinadi.')}
         steps={[
-          { icon: <PenLine size={16} aria-hidden="true" />, title: 'Shikoyat yozing', text: 'Mavzu va batafsil tavsifni kiriting.' },
-          { icon: <Search size={16} aria-hidden="true" />, title: 'Ko‘rib chiqiladi', text: 'Murojaatingiz administrator tomonidan o‘rganiladi.' },
-          { icon: <CheckCircle2 size={16} aria-hidden="true" />, title: 'Javob oling', text: 'Qaror shu yerda holati bilan ko‘rinadi.' },
+          { icon: <PenLine size={16} aria-hidden="true" />, title: t('Shikoyat yozing'), text: t('Mavzu va batafsil tavsifni kiriting.') },
+          { icon: <Search size={16} aria-hidden="true" />, title: t('Ko‘rib chiqiladi'), text: t('Murojaatingiz administrator tomonidan o‘rganiladi.') },
+          { icon: <CheckCircle2 size={16} aria-hidden="true" />, title: t('Javob oling'), text: t('Qaror shu yerda holati bilan ko‘rinadi.') },
         ]}
       />
     );
@@ -36,8 +37,8 @@ export function ComplaintList() {
             <Badge tone="primary">{CASE_STATUS_LABEL[complaint.status]}</Badge>
           </div>
           <p>{complaint.description}</p>
-          {complaint.decision && <p>Qaror: {complaint.decision}</p>}
-          <p className="gm-card__meta">Yuborildi: {formatDateTime(complaint.createdAt)}</p>
+          {complaint.decision && <p>{t('Qaror:')}{' '}{complaint.decision}</p>}
+          <p className="gm-card__meta">{t('Yuborildi:')}{' '}{formatDateTime(complaint.createdAt)}</p>
         </div>
       ))}
     </div>

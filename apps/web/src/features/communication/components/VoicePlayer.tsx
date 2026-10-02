@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, Pause, Play } from 'lucide-react';
 import { mediaService } from '@/features/media/services/media.service';
+import { t } from '@/i18n';
 
 const RATES = [1, 1.5, 2];
 const BARS = 34;
@@ -106,18 +107,18 @@ export function VoicePlayer({ assetId, seconds = 0 }: { assetId: string; seconds
   const bars = useMemo(() => waveform(assetId), [assetId]);
   const active = Math.round(progress * BARS);
   const started = playing || current > 0;
-  const label = failed ? 'Yuklab bo‘lmadi' : format(started || !duration ? current : duration);
+  const label = failed ? t('Yuklab bo‘lmadi') : format(started || !duration ? current : duration);
 
   return (
     <div className="gm-voice">
-      <button type="button" className="gm-voice__play" onClick={() => void toggle()} aria-label={playing ? 'To‘xtatish' : 'Eshitish'}>
+      <button type="button" className="gm-voice__play" onClick={() => void toggle()} aria-label={playing ? t('To‘xtatish') : t('Eshitish')}>
         {loading ? <Loader2 size={20} className="gm-spin" /> : playing ? <Pause size={20} /> : <Play size={20} />}
       </button>
       <div className="gm-voice__body">
         <div
           className="gm-voice__wave"
           role="slider"
-          aria-label="Ovoz o‘rni"
+          aria-label={t('Ovoz o‘rni')}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(progress * 100)}
@@ -134,7 +135,7 @@ export function VoicePlayer({ assetId, seconds = 0 }: { assetId: string; seconds
         <span className="gm-voice__time">{label}</span>
       </div>
       {started && (
-        <button type="button" className="gm-voice__rate" onClick={nextRate} aria-label="Tezlikni o‘zgartirish">
+        <button type="button" className="gm-voice__rate" onClick={nextRate} aria-label={t('Tezlikni o‘zgartirish')}>
           {rate}x
         </button>
       )}

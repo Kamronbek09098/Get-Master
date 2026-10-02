@@ -5,6 +5,7 @@ import { FLOW_STEPS, stepIndex } from '../order-flow';
 import { OrderStatus } from './OrderStatus';
 import type { OrderListItem } from '../types';
 import './Order.css';
+import { t } from '@/i18n';
 
 export function OrderCard({ order }: { order: OrderListItem }) {
   const basePath = order.viewerRole === 'MASTER' ? '/ustalar/buyurtmalar' : '/mijozlar/buyurtmalar';
@@ -17,16 +18,16 @@ export function OrderCard({ order }: { order: OrderListItem }) {
       <div className="gm-ocardlink__top">
         <div>
           <h3 className="gm-ocardlink__title">{order.title}</h3>
-          <p className="gm-ocardlink__meta">{order.service?.name ?? 'Xizmat'}</p>
+          <p className="gm-ocardlink__meta">{order.service?.name ?? t('Xizmat')}</p>
         </div>
         <OrderStatus status={order.status} />
       </div>
-      <p className="gm-ocardlink__meta">Buyurtma №{order.orderNumber}</p>
+      <p className="gm-ocardlink__meta">{t('Buyurtma №')}{order.orderNumber}</p>
       <p className="gm-ocardlink__meta">
         {party}: <strong>{accountName(order.counterpart)}</strong>
       </p>
       {index >= 0 && (
-        <div className="gm-ocardlink__bar" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="Bajarilish darajasi">
+        <div className="gm-ocardlink__bar" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label={t('Bajarilish darajasi')}>
           <span style={{ width: `${percent}%` }} />
         </div>
       )}

@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 export type DeviceKind = 'desktop' | 'mobile' | 'tablet' | 'unknown';
 
 export interface DeviceDescription {
@@ -8,7 +9,7 @@ export interface DeviceDescription {
 
 export function describeDevice(userAgent: string | null | undefined): DeviceDescription {
   const ua = userAgent ?? '';
-  if (!ua) return { browser: 'Noma’lum brauzer', os: 'Noma’lum qurilma', kind: 'unknown' };
+  if (!ua) return { browser: t('Noma’lum brauzer'), os: t('Noma’lum qurilma'), kind: 'unknown' };
 
   let browser = 'Brauzer';
   if (/Edg(e|A|iOS)?\//.test(ua)) browser = 'Edge';
@@ -19,7 +20,7 @@ export function describeDevice(userAgent: string | null | undefined): DeviceDesc
   else if (/Safari\//.test(ua)) browser = 'Safari';
   else if (/^(curl|node|undici|PostmanRuntime|insomnia)/i.test(ua)) browser = 'Dastur (API)';
 
-  let os = 'Noma’lum tizim';
+  let os = t('Noma’lum tizim');
   if (/iPhone|iPad|iPod/.test(ua)) os = 'iOS';
   else if (/Android/.test(ua)) os = 'Android';
   else if (/Windows/.test(ua)) os = 'Windows';

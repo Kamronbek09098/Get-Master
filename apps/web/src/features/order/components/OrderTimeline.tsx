@@ -1,6 +1,7 @@
 import { cx, formatDateTime } from '@/lib/utils';
 import { ACTOR_TEXT, STATUS_TEXT } from '../order-flow';
 import { useOrderTimeline } from '../hooks/useOrders';
+import { t } from '@/i18n';
 
 export function OrderTimeline({ orderId }: { orderId: string }) {
   const timeline = useOrderTimeline(orderId);
@@ -8,8 +9,8 @@ export function OrderTimeline({ orderId }: { orderId: string }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="gm-ocard" aria-label="Tarix">
-      <h2 className="gm-ocard__title">Buyurtma tarixi</h2>
+    <section className="gm-ocard" aria-label={t('Tarix')}>
+      <h2 className="gm-ocard__title">{t('Buyurtma tarixi')}</h2>
       <ol className="gm-otimeline">
         {items.map((entry, index) => (
           <li key={entry.id} className={cx('gm-otimeline__item', index === 0 && 'gm-otimeline__item--latest')}>

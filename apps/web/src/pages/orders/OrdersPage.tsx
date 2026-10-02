@@ -9,13 +9,14 @@ import { useMyOrders } from '@/features/order/hooks/useOrders';
 import { OrderCard } from '@/features/order/components/OrderCard';
 import { ACTIVE_STATUSES } from '@/features/order/order-flow';
 import '@/features/order/components/Order.css';
+import { t } from '@/i18n';
 
 type Tab = 'active' | 'done' | 'closed';
 
 const TABS: Array<{ value: Tab; label: string }> = [
-  { value: 'active', label: 'Faol' },
-  { value: 'done', label: 'Yakunlangan' },
-  { value: 'closed', label: 'Bekor qilingan' },
+  { value: 'active', label: t('Faol') },
+  { value: 'done', label: t('Yakunlangan') },
+  { value: 'closed', label: t('Bekor qilingan') },
 ];
 
 export function OrdersPage() {
@@ -36,12 +37,12 @@ export function OrdersPage() {
     <div className="gm-opage">
       <div className="gm-ohead">
         <div>
-          <h1>Buyurtmalar</h1>
-          <p>Qabul qilingan takliflar bo‘yicha ishlar shu yerda kuzatiladi.</p>
+          <h1>{t('Buyurtmalar')}</h1>
+          <p>{t('Qabul qilingan takliflar bo‘yicha ishlar shu yerda kuzatiladi.')}</p>
         </div>
       </div>
 
-      <div className="gm-olist-tabs" role="tablist" aria-label="Buyurtmalar">
+      <div className="gm-olist-tabs" role="tablist" aria-label={t('Buyurtmalar')}>
         {TABS.map((item) => (
           <button
             key={item.value}
@@ -70,8 +71,8 @@ export function OrdersPage() {
       {orders.data && visible.length === 0 && (
         <EmptyState
           icon={<ClipboardList size={28} />}
-          title="Bu bo‘limda buyurtma yo‘q"
-          description="Taklif qabul qilingach, buyurtma shu yerda ko‘rinadi."
+          title={t('Bu bo‘limda buyurtma yo‘q')}
+          description={t('Taklif qabul qilingach, buyurtma shu yerda ko‘rinadi.')}
         />
       )}
       {visible.length > 0 && (

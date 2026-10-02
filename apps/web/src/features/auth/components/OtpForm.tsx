@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
 import { otpSchema, type OtpFormValues } from '../validation';
+import { t } from '@/i18n';
 
 const OTP_TTL_SECONDS = 300;
 
@@ -61,11 +62,11 @@ export function OtpForm({ phone, loading, error, onSubmit, onExpiredHint, onRese
     <form className="gm-auth-form" onSubmit={(e) => void handleSubmit((values) => onSubmit({ code: values.code }))(e)} noValidate>
       {!!error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
       <p className="gm-auth-form__hint">
-        <strong>+{phone.replace('+', '')}</strong> raqamiga yuborilgan 6 xonali kodni kiriting.
+        <strong>+{phone.replace('+', '')}</strong> {t('raqamiga yuborilgan 6 xonali kodni kiriting.')}
       </p>
 
       <Input
-        label="Tasdiqlash kodi"
+        label={t('Tasdiqlash kodi')}
         inputMode="numeric"
         maxLength={6}
         required
@@ -78,17 +79,17 @@ export function OtpForm({ phone, loading, error, onSubmit, onExpiredHint, onRese
         <Alert tone="warning">{onExpiredHint}</Alert>
       ) : (
         <p className="gm-auth-form__countdown" aria-live="polite">
-          Kod amal qilish muddati: {minutes}:{seconds}
+          {t('Kod amal qilish muddati:')} {minutes}:{seconds}
         </p>
       )}
 
       <Button type="submit" loading={loading} disabled={expired} fullWidth>
-        Tasdiqlash
+        {t('Tasdiqlash')}
       </Button>
 
       {onResend && (
         <Button type="button" variant="secondary" fullWidth loading={resending} disabled={resendIn > 0 && !expired} onClick={() => void resend()}>
-          {expired ? 'Yangi kod yuborish' : resendIn > 0 ? `Kodni qayta yuborish (${clock(resendIn)})` : 'Kod kelmadimi? Qayta yuborish'}
+          {expired ? t('Yangi kod yuborish') : resendIn > 0 ? t('Kodni qayta yuborish ({time})', { time: clock(resendIn) }) : t('Kod kelmadimi? Qayta yuborish')}
         </Button>
       )}
     </form>

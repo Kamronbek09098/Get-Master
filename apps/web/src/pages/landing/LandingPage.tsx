@@ -8,23 +8,23 @@ import type { LandingContent } from './landing-content';
 import '@/components/ui/Button.css';
 import '@/components/ui/Badge.css';
 import './Landing.css';
+import { t } from '@/i18n';
 
 function HeroPreview({ master }: { master: boolean }) {
   return (
     <div className="gm-hero-preview" aria-hidden="true">
       <div className="gm-hero-preview__card gm-hero-preview__card--main">
         <div className="gm-hero-preview__row">
-          <span className="gm-badge gm-badge--primary">{master ? 'Yangi so‘rov' : 'So‘rovingiz'}</span>
-          <span className="gm-hero-preview__time">2 daqiqa oldin</span>
+          <span className="gm-badge gm-badge--primary">{master ? t('Yangi so‘rov') : t('So‘rovingiz')}</span>
+          <span className="gm-hero-preview__time">{t('2 daqiqa oldin')}</span>
         </div>
-        <h3>Oshxonadagi kran oqyapti</h3>
+        <h3>{t('Oshxonadagi kran oqyapti')}</h3>
         <p className="gm-hero-preview__meta">
-          <MapPin size={14} /> Chilonzor, Toshkent · 1.2 km
-        </p>
+          <MapPin size={14} />{' '}{t('Chilonzor, Toshkent · 1.2 km')}</p>
         <div className="gm-hero-preview__chips">
-          <span>Santexnika</span>
-          <span>Bugun</span>
-          <span>3 ta foto</span>
+          <span>{t('Santexnika')}</span>
+          <span>{t('Bugun')}</span>
+          <span>{t('3 ta foto')}</span>
         </div>
       </div>
 
@@ -39,11 +39,10 @@ function HeroPreview({ master }: { master: boolean }) {
               {offer.name} <BadgeCheck size={15} className="gm-hero-preview__verified" />
             </strong>
             <span>
-              <Star size={13} fill="currentColor" /> {offer.rating} · {offer.jobs} ta ish
-            </span>
+              <Star size={13} fill="currentColor" />{' '}{t('{rating} · {jobs} ta ish', { rating: offer.rating, jobs: offer.jobs })}</span>
           </div>
           <div className="gm-hero-preview__price">
-            {offer.price} <small>so‘m</small>
+            {offer.price} <small>{t('so‘m')}</small>
           </div>
         </div>
       ))}
@@ -59,19 +58,15 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
           <Link to="/" aria-label="GetMaster">
             <Logo />
           </Link>
-          <nav className="gm-landing__links" aria-label="Bo‘limlar">
-            <a href="#qanday">Qanday ishlaydi</a>
-            {content.showCategories && <a href="#xizmatlar">Xizmatlar</a>}
-            <a href="#ishonch">Ishonch</a>
+          <nav className="gm-landing__links" aria-label={t('Bo‘limlar')}>
+            <a href="#qanday">{t('Qanday ishlaydi')}</a>
+            {content.showCategories && <a href="#xizmatlar">{t('Xizmatlar')}</a>}
+            <a href="#ishonch">{t('Ishonch')}</a>
           </nav>
           <div className="gm-landing__nav-actions">
             <ThemeToggle />
-            <Link to="/login" className="gm-button gm-button--ghost gm-button--md">
-              Kirish
-            </Link>
-            <Link to="/register" className="gm-button gm-button--primary gm-button--md">
-              Ro‘yxatdan o‘tish
-            </Link>
+            <Link to="/login" className="gm-button gm-button--ghost gm-button--md">{t('Kirish')}</Link>
+            <Link to="/register" className="gm-button gm-button--primary gm-button--md">{t('Ro‘yxatdan o‘tish')}</Link>
           </div>
         </div>
       </header>
@@ -93,7 +88,7 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
               </a>
             </div>
             {!master && (
-              <ul className="gm-landing__inputs" aria-label="Muammoni tasvirlash usullari">
+              <ul className="gm-landing__inputs" aria-label={t('Muammoni tasvirlash usullari')}>
                 {INPUT_METHODS.map((method) => (
                   <li key={method.label}>
                     <method.icon size={16} /> {method.label}
@@ -106,7 +101,7 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
         </div>
       </section>
 
-      <section className="gm-landing__stats" aria-label="Qisqacha">
+      <section className="gm-landing__stats" aria-label={t('Qisqacha')}>
         {content.stats.map((stat) => (
           <div key={stat.label} className="gm-landing__stat">
             <strong>{stat.value}</strong>
@@ -133,7 +128,7 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
 
       {content.showCategories && (
         <section className="gm-landing__section" id="xizmatlar">
-          <h2>Mashhur xizmatlar</h2>
+          <h2>{t('Mashhur xizmatlar')}</h2>
           <div className="gm-landing__categories">
             {CATEGORIES.map((category) => (
               <Link key={category.name} to="/register" className="gm-landing__category">
@@ -174,7 +169,7 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
 
       <footer className="gm-landing__footer">
         <Logo />
-        <p>© {new Date().getFullYear()} GetMaster. Barcha huquqlar himoyalangan.</p>
+        <p>{t('© {getFullYear} GetMaster. Barcha huquqlar himoyalangan.', { getFullYear: new Date().getFullYear() })}</p>
       </footer>
     </div>
   );

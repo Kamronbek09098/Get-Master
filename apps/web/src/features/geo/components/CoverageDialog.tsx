@@ -3,6 +3,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { CoverageMap } from './CoverageMap';
 import './geo.css';
+import { t } from '@/i18n';
 
 export interface CoverageDialogProps {
   open: boolean;
@@ -21,7 +22,7 @@ export interface CoverageDialogProps {
 /** Ustaning ish hududi: markaz va radius xaritada to‘liq ajratib ko‘rsatiladi. */
 export function CoverageDialog({ open, onClose, title, lat, lon, radiusKm, area, areas = [], approximate = false }: CoverageDialogProps) {
   return (
-    <Modal open={open} onClose={onClose} title={title} wide footer={<Button onClick={onClose}>Yopish</Button>}>
+    <Modal open={open} onClose={onClose} title={title} wide footer={<Button onClick={onClose}>{t('Yopish')}</Button>}>
       <div className="gm-covdlg">
         <div className="gm-covdlg__chips">
           {area && (
@@ -30,7 +31,7 @@ export function CoverageDialog({ open, onClose, title, lat, lon, radiusKm, area,
             </span>
           )}
           <span className="gm-covdlg__chip">
-            <Ruler size={14} aria-hidden="true" /> Ish radiusi: <strong>{radiusKm ? `${radiusKm} km` : '—'}</strong>
+            <Ruler size={14} aria-hidden="true" />{' '}{t('Ish radiusi:')}{' '}<strong>{radiusKm ? `${radiusKm} km` : '—'}</strong>
           </span>
           {areas
             .filter((item) => item !== area)
@@ -41,9 +42,7 @@ export function CoverageDialog({ open, onClose, title, lat, lon, radiusKm, area,
             ))}
         </div>
         <CoverageMap latitude={lat} longitude={lon} radiusKm={radiusKm} height="min(58dvh, 460px)" wheelZoom />
-        <p className="gm-covdlg__note">
-          Ko‘k doira — usta ishlay oladigan hudud: markazdan {radiusKm ? `${radiusKm} km` : 'belgilangan'} masofagacha bo‘lgan manzillarga keladi.
-          {approximate && ' Usta joylashuvi maxfiylik uchun taxminan (~1 km) ko‘rsatilgan.'}
+        <p className="gm-covdlg__note">{t('Ko‘k doira — usta ishlay oladigan hudud: markazdan')}{' '}{radiusKm ? `${radiusKm} km` : 'belgilangan'}{' '}{t('masofagacha bo‘lgan manzillarga keladi.')}{approximate && t(' Usta joylashuvi maxfiylik uchun taxminan (~1 km) ko‘rsatilgan.')}
         </p>
       </div>
     </Modal>

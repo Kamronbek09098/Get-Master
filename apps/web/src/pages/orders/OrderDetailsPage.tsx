@@ -32,11 +32,12 @@ import {
   useWorkProofs,
 } from '@/features/order/hooks/useOrders';
 import '@/features/order/components/Order.css';
+import { t } from '@/i18n';
 
 type DialogKind = 'cancel' | 'dispute' | null;
 type Tone = 'next' | 'wait' | 'done' | 'stop';
 
-const BADGE: Record<Tone, string> = { next: 'Sizning navbatingiz', wait: 'Kutilmoqda', done: 'Tayyor', stop: 'To‘xtatilgan' };
+const BADGE: Record<Tone, string> = { next: t('Sizning navbatingiz'), wait: t('Kutilmoqda'), done: t('Tayyor'), stop: t('To‘xtatilgan') };
 
 function StepCard({ tone, icon, title, lead, children }: { tone: Tone; icon: ReactNode; title: string; lead?: string; children?: ReactNode }) {
   return (
@@ -76,7 +77,7 @@ export function OrderDetailsPage() {
   const [reason, setReason] = useState('');
   const [method, setMethod] = useState<PaymentProvider | ''>('');
 
-  if (order.isLoading) return <PageLoader label="Buyurtma yuklanmoqda…" />;
+  if (order.isLoading) return <PageLoader label={t('Buyurtma yuklanmoqda…')} />;
   if (order.isError) return <Alert tone="danger">{getErrorMessage(order.error)}</Alert>;
   if (!order.data) return null;
 
@@ -101,71 +102,69 @@ export function OrderDetailsPage() {
   if (isMaster) {
     if (status === 'BOOKED')
       step = (
-        <StepCard tone="next" icon={<CheckCircle2 size={22} />} title="Buyurtmani tasdiqlang" lead="Mijoz sizni tanladi. Buyurtmani tasdiqlasangiz, mijoz sizning kelishingizni kutadi.">
+        <StepCard tone="next" icon={<CheckCircle2 size={22} />} title={t('Buyurtmani tasdiqlang')} lead={t('Mijoz sizni tanladi. Buyurtmani tasdiqlasangiz, mijoz sizning kelishingizni kutadi.')}>
           <div className="gm-oactions">
-            <Button loading={confirmOrder.isPending} onClick={() => confirmOrder.mutate()}>Buyurtmani tasdiqlash</Button>
+            <Button loading={confirmOrder.isPending} onClick={() => confirmOrder.mutate()}>{t('Buyurtmani tasdiqlash')}</Button>
           </div>
         </StepCard>
       );
     else if (status === 'CONFIRMED')
       step = (
-        <StepCard tone="next" icon={<Navigation size={22} />} title="Manzilga yo‘lga chiqing" lead="Yo‘lga chiqqaningizda mijozga xabar boradi.">
+        <StepCard tone="next" icon={<Navigation size={22} />} title={t('Manzilga yo‘lga chiqing')} lead={t('Yo‘lga chiqqaningizda mijozga xabar boradi.')}>
           <div className="gm-oactions">
-            <Button loading={startTravel.isPending} onClick={() => startTravel.mutate()}>Yo‘lga chiqdim</Button>
+            <Button loading={startTravel.isPending} onClick={() => startTravel.mutate()}>{t('Yo‘lga chiqdim')}</Button>
           </div>
         </StepCard>
       );
     else if (status === 'ON_THE_WAY')
       step = (
-        <StepCard tone="next" icon={<MapPinned size={22} />} title="Manzilga yetib keldingizmi?" lead="Yetib kelganingizni belgilang, so‘ng ishni boshlashdan oldin rasmga oling.">
+        <StepCard tone="next" icon={<MapPinned size={22} />} title={t('Manzilga yetib keldingizmi?')} lead={t('Yetib kelganingizni belgilang, so‘ng ishni boshlashdan oldin rasmga oling.')}>
           <div className="gm-oactions">
-            <Button loading={arrive.isPending} onClick={() => arrive.mutate()}>Yetib keldim</Button>
+            <Button loading={arrive.isPending} onClick={() => arrive.mutate()}>{t('Yetib keldim')}</Button>
           </div>
         </StepCard>
       );
     else if (status === 'ARRIVED')
       step = (
-        <StepCard tone="next" icon={<Hammer size={22} />} title="Ishni boshlashdan oldin" lead="Ishdan oldingi holatni suratga oling. Kamida bitta rasm bo‘lmasa, ishni boshlab bo‘lmaydi.">
+        <StepCard tone="next" icon={<Hammer size={22} />} title={t('Ishni boshlashdan oldin')} lead={t('Ishdan oldingi holatni suratga oling. Kamida bitta rasm bo‘lmasa, ishni boshlab bo‘lmaydi.')}>
           <WorkProofPanel orderId={id} stage="BEFORE" canEdit required />
           <div className="gm-oactions">
-            <Button disabled={counts.BEFORE === 0 || tooEarly} loading={startWork.isPending} onClick={() => startWork.mutate()}>Ishni boshlash</Button>
+            <Button disabled={counts.BEFORE === 0 || tooEarly} loading={startWork.isPending} onClick={() => startWork.mutate()}>{t('Ishni boshlash')}</Button>
           </div>
-          {counts.BEFORE === 0 && <p className="gm-oneed">Davom etish uchun kamida 1 ta rasm yuklang.</p>}
+          {counts.BEFORE === 0 && <p className="gm-oneed">{t('Davom etish uchun kamida 1 ta rasm yuklang.')}</p>}
           {tooEarly && data.scheduledStartAt && (
-            <p className="gm-oneed">
-              Ish belgilangan vaqtdan ({formatDateTime(data.scheduledStartAt)}) oldin boshlanmaydi. Vaqt kelishinmasa, pastdagi «Belgilangan vaqt» bo‘limidan yangisini taklif qiling.
-            </p>
+            <p className="gm-oneed">{t('Ish belgilangan vaqtdan ({dateTime}) oldin boshlanmaydi. Vaqt kelishinmasa, pastdagi «Belgilangan vaqt» bo‘limidan yangisini taklif qiling.', { dateTime: formatDateTime(data.scheduledStartAt) })}</p>
           )}
         </StepCard>
       );
     else if (status === 'IN_PROGRESS')
       step = (
-        <StepCard tone="next" icon={<Hammer size={22} />} title="Ish jarayonida" lead="Ish tugagach, natijani suratga olib, mijozga tasdiqlash uchun yuboring.">
-          <WorkProofPanel orderId={id} stage="DURING" canEdit hint="Ixtiyoriy: jarayonni ko‘rsatuvchi rasmlar." />
-          <WorkProofPanel orderId={id} stage="AFTER" canEdit required hint="Tayyor natijaning rasmi." />
+        <StepCard tone="next" icon={<Hammer size={22} />} title={t('Ish jarayonida')} lead={t('Ish tugagach, natijani suratga olib, mijozga tasdiqlash uchun yuboring.')}>
+          <WorkProofPanel orderId={id} stage="DURING" canEdit hint={t('Ixtiyoriy: jarayonni ko‘rsatuvchi rasmlar.')} />
+          <WorkProofPanel orderId={id} stage="AFTER" canEdit required hint={t('Tayyor natijaning rasmi.')} />
           <div className="gm-oactions">
-            <Button disabled={counts.AFTER === 0} loading={submitCompletion.isPending} onClick={() => submitCompletion.mutate()}>Ish tugadi, mijozga yuborish</Button>
+            <Button disabled={counts.AFTER === 0} loading={submitCompletion.isPending} onClick={() => submitCompletion.mutate()}>{t('Ish tugadi, mijozga yuborish')}</Button>
           </div>
-          {counts.AFTER === 0 && <p className="gm-oneed">Yuborish uchun ishdan keyingi kamida 1 ta rasm kerak.</p>}
+          {counts.AFTER === 0 && <p className="gm-oneed">{t('Yuborish uchun ishdan keyingi kamida 1 ta rasm kerak.')}</p>}
         </StepCard>
       );
     else if (status === 'WAITING_CONFIRMATION')
-      step = <StepCard tone="wait" icon={<Clock size={22} />} title="Mijoz tasdig‘i kutilmoqda" lead="Ishni mijoz ko‘rib chiqadi. Tasdiqlangach to‘lov hisobingizga o‘tadi." />;
+      step = <StepCard tone="wait" icon={<Clock size={22} />} title={t('Mijoz tasdig‘i kutilmoqda')} lead={t('Ishni mijoz ko‘rib chiqadi. Tasdiqlangach to‘lov hisobingizga o‘tadi.')} />;
     else if (status === 'COMPLETED')
-      step = <StepCard tone="done" icon={<CheckCircle2 size={22} />} title="Buyurtma yakunlandi" lead="Ish mijoz tomonidan tasdiqlandi. Daromad “Daromad” bo‘limida ko‘rinadi." />;
+      step = <StepCard tone="done" icon={<CheckCircle2 size={22} />} title={t('Buyurtma yakunlandi')} lead={t('Ish mijoz tomonidan tasdiqlandi. Daromad “Daromad” bo‘limida ko‘rinadi.')} />;
   } else {
     if (status === 'BOOKED')
-      step = <StepCard tone="wait" icon={<Clock size={22} />} title="Usta tasdiqlashini kutmoqda" lead="Usta buyurtmani tasdiqlagach, sizga xabar keladi." />;
+      step = <StepCard tone="wait" icon={<Clock size={22} />} title={t('Usta tasdiqlashini kutmoqda')} lead={t('Usta buyurtmani tasdiqlagach, sizga xabar keladi.')} />;
     else if (status === 'CONFIRMED')
-      step = <StepCard tone="wait" icon={<Clock size={22} />} title="Usta tasdiqladi" lead="Usta yo‘lga chiqqanda xabar olasiz. Chat orqali kelishuv qilishingiz mumkin." />;
+      step = <StepCard tone="wait" icon={<Clock size={22} />} title={t('Usta tasdiqladi')} lead={t('Usta yo‘lga chiqqanda xabar olasiz. Chat orqali kelishuv qilishingiz mumkin.')} />;
     else if (status === 'ON_THE_WAY')
-      step = <StepCard tone="wait" icon={<Navigation size={22} />} title="Usta yo‘lda" lead="Usta manzilingizga qarab yo‘lga chiqdi." />;
+      step = <StepCard tone="wait" icon={<Navigation size={22} />} title={t('Usta yo‘lda')} lead={t('Usta manzilingizga qarab yo‘lga chiqdi.')} />;
     else if (status === 'ARRIVED')
-      step = <StepCard tone="wait" icon={<MapPinned size={22} />} title="Usta yetib keldi" lead="Usta ishni boshlashga tayyorlanmoqda.">
+      step = <StepCard tone="wait" icon={<MapPinned size={22} />} title={t('Usta yetib keldi')} lead={t('Usta ishni boshlashga tayyorlanmoqda.')}>
         <WorkProofPanel orderId={id} stage="BEFORE" />
       </StepCard>;
     else if (status === 'IN_PROGRESS')
-      step = <StepCard tone="wait" icon={<Hammer size={22} />} title="Ish jarayonida" lead="Usta ishni bajarmoqda. Tugagach sizdan tasdiq so‘raydi.">
+      step = <StepCard tone="wait" icon={<Hammer size={22} />} title={t('Ish jarayonida')} lead={t('Usta ishni bajarmoqda. Tugagach sizdan tasdiq so‘raydi.')}>
         <WorkProofPanel orderId={id} stage="BEFORE" />
         <WorkProofPanel orderId={id} stage="DURING" />
       </StepCard>;
@@ -174,22 +173,20 @@ export function OrderDetailsPage() {
       const existing = data.payment && data.payment.status !== 'FAILED' && data.payment.status !== 'CANCELLED' ? data.payment.provider : '';
       const chosen: PaymentProvider | '' = method || existing;
       step = (
-        <StepCard tone="next" icon={<CheckCircle2 size={22} />} title="Ishni ko‘rib chiqing" lead="Usta ishni tugatdi. Natijani tekshiring va tasdiqlang. Muammo bo‘lsa, nizo oching.">
+        <StepCard tone="next" icon={<CheckCircle2 size={22} />} title={t('Ishni ko‘rib chiqing')} lead={t('Usta ishni tugatdi. Natijani tekshiring va tasdiqlang. Muammo bo‘lsa, nizo oching.')}>
           <WorkProofPanel orderId={id} stage="BEFORE" />
           <WorkProofPanel orderId={id} stage="AFTER" />
           {!chosen && (
-            <p className="gm-ocard__lead">
-              Ishni tasdiqlash uchun avval pastdagi <a href="#tolov">«To‘lov» kartasida</a> to‘lov usulini tanlang.
-            </p>
+            <p className="gm-ocard__lead">{t('Ishni tasdiqlash uchun avval pastdagi')}{' '}<a href="#tolov">{t('«To‘lov» kartasida')}</a>{' '}{t('to‘lov usulini tanlang.')}</p>
           )}
           <div className="gm-oactions">
-            <Button loading={confirmCompletion.isPending} disabled={!chosen} onClick={() => chosen && confirmCompletion.mutate(chosen)}>Ishni tasdiqlash</Button>
+            <Button loading={confirmCompletion.isPending} disabled={!chosen} onClick={() => chosen && confirmCompletion.mutate(chosen)}>{t('Ishni tasdiqlash')}</Button>
           </div>
         </StepCard>
       );
     } else if (status === 'COMPLETED')
       step = (
-        <StepCard tone="done" icon={<Star size={22} />} title="Buyurtma yakunlandi" lead="Ustani baholang. Fikringiz boshqa mijozlarga yordam beradi.">
+        <StepCard tone="done" icon={<Star size={22} />} title={t('Buyurtma yakunlandi')} lead={t('Ustani baholang. Fikringiz boshqa mijozlarga yordam beradi.')}>
           <ReviewForm orderId={id} existing={data.review} />
 
         </StepCard>
@@ -197,22 +194,21 @@ export function OrderDetailsPage() {
   }
   if (status === 'CANCELLED')
     step = (
-      <StepCard tone="stop" icon={<XCircle size={22} />} title="Buyurtma bekor qilindi" lead={data.cancellationReason ? `Sabab: ${data.cancellationReason}` : undefined}>
+      <StepCard tone="stop" icon={<XCircle size={22} />} title={t('Buyurtma bekor qilindi')} lead={data.cancellationReason ? t('Sabab: {cancellationReason}', { cancellationReason: data.cancellationReason }) : undefined}>
         {data.cancelledAt && <p className="gm-ocard__lead">{formatDateTime(data.cancelledAt)}</p>}
       </StepCard>
     );
   if (status === 'DISPUTED')
-    step = <StepCard tone="stop" icon={<ShieldAlert size={22} />} title="Nizo ko‘rib chiqilmoqda" lead="Administrator ikkala tomonning dalillarini ko‘rib chiqadi. Natija haqida xabar olasiz." />;
-  if (status === 'EXPIRED') step = <StepCard tone="stop" icon={<XCircle size={22} />} title="Buyurtma muddati tugadi" />;
+    step = <StepCard tone="stop" icon={<ShieldAlert size={22} />} title={t('Nizo ko‘rib chiqilmoqda')} lead={t('Administrator ikkala tomonning dalillarini ko‘rib chiqadi. Natija haqida xabar olasiz.')} />;
+  if (status === 'EXPIRED') step = <StepCard tone="stop" icon={<XCircle size={22} />} title={t('Buyurtma muddati tugadi')} />;
 
   return (
     <div className="gm-opage">
       <div className="gm-ohead">
         <div>
-          <h1>{data.request?.title ?? 'Buyurtma'}</h1>
+          <h1>{data.request?.title ?? t('Buyurtma')}</h1>
           <p>
-            {data.service?.name ?? 'Xizmat'} · Buyurtma №{data.orderNumber}
-          </p>
+            {data.service?.name ?? t('Xizmat')}{' '}{t('· Buyurtma №{orderNumber}', { orderNumber: data.orderNumber })}</p>
         </div>
         <OrderStatus status={status} />
       </div>
@@ -230,32 +226,30 @@ export function OrderDetailsPage() {
 
           {data.request?.description && (
             <section className="gm-ocard">
-              <h2 className="gm-ocard__title">Muammo tavsifi</h2>
+              <h2 className="gm-ocard__title">{t('Muammo tavsifi')}</h2>
               <p>{data.request.description}</p>
             </section>
           )}
 
           <section className="gm-ocard">
-            <h2 className="gm-ocard__title">Qo‘shimcha ishlar</h2>
+            <h2 className="gm-ocard__title">{t('Qo‘shimcha ishlar')}</h2>
             <AdditionalWorkPanel orderId={id} isMaster={isMaster} canRequest={isMaster && (status === 'ARRIVED' || status === 'IN_PROGRESS')} />
           </section>
 
           {(canCancel || canDispute) && (
             <section className="gm-ocard">
-              <h2 className="gm-ocard__title">Muammo yuz berdimi?</h2>
+              <h2 className="gm-ocard__title">{t('Muammo yuz berdimi?')}</h2>
               <p className="gm-ocard__lead">
-                {canCancel ? `Buyurtmani bekor qilsangiz, ${otherName}ga xabar boradi.` : `Ish sifati yoki kelishuv bo‘yicha nizo ochsangiz, administrator ko‘rib chiqadi.`}
+                {canCancel ? t('Buyurtmani bekor qilsangiz, {otherName}ga xabar boradi.', { otherName }) : t('Ish sifati yoki kelishuv bo‘yicha nizo ochsangiz, administrator ko‘rib chiqadi.')}
               </p>
               <div className="gm-oactions">
                 {canCancel && (
                   <Button variant="danger" size="sm" onClick={() => setDialog('cancel')}>
-                    <XCircle size={16} /> Bekor qilish
-                  </Button>
+                    <XCircle size={16} />{' '}{t('Bekor qilish')}</Button>
                 )}
                 {canDispute && (
                   <Button variant="secondary" size="sm" onClick={() => setDialog('dispute')}>
-                    <Flag size={16} /> Nizo ochish
-                  </Button>
+                    <Flag size={16} />{' '}{t('Nizo ochish')}</Button>
                 )}
               </div>
             </section>
@@ -270,10 +264,10 @@ export function OrderDetailsPage() {
 
       <ConfirmDialog
         open={dialog === 'cancel'}
-        title="Buyurtmani bekor qilish"
-        description="Bekor qilish sababini yozing. Bu amalni qaytarib bo‘lmaydi."
-        confirmLabel="Bekor qilish"
-        cancelLabel="Yopish"
+        title={t('Buyurtmani bekor qilish')}
+        description={t('Bekor qilish sababini yozing. Bu amalni qaytarib bo‘lmaydi.')}
+        confirmLabel={t('Bekor qilish')}
+        cancelLabel={t('Yopish')}
         tone="danger"
         loading={cancelOrder.isPending}
         confirmDisabled={!reasonReady}
@@ -281,22 +275,22 @@ export function OrderDetailsPage() {
         onConfirm={() => cancelOrder.mutate(reason.trim(), { onSuccess: closeDialog })}
       >
         {cancelOrder.isError && <Alert tone="danger">{getErrorMessage(cancelOrder.error)}</Alert>}
-        <Textarea label="Sabab" required rows={3} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} />
+        <Textarea label={t('Sabab')} required rows={3} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} />
       </ConfirmDialog>
 
       <ConfirmDialog
         open={dialog === 'dispute'}
-        title="Nizo ochish"
-        description="Nizo sababini batafsil yozing. U administrator ko‘rib chiqishi uchun yuboriladi."
-        confirmLabel="Nizo ochish"
-        cancelLabel="Yopish"
+        title={t('Nizo ochish')}
+        description={t('Nizo sababini batafsil yozing. U administrator ko‘rib chiqishi uchun yuboriladi.')}
+        confirmLabel={t('Nizo ochish')}
+        cancelLabel={t('Yopish')}
         loading={disputeOrder.isPending}
         confirmDisabled={!reasonReady}
         onCancel={closeDialog}
         onConfirm={() => disputeOrder.mutate(reason.trim(), { onSuccess: closeDialog })}
       >
         {disputeOrder.isError && <Alert tone="danger">{getErrorMessage(disputeOrder.error)}</Alert>}
-        <Textarea label="Sabab" required rows={4} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} />
+        <Textarea label={t('Sabab')} required rows={4} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} />
       </ConfirmDialog>
     </div>
   );

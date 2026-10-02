@@ -9,15 +9,16 @@ import type { LinkTargetType, MediaAssetKind } from '@/types/common';
 import { useMediaStatus, useUploadMedia } from '../hooks/useMedia';
 import { MediaThumbnail } from './MediaThumbnail';
 import './MediaUploadField.css';
+import { t } from '@/i18n';
 
 const STATUS_LABEL: Record<string, string> = {
-  UPLOADING: 'Yuklanmoqda',
-  QUARANTINED: 'Navbatda',
-  SCANNING: 'Tekshirilmoqda',
-  PROCESSING: 'Qayta ishlanmoqda',
-  READY: 'Tayyor',
-  REJECTED: 'Rad etildi',
-  FAILED: 'Xatolik',
+  UPLOADING: t('Yuklanmoqda'),
+  QUARANTINED: t('Navbatda'),
+  SCANNING: t('Tekshirilmoqda'),
+  PROCESSING: t('Qayta ishlanmoqda'),
+  READY: t('Tayyor'),
+  REJECTED: t('Rad etildi'),
+  FAILED: t('Xatolik'),
 };
 const STATUS_TONE: Record<string, 'neutral' | 'success' | 'danger' | 'warning'> = {
   UPLOADING: 'neutral',
@@ -80,8 +81,7 @@ export function MediaUploadField({ label, accept = 'image/*,video/*', kind, link
         className="gm-visually-hidden"
       />
       <Button type="button" variant="secondary" className="gm-media-upload__pick" loading={upload.isPending} onClick={() => inputRef.current?.click()}>
-        <Upload size={18} /> Fayl tanlash
-      </Button>
+        <Upload size={18} />{' '}{t('Fayl tanlash')}</Button>
 
       {upload.isError && <Alert tone="danger">{getErrorMessage(upload.error)}</Alert>}
 

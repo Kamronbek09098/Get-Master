@@ -14,8 +14,9 @@ import {
   useSaveAvailability,
   useToggleAvailability,
 } from '../hooks/useMasterManage';
+import { t } from '@/i18n';
 
-const DAYS = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+const DAYS = [t('Yakshanba'), t('Dushanba'), t('Seshanba'), t('Chorshanba'), t('Payshanba'), t('Juma'), t('Shanba')];
 const DAY_OPTIONS = DAYS.map((label, index) => ({ value: String(index), label }));
 
 export function AvailabilityEditor() {
@@ -37,20 +38,18 @@ export function AvailabilityEditor() {
   return (
     <div className="gm-form">
       <form className="gm-inline-form" onSubmit={handleSubmit}>
-        <Select label="Kun" options={DAY_OPTIONS} value={dayOfWeek} onChange={(e) => setDayOfWeek(e.target.value)} />
-        <Input label="Boshlanishi" type="time" required value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-        <Input label="Tugashi" type="time" required value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-        <Button type="submit" loading={save.isPending}>
-          Qo‘shish
-        </Button>
+        <Select label={t('Kun')} options={DAY_OPTIONS} value={dayOfWeek} onChange={(e) => setDayOfWeek(e.target.value)} />
+        <Input label={t('Boshlanishi')} type="time" required value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+        <Input label={t('Tugashi')} type="time" required value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+        <Button type="submit" loading={save.isPending}>{t('Qo‘shish')}</Button>
       </form>
       {save.isError && <Alert tone="danger">{getErrorMessage(save.error)}</Alert>}
       {(toggle.isError || remove.isError) && <Alert tone="danger">{getErrorMessage(toggle.error ?? remove.error)}</Alert>}
 
-      {availability.isLoading && <PageLoader label="Jadval yuklanmoqda…" />}
+      {availability.isLoading && <PageLoader label={t('Jadval yuklanmoqda…')} />}
       {availability.isError && <Alert tone="danger">{getErrorMessage(availability.error)}</Alert>}
       {availability.data && items.length === 0 && (
-        <EmptyState title="Ish jadvali bo‘sh" description="Mijozlar band qila olishi uchun ish vaqtlarini qo‘shing." />
+        <EmptyState title={t('Ish jadvali bo‘sh')} description={t('Mijozlar band qila olishi uchun ish vaqtlarini qo‘shing.')} />
       )}
       <div className="gm-list">
         {items.map((slot) => (
@@ -59,7 +58,7 @@ export function AvailabilityEditor() {
               <h3>
                 {DAYS[slot.dayOfWeek]}: {slot.startTime} – {slot.endTime}
               </h3>
-              <Badge tone={slot.isAvailable ? 'success' : 'neutral'}>{slot.isAvailable ? 'Faol' : 'O‘chirilgan'}</Badge>
+              <Badge tone={slot.isAvailable ? 'success' : 'neutral'}>{slot.isAvailable ? t('Faol') : t('O‘chirilgan')}</Badge>
             </div>
             <div className="gm-action-row">
               <Button
@@ -67,11 +66,9 @@ export function AvailabilityEditor() {
                 variant="secondary"
                 onClick={() => toggle.mutate({ id: slot.id, isAvailable: !slot.isAvailable })}
               >
-                {slot.isAvailable ? 'Vaqtincha o‘chirish' : 'Yoqish'}
+                {slot.isAvailable ? t('Vaqtincha o‘chirish') : t('Yoqish')}
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => remove.mutate(slot.id)}>
-                O‘chirish
-              </Button>
+              <Button size="sm" variant="ghost" onClick={() => remove.mutate(slot.id)}>{t('O‘chirish')}</Button>
             </div>
           </div>
         ))}

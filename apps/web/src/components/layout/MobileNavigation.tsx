@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useMe } from '@/features/session/hooks/useMe';
 import { badgeText, useNavBadges } from '@/features/admin/hooks/useNavBadges';
 import { getNavItems } from './nav-items';
+import { t } from '@/i18n';
 import './MobileNavigation.css';
 
 export function MobileNavigation() {
@@ -22,7 +23,7 @@ export function MobileNavigation() {
 
   return (
     <>
-      <nav className="gm-mobile-nav" aria-label="Asosiy navigatsiya">
+      <nav className="gm-mobile-nav" aria-label={t('Asosiy navigatsiya')}>
         {primary.map((item) => (
           <NavLink
             key={item.to}
@@ -44,16 +45,16 @@ export function MobileNavigation() {
         >
           <LayoutGrid size={22} strokeWidth={2} aria-hidden="true" />
           {hiddenBadge && <span className="gm-nav-badge gm-nav-badge--dot" aria-hidden="true" />}
-          <span>Yana</span>
+          <span>{t('Yana')}</span>
         </button>
       </nav>
 
       {open && (
         <div className="gm-sheet-overlay" onMouseDown={(e) => e.target === e.currentTarget && setOpen(false)}>
-          <div className="gm-sheet" role="dialog" aria-modal="true" aria-label="Barcha bo‘limlar">
+          <div className="gm-sheet" role="dialog" aria-modal="true" aria-label={t('Barcha bo‘limlar')}>
             <div className="gm-sheet__header">
-              <h2>Bo‘limlar</h2>
-              <button type="button" className="gm-icon-button" aria-label="Yopish" onClick={() => setOpen(false)}>
+              <h2>{t('Bo‘limlar')}</h2>
+              <button type="button" className="gm-icon-button" aria-label={t('Yopish')} onClick={() => setOpen(false)}>
                 <X size={20} />
               </button>
             </div>

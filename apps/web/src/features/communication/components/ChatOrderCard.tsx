@@ -16,6 +16,7 @@ import { PaymentMethodCards } from '@/features/payment/components/PaymentMethodC
 import { useConfirmCash } from '@/features/payment/hooks/usePayment';
 import { providerLabel } from '@/features/payment/labels';
 import type { PaymentProvider } from '@/types/common';
+import { t } from '@/i18n';
 
 /**
  * Chatdagi buyurtma kartasi: buyurtma holati jonli yangilanadi va shu yerning o‘zida
@@ -36,7 +37,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
   const [method, setMethod] = useState<PaymentProvider | ''>('');
 
   if (query.isLoading) return <Skeleton style={{ height: 120, width: 300, borderRadius: 12 }} />;
-  if (query.isError || !query.data) return <div className="gm-ochat gm-ochat--error">Buyurtmani ochib bo‘lmadi</div>;
+  if (query.isError || !query.data) return <div className="gm-ochat gm-ochat--error">{t('Buyurtmani ochib bo‘lmadi')}</div>;
 
   const order = query.data;
   const master = order.viewerRole === 'MASTER';
@@ -53,33 +54,33 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
   const actions: Array<{ label: string; icon: JSX.Element; run: () => void; primary?: boolean; disabled?: boolean }> = [];
   if (master) {
     if (status === 'BOOKED') {
-      hint = 'Mijoz sizga buyurtma yubordi. Qabul qilasizmi?';
-      actions.push({ label: 'Qabul qilish', icon: <CheckCircle2 size={15} />, run: () => confirm.mutate(), primary: true });
+      hint = t('Mijoz sizga buyurtma yubordi. Qabul qilasizmi?');
+      actions.push({ label: t('Qabul qilish'), icon: <CheckCircle2 size={15} />, run: () => confirm.mutate(), primary: true });
     } else if (status === 'CONFIRMED') {
-      hint = 'Buyurtma qabul qilindi. Tayyor bo‘lgach, yo‘lga chiqing.';
-      actions.push({ label: 'Yo‘lga chiqdim', icon: <Navigation size={15} />, run: () => travel.mutate(), primary: true });
+      hint = t('Buyurtma qabul qilindi. Tayyor bo‘lgach, yo‘lga chiqing.');
+      actions.push({ label: t('Yo‘lga chiqdim'), icon: <Navigation size={15} />, run: () => travel.mutate(), primary: true });
     } else if (status === 'ON_THE_WAY') {
-      hint = 'Mijoz sizni kutmoqda.';
-      actions.push({ label: 'Yetib keldim', icon: <MapPinned size={15} />, run: () => arrive.mutate(), primary: true });
+      hint = t('Mijoz sizni kutmoqda.');
+      actions.push({ label: t('Yetib keldim'), icon: <MapPinned size={15} />, run: () => arrive.mutate(), primary: true });
     } else if (status === 'ARRIVED') {
       const tooEarly = !!order.scheduledStartAt && new Date(order.scheduledStartAt).getTime() > Date.now();
-      hint = tooEarly ? `Ish belgilangan vaqtdan (${formatDateTime(order.scheduledStartAt!)}) oldin boshlanmaydi.` : 'Ishni boshlash uchun tayyor bo‘lsangiz, boshlang.';
-      actions.push({ label: 'Ishni boshlash', icon: <Hammer size={15} />, run: () => start.mutate(), primary: true, disabled: tooEarly });
+      hint = tooEarly ? t('Ish belgilangan vaqtdan ({dateTime}) oldin boshlanmaydi.', { dateTime: formatDateTime(order.scheduledStartAt!) }) : t('Ishni boshlash uchun tayyor bo‘lsangiz, boshlang.');
+      actions.push({ label: t('Ishni boshlash'), icon: <Hammer size={15} />, run: () => start.mutate(), primary: true, disabled: tooEarly });
     } else if (status === 'IN_PROGRESS') {
-      hint = 'Ish tugagach, mijozga tasdiqlash uchun yuboring. Rasmlarni buyurtma sahifasidan yuklang.';
-      actions.push({ label: 'Ishni tugatdim', icon: <CheckCircle2 size={15} />, run: () => submit.mutate(), primary: true });
-    } else if (status === 'WAITING_CONFIRMATION') hint = 'Mijoz ishni tasdiqlashini kuting.';
+      hint = t('Ish tugagach, mijozga tasdiqlash uchun yuboring. Rasmlarni buyurtma sahifasidan yuklang.');
+      actions.push({ label: t('Ishni tugatdim'), icon: <CheckCircle2 size={15} />, run: () => submit.mutate(), primary: true });
+    } else if (status === 'WAITING_CONFIRMATION') hint = t('Mijoz ishni tasdiqlashini kuting.');
     else if (status === 'COMPLETED' && payment?.provider === 'CASH' && payment.status === 'PENDING') {
-      hint = 'Mijoz naqd pul bilan to‘laydi. Pulni olgach, tasdiqlang.';
-      actions.push({ label: 'Naqd pulni qabul qildim', icon: <Banknote size={15} />, run: () => cash.mutate(payment.id), primary: true });
-    } else if (status === 'COMPLETED') hint = 'Buyurtma yakunlandi.';
-  } else if (status === 'BOOKED') hint = 'Usta buyurtmani qabul qilishini kuting.';
-  else if (status === 'CONFIRMED') hint = 'Usta buyurtmani qabul qildi.';
-  else if (status === 'ON_THE_WAY') hint = 'Usta yo‘lda.';
-  else if (status === 'ARRIVED') hint = 'Usta yetib keldi.';
-  else if (status === 'IN_PROGRESS') hint = 'Ish jarayonida.';
-  else if (status === 'WAITING_CONFIRMATION') hint = 'Usta ishni tugatdi. To‘lov usulini tanlab, ishni tasdiqlang.';
-  else if (status === 'COMPLETED') hint = payment ? `Yakunlandi. To‘lov: ${providerLabel(payment.provider)}.` : 'Yakunlandi. To‘lov usulini buyurtma sahifasida tanlang.';
+      hint = t('Mijoz naqd pul bilan to‘laydi. Pulni olgach, tasdiqlang.');
+      actions.push({ label: t('Naqd pulni qabul qildim'), icon: <Banknote size={15} />, run: () => cash.mutate(payment.id), primary: true });
+    } else if (status === 'COMPLETED') hint = t('Buyurtma yakunlandi.');
+  } else if (status === 'BOOKED') hint = t('Usta buyurtmani qabul qilishini kuting.');
+  else if (status === 'CONFIRMED') hint = t('Usta buyurtmani qabul qildi.');
+  else if (status === 'ON_THE_WAY') hint = t('Usta yo‘lda.');
+  else if (status === 'ARRIVED') hint = t('Usta yetib keldi.');
+  else if (status === 'IN_PROGRESS') hint = t('Ish jarayonida.');
+  else if (status === 'WAITING_CONFIRMATION') hint = t('Usta ishni tugatdi. To‘lov usulini tanlab, ishni tasdiqlang.');
+  else if (status === 'COMPLETED') hint = payment ? t('Yakunlandi. To‘lov: {providerLabel}.', { providerLabel: providerLabel(payment.provider) }) : t('Yakunlandi. To‘lov usulini buyurtma sahifasida tanlang.');
 
   return (
     <div className="gm-ochat">
@@ -88,10 +89,8 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
           <PackageCheck size={18} />
         </span>
         <div>
-          <strong>{order.request?.title ?? 'Buyurtma'}</strong>
-          <small>
-            Buyurtma №{order.orderNumber} · {accountName(order.counterpart)}
-          </small>
+          <strong>{order.request?.title ?? t('Buyurtma')}</strong>
+          <small>{t('Buyurtma №{orderNumber} · {accountName}', { orderNumber: order.orderNumber, accountName: accountName(order.counterpart) })}</small>
         </div>
         <OrderStatus status={status} />
       </div>
@@ -105,7 +104,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
           <span style={{ width: `${percent}%` }} />
         </div>
       )}
-      {status === 'CANCELLED' ? <p className="gm-ochat__hint gm-ochat__hint--bad">Buyurtma bekor qilindi{order.cancellationReason ? `: ${order.cancellationReason}` : ''}</p> : hint && <p className="gm-ochat__hint">{hint}</p>}
+      {status === 'CANCELLED' ? <p className="gm-ochat__hint gm-ochat__hint--bad">{t('Buyurtma bekor qilindi')}{order.cancellationReason ? `: ${order.cancellationReason}` : ''}</p> : hint && <p className="gm-ochat__hint">{hint}</p>}
 
       {!master && status === 'WAITING_CONFIRMATION' && <PaymentMethodCards value={method} onChange={setMethod} compact disabled={busy} />}
       {error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
@@ -113,8 +112,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
       <div className="gm-ochat__actions">
         {!master && status === 'WAITING_CONFIRMATION' && (
           <Button size="sm" loading={complete.isPending} disabled={!method || busy} onClick={() => method && complete.mutate(method)}>
-            <CheckCircle2 size={15} /> Ishni tasdiqlash
-          </Button>
+            <CheckCircle2 size={15} />{' '}{t('Ishni tasdiqlash')}</Button>
         )}
         {actions.map((action) => (
           <Button key={action.label} size="sm" loading={busy} disabled={action.disabled || busy} onClick={action.run}>
@@ -123,20 +121,19 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
         ))}
         {canCancel && (
           <Button size="sm" variant="danger" onClick={() => setCancelOpen(true)}>
-            <XCircle size={15} /> {master && status === 'BOOKED' ? 'Rad etish' : 'Bekor qilish'}
+            <XCircle size={15} /> {master && status === 'BOOKED' ? t('Rad etish') : t('Bekor qilish')}
           </Button>
         )}
         <Link to={link} className="gm-ochat__more">
-          <ExternalLink size={14} /> Batafsil
-        </Link>
+          <ExternalLink size={14} />{' '}{t('Batafsil')}</Link>
       </div>
 
       <ConfirmDialog
         open={cancelOpen}
-        title={master && status === 'BOOKED' ? 'Buyurtmani rad etish' : 'Buyurtmani bekor qilish'}
-        description="Sababini yozing. Bu amalni qaytarib bo‘lmaydi."
-        confirmLabel={master && status === 'BOOKED' ? 'Rad etish' : 'Bekor qilish'}
-        cancelLabel="Yopish"
+        title={master && status === 'BOOKED' ? t('Buyurtmani rad etish') : t('Buyurtmani bekor qilish')}
+        description={t('Sababini yozing. Bu amalni qaytarib bo‘lmaydi.')}
+        confirmLabel={master && status === 'BOOKED' ? t('Rad etish') : t('Bekor qilish')}
+        cancelLabel={t('Yopish')}
         tone="danger"
         loading={cancel.isPending}
         confirmDisabled={reason.trim().length < 3}
@@ -144,7 +141,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
         onConfirm={() => cancel.mutate(reason.trim(), { onSuccess: () => { setCancelOpen(false); setReason(''); } })}
       >
         {cancel.isError && <Alert tone="danger">{getErrorMessage(cancel.error)}</Alert>}
-        <Textarea label="Sabab" required rows={3} value={reason} onChange={(event) => setReason(event.target.value)} />
+        <Textarea label={t('Sabab')} required rows={3} value={reason} onChange={(event) => setReason(event.target.value)} />
       </ConfirmDialog>
     </div>
   );

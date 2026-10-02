@@ -14,6 +14,7 @@ import { useMarkAllAsRead, useMarkAsRead, useNotifications } from '../hooks/useN
 import { notificationMeta, notificationText } from '../notification-meta';
 import type { AppNotification } from '../types';
 import './NotificationList.css';
+import { t } from '@/i18n';
 
 type Filter = 'all' | 'unread';
 
@@ -62,25 +63,21 @@ export function NotificationList() {
   return (
     <div className="gm-notify">
       <div className="gm-notify__bar">
-        <div className="gm-notify__tabs" role="tablist" aria-label="Filtr">
-          <button type="button" role="tab" aria-selected={filter === 'all'} className={cx('gm-notify__tab', filter === 'all' && 'gm-notify__tab--active')} onClick={() => setFilter('all')}>
-            Hammasi
-          </button>
-          <button type="button" role="tab" aria-selected={filter === 'unread'} className={cx('gm-notify__tab', filter === 'unread' && 'gm-notify__tab--active')} onClick={() => setFilter('unread')}>
-            O‘qilmagan
-            {unreadCount > 0 && <span className="gm-notify__count">{unreadCount}</span>}
+        <div className="gm-notify__tabs" role="tablist" aria-label={t('Filtr')}>
+          <button type="button" role="tab" aria-selected={filter === 'all'} className={cx('gm-notify__tab', filter === 'all' && 'gm-notify__tab--active')} onClick={() => setFilter('all')}>{t('Hammasi')}</button>
+          <button type="button" role="tab" aria-selected={filter === 'unread'} className={cx('gm-notify__tab', filter === 'unread' && 'gm-notify__tab--active')} onClick={() => setFilter('unread')}>{t('O‘qilmagan')}{unreadCount > 0 && <span className="gm-notify__count">{unreadCount}</span>}
           </button>
         </div>
-        <Button size="sm" variant="secondary" aria-label="Hammasini o‘qilgan deb belgilash" className="gm-notify__markall-btn" disabled={unreadCount === 0} loading={markAllAsRead.isPending} onClick={() => markAllAsRead.mutate()}>
-          <CheckCheck size={16} /> <span className="gm-notify__markall">Hammasini o‘qilgan deb belgilash</span>
+        <Button size="sm" variant="secondary" aria-label={t('Hammasini o‘qilgan deb belgilash')} className="gm-notify__markall-btn" disabled={unreadCount === 0} loading={markAllAsRead.isPending} onClick={() => markAllAsRead.mutate()}>
+          <CheckCheck size={16} /> <span className="gm-notify__markall">{t('Hammasini o‘qilgan deb belgilash')}</span>
         </Button>
       </div>
 
       {visible.length === 0 ? (
         <EmptyState
           icon={<BellOff size={28} />}
-          title={filter === 'unread' ? 'Hammasi o‘qilgan' : 'Bildirishnomalar yo‘q'}
-          description={filter === 'unread' ? 'Yangi bildirishnomalar shu yerda paydo bo‘ladi.' : 'Buyurtma, chat va tasdiqlash xabarlari shu yerda ko‘rinadi.'}
+          title={filter === 'unread' ? t('Hammasi o‘qilgan') : t('Bildirishnomalar yo‘q')}
+          description={filter === 'unread' ? t('Yangi bildirishnomalar shu yerda paydo bo‘ladi.') : t('Buyurtma, chat va tasdiqlash xabarlari shu yerda ko‘rinadi.')}
         />
       ) : (
         groups.map((group) => (
@@ -103,7 +100,7 @@ export function NotificationList() {
                         <span>{text.body}</span>
                         <small>{formatRelativeTime(item.createdAt)}</small>
                       </span>
-                      {unread && <span className="gm-notify__dot" aria-label="O‘qilmagan" />}
+                      {unread && <span className="gm-notify__dot" aria-label={t('O‘qilmagan')} />}
                     </button>
                   </li>
                 );

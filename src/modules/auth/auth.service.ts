@@ -27,6 +27,7 @@ import { OtpService } from '../otp/otp.service';
 import { TelegramAlertService } from '../../infrastructure/telegram/telegram-alert.service';
 import { SignInDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { GoogleRegisterDto, GoogleSignInDto } from './dto/google.dto';
 import { VerifyOTPDto } from '../otp/dto/verify-otp.dto';
 import { RequestOtpDto } from '../otp/dto/request-otp.dto';
 import {
@@ -318,6 +319,118 @@ export class AuthService {
     });
 
     return updated;
+  }
+
+  /** Google ID tokenni tekshiradi (imzo, auditoriya, muddat, tasdiqlangan email). */
+  private async verifyGoogleCredential(credential: string) {
+    const clientId = this.config.get<string>('auth.googleClientId', '');
+    if (!clientId) throw new BadRequestException(ERRORS.GOOGLE_NOT_CONFIGURED);
+    let info: { aud?: string; sub?: string; email?: string; email_verified?: string | boolean; given_name?: string; family_name?: string; name?: string; exp?: string; iss?: string };
+    try {
+      const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`, { signal: AbortSignal.timeout(8000) });
+      if (!response.ok) throw new Error('tokeninfo');
+      info = (await response.json()) as typeof info;
+    } catch {
+      throw new UnauthorizedException(ERRORS.GOOGLE_TOKEN_INVALID);
+    }
+    const issuerOk = info.iss === 'accounts.google.com' || info.iss === 'https://accounts.google.com';
+    const verified = info.email_verified === true || info.email_verified === 'true';
+    if (info.aud !== clientId || !info.sub || !issuerOk || !verified || Number(info.exp ?? 0) * 1000 < Date.now()) {
+      throw new UnauthorizedException(ERRORS.GOOGLE_TOKEN_INVALID);
+    }
+    const fallbackName = (info.name ?? '').trim().split(/\s+/);
+    return {
+      sub: info.sub,
+      email: info.email ?? null,
+      firstName: (info.given_name ?? fallbackName[0] ?? '').trim() || null,
+      lastName: (info.family_name ?? fallbackName.slice(1).join(' ')).trim() || null,
+    };
+  }
+
+  /**
+   * Google orqali kirish. Hisob bog‘langan bo‘lsa — sessiya ochiladi (Google o‘zi shaxsni tasdiqlaydi).
+   * Aks holda telefon raqami va shartlarni qabul qilish kerak: `needsPhone` va qisqa muddatli `signupToken` qaytadi.
+   */
+  async googleSignIn(dto: GoogleSignInDto, req: Request, res: Response) {
+    const profile = await this.verifyGoogleCredential(dto.credential);
+    const user = await this.db.user.findUnique({
+      where: { googleId: profile.sub },
+      select: { id: true, phone: true, status: true, deletedAt: true, accountNumber: true, firstName: true, lastName: true, userRoles: { select: { role: true } } },
+    });
+    if (user && user.deletedAt === null && user.status !== UserStatus.DELETED) {
+      if (user.status === UserStatus.BLOCKED || user.status === UserStatus.SUSPENDED) {
+        throw new ForbiddenException(ERRORS.ACCOUNT_NOT_AVAILABLE);
+      }
+      if (user.status !== UserStatus.ACTIVE) {
+        throw new ForbiddenException(ERRORS.ACCOUNT_VERIFICATION_REQUIRED);
+      }
+      const session = await this.createSession(user.id, user.userRoles.map((item) => item.role), user.status, req, res);
+      this.notifySession('login', user, req);
+      return { verificationRequired: false as const, needsPhone: false as const, ...session };
+    }
+    const signupToken = newOpaqueToken(32);
+    await this.redis.set(`google:signup:${signupToken}`, JSON.stringify(profile), 900);
+    return { needsPhone: true as const, signupToken, firstName: profile.firstName, lastName: profile.lastName };
+  }
+
+  /** Google orqali yangi hisob: telefon raqam OTP bilan tasdiqlanadi (platforma identifikatori — telefon). */
+  async googleRegister(dto: GoogleRegisterDto, req: Request) {
+    const raw = await this.redis.get(`google:signup:${dto.signupToken}`);
+    if (!raw) throw new BadRequestException(ERRORS.GOOGLE_SIGNUP_EXPIRED);
+    const profile = JSON.parse(raw) as { sub: string; firstName: string | null; lastName: string | null };
+    const phone = this.normalizePhone(dto.phone);
+    const policyIds = [...new Set(dto.acceptedPolicyIds)];
+    if (policyIds.length !== dto.acceptedPolicyIds.length) throw new BadRequestException(ERRORS.DUPLICATE_POLICY_ACCEPTANCE);
+    const requiredPolicies = await this.getRequiredPolicies();
+    const requiredIds = new Set(requiredPolicies.map((policy) => policy.id));
+    if (requiredPolicies.length === 0 || requiredPolicies.some((policy) => !policyIds.includes(policy.id))) {
+      throw new BadRequestException(ERRORS.POLICY_ACCEPTANCE_MISSING);
+    }
+    if (policyIds.some((id) => !requiredIds.has(id))) throw new BadRequestException(ERRORS.INVALID_POLICY_ACCEPTANCE);
+
+    const decoy = async (targetUserId: string | null) => {
+      // Raqam band/bloklangan: tashqaridan oddiy ro‘yxatdan o‘tishdan farq qilmaydi; kod yuborilmaydi.
+      await hashSecret(randomUUID(), 10);
+      this.warnAuth('Google orqali ro‘yxatdan o‘tishda band raqam', 'Raqam band yoki bloklangan', phone, req, 'Foydalanuvchiga hech narsa bildirilmadi.', `google-dup:${phone}:${this.clientIp(req) ?? ''}`);
+      return { userId: targetUserId ?? randomUUID(), verificationRequired: true as const };
+    };
+
+    const blocked = await this.db.blockedPhone.findUnique({ where: { phone }, select: { id: true } });
+    if (blocked) return decoy(blocked.id);
+    let existing = await this.db.user.findUnique({ where: { phone }, select: { id: true, deletedAt: true, status: true, accountNumber: true } });
+    if (existing && (existing.deletedAt !== null || existing.status === UserStatus.DELETED)) {
+      await this.db.user.update({ where: { id: existing.id }, data: { phone: `del${existing.accountNumber}_${phone}`.slice(0, 32), email: null, passwordHash: null, googleId: null } });
+      existing = null;
+    }
+    if (existing) return decoy(existing.id);
+    // Google hisobi boshqa (o‘chirilmagan) akkauntga bog‘langan bo‘lsa — yangi hisob ochilmaydi.
+    const linked = await this.db.user.findUnique({ where: { googleId: profile.sub }, select: { id: true, deletedAt: true, status: true, accountNumber: true } });
+    if (linked) {
+      if (linked.deletedAt === null && linked.status !== UserStatus.DELETED) return decoy(linked.id);
+      await this.db.user.update({ where: { id: linked.id }, data: { googleId: null } });
+    }
+
+    const user = await this.withSerializableRetry(async (tx) => {
+      const account = await tx.user.create({
+        data: {
+          phone,
+          googleId: profile.sub,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          status: UserStatus.PENDING,
+          userRoles: { create: { role: Role.CUSTOMER } },
+        },
+        select: { id: true },
+      });
+      await tx.policyAcceptance.createMany({ data: policyIds.map((policyId) => ({ userId: account.id, policyId, ipAddress: this.clientIp(req) })) });
+      await tx.auditLog.create({
+        data: { actorId: account.id, action: 'AUTH_REGISTERED', targetType: 'User', targetId: account.id, after: { status: UserStatus.PENDING, via: 'google' }, ipAddress: this.clientIp(req), requestId: this.requestId(req) },
+      });
+      return account;
+    });
+    await this.redis.del(`google:signup:${dto.signupToken}`);
+    const issued = await this.otp.issue(phone, OtpPurpose.REGISTER, user.id, { ip: this.clientIp(req), device: this.deviceCookie(req), panel: panelOf(req) });
+    return { userId: user.id, verificationRequired: true as const, ...this.devCode(issued) };
   }
 
   async signIn(dto: SignInDto, req: Request, res?: Response) {

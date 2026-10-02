@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 export type CaseStatus = 'REPORTED' | 'UNDER_REVIEW' | 'CONFIRMED' | 'DISMISSED' | 'RESOLVED';
 
 export interface CaseItem {
@@ -19,9 +20,9 @@ export interface CreateDisputeInput {
 }
 
 export const CASE_STATUS_LABEL: Record<CaseStatus, string> = {
-  REPORTED: 'Yuborildi',
-  UNDER_REVIEW: 'Ko‘rib chiqilmoqda',
-  CONFIRMED: 'Tasdiqlandi',
-  DISMISSED: 'Rad etildi',
-  RESOLVED: 'Hal qilindi',
+  REPORTED: t('Yuborildi'),
+  UNDER_REVIEW: t('Ko‘rib chiqilmoqda'),
+  CONFIRMED: t('Tasdiqlandi'),
+  DISMISSED: t('Rad etildi'),
+  RESOLVED: t('Hal qilindi'),
 };

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useCreateDispute } from '../hooks/useDisputes';
+import { t } from '@/i18n';
 
 export function DisputeForm({ orderId }: { orderId: string }) {
   const createDispute = useCreateDispute();
@@ -18,23 +19,21 @@ export function DisputeForm({ orderId }: { orderId: string }) {
   }
 
   if (createDispute.isSuccess) {
-    return <Alert tone="success">Nizo ochildi. Administrator uni ko‘rib chiqadi.</Alert>;
+    return <Alert tone="success">{t('Nizo ochildi. Administrator uni ko‘rib chiqadi.')}</Alert>;
   }
 
   return (
     <form className="gm-form" onSubmit={handleSubmit}>
       {createDispute.isError && <Alert tone="danger">{getErrorMessage(createDispute.error)}</Alert>}
-      <Input label="Mavzu" required value={title} onChange={(event) => setTitle(event.target.value)} maxLength={255} />
+      <Input label={t('Mavzu')} required value={title} onChange={(event) => setTitle(event.target.value)} maxLength={255} />
       <Textarea
-        label="Muammo tavsifi"
+        label={t('Muammo tavsifi')}
         required
         value={description}
         onChange={(event) => setDescription(event.target.value)}
         rows={4}
       />
-      <Button type="submit" variant="danger" loading={createDispute.isPending} disabled={!title.trim() || !description.trim()}>
-        Nizo ochish
-      </Button>
+      <Button type="submit" variant="danger" loading={createDispute.isPending} disabled={!title.trim() || !description.trim()}>{t('Nizo ochish')}</Button>
     </form>
   );
 }

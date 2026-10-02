@@ -4,6 +4,7 @@ import { BadgeCheck, Briefcase, MessageCircle, Star, Wrench } from 'lucide-react
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { formatMoney } from '@/lib/utils';
 import type { PublicMaster } from '../types';
+import { t } from '@/i18n';
 
 const MAX_TAGS = 3;
 
@@ -22,19 +23,19 @@ export function MasterCard({ master }: { master: PublicMaster }) {
           <h3 className="gm-master__name">
             {name}
             {master.verification === 'VERIFIED' && (
-              <BadgeCheck size={18} className="gm-master__verified" aria-label="Tasdiqlangan usta" />
+              <BadgeCheck size={18} className="gm-master__verified" aria-label={t('Tasdiqlangan usta')} />
             )}
           </h3>
-          <p className="gm-master__profession">{master.profession ?? 'Kasb ko‘rsatilmagan'}</p>
+          <p className="gm-master__profession">{master.profession ?? t('Kasb ko‘rsatilmagan')}</p>
           {master.workPlace && <p className="gm-master__profession">{master.workPlace}</p>}
         </div>
         {master.user.accountNumber !== undefined && <span className="gm-master__num">ID {master.user.accountNumber}</span>}
       </div>
 
       <div className="gm-master__stats">
-        <span className="gm-master__stat" title={`${master.ratingCount} ta sharh`}>
+        <span className="gm-master__stat" title={t('{ratingCount} ta sharh', { ratingCount: master.ratingCount })}>
           <Star size={15} className="gm-master__star" fill="currentColor" />
-          <strong>{master.ratingCount > 0 ? rating.toFixed(1) : 'Yangi'}</strong>
+          <strong>{master.ratingCount > 0 ? rating.toFixed(1) : t('Yangi')}</strong>
           {master.ratingCount > 0 && <small>({master.ratingCount})</small>}
         </span>
         <span className="gm-master__stat">
@@ -46,13 +47,13 @@ export function MasterCard({ master }: { master: PublicMaster }) {
           <span className="gm-master__stat">
             <Wrench size={15} />
             <strong>{master.experienceYears}</strong>
-            <small>yil tajriba</small>
+            <small>{t('yil tajriba')}</small>
           </span>
         ) : null}
       </div>
 
       {services.length > 0 && (
-        <ul className="gm-master__tags" aria-label="Xizmatlar">
+        <ul className="gm-master__tags" aria-label={t('Xizmatlar')}>
           {services.slice(0, MAX_TAGS).map((item) => (
             <li key={item.serviceId}>{item.service.name}</li>
           ))}
@@ -67,12 +68,11 @@ export function MasterCard({ master }: { master: PublicMaster }) {
               <small>dan</small> <strong>{formatMoney(minPrice)}</strong>
             </>
           ) : (
-            <small>Narx kelishiladi</small>
+            <small>{t('Narx kelishiladi')}</small>
           )}
         </span>
         <span className="gm-master__cta">
-          <MessageCircle size={16} /> Batafsil
-        </span>
+          <MessageCircle size={16} />{' '}{t('Batafsil')}</span>
       </div>
     </Link>
   );

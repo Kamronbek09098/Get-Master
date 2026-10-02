@@ -2,13 +2,14 @@ import { Check } from 'lucide-react';
 import { cx } from '@/lib/utils';
 import type { OrderStatus } from '@/types/common';
 import { FLOW_STEPS, stepIndex } from '../order-flow';
+import { t } from '@/i18n';
 
 export function OrderProgress({ status }: { status: OrderStatus }) {
   const terminal = status === 'CANCELLED' || status === 'EXPIRED' || status === 'DISPUTED';
   const current = terminal ? -1 : stepIndex(status);
 
   return (
-    <ol className={cx('gm-oprogress', terminal && 'gm-oprogress--off')} aria-label="Buyurtma bosqichlari">
+    <ol className={cx('gm-oprogress', terminal && 'gm-oprogress--off')} aria-label={t('Buyurtma bosqichlari')}>
       {FLOW_STEPS.map((step, index) => {
         const state = current > index || status === 'COMPLETED' ? 'done' : current === index ? 'current' : 'todo';
         return (

@@ -13,13 +13,14 @@ import { useAppStore } from '@/store/app.store';
 import { useMe } from '../hooks/useMe';
 import { useSetTwoFactor } from '../hooks/useTwoFactor';
 import './TwoFactorSettings.css';
+import { t } from '@/i18n';
 
 /**
  * Ikki bosqichli autentifikatsiya: yoqilgan bo‘lsa kirishda doim SMS/OTP kod so‘raladi, o‘chirilgan bo‘lsa faqat login va parol.
  * O‘chirish uchun joriy parol talab qilinadi. Administrator akkaunti uchun doim yoqilgan.
  */
 /** Bu yerda 401 — joriy parol noto‘g‘ri (telefon raqami kiritilmaydi), shuning uchun kirish xatosi matni ishlatilmaydi. */
-const twoFactorError = (error: unknown) => (error instanceof ApiError && error.code === 'UNAUTHORIZED' ? 'Kiritilgan parol noto‘g‘ri.' : getErrorMessage(error));
+const twoFactorError = (error: unknown) => (error instanceof ApiError && error.code === 'UNAUTHORIZED' ? t('Kiritilgan parol noto‘g‘ri.') : getErrorMessage(error));
 
 export function TwoFactorSettings() {
   const me = useMe();
@@ -41,7 +42,7 @@ export function TwoFactorSettings() {
 
   function handleToggle(next: boolean) {
     if (next) {
-      setTwoFactor.mutate({ enabled: true }, { onSuccess: () => pushToast('Ikki bosqichli autentifikatsiya yoqildi.', 'success') });
+      setTwoFactor.mutate({ enabled: true }, { onSuccess: () => pushToast(t('Ikki bosqichli autentifikatsiya yoqildi.'), 'success') });
     } else {
       setConfirmOpen(true);
     }
@@ -52,7 +53,7 @@ export function TwoFactorSettings() {
       { enabled: false, password },
       {
         onSuccess: () => {
-          pushToast('Ikki bosqichli autentifikatsiya o‘chirildi.', 'success');
+          pushToast(t('Ikki bosqichli autentifikatsiya o‘chirildi.'), 'success');
           setConfirmOpen(false);
           setPassword('');
         },
@@ -67,34 +68,34 @@ export function TwoFactorSettings() {
           {enabled ? <ShieldCheck size={22} /> : <ShieldOff size={22} />}
         </span>
         <div className="gm-twofa__title">
-          <h2 id="gm-twofa-title">Ikki bosqichli autentifikatsiya</h2>
-          <Badge tone={enabled ? 'success' : 'warning'}>{enabled ? 'Yoqilgan' : 'O‘chirilgan'}</Badge>
+          <h2 id="gm-twofa-title">{t('Ikki bosqichli autentifikatsiya')}</h2>
+          <Badge tone={enabled ? 'success' : 'warning'}>{enabled ? t('Yoqilgan') : t('O‘chirilgan')}</Badge>
         </div>
       </div>
 
       <p className="gm-twofa__text">
         {enabled
-          ? 'Akkauntga har safar kirganingizda login va paroldan keyin telefoningizga kelgan tasdiqlash kodi ham so‘raladi. Bu akkauntingizni begonalardan himoya qiladi.'
-          : 'Hozir akkauntga faqat login va parol bilan kiriladi, tasdiqlash kodi so‘ralmaydi. Xavfsizlik uchun ikki bosqichli autentifikatsiyani yoqib qo‘yish tavsiya etiladi.'}
+          ? t('Akkauntga har safar kirganingizda login va paroldan keyin telefoningizga kelgan tasdiqlash kodi ham so‘raladi. Bu akkauntingizni begonalardan himoya qiladi.')
+          : t('Hozir akkauntga faqat login va parol bilan kiriladi, tasdiqlash kodi so‘ralmaydi. Xavfsizlik uchun ikki bosqichli autentifikatsiyani yoqib qo‘yish tavsiya etiladi.')}
       </p>
 
       {setTwoFactor.isError && !confirmOpen && <Alert tone="danger">{twoFactorError(setTwoFactor.error)}</Alert>}
 
       <div className="gm-twofa__switch">
-        <Switch label={enabled ? 'Kirishda kod so‘ralsin' : 'Kirishda kod so‘ralmaydi'} checked={enabled} disabled={setTwoFactor.isPending} onChange={handleToggle} />
+        <Switch label={enabled ? t('Kirishda kod so‘ralsin') : t('Kirishda kod so‘ralmaydi')} checked={enabled} disabled={setTwoFactor.isPending} onChange={handleToggle} />
       </div>
 
       <Modal
         open={confirmOpen}
         onClose={closeConfirm}
-        title="Ikki bosqichli autentifikatsiyani o‘chirish"
+        title={t('Ikki bosqichli autentifikatsiyani o‘chirish')}
         footer={
           <>
             <Button variant="secondary" onClick={closeConfirm} disabled={setTwoFactor.isPending}>
-              Bekor qilish
+              {t('Bekor qilish')}
             </Button>
             <Button variant="danger" loading={setTwoFactor.isPending} disabled={password.length < 1} onClick={confirmDisable}>
-              O‘chirish
+              {t('O‘chirish')}
             </Button>
           </>
         }
@@ -107,16 +108,16 @@ export function TwoFactorSettings() {
           }}
           noValidate
         >
-          <Alert tone="warning" title="Xavfsizlik pasayadi">
-            O‘chirilgach, akkauntga faqat login va parol bilan kiriladi. Parolingiz o‘g‘irlansa, akkauntingizga begona kira oladi.
+          <Alert tone="warning" title={t('Xavfsizlik pasayadi')}>
+            {t('O‘chirilgach, akkauntga faqat login va parol bilan kiriladi. Parolingiz o‘g‘irlansa, akkauntingizga begona kira oladi.')}
           </Alert>
           <Input
-            label="Joriy parol"
+            label={t('Joriy parol')}
             type="password"
             aria-required="true"
             autoComplete="current-password"
             autoFocus
-            placeholder="Parolingizni kiriting"
+            placeholder={t('Parolingizni kiriting')}
             value={password}
             error={wrongPassword ? twoFactorError(setTwoFactor.error) : undefined}
             onChange={(event) => {

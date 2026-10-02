@@ -13,6 +13,7 @@ import {
 import { useCreateAdmin } from "../hooks/useAdmin";
 import { ADMIN_PERMISSION_OPTIONS } from "../permissions";
 import { PermissionPicker } from "./PermissionPicker";
+import { t } from '@/i18n';
 
 /** Tasodifiy, o‘qish oson (o‘xshash belgilarsiz) parol. */
 function generatePassword(length = 12): string {
@@ -33,7 +34,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
         <button
           type="button"
           className={done ? "gm-save__btn gm-save__btn--done" : "gm-save__btn"}
-          aria-label={`${label}ni nusxalash`}
+          aria-label={t('{label}ni nusxalash', { label })}
           onClick={() => {
             void navigator.clipboard?.writeText(value).then(() => {
               setDone(true);
@@ -46,7 +47,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
           ) : (
             <Copy size={16} aria-hidden="true" />
           )}
-          <span>{done ? "Nusxalandi" : "Nusxa"}</span>
+          <span>{done ? t('Nusxalandi') : t('Nusxa')}</span>
         </button>
       </div>
     </div>
@@ -110,8 +111,8 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
       <Modal
         open
         onClose={onClose}
-        title="Admin yaratildi"
-        footer={<Button onClick={onClose}>Tayyor</Button>}
+        title={t('Admin yaratildi')}
+        footer={<Button onClick={onClose}>{t('Tayyor')}</Button>}
       >
         <div className="gm-newadm gm-newadm--done">
           <div className="gm-newadm__ok">
@@ -120,22 +121,18 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
             </span>
             <div>
               <strong>{created.name}</strong>
-              <p>
-                admin sifatida qo‘shildi
-                {created.isSuperAdmin
-                  ? " (superadmin: barcha bo‘limlar)"
-                  : ` (${created.permissionCount} ta bo‘limga ruxsat bilan)`}
+              <p>{t('admin sifatida qo‘shildi')}{created.isSuperAdmin
+                  ? t(' (superadmin: barcha bo‘limlar)')
+                  : t(' ({permissionCount} ta bo‘limga ruxsat bilan)', { permissionCount: created.permissionCount })}
                 .
               </p>
             </div>
           </div>
           <div className="gm-newadm__creds">
-            <CopyRow label="Login (telefon)" value={created.phone} />
-            <CopyRow label="Parol" value={created.password} />
+            <CopyRow label={t('Login (telefon)')} value={created.phone} />
+            <CopyRow label={t('Parol')} value={created.password} />
           </div>
-          <p className="gm-newadm__warn" role="note">
-            Login va parolni adminga xavfsiz yo‘l bilan yetkazing.{" "}
-            <strong>Parol keyin qayta ko‘rsatilmaydi.</strong>
+          <p className="gm-newadm__warn" role="note">{t('Login va parolni adminga xavfsiz yo‘l bilan yetkazing.')}<strong>{t('Parol keyin qayta ko‘rsatilmaydi.')}</strong>
           </p>
         </div>
       </Modal>
@@ -146,7 +143,7 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
     <Modal
       open
       onClose={create.isPending ? () => undefined : onClose}
-      title="Yangi admin yaratish"
+      title={t('Yangi admin yaratish')}
       large
       footer={
         <>
@@ -154,12 +151,8 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
             variant="secondary"
             onClick={onClose}
             disabled={create.isPending}
-          >
-            Bekor qilish
-          </Button>
-          <Button loading={create.isPending} disabled={!valid} onClick={submit}>
-            Admin yaratish
-          </Button>
+          >{t('Bekor qilish')}</Button>
+          <Button loading={create.isPending} disabled={!valid} onClick={submit}>{t('Admin yaratish')}</Button>
         </>
       }
     >
@@ -175,11 +168,9 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
           <Alert tone="danger">{getErrorMessage(create.error)}</Alert>
         )}
         <section className="gm-newadm__sec" aria-labelledby="gm-newadm-s1">
-          <h3 id="gm-newadm-s1" className="gm-newadm__sec-title">
-            Shaxsiy ma’lumotlar
-          </h3>
+          <h3 id="gm-newadm-s1" className="gm-newadm__sec-title">{t('Shaxsiy ma’lumotlar')}</h3>
           <Input
-            label="Telefon raqami"
+            label={t('Telefon raqami')}
             prefix="+998"
             inputMode="numeric"
             placeholder="90 123 45 67"
@@ -191,15 +182,15 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
           />
           <div className="gm-newadm__row">
             <Input
-              label="Ism"
-              placeholder="Ism"
+              label={t('Ism')}
+              placeholder={t('Ism')}
               value={firstName}
               maxLength={100}
               onChange={(event) => setFirstName(event.target.value)}
             />
             <Input
-              label="Familiya"
-              placeholder="Familiya"
+              label={t('Familiya')}
+              placeholder={t('Familiya')}
               value={lastName}
               maxLength={100}
               onChange={(event) => setLastName(event.target.value)}
@@ -208,31 +199,26 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
         </section>
 
         <section className="gm-newadm__sec" aria-labelledby="gm-newadm-s2">
-          <h3 id="gm-newadm-s2" className="gm-newadm__sec-title">
-            Kirish paroli
-          </h3>
+          <h3 id="gm-newadm-s2" className="gm-newadm__sec-title">{t('Kirish paroli')}</h3>
           <div className="gm-newadm__pw">
             <Input
-              label="Parol"
+              label={t('Parol')}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
             <div className="gm-newadm__pwbar">
-              <span>Kamida 8 ta belgi</span>
+              <span>{t('Kamida 8 ta belgi')}</span>
               <button
                 type="button"
                 onClick={() => setPassword(generatePassword())}
               >
-                <RefreshCw size={14} aria-hidden="true" /> Yangi parol yaratish
-              </button>
+                <RefreshCw size={14} aria-hidden="true" />{' '}{t('Yangi parol yaratish')}</button>
             </div>
           </div>
         </section>
 
         <section className="gm-newadm__sec" aria-labelledby="gm-newadm-s3">
-          <h3 id="gm-newadm-s3" className="gm-newadm__sec-title">
-            Huquqlar
-          </h3>
+          <h3 id="gm-newadm-s3" className="gm-newadm__sec-title">{t('Huquqlar')}</h3>
           <label className="gm-newadm__super">
             <input
               type="checkbox"
@@ -240,11 +226,8 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
               onChange={(event) => setIsSuperAdmin(event.target.checked)}
             />
             <span>
-              <strong>Superadmin huquqi</strong>
-              <small>
-                Boshqa adminlarni yaratish va boshqarish mumkin bo‘ladi. Odatda
-                kerak emas.
-              </small>
+              <strong>{t('Superadmin huquqi')}</strong>
+              <small>{t('Boshqa adminlarni yaratish va boshqarish mumkin bo‘ladi. Odatda kerak emas.')}</small>
             </span>
           </label>
           {!isSuperAdmin && (

@@ -1,21 +1,22 @@
 import { Badge } from '@/components/ui/Badge';
 import type { OrderStatus as OrderStatusEnum } from '@/types/common';
+import { t } from '@/i18n';
 
 const LABEL: Record<OrderStatusEnum, string> = {
-  DRAFT: 'Qoralama',
-  SUBMITTED: 'Yuborildi',
-  MATCHING: 'Mos usta izlanmoqda',
-  OFFERS_RECEIVED: 'Takliflar keldi',
-  BOOKED: 'Band qilindi',
-  CONFIRMED: 'Tasdiqlandi',
-  ON_THE_WAY: 'Usta yo‘lda',
-  ARRIVED: 'Usta yetib keldi',
-  IN_PROGRESS: 'Ish jarayonida',
-  WAITING_CONFIRMATION: 'Tasdiq kutilmoqda',
-  COMPLETED: 'Yakunlandi',
-  CANCELLED: 'Bekor qilindi',
-  EXPIRED: 'Muddati tugadi',
-  DISPUTED: 'Nizoli',
+  DRAFT: t('Qoralama'),
+  SUBMITTED: t('Yuborildi'),
+  MATCHING: t('Mos usta izlanmoqda'),
+  OFFERS_RECEIVED: t('Takliflar keldi'),
+  BOOKED: t('Band qilindi'),
+  CONFIRMED: t('Tasdiqlandi'),
+  ON_THE_WAY: t('Usta yo‘lda'),
+  ARRIVED: t('Usta yetib keldi'),
+  IN_PROGRESS: t('Ish jarayonida'),
+  WAITING_CONFIRMATION: t('Tasdiq kutilmoqda'),
+  COMPLETED: t('Yakunlandi'),
+  CANCELLED: t('Bekor qilindi'),
+  EXPIRED: t('Muddati tugadi'),
+  DISPUTED: t('Nizoli'),
 };
 
 const TONE: Record<OrderStatusEnum, 'neutral' | 'primary' | 'success' | 'warning' | 'danger'> = {

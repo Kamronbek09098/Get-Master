@@ -9,11 +9,12 @@ import { RedirectIfAuthed } from '@/router/ProtectedRoute';
 import type { Role } from '@/types/common';
 import { LandingPage } from './landing/LandingPage';
 import './RoleSelectPage.css';
+import { t } from '@/i18n';
 
 const OPTIONS: Array<{ role: Role; icon: LucideIcon; title: string; text: string }> = [
-  { role: 'CUSTOMER', icon: UserRound, title: 'Men mijozman', text: 'Muammoni tasvirlab, mos ustani topaman' },
-  { role: 'MASTER', icon: Wrench, title: 'Men ustaman', text: 'Buyurtmalar olaman va daromad topaman' },
-  { role: 'ADMIN', icon: Shield, title: 'Administrator', text: 'Platformani boshqaraman' },
+  { role: 'CUSTOMER', icon: UserRound, title: t('Men mijozman'), text: t('Muammoni tasvirlab, mos ustani topaman') },
+  { role: 'MASTER', icon: Wrench, title: t('Men ustaman'), text: t('Buyurtmalar olaman va daromad topaman') },
+  { role: 'ADMIN', icon: Shield, title: t('Administrator'), text: t('Platformani boshqaraman') },
 ];
 
 export function RoleSelectPage() {
@@ -43,8 +44,8 @@ export function RoleSelectPage() {
         </div>
         <div className="gm-role-select__body">
           <Logo />
-          <h1>GetMaster’ga xush kelibsiz</h1>
-          <p>Davom etish uchun rolingizni tanlang.</p>
+          <h1>{t('GetMaster’ga xush kelibsiz')}</h1>
+          <p>{t('Davom etish uchun rolingizni tanlang.')}</p>
           <div className="gm-role-select__options">
             {OPTIONS.map((option) => (
               <button

@@ -9,6 +9,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime } from '@/lib/utils';
 import { useAcceptReschedule, useDeclineReschedule, useProposeReschedule } from '../hooks/useOrders';
 import type { OrderDetailsData } from '../types';
+import { t } from '@/i18n';
 
 const RESCHEDULABLE = new Set(['BOOKED', 'CONFIRMED', 'ON_THE_WAY', 'ARRIVED']);
 
@@ -29,27 +30,23 @@ function ProposeDialog({ orderId, onClose }: { orderId: string; onClose: () => v
     <Modal
       open
       onClose={propose.isPending ? () => undefined : onClose}
-      title="Yangi vaqt taklif qilish"
+      title={t('Yangi vaqt taklif qilish')}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} disabled={propose.isPending}>
-            Bekor qilish
-          </Button>
-          <Button loading={propose.isPending} disabled={!valid} onClick={() => propose.mutate(new Date(when).toISOString(), { onSuccess: onClose })}>
-            Taklif yuborish
-          </Button>
+          <Button variant="ghost" onClick={onClose} disabled={propose.isPending}>{t('Bekor qilish')}</Button>
+          <Button loading={propose.isPending} disabled={!valid} onClick={() => propose.mutate(new Date(when).toISOString(), { onSuccess: onClose })}>{t('Taklif yuborish')}</Button>
         </>
       }
     >
       <div className="gm-form">
-        <Alert tone="info">Ikkinchi tomon tasdiqlaguncha yangi vaqt kuchga kirmaydi.</Alert>
+        <Alert tone="info">{t('Ikkinchi tomon tasdiqlaguncha yangi vaqt kuchga kirmaydi.')}</Alert>
         {propose.isError && <Alert tone="danger">{getErrorMessage(propose.error)}</Alert>}
         <Input
-          label="Yangi sana va vaqt"
+          label={t('Yangi sana va vaqt')}
           type="datetime-local"
           min={nowLocal()}
           value={when}
-          error={inPast ? 'O‘tgan vaqtni tanlab bo‘lmaydi' : undefined}
+          error={inPast ? t('O‘tgan vaqtni tanlab bo‘lmaydi') : undefined}
           onChange={(event) => setWhen(event.target.value)}
         />
       </div>
@@ -70,28 +67,23 @@ export function ScheduleCard({ order }: { order: OrderDetailsData }) {
   return (
     <section className="gm-ocard">
       <h2 className="gm-ocard__title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <CalendarClock size={20} /> Belgilangan vaqt
-      </h2>
-      <p className="gm-ocard__value">{order.scheduledStartAt ? formatDateTime(order.scheduledStartAt) : 'Vaqt belgilanmagan'}</p>
+        <CalendarClock size={20} />{' '}{t('Belgilangan vaqt')}</h2>
+      <p className="gm-ocard__value">{order.scheduledStartAt ? formatDateTime(order.scheduledStartAt) : t('Vaqt belgilanmagan')}</p>
       {error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
 
       {order.reschedule ? (
         order.reschedule.proposedByMe ? (
-          <Alert tone="warning">
-            Siz yangi vaqt taklif qildingiz: <strong>{formatDateTime(order.reschedule.proposedStartAt)}</strong>. {accountName(order.counterpart)} tasdiqlashini kutmoqda.
+          <Alert tone="warning">{t('Siz yangi vaqt taklif qildingiz:')}{' '}<strong>{formatDateTime(order.reschedule.proposedStartAt)}</strong>. {accountName(order.counterpart)} tasdiqlashini kutmoqda.
           </Alert>
         ) : (
           <Alert tone="warning">
-            <p style={{ margin: '0 0 10px' }}>
-              {accountName(order.counterpart)} yangi vaqt taklif qildi: <strong>{formatDateTime(order.reschedule.proposedStartAt)}</strong>.
+            <p style={{ margin: '0 0 10px' }}>{t('{accountName} yangi vaqt taklif qildi:', { accountName: accountName(order.counterpart) })}{' '}<strong>{formatDateTime(order.reschedule.proposedStartAt)}</strong>.
             </p>
             <div className="gm-oactions">
               <Button size="sm" loading={accept.isPending} onClick={() => accept.mutate()}>
-                <CheckCircle2 size={15} /> Qabul qilish
-              </Button>
+                <CheckCircle2 size={15} />{' '}{t('Qabul qilish')}</Button>
               <Button size="sm" variant="secondary" loading={decline.isPending} onClick={() => decline.mutate()}>
-                <XCircle size={15} /> Rad etish
-              </Button>
+                <XCircle size={15} />{' '}{t('Rad etish')}</Button>
             </div>
           </Alert>
         )
@@ -99,8 +91,7 @@ export function ScheduleCard({ order }: { order: OrderDetailsData }) {
         canReschedule && (
           <div className="gm-oactions">
             <Button size="sm" variant="secondary" onClick={() => setProposing(true)}>
-              <CalendarClock size={15} /> Vaqtni o‘zgartirish
-            </Button>
+              <CalendarClock size={15} />{' '}{t('Vaqtni o‘zgartirish')}</Button>
           </div>
         )
       )}

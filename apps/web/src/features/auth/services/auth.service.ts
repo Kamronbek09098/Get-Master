@@ -2,6 +2,7 @@ import { apiGet, apiPost } from '@/services/api.client';
 import { REQUIRED_POLICY_IDS } from '@/config/policies';
 import type {
   DeviceSession,
+  GoogleSignInResult,
   LoginInput,
   LoginResult,
   RegisterInput,
@@ -20,6 +21,12 @@ export const authService = {
   },
   resendRegistration(phone: string) {
     return apiPost<{ verificationRequired: true; developmentCode?: string }>('/auth/resend-registration', { phone });
+  },
+  googleSignIn(credential: string) {
+    return apiPost<GoogleSignInResult>('/auth/google', { credential });
+  },
+  googleRegister(signupToken: string, phone: string) {
+    return apiPost<RegisterResult>('/auth/google/register', { signupToken, phone, acceptedPolicyIds: REQUIRED_POLICY_IDS });
   },
   login(input: LoginInput) {
     return apiPost<LoginResult>('/auth/login', input);

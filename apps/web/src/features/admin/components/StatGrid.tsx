@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { formatMoney } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
+import { t } from '@/i18n';
 
 export function StatGrid({ items }: { items: Array<{ label: string; value: string | number; icon?: ReactNode; to?: string }> }) {
   return (
@@ -54,7 +55,7 @@ export function CountList({ title, counts }: { title: string; counts: Record<str
     <div className="gm-count-card">
       <h3>{title}</h3>
       {entries.length === 0 ? (
-        <p className="gm-card__meta">Ma’lumot yo‘q</p>
+        <p className="gm-card__meta">{t('Ma’lumot yo‘q')}</p>
       ) : (
         <ul className="gm-count-list">
           {entries.map(([key, value]) => (

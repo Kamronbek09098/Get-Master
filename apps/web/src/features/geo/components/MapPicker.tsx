@@ -7,6 +7,7 @@ import { Modal } from '@/components/ui/Modal';
 import { geoService } from '../geo.service';
 import type { GeoPlace } from '../geo.service';
 import './geo.css';
+import { t } from '@/i18n';
 
 const TASHKENT: [number, number] = [41.2995, 69.2401];
 
@@ -87,13 +88,11 @@ export function MapPicker({ open, initial, onClose, onPick }: MapPickerProps) {
     <Modal
       open={open}
       onClose={onClose}
-      title="Xaritadan manzil tanlang"
+      title={t('Xaritadan manzil tanlang')}
       wide
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
-            Bekor qilish
-          </Button>
+          <Button variant="ghost" onClick={onClose}>{t('Bekor qilish')}</Button>
           <Button
             disabled={!center || loading}
             onClick={() => {
@@ -101,9 +100,7 @@ export function MapPicker({ open, initial, onClose, onPick }: MapPickerProps) {
               const base: GeoPlace = place ?? { title: '', subtitle: '', addressLine: `${center.lat.toFixed(5)}, ${center.lon.toFixed(5)}`, city: null, district: null, latitude: null, longitude: null };
               onPick({ ...base, latitude: center.lat, longitude: center.lon });
             }}
-          >
-            Shu manzilni tanlash
-          </Button>
+          >{t('Shu manzilni tanlash')}</Button>
         </>
       }
     >
@@ -112,11 +109,11 @@ export function MapPicker({ open, initial, onClose, onPick }: MapPickerProps) {
         <span className="gm-mappicker__pin" aria-hidden="true">
           <MapPin size={38} strokeWidth={2.2} />
         </span>
-        <button type="button" className="gm-mappicker__locate" onClick={locate} aria-label="Joriy joylashuvim">
+        <button type="button" className="gm-mappicker__locate" onClick={locate} aria-label={t('Joriy joylashuvim')}>
           <LocateFixed size={20} />
         </button>
         <div className="gm-mappicker__address" role="status" aria-live="polite">
-          {loading ? 'Manzil aniqlanmoqda…' : failed ? 'Manzilni aniqlab bo‘lmadi. Xaritani siljitib ko‘ring.' : place ? <><strong>{place.addressLine}</strong></> : 'Xaritani siljiting'}
+          {loading ? t('Manzil aniqlanmoqda…') : failed ? t('Manzilni aniqlab bo‘lmadi. Xaritani siljitib ko‘ring.') : place ? <><strong>{place.addressLine}</strong></> : t('Xaritani siljiting')}
         </div>
       </div>
     </Modal>

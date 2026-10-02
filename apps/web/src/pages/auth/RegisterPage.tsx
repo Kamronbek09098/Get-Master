@@ -1,7 +1,9 @@
 import { Link, Navigate } from 'react-router-dom';
+import { GoogleAuth } from '@/features/auth/components/GoogleAuth';
 import { RegisterForm } from '@/features/auth/components/RegisterForm';
 import { env } from '@/lib/env';
 import { useAuthStore } from '@/store/auth.store';
+import { t } from '@/i18n';
 
 export function RegisterPage() {
   const isAdmin = useAuthStore((s) => s.preferredRole) === 'ADMIN';
@@ -9,13 +11,14 @@ export function RegisterPage() {
 
   return (
     <div className="gm-auth-page">
-      <h1>Ro‘yxatdan o‘tish</h1>
+      <h1>{t('Ro‘yxatdan o‘tish')}</h1>
       <p className="gm-auth-page__subtitle">{env.appRole === 'MASTER'
-          ? 'Ro‘yxatdan o‘ting, so‘ng usta profilingizni to‘ldiring.'
-          : 'Mijoz sifatida ro‘yxatdan o‘ting va birinchi so‘rovingizni yarating.'}</p>
+          ? t('Ro‘yxatdan o‘ting, so‘ng usta profilingizni to‘ldiring.')
+          : t('Mijoz sifatida ro‘yxatdan o‘ting va birinchi so‘rovingizni yarating.')}</p>
       <RegisterForm />
+      <GoogleAuth />
       <p className="gm-auth-page__switch">
-        Akkauntingiz bormi? <Link to="/login">Kirish</Link>
+        {t('Akkauntingiz bormi?')} <Link to="/login">{t('Kirish')}</Link>
       </p>
     </div>
   );

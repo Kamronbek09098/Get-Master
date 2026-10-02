@@ -1,4 +1,5 @@
 import type { OrderStatus } from '@/types/common';
+import { t } from '@/i18n';
 
 export interface FlowStep {
   status: OrderStatus;
@@ -6,33 +7,33 @@ export interface FlowStep {
 }
 
 export const FLOW_STEPS: FlowStep[] = [
-  { status: 'BOOKED', label: 'Band qilindi' },
-  { status: 'CONFIRMED', label: 'Tasdiqlandi' },
-  { status: 'ON_THE_WAY', label: 'Yo‘lda' },
-  { status: 'ARRIVED', label: 'Yetib keldi' },
-  { status: 'IN_PROGRESS', label: 'Ish jarayonida' },
-  { status: 'WAITING_CONFIRMATION', label: 'Tasdiq kutilmoqda' },
-  { status: 'COMPLETED', label: 'Yakunlandi' },
+  { status: 'BOOKED', label: t('Band qilindi') },
+  { status: 'CONFIRMED', label: t('Tasdiqlandi') },
+  { status: 'ON_THE_WAY', label: t('Yo‘lda') },
+  { status: 'ARRIVED', label: t('Yetib keldi') },
+  { status: 'IN_PROGRESS', label: t('Ish jarayonida') },
+  { status: 'WAITING_CONFIRMATION', label: t('Tasdiq kutilmoqda') },
+  { status: 'COMPLETED', label: t('Yakunlandi') },
 ];
 
 export const STATUS_TEXT: Record<OrderStatus, string> = {
-  DRAFT: 'Qoralama',
-  SUBMITTED: 'Yuborildi',
-  MATCHING: 'Mos usta izlanmoqda',
-  OFFERS_RECEIVED: 'Takliflar keldi',
-  BOOKED: 'Band qilindi',
-  CONFIRMED: 'Tasdiqlandi',
-  ON_THE_WAY: 'Usta yo‘lda',
-  ARRIVED: 'Usta yetib keldi',
-  IN_PROGRESS: 'Ish jarayonida',
-  WAITING_CONFIRMATION: 'Tasdiq kutilmoqda',
-  COMPLETED: 'Yakunlandi',
-  CANCELLED: 'Bekor qilindi',
-  EXPIRED: 'Muddati tugadi',
-  DISPUTED: 'Nizoli',
+  DRAFT: t('Qoralama'),
+  SUBMITTED: t('Yuborildi'),
+  MATCHING: t('Mos usta izlanmoqda'),
+  OFFERS_RECEIVED: t('Takliflar keldi'),
+  BOOKED: t('Band qilindi'),
+  CONFIRMED: t('Tasdiqlandi'),
+  ON_THE_WAY: t('Usta yo‘lda'),
+  ARRIVED: t('Usta yetib keldi'),
+  IN_PROGRESS: t('Ish jarayonida'),
+  WAITING_CONFIRMATION: t('Tasdiq kutilmoqda'),
+  COMPLETED: t('Yakunlandi'),
+  CANCELLED: t('Bekor qilindi'),
+  EXPIRED: t('Muddati tugadi'),
+  DISPUTED: t('Nizoli'),
 };
 
-export const ACTOR_TEXT = { CUSTOMER: 'Mijoz', MASTER: 'Usta', ADMIN: 'Administrator', SYSTEM: 'Tizim' } as const;
+export const ACTOR_TEXT = { CUSTOMER: t('Mijoz'), MASTER: t('Usta'), ADMIN: t('Administrator'), SYSTEM: t('Tizim') } as const;
 
 export const ACTIVE_STATUSES: readonly OrderStatus[] = ['BOOKED', 'CONFIRMED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'WAITING_CONFIRMATION', 'DISPUTED'];
 

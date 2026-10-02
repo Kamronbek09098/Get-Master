@@ -1,11 +1,12 @@
+import { t } from '@/i18n';
 export type UiSize = 'small' | 'medium' | 'large';
 
 const KEY = 'getmaster.ui-size';
 
 export const UI_SIZES: ReadonlyArray<{ value: UiSize; label: string }> = [
-  { value: 'small', label: 'Kichik' },
-  { value: 'medium', label: 'O‘rtacha' },
-  { value: 'large', label: 'Katta' },
+  { value: 'small', label: t('Kichik') },
+  { value: 'medium', label: t('O‘rtacha') },
+  { value: 'large', label: t('Katta') },
 ];
 
 export function getUiSize(): UiSize {

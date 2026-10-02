@@ -14,17 +14,18 @@ import { STATUS_TEXT } from '@/features/order/order-flow';
 import { useAdminOrders, useAdminOrdersSummary } from '@/features/admin/hooks/useAdmin';
 import type { AdminOrderFilters, AdminOrderStatus } from '@/features/admin/types';
 import './AdminOrdersPage.css';
+import { t } from '@/i18n';
 
 const TABS: Array<{ value: AdminOrderStatus | ''; label: string }> = [
-  { value: '', label: 'Hammasi' },
-  { value: 'BOOKED', label: 'Band qilingan' },
-  { value: 'CONFIRMED', label: 'Tasdiqlangan' },
-  { value: 'ON_THE_WAY', label: 'Yo‘lda' },
-  { value: 'IN_PROGRESS', label: 'Jarayonda' },
-  { value: 'WAITING_CONFIRMATION', label: 'Tasdiq kutilmoqda' },
-  { value: 'COMPLETED', label: 'Yakunlangan' },
-  { value: 'CANCELLED', label: 'Bekor qilingan' },
-  { value: 'DISPUTED', label: 'Nizoli' },
+  { value: '', label: t('Hammasi') },
+  { value: 'BOOKED', label: t('Band qilingan') },
+  { value: 'CONFIRMED', label: t('Tasdiqlangan') },
+  { value: 'ON_THE_WAY', label: t('Yo‘lda') },
+  { value: 'IN_PROGRESS', label: t('Jarayonda') },
+  { value: 'WAITING_CONFIRMATION', label: t('Tasdiq kutilmoqda') },
+  { value: 'COMPLETED', label: t('Yakunlangan') },
+  { value: 'CANCELLED', label: t('Bekor qilingan') },
+  { value: 'DISPUTED', label: t('Nizoli') },
 ];
 const dayStart = (value: string) => (value ? new Date(`${value}T00:00:00`).toISOString() : undefined);
 const dayEnd = (value: string) => (value ? new Date(`${value}T23:59:59.999`).toISOString() : undefined);
@@ -63,13 +64,13 @@ export function AdminOrdersPage() {
     <div className="gm-aord">
       <div className="gm-page-header">
         <div>
-          <h1>Buyurtmalar</h1>
-          <p className="gm-page-lead">Platformadagi barcha buyurtmalar: holati, tomonlar, to‘lovlar va usta yuklagan rasmlar. Kerak bo‘lsa, boshqarish mumkin.</p>
+          <h1>{t('Buyurtmalar')}</h1>
+          <p className="gm-page-lead">{t('Platformadagi barcha buyurtmalar: holati, tomonlar, to‘lovlar va usta yuklagan rasmlar. Kerak bo‘lsa, boshqarish mumkin.')}</p>
         </div>
       </div>
 
       {summary.data && (
-        <section className="gm-aord__stats" aria-label="Umumiy ko‘rsatkichlar">
+        <section className="gm-aord__stats" aria-label={t('Umumiy ko‘rsatkichlar')}>
           <button
             type="button"
             className={cx('gm-aord__stat', !status && !flagged && !ongoing && 'gm-aord__stat--on')}
@@ -78,17 +79,17 @@ export function AdminOrdersPage() {
           >
             <ClipboardList size={18} />
             <strong>{summary.data.total}</strong>
-            <small>Jami buyurtma</small>
+            <small>{t('Jami buyurtma')}</small>
           </button>
           <button type="button" className={cx('gm-aord__stat', ongoing && 'gm-aord__stat--on')} onClick={() => selectView({ ongoing: true })} aria-pressed={ongoing}>
             <ArrowRight size={18} />
             <strong>{summary.data.active}</strong>
-            <small>Jarayonda</small>
+            <small>{t('Jarayonda')}</small>
           </button>
           <button type="button" className={cx('gm-aord__stat gm-aord__stat--warn', flagged && 'gm-aord__stat--on')} onClick={() => selectView({ flagged: true })} aria-pressed={flagged}>
             <AlertTriangle size={18} />
             <strong>{summary.data.flagged}</strong>
-            <small>Nizoli / shikoyatli</small>
+            <small>{t('Nizoli / shikoyatli')}</small>
           </button>
           <button
             type="button"
@@ -98,7 +99,7 @@ export function AdminOrdersPage() {
           >
             <CheckCircle2 size={18} />
             <strong>{counts.COMPLETED ?? 0}</strong>
-            <small>Yakunlangan</small>
+            <small>{t('Yakunlangan')}</small>
           </button>
           <button
             type="button"
@@ -108,17 +109,17 @@ export function AdminOrdersPage() {
           >
             <Wallet size={18} />
             <strong>{formatMoney(summary.data.completedAmount)}</strong>
-            <small>Yakunlanganlar summasi</small>
+            <small>{t('Yakunlanganlar summasi')}</small>
           </button>
         </section>
       )}
 
-      <section className="gm-aord__filters" aria-label="Filtrlar">
+      <section className="gm-aord__filters" aria-label={t('Filtrlar')}>
         <div className="gm-aord__search">
           <Search size={16} aria-hidden="true" />
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buyurtma raqami (№), mijoz yoki usta ID/ismi/telefoni, so‘rov nomi" aria-label="Qidirish" />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Buyurtma raqami (№), mijoz yoki usta ID/ismi/telefoni, so‘rov nomi')} aria-label={t('Qidirish')} />
         </div>
-        <div className="gm-aord__tabs" role="group" aria-label="Holat">
+        <div className="gm-aord__tabs" role="group" aria-label={t('Holat')}>
           {TABS.map((tab) => (
             <button
               key={tab.value}
@@ -134,11 +135,11 @@ export function AdminOrdersPage() {
         </div>
         <div className="gm-aord__dates">
           <label>
-            <span>Sanadan</span>
+            <span>{t('Sanadan')}</span>
             <input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} />
           </label>
           <label>
-            <span>Sanagacha</span>
+            <span>{t('Sanagacha')}</span>
             <input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} />
           </label>
           {active && (
@@ -154,15 +155,14 @@ export function AdminOrdersPage() {
                 setOngoing(false);
               }}
             >
-              <X size={14} /> Tozalash
-            </Button>
+              <X size={14} />{' '}{t('Tozalash')}</Button>
           )}
         </div>
       </section>
 
       {orders.isLoading && <PageLoader />}
       {orders.isError && <Alert tone="danger">{getErrorMessage(orders.error)}</Alert>}
-      {orders.data && items.length === 0 && <EmptyState title="Buyurtma topilmadi" description={active ? 'Filtrlarni o‘zgartirib ko‘ring.' : undefined} />}
+      {orders.data && items.length === 0 && <EmptyState title={t('Buyurtma topilmadi')} description={active ? t('Filtrlarni o‘zgartirib ko‘ring.') : undefined} />}
 
       <ul className="gm-aord__list">
         {items.map((order) => (
@@ -180,7 +180,7 @@ export function AdminOrdersPage() {
                 <div className="gm-aord__meta">
                   <span>№{order.orderNumber}</span>
                   <span title={formatDateTime(order.createdAt)}>{formatRelativeTime(order.createdAt)}</span>
-                  {order.scheduledStartAt && <span>Reja: {formatDateTime(order.scheduledStartAt)}</span>}
+                  {order.scheduledStartAt && <span>{t('Reja:')}{' '}{formatDateTime(order.scheduledStartAt)}</span>}
                   {order._count.workProofs > 0 && (
                     <span className="gm-aord__chip">
                       <Camera size={12} /> {order._count.workProofs} rasm
@@ -203,9 +203,7 @@ export function AdminOrdersPage() {
       </ul>
       {orders.hasNextPage && (
         <div className="gm-aord__more">
-          <Button variant="secondary" loading={orders.isFetchingNextPage} onClick={() => void orders.fetchNextPage()}>
-            Ko‘proq yuklash
-          </Button>
+          <Button variant="secondary" loading={orders.isFetchingNextPage} onClick={() => void orders.fetchNextPage()}>{t('Ko‘proq yuklash')}</Button>
         </div>
       )}
     </div>

@@ -14,6 +14,10 @@ export default registerAs('telegram', () => ({
   securityThreadId: process.env.TELEGRAM_SECURITY_THREAD_ID ? Number(process.env.TELEGRAM_SECURITY_THREAD_ID) : undefined,
   // Foydalanuvchilarning kirish/chiqish hodisalari mavzusi.
   sessionsThreadId: process.env.TELEGRAM_SESSIONS_THREAD_ID ? Number(process.env.TELEGRAM_SESSIONS_THREAD_ID) : undefined,
+  // Alohida «xato ogohlantirishlari» mavzusi (credentials guruhida). Bo‘sh bo‘lsa xavfsizlik mavzusi ishlatiladi.
+  alertsThreadId: process.env.TELEGRAM_ALERTS_THREAD_ID ? Number(process.env.TELEGRAM_ALERTS_THREAD_ID) : undefined,
+  // Bot HECH QACHON xabar yubormaydigan guruhlar (vergul bilan ajratilgan chat ID lar).
+  blockedChatIds: (process.env.TELEGRAM_BLOCKED_CHAT_IDS ?? '').split(',').map((id) => id.trim()).filter(Boolean),
   minStatus: Number(process.env.TELEGRAM_ALERT_MIN_STATUS ?? 500),
   dedupeWindowMs: Number(process.env.TELEGRAM_ALERT_DEDUPE_SECONDS ?? 300) * 1000,
   timeoutMs: 8_000,

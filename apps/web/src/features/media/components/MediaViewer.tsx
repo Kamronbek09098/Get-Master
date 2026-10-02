@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { useMediaSignedUrl, useMediaStatus } from '../hooks/useMedia';
 import { MediaThumbnail } from './MediaThumbnail';
 import './MediaViewer.css';
+import { t } from '@/i18n';
 
 /** Kichik rasm; bosilganda faylning asl (to‘liq) nusxasi katta oynada ochiladi. */
 export function MediaViewer({ assetId, alt, label = 'Fayl', size = 'md' }: { assetId: string; alt: string; label?: string; size?: 'md' | 'lg' }) {
@@ -29,9 +30,9 @@ export function MediaViewer({ assetId, alt, label = 'Fayl', size = 'md' }: { ass
 
   return (
     <>
-      <button type="button" className={size === 'lg' ? 'gm-mviewer__open gm-mviewer__open--lg' : 'gm-mviewer__open'} onClick={() => setOpen(true)} aria-label={`${label}ni to‘liq ochish`}>
+      <button type="button" className={size === 'lg' ? 'gm-mviewer__open gm-mviewer__open--lg' : 'gm-mviewer__open'} onClick={() => setOpen(true)} aria-label={t('{label}ni to‘liq ochish', { label })}>
         <MediaThumbnail assetId={assetId} alt={alt} variant={size === 'lg' ? 'medium' : 'thumbnail'} />
-        <span className="gm-mviewer__hint">To‘liq ochish</span>
+        <span className="gm-mviewer__hint">{t('To‘liq ochish')}</span>
       </button>
       <Modal
         open={open}
@@ -43,13 +44,11 @@ export function MediaViewer({ assetId, alt, label = 'Fayl', size = 'md' }: { ass
             <>
               <a href={url} target="_blank" rel="noreferrer">
                 <Button variant="secondary">
-                  <ExternalLink size={16} /> Yangi oynada
-                </Button>
+                  <ExternalLink size={16} />{' '}{t('Yangi oynada')}</Button>
               </a>
               <a href={url} download>
                 <Button>
-                  <Download size={16} /> Yuklab olish
-                </Button>
+                  <Download size={16} />{' '}{t('Yuklab olish')}</Button>
               </a>
             </>
           ) : undefined
@@ -57,7 +56,7 @@ export function MediaViewer({ assetId, alt, label = 'Fayl', size = 'md' }: { ass
       >
         <div className="gm-mviewer__stage">
           {original.isLoading && <Spinner />}
-          {original.isError && <p>Faylni yuklab bo‘lmadi.</p>}
+          {original.isError && <p>{t('Faylni yuklab bo‘lmadi.')}</p>}
           {url && !broken && !asVideo && (
             <div className={cx('gm-mviewer__frame', zoomed && 'gm-mviewer__frame--zoomed')}>
               <img
@@ -78,9 +77,7 @@ export function MediaViewer({ assetId, alt, label = 'Fayl', size = 'md' }: { ass
                 </>
               )}
               {!asVideo && dims && (
-                <>
-                  {info.data && ' · '}
-                  {dims.w} × {dims.h} px · {zoomed ? 'sig‘dirish uchun rasmni bosing' : 'rasm asl o‘lchamida; kattaroq bo‘lsa, bosib to‘liq ko‘ring'}
+                <>{t('{p} {w} × {h} px ·', { p: info.data && ' · ', w: dims.w, h: dims.h })}{' '}{zoomed ? t('sig‘dirish uchun rasmni bosing') : t('rasm asl o‘lchamida; kattaroq bo‘lsa, bosib to‘liq ko‘ring')}
                 </>
               )}
             </p>
@@ -88,8 +85,7 @@ export function MediaViewer({ assetId, alt, label = 'Fayl', size = 'md' }: { ass
           {url && !broken && asVideo && <video src={url} controls className="gm-mviewer__img gm-mviewer__img--video" onError={() => setBroken(true)} />}
           {url && broken && (
             <p className="gm-mviewer__file">
-              <FileText size={28} aria-hidden="true" /> Bu fayl brauzerda ko‘rsatilmaydi. Yuqoridagi tugmalar orqali oching yoki yuklab oling.
-            </p>
+              <FileText size={28} aria-hidden="true" />{' '}{t('Bu fayl brauzerda ko‘rsatilmaydi. Yuqoridagi tugmalar orqali oching yoki yuklab oling.')}</p>
           )}
         </div>
       </Modal>

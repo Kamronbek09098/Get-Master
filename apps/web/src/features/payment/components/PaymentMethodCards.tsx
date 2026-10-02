@@ -3,6 +3,7 @@ import { cx } from '@/lib/utils';
 import type { PaymentProvider } from '@/types/common';
 import { PROVIDER_OPTIONS } from '../labels';
 import './Payment.css';
+import { t } from '@/i18n';
 
 const BRAND: Partial<Record<PaymentProvider, string>> = { CLICK: 'click', PAYME: 'payme', UZUM: 'uzum' };
 
@@ -22,7 +23,7 @@ export function PaymentMethodCards({
   disabled?: boolean;
 }) {
   return (
-    <div className={cx('gm-paym', compact && 'gm-paym--compact')} role="radiogroup" aria-label="To‘lov usuli">
+    <div className={cx('gm-paym', compact && 'gm-paym--compact')} role="radiogroup" aria-label={t('To‘lov usuli')}>
       {PROVIDER_OPTIONS.map((option) => {
         const selected = value === option.value;
         return (
@@ -34,7 +35,7 @@ export function PaymentMethodCards({
             <span className="gm-paym__text">
               <strong>
                 {option.label}
-                {current === option.value && <em>Tanlangan</em>}
+                {current === option.value && <em>{t('Tanlangan')}</em>}
               </strong>
               {!compact && <small>{option.hint}</small>}
             </span>

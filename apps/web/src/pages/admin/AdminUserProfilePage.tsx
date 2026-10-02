@@ -24,13 +24,14 @@ import { PasswordResetDialog } from '@/features/admin/components/PasswordResetDi
 import type { UserAction } from '@/features/admin/user-actions';
 import type { AdminUser } from '@/features/admin/types';
 import './AdminUserProfilePage.css';
+import { t } from '@/i18n';
 
 const STATUS: Record<string, { label: string; tone: BadgeTone }> = {
-  ACTIVE: { label: 'Akkaunt faol', tone: 'success' },
-  PENDING: { label: 'Telefon tasdiqlanmagan', tone: 'neutral' },
-  SUSPENDED: { label: 'Akkaunt muzlatilgan', tone: 'warning' },
-  BLOCKED: { label: 'Akkaunt bloklangan', tone: 'danger' },
-  DELETED: { label: 'O‘chirilgan', tone: 'neutral' },
+  ACTIVE: { label: t('Akkaunt faol'), tone: 'success' },
+  PENDING: { label: t('Telefon tasdiqlanmagan'), tone: 'neutral' },
+  SUSPENDED: { label: t('Akkaunt muzlatilgan'), tone: 'warning' },
+  BLOCKED: { label: t('Akkaunt bloklangan'), tone: 'danger' },
+  DELETED: { label: t('O‘chirilgan'), tone: 'neutral' },
 };
 const orderTone = (status: string): 'success' | 'danger' | 'warning' | 'info' => {
   if (status === 'COMPLETED') return 'success';
@@ -38,7 +39,7 @@ const orderTone = (status: string): 'success' | 'danger' | 'warning' | 'info' =>
   if (['DRAFT', 'SUBMITTED', 'MATCHING', 'OFFERS_RECEIVED', 'WAITING_CONFIRMATION'].includes(status)) return 'warning';
   return 'info';
 };
-const ROLE: Record<string, string> = { CUSTOMER: 'Mijoz', MASTER: 'Usta', ADMIN: 'Admin' };
+const ROLE: Record<string, string> = { CUSTOMER: t('Mijoz'), MASTER: t('Usta'), ADMIN: t('Admin') };
 
 function Field({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
   return (
@@ -85,8 +86,7 @@ export function AdminUserProfilePage() {
     <div className="gm-uprofile">
       {openChat.isError && <Alert tone="danger">{getErrorMessage(openChat.error)}</Alert>}
       <Link to="/admin/foydalanuvchilar" className="gm-uprofile__back">
-        <ArrowLeft size={16} /> Foydalanuvchilar
-      </Link>
+        <ArrowLeft size={16} />{' '}{t('Foydalanuvchilar')}</Link>
       {user.isLoading && <PageLoader />}
       {user.isError && <Alert tone="danger">{getErrorMessage(user.error)}</Alert>}
       {data && status && (
@@ -107,7 +107,7 @@ export function AdminUserProfilePage() {
                 ))}
                 <Badge tone={status.tone}>{status.label}</Badge>
                 {data.status === 'DELETED' && (
-                  <Badge tone={data.registrationBlocked ? 'danger' : 'success'}>{data.registrationBlocked ? 'Qayta ro‘yxatdan o‘tish bloklangan' : 'Qayta ro‘yxatdan o‘tish mumkin'}</Badge>
+                  <Badge tone={data.registrationBlocked ? 'danger' : 'success'}>{data.registrationBlocked ? t('Qayta ro‘yxatdan o‘tish bloklangan') : t('Qayta ro‘yxatdan o‘tish mumkin')}</Badge>
                 )}
                 {data.masterProfile && <TrustBadge verification={data.masterProfile.verification} />}
               </div>
@@ -120,33 +120,28 @@ export function AdminUserProfilePage() {
                   className={data.registrationBlocked ? undefined : 'gm-btn-danger-text'}
                   onClick={() => setAction(data.registrationBlocked ? 'ALLOW_REGISTRATION' : 'BLOCK_REGISTRATION')}
                 >
-                  <Ban size={16} /> {data.registrationBlocked ? 'Ro‘yxatdan o‘tishga ruxsat berish' : 'Qayta ro‘yxatdan o‘tishni bloklash'}
+                  <Ban size={16} /> {data.registrationBlocked ? t('Ro‘yxatdan o‘tishga ruxsat berish') : t('Qayta ro‘yxatdan o‘tishni bloklash')}
                 </Button>
               )}
               {data.roles.includes('ADMIN') && data.status !== 'DELETED' && data.id !== me.data?.id && !!me.data?.isSuperAdmin && (
                 <Button size="sm" variant="ghost" className="gm-btn-danger-text" onClick={() => setAction('DELETE')}>
-                  <Trash2 size={16} /> Adminni o‘chirish
-                </Button>
+                  <Trash2 size={16} />{' '}{t('Adminni o‘chirish')}</Button>
               )}
               {!data.roles.includes('ADMIN') && data.status !== 'DELETED' && (
                 <>
                   {data.status === 'SUSPENDED' || data.status === 'BLOCKED' ? (
                     <Button size="sm" onClick={() => setAction('ACTIVATE')}>
-                      <CheckCircle2 size={16} /> Faollashtirish
-                    </Button>
+                      <CheckCircle2 size={16} />{' '}{t('Faollashtirish')}</Button>
                   ) : (
                     <>
                       <Button size="sm" variant="secondary" className="gm-btn-tone gm-btn-tone--warn" onClick={() => setAction('SUSPEND')}>
-                        <Snowflake size={16} /> Muzlatish
-                      </Button>
+                        <Snowflake size={16} />{' '}{t('Muzlatish')}</Button>
                       <Button size="sm" variant="secondary" className="gm-btn-tone gm-btn-tone--danger" onClick={() => setAction('BLOCK')}>
-                        <Ban size={16} /> Bloklash
-                      </Button>
+                        <Ban size={16} />{' '}{t('Bloklash')}</Button>
                     </>
                   )}
                   <Button size="sm" variant="ghost" className="gm-btn-danger-text" onClick={() => setAction('DELETE')}>
-                    <Trash2 size={16} /> O‘chirish
-                  </Button>
+                    <Trash2 size={16} />{' '}{t('O‘chirish')}</Button>
                 </>
               )}
               {!data.roles.includes('ADMIN') && data.status !== 'DELETED' && (
@@ -156,36 +151,33 @@ export function AdminUserProfilePage() {
                   loading={openChat.isPending}
                   onClick={() => openChat.mutate(data.id, { onSuccess: (conversation) => navigate(`/admin/xabarlar?suhbat=${conversation.id}`) })}
                 >
-                  <MessageCircle size={16} /> Chat orqali yozish
-                </Button>
+                  <MessageCircle size={16} />{' '}{t('Chat orqali yozish')}</Button>
               )}
               <Link to={`/admin/audit?actor=${data.accountNumber}`}>
-                <Button size="sm" variant="secondary">
-                  Audit jurnali
-                </Button>
+                <Button size="sm" variant="secondary">{t('Audit jurnali')}</Button>
               </Link>
             </div>
           </header>
 
-          <section className="gm-uprofile__stats" aria-label="Statistika">
-            <Stat icon={<Package size={18} />} value={data.stats.orders} label="Buyurtmalar" />
-            <Stat icon={<Wrench size={18} />} value={data.stats.requests} label="So‘rovlar" />
-            <Stat icon={<MessageSquare size={18} />} value={data.stats.messages} label="Xabarlar" />
-            <Stat icon={<Smartphone size={18} />} value={data.stats.activeDevices} label="Faol qurilmalar" />
-            {data.masterProfile && <Stat icon={<Star size={18} />} value={Number(data.masterProfile.ratingAvg).toFixed(1)} label={`Reyting · ${data.masterProfile.completedOrders} ish`} />}
+          <section className="gm-uprofile__stats" aria-label={t('Statistika')}>
+            <Stat icon={<Package size={18} />} value={data.stats.orders} label={t('Buyurtmalar')} />
+            <Stat icon={<Wrench size={18} />} value={data.stats.requests} label={t('So‘rovlar')} />
+            <Stat icon={<MessageSquare size={18} />} value={data.stats.messages} label={t('Xabarlar')} />
+            <Stat icon={<Smartphone size={18} />} value={data.stats.activeDevices} label={t('Faol qurilmalar')} />
+            {data.masterProfile && <Stat icon={<Star size={18} />} value={Number(data.masterProfile.ratingAvg).toFixed(1)} label={t('Reyting · {completedOrders} ish', { completedOrders: data.masterProfile.completedOrders })} />}
           </section>
 
           <div className="gm-uprofile__grid">
             <section className="gm-uprofile__card">
-              <h2>Aloqa va akkaunt</h2>
-              <Field icon={<Phone size={16} />} label="Telefon">
+              <h2>{t('Aloqa va akkaunt')}</h2>
+              <Field icon={<Phone size={16} />} label={t('Telefon')}>
                 {data.phone}
-                {data.phoneVerifiedAt ? ' · tasdiqlangan' : ' · tasdiqlanmagan'}
+                {data.phoneVerifiedAt ? t(' · tasdiqlangan') : t(' · tasdiqlanmagan')}
               </Field>
-              <Field icon={<KeyRound size={16} />} label="Kirish ma’lumotlari">
+              <Field icon={<KeyRound size={16} />} label={t('Kirish ma’lumotlari')}>
                 <span className="gm-cred">
                   <span className="gm-cred__row">
-                    <span className="gm-cred__key">Login</span>
+                    <span className="gm-cred__key">{t('Login')}</span>
                     <strong className="gm-cred__value">{data.phone}</strong>
                     <span className="gm-cred__tools">
                       <Button
@@ -198,41 +190,38 @@ export function AdminUserProfilePage() {
                           window.setTimeout(() => setLoginCopied(false), 1500);
                         }}
                       >
-                        {loginCopied ? <Check size={15} /> : <Copy size={15} />} {loginCopied ? 'Nusxalandi' : 'Nusxalash'}
+                        {loginCopied ? <Check size={15} /> : <Copy size={15} />} {loginCopied ? t('Nusxalandi') : t('Nusxalash')}
                       </Button>
                     </span>
                   </span>
                   <span className="gm-cred__row">
-                    <span className="gm-cred__key">Parol</span>
+                    <span className="gm-cred__key">{t('Parol')}</span>
                     <span className="gm-cred__value">
                       <strong className="gm-cred__dots">••••••••••</strong>
                     </span>
                     {!data.roles.includes('ADMIN') && data.status !== 'DELETED' && (
                       <span className="gm-cred__tools">
                         <Button size="sm" className="gm-btn-chip gm-btn-chip--accent" onClick={() => setPasswordOpen(true)}>
-                          <KeyRound size={15} /> Yangi parol belgilash
-                        </Button>
+                          <KeyRound size={15} />{' '}{t('Yangi parol belgilash')}</Button>
                       </span>
                     )}
                   </span>
-                  <small className="gm-cred__note">
-                    Parol faqat xeshlangan (qaytarib bo‘lmaydigan) ko‘rinishda saqlanadi — uni hech kim, jumladan administrator ham ko‘ra olmaydi. Faqat yangisini belgilash mumkin; bunda foydalanuvchi barcha qurilmalardan chiqariladi.
-                  </small>
+                  <small className="gm-cred__note">{t('Parol faqat xeshlangan (qaytarib bo‘lmaydigan) ko‘rinishda saqlanadi — uni hech kim, jumladan administrator ham ko‘ra olmaydi. Faqat yangisini belgilash mumkin; bunda foydalanuvchi barcha qurilmalardan chiqariladi.')}</small>
                 </span>
               </Field>
-              <Field icon={<Mail size={16} />} label="Email">
+              <Field icon={<Mail size={16} />} label={t('Email')}>
                 {data.email ?? '—'}
               </Field>
-              <Field icon={<CalendarClock size={16} />} label="Ro‘yxatdan o‘tgan">
+              <Field icon={<CalendarClock size={16} />} label={t('Ro‘yxatdan o‘tgan')}>
                 {formatDateTime(data.createdAt)}
               </Field>
-              <Field icon={<CalendarClock size={16} />} label="Oxirgi kirish">
+              <Field icon={<CalendarClock size={16} />} label={t('Oxirgi kirish')}>
                 {data.lastLoginAt ? `${formatDateTime(data.lastLoginAt)} · ${formatRelativeTime(data.lastLoginAt)}` : '—'}
               </Field>
               {data.lastSession && (
-                <Field icon={<Smartphone size={16} />} label="Oxirgi qurilma">
-                  {data.lastSession.panel && `${data.lastSession.panel} paneli · `}
-                  {data.lastSession.ipAddress ?? 'IP noma’lum'}
+                <Field icon={<Smartphone size={16} />} label={t('Oxirgi qurilma')}>
+                  {data.lastSession.panel && t('{panel} paneli · ', { panel: data.lastSession.panel })}
+                  {data.lastSession.ipAddress ?? t('IP noma’lum')}
                   {data.lastSession.userAgent && <small className="gm-uprofile__ua">{data.lastSession.userAgent}</small>}
                 </Field>
               )}
@@ -240,37 +229,33 @@ export function AdminUserProfilePage() {
 
             {data.masterProfile && (
               <section className="gm-uprofile__card">
-                <h2>Usta profili</h2>
-                <Field icon={<Wrench size={16} />} label="Kasbi">
+                <h2>{t('Usta profili')}</h2>
+                <Field icon={<Wrench size={16} />} label={t('Kasbi')}>
                   {data.masterProfile.profession ?? '—'}
-                  {data.masterProfile.experienceYears != null && ` · ${data.masterProfile.experienceYears} yil tajriba`}
+                  {data.masterProfile.experienceYears != null && t(' · {experienceYears} yil tajriba', { experienceYears: data.masterProfile.experienceYears })}
                 </Field>
-                <Field icon={<ShieldCheck size={16} />} label="Holati">
+                <Field icon={<ShieldCheck size={16} />} label={t('Holati')}>
                   <span className="gm-uprofile__inline">
-                    {data.masterExtra?.isPaused ? 'Pauzada' : statusLabel(data.masterProfile.status)}
+                    {data.masterExtra?.isPaused ? t('Pauzada') : statusLabel(data.masterProfile.status)}
                     <TrustBadge verification={data.masterProfile.verification} />
                   </span>
                 </Field>
                 {data.masterProfile.bio && <p className="gm-uprofile__bio">{data.masterProfile.bio}</p>}
                 {data.masterExtra && (
                   <>
-                    <Field icon={<Star size={16} />} label="Reyting va sharhlar">
-                      {Number(data.masterProfile.ratingAvg).toFixed(1)} · {data.masterExtra.ratingCount} ta sharh
-                    </Field>
-                    <Field icon={<ShieldCheck size={16} />} label="Ishonchlilik">
-                      Yakunlash {Math.round(Number(data.masterExtra.completionRate))}% · Javob berish {Math.round(Number(data.masterExtra.responseRate))}%
-                    </Field>
-                    <Field icon={<Building2 size={16} />} label="Ish joyi">
+                    <Field icon={<Star size={16} />} label={t('Reyting va sharhlar')}>{t('{toFixed} · {ratingCount} ta sharh', { toFixed: Number(data.masterProfile.ratingAvg).toFixed(1), ratingCount: data.masterExtra.ratingCount })}</Field>
+                    <Field icon={<ShieldCheck size={16} />} label={t('Ishonchlilik')}>{t('Yakunlash {round}% · Javob berish {round2}%', { round: Math.round(Number(data.masterExtra.completionRate)), round2: Math.round(Number(data.masterExtra.responseRate)) })}</Field>
+                    <Field icon={<Building2 size={16} />} label={t('Ish joyi')}>
                       {data.masterExtra.workPlace || '—'}
                     </Field>
-                    <Field icon={<MapPin size={16} />} label="Ish hududi">
+                    <Field icon={<MapPin size={16} />} label={t('Ish hududi')}>
                       {Array.isArray(data.masterExtra.serviceAreas) && data.masterExtra.serviceAreas.length > 0 ? (data.masterExtra.serviceAreas as string[]).join(', ') : '—'}
-                      {data.masterExtra.workRadiusKm ? <small className="gm-uprofile__ua">Ish radiusi: {Number(data.masterExtra.workRadiusKm)} km</small> : <small className="gm-uprofile__ua">Radius belgilanmagan</small>}
+                      {data.masterExtra.workRadiusKm ? <small className="gm-uprofile__ua">{t('Ish radiusi: {number} km', { number: Number(data.masterExtra.workRadiusKm) })}</small> : <small className="gm-uprofile__ua">{t('Radius belgilanmagan')}</small>}
                     </Field>
                     {data.masterExtra.services.length > 0 && (
                       <div className="gm-uprofile__services">
-                        <span className="gm-uprofile__services-title">Xizmatlari</span>
-                        <ul className="gm-uprofile__tags" aria-label="Xizmatlari">
+                        <span className="gm-uprofile__services-title">{t('Xizmatlari')}</span>
+                        <ul className="gm-uprofile__tags" aria-label={t('Xizmatlari')}>
                           {data.masterExtra.services.map((service) => (
                             <li key={service.name}>
                               {service.name}
@@ -282,15 +267,13 @@ export function AdminUserProfilePage() {
                     )}
                   </>
                 )}
-                <Link to="/admin/tasdiqlash" className="gm-uprofile__link">
-                  Tasdiqlash hujjatlari →
-                </Link>
+                <Link to="/admin/tasdiqlash" className="gm-uprofile__link">{t('Tasdiqlash hujjatlari →')}</Link>
               </section>
             )}
 
             {data.addresses && data.addresses.length > 0 && (
               <section className="gm-uprofile__card">
-                <h2>Manzillari</h2>
+                <h2>{t('Manzillari')}</h2>
                 {data.addresses.map((address) => (
                   <Field key={address.id} icon={<MapPin size={16} />} label={`${address.title ?? 'Manzil'}${address.isDefault ? ' · asosiy' : ''}`}>
                     {[address.addressLine, address.district, address.city].filter(Boolean).join(', ')}
@@ -301,14 +284,14 @@ export function AdminUserProfilePage() {
 
             {data.recentOrders && data.recentOrders.length > 0 && (
               <section className="gm-uprofile__card">
-                <h2>Oxirgi buyurtmalar</h2>
+                <h2>{t('Oxirgi buyurtmalar')}</h2>
                 <ul className="gm-uprofile__orders">
                   {data.recentOrders.map((order) => (
                     <li key={order.id}>
-                      <Link to={`/admin/buyurtmalar/${order.id}`} className="gm-order-card" aria-label={`Buyurtma №${order.orderNumber} — ${statusLabel(order.status)}`}>
+                      <Link to={`/admin/buyurtmalar/${order.id}`} className="gm-order-card" aria-label={t('Buyurtma №{orderNumber} — {statusLabel}', { orderNumber: order.orderNumber, statusLabel: statusLabel(order.status) })}>
                         <span className="gm-order-card__head">
                           <strong className="gm-order-card__no">№{order.orderNumber}</strong>
-                          <Badge tone="neutral">{order.side === 'MASTER' ? 'Usta sifatida' : 'Mijoz sifatida'}</Badge>
+                          <Badge tone="neutral">{order.side === 'MASTER' ? t('Usta sifatida') : t('Mijoz sifatida')}</Badge>
                         </span>
                         <span className={`gm-order-card__status gm-order-card__status--${orderTone(order.status)}`}>{statusLabel(order.status)}</span>
                         <span className="gm-order-card__foot">
@@ -325,9 +308,9 @@ export function AdminUserProfilePage() {
           </div>
 
           <section className="gm-uprofile__card">
-            <h2>So‘nggi faollik</h2>
+            <h2>{t('So‘nggi faollik')}</h2>
             {data.recentActivity.length === 0 ? (
-              <EmptyState title="Faollik yo‘q" />
+              <EmptyState title={t('Faollik yo‘q')} />
             ) : (
               <ul className="gm-uprofile__activity">
                 {data.recentActivity.map((entry) => {
@@ -336,11 +319,9 @@ export function AdminUserProfilePage() {
                     <li key={entry.id}>
                       <Badge tone={info.tone}>{info.label}</Badge>
                       {entry.actor && entry.actor.accountNumber !== data.accountNumber && (
-                        <Link to={accountPath(entry.actor.accountNumber, me.data?.accountNumber)} className="gm-uprofile__link">
-                          bajaruvchi profili
-                        </Link>
+                        <Link to={accountPath(entry.actor.accountNumber, me.data?.accountNumber)} className="gm-uprofile__link">{t('bajaruvchi profili')}</Link>
                       )}
-                      {entry.reason && <span className="gm-uprofile__reason">Sabab: {entry.reason}</span>}
+                      {entry.reason && <span className="gm-uprofile__reason">{t('Sabab:')}{' '}{entry.reason}</span>}
                       <time>{formatDateTime(entry.createdAt)}</time>
                     </li>
                   );

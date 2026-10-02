@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { formatDateTime } from '@/lib/utils';
 import type { DevOpsSnapshot, DevOpsWindow } from '../types';
 import './TrafficChart.css';
+import { t } from '@/i18n';
 
 const WIDTH = 760;
 const HEIGHT = 160;
@@ -30,14 +31,14 @@ export function TrafficChart({ data, window }: { data: DevOpsSnapshot['traffic']
   if (total === 0) {
     return (
       <div className="gm-traffic-chart gm-traffic-chart--empty">
-        <p className="gm-card__meta">Bu davrda hali so‘rov qayd etilmagan.</p>
+        <p className="gm-card__meta">{t('Bu davrda hali so‘rov qayd etilmagan.')}</p>
       </div>
     );
   }
 
   return (
     <div className="gm-traffic-chart">
-      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label="API so‘rovlar soni vaqt bo‘yicha" preserveAspectRatio="none">
+      <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label={t('API so‘rovlar soni vaqt bo‘yicha')} preserveAspectRatio="none">
         <line
           x1={PAD_LEFT}
           y1={PAD_TOP + plotHeight}
@@ -63,20 +64,18 @@ export function TrafficChart({ data, window }: { data: DevOpsSnapshot['traffic']
                   className={isHovered ? 'gm-traffic-chart__bar gm-traffic-chart__bar--hover' : 'gm-traffic-chart__bar'}
                 />
               )}
-              <title>
-                {bucketLabel(point.at, window)} · {point.count} ta so‘rov
-              </title>
+              <title>{t('{bucketLabel} · {count} ta so‘rov', { bucketLabel: bucketLabel(point.at, window), count: point.count })}</title>
             </g>
           );
         })}
       </svg>
       <div className="gm-traffic-chart__footer">
         <span>{bucketLabel(data[0]!.at, window)}</span>
-        <span className="gm-card__meta">Jami: {total} ta so‘rov</span>
+        <span className="gm-card__meta">{t('Jami: {total} ta so‘rov', { total })}</span>
         <span>{bucketLabel(data[data.length - 1]!.at, window)}</span>
       </div>
       <p className="gm-card__meta gm-traffic-chart__hover">
-        {hover !== null ? `${formatDateTime(data[hover]!.at)} — ${data[hover]!.count} ta so‘rov` : ' '}
+        {hover !== null ? t('{dateTime} — {count} ta so‘rov', { dateTime: formatDateTime(data[hover]!.at), count: data[hover]!.count }) : ' '}
       </p>
     </div>
   );

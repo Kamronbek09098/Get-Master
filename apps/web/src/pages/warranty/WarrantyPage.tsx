@@ -6,6 +6,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { useAuthStore } from '@/store/auth.store';
 import { useMyWarranties } from '@/features/warranty/hooks/useWarranties';
 import { WarrantyCard } from '@/features/warranty/components/WarrantyCard';
+import { t } from '@/i18n';
 
 export function WarrantyPage() {
   const warranties = useMyWarranties();
@@ -17,21 +18,21 @@ export function WarrantyPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>Kafolatlar</h1>
-          <p className="gm-page-lead">Bajarilgan ishlar bo‘yicha kafolat murojaatlari.</p>
+          <h1>{t('Kafolatlar')}</h1>
+          <p className="gm-page-lead">{t('Bajarilgan ishlar bo‘yicha kafolat murojaatlari.')}</p>
         </div>
       </div>
-      {warranties.isLoading && <PageLoader label="Kafolatlar yuklanmoqda…" />}
+      {warranties.isLoading && <PageLoader label={t('Kafolatlar yuklanmoqda…')} />}
       {warranties.isError && <Alert tone="danger">{getErrorMessage(warranties.error)}</Alert>}
       {!warranties.isLoading && items.length === 0 && (
           <EmptyState
             icon={<ShieldCheck size={34} strokeWidth={1.8} />}
-            title="Hali kafolatlar yo‘q"
-            description={isMaster ? 'Yakunlangan ishlaringiz bo‘yicha kafolat murojaatlari shu yerda ko‘rinadi.' : 'Ish yakunlangach, unga kafolat beriladi. Muammo qaytsa, shu yerdan murojaat qilasiz.'}
+            title={t('Hali kafolatlar yo‘q')}
+            description={isMaster ? t('Yakunlangan ishlaringiz bo‘yicha kafolat murojaatlari shu yerda ko‘rinadi.') : t('Ish yakunlangach, unga kafolat beriladi. Muammo qaytsa, shu yerdan murojaat qilasiz.')}
             steps={[
-              { icon: <ClipboardCheck size={16} aria-hidden="true" />, title: 'Ish yakunlanadi', text: isMaster ? 'Ishni tugatasiz, mijoz natijani tasdiqlaydi.' : 'Usta ishni tugatadi, siz natijani tasdiqlaysiz.' },
-              { icon: <ShieldCheck size={16} aria-hidden="true" />, title: 'Kafolat boshlanadi', text: 'Bajarilgan ish uchun kafolat muddati shu yerda ko‘rinadi.' },
-              { icon: <MessageSquareWarning size={16} aria-hidden="true" />, title: 'Murojaat qiling', text: isMaster ? 'Mijoz nuqson haqida murojaat yuborsa, shu yerda ko‘rasiz.' : 'Nuqson chiqsa, kafolat doirasida murojaat yuboring.' },
+              { icon: <ClipboardCheck size={16} aria-hidden="true" />, title: t('Ish yakunlanadi'), text: isMaster ? t('Ishni tugatasiz, mijoz natijani tasdiqlaydi.') : t('Usta ishni tugatadi, siz natijani tasdiqlaysiz.') },
+              { icon: <ShieldCheck size={16} aria-hidden="true" />, title: t('Kafolat boshlanadi'), text: t('Bajarilgan ish uchun kafolat muddati shu yerda ko‘rinadi.') },
+              { icon: <MessageSquareWarning size={16} aria-hidden="true" />, title: t('Murojaat qiling'), text: isMaster ? t('Mijoz nuqson haqida murojaat yuborsa, shu yerda ko‘rasiz.') : t('Nuqson chiqsa, kafolat doirasida murojaat yuboring.') },
             ]}
           />
         )}

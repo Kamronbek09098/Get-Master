@@ -9,6 +9,7 @@ import { FLOW_STEPS, stepIndex } from '../order-flow';
 import { OrderStatus } from './OrderStatus';
 import type { OrderListItem } from '../types';
 import './MyOrders.css';
+import { t } from '@/i18n';
 
 export type MyOrderItem = { kind: 'request'; request: ProblemRequestSummary } | { kind: 'order'; order: OrderListItem };
 
@@ -30,25 +31,22 @@ export function MyOrderCard({ item }: { item: MyOrderItem }) {
             <h3>{request.title}</h3>
             <RequestStatus status={request.status} />
           </div>
-          <p className="gm-mo__sub">{request.service?.name ?? 'Xizmat turi tanlanmagan'}</p>
+          <p className="gm-mo__sub">{request.service?.name ?? t('Xizmat turi tanlanmagan')}</p>
           <p className="gm-mo__text">{request.description}</p>
           {offers > 0 && (
             <p className="gm-mo__alert">
-              <Users size={14} aria-hidden="true" /> {offers} ta taklif keldi. Ko‘rib chiqib, ustani tanlang
-            </p>
+              <Users size={14} aria-hidden="true" />{' '}{t('{offers} ta taklif keldi. Ko‘rib chiqib, ustani tanlang', { offers })}</p>
           )}
           {draft && (
             <p className="gm-mo__alert">
-              <AlertCircle size={14} aria-hidden="true" /> So‘rov hali yuborilmagan. Yuborish uchun oching
-            </p>
+              <AlertCircle size={14} aria-hidden="true" />{' '}{t('So‘rov hali yuborilmagan. Yuborish uchun oching')}</p>
           )}
           {waiting && offers === 0 && (
             <p className="gm-mo__hint">
-              <Clock size={14} aria-hidden="true" /> Mos ustalar qidirilmoqda, takliflar shu yerda ko‘rinadi
-            </p>
+              <Clock size={14} aria-hidden="true" />{' '}{t('Mos ustalar qidirilmoqda, takliflar shu yerda ko‘rinadi')}</p>
           )}
           <div className="gm-mo__foot">
-            <span className="gm-mo__stage">So‘rov bosqichi</span>
+            <span className="gm-mo__stage">{t('So‘rov bosqichi')}</span>
             <span className="gm-mo__time" title={formatDateTime(request.createdAt)}>
               {formatRelativeTime(request.createdAt)}
             </span>
@@ -75,23 +73,20 @@ export function MyOrderCard({ item }: { item: MyOrderItem }) {
           <OrderStatus status={order.status} />
         </div>
         <p className="gm-mo__sub">
-          {order.service?.name ?? 'Xizmat'} · Usta: <strong>{accountName(order.counterpart)}</strong>
+          {order.service?.name ?? t('Xizmat')}{' '}{t('· Usta:')}{' '}<strong>{accountName(order.counterpart)}</strong>
         </p>
         {needsConfirm && (
           <p className="gm-mo__alert">
-            <AlertCircle size={14} aria-hidden="true" /> Usta ishni tugatdi. Natijani ko‘rib, tasdiqlang
-          </p>
+            <AlertCircle size={14} aria-hidden="true" />{' '}{t('Usta ishni tugatdi. Natijani ko‘rib, tasdiqlang')}</p>
         )}
         {index >= 0 && (
-          <div className="gm-mo__bar" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label="Bajarilish darajasi">
+          <div className="gm-mo__bar" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label={t('Bajarilish darajasi')}>
             <span style={{ width: `${percent}%` }} />
           </div>
         )}
         <div className="gm-mo__foot">
           <span className="gm-mo__stage gm-mo__stage--order">
-            <Hash size={12} aria-hidden="true" />
-            Buyurtma №{order.orderNumber}
-          </span>
+            <Hash size={12} aria-hidden="true" />{t('Buyurtma №{orderNumber}', { orderNumber: order.orderNumber })}</span>
           <span className="gm-mo__amount">{formatMoney(order.finalAmount, order.currency)}</span>
           <span className="gm-mo__time">{formatDateTime(order.createdAt)}</span>
         </div>

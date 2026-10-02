@@ -7,6 +7,7 @@ import { useCurrentRole } from '@/features/session/hooks/useCurrentRole';
 import { useAutoReadNotifications } from '@/features/notification/hooks/useAutoReadNotifications';
 import { VerificationBanner } from '@/features/trust/components/VerificationBanner';
 import { NameRequiredDialog } from '@/features/session/components/NameRequiredDialog';
+import { t } from '@/i18n';
 import './AppLayout.css';
 
 export function AppLayout() {
@@ -15,7 +16,7 @@ export function AppLayout() {
   return (
     <div className="gm-app-layout">
       <a href="#gm-main-content" className="gm-skip-link">
-        Asosiy kontentga o‘tish
+        {t('Asosiy kontentga o‘tish')}
       </a>
       <Header />
       <div className="gm-app-layout__body">

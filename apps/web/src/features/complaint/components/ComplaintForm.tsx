@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useCreateComplaint } from '../hooks/useComplaints';
+import { t } from '@/i18n';
 
 export function ComplaintForm({ orderId }: { orderId?: string }) {
   const createComplaint = useCreateComplaint();
@@ -28,18 +29,16 @@ export function ComplaintForm({ orderId }: { orderId?: string }) {
   return (
     <form className="gm-form" onSubmit={handleSubmit}>
       {createComplaint.isError && <Alert tone="danger">{getErrorMessage(createComplaint.error)}</Alert>}
-      {createComplaint.isSuccess && <Alert tone="success">Shikoyatingiz qabul qilindi</Alert>}
-      <Input label="Mavzu" required value={title} onChange={(event) => setTitle(event.target.value)} maxLength={255} />
+      {createComplaint.isSuccess && <Alert tone="success">{t('Shikoyatingiz qabul qilindi')}</Alert>}
+      <Input label={t('Mavzu')} required value={title} onChange={(event) => setTitle(event.target.value)} maxLength={255} />
       <Textarea
-        label="Tavsif"
+        label={t('Tavsif')}
         required
         value={description}
         onChange={(event) => setDescription(event.target.value)}
         rows={4}
       />
-      <Button type="submit" loading={createComplaint.isPending} disabled={!title.trim() || !description.trim()}>
-        Shikoyat yuborish
-      </Button>
+      <Button type="submit" loading={createComplaint.isPending} disabled={!title.trim() || !description.trim()}>{t('Shikoyat yuborish')}</Button>
     </form>
   );
 }

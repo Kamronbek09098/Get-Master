@@ -2,15 +2,16 @@ import { Badge } from '@/components/ui/Badge';
 import { formatMoney } from '@/lib/utils';
 import type { Payment } from '../types';
 import type { PaymentStatus as PaymentStatusEnum } from '@/types/common';
+import { t } from '@/i18n';
 
 const LABEL: Record<PaymentStatusEnum, string> = {
-  PENDING: 'Kutilmoqda',
-  PROCESSING: 'Amalga oshirilmoqda',
-  SUCCEEDED: 'Muvaffaqiyatli',
-  FAILED: 'Muvaffaqiyatsiz',
-  CANCELLED: 'Bekor qilindi',
-  REFUNDED: 'Qaytarildi',
-  PARTIALLY_REFUNDED: 'Qisman qaytarildi',
+  PENDING: t('Kutilmoqda'),
+  PROCESSING: t('Amalga oshirilmoqda'),
+  SUCCEEDED: t('Muvaffaqiyatli'),
+  FAILED: t('Muvaffaqiyatsiz'),
+  CANCELLED: t('Bekor qilindi'),
+  REFUNDED: t('Qaytarildi'),
+  PARTIALLY_REFUNDED: t('Qisman qaytarildi'),
 };
 const TONE: Record<PaymentStatusEnum, 'neutral' | 'success' | 'danger' | 'warning'> = {
   PENDING: 'neutral',

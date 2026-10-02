@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { useMe } from '@/features/session/hooks/useMe';
 import { getNavItems } from './nav-items';
 import type { NavItem } from './nav-items';
+import { t } from '@/i18n';
 import './Sidebar.css';
 
 function groupItems(items: NavItem[]): Array<[string, NavItem[]]> {
@@ -20,7 +21,7 @@ export function Sidebar() {
   const badges = useNavBadges(preferredRole, pathname);
 
   return (
-    <nav className="gm-sidebar" aria-label="Asosiy navigatsiya">
+    <nav className="gm-sidebar" aria-label={t('Asosiy navigatsiya')}>
       {groups.map(([group, items]) => (
         <div key={group} className="gm-sidebar__group">
           <p className="gm-sidebar__heading">{group}</p>
@@ -35,7 +36,7 @@ export function Sidebar() {
                   <item.icon size={19} strokeWidth={2} aria-hidden="true" />
                   <span>{item.label}</span>
                   {badges[item.to] && (
-                    <span className="gm-nav-badge" role="status" aria-label={`${badges[item.to]!.count} ta yangi`}>
+                    <span className="gm-nav-badge" role="status" aria-label={t('{count} ta yangi', { count: badges[item.to]!.count })}>
                       {badgeText(badges[item.to]!)}
                     </span>
                   )}

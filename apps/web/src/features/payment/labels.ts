@@ -1,28 +1,29 @@
 import type { PaymentProvider, PaymentStatus } from '@/types/common';
+import { t } from '@/i18n';
 
 export const PROVIDER_LABEL: Record<PaymentProvider, string> = {
-  CASH: 'Naqd pul',
-  CLICK: 'Click',
-  PAYME: 'Payme',
-  UZUM: 'Uzum',
-  OTHER: 'Boshqa usul',
+  CASH: t('Naqd pul'),
+  CLICK: t('Click'),
+  PAYME: t('Payme'),
+  UZUM: t('Uzum'),
+  OTHER: t('Boshqa usul'),
 };
 
 export const PROVIDER_OPTIONS: Array<{ value: PaymentProvider; label: string; hint: string }> = [
-  { value: 'CASH', label: 'Naqd pul', hint: 'Ish tugagach ustaga qo‘lda to‘laysiz; usta olganini tasdiqlaydi' },
-  { value: 'CLICK', label: 'Click', hint: 'Onlayn to‘lov' },
-  { value: 'PAYME', label: 'Payme', hint: 'Onlayn to‘lov' },
-  { value: 'UZUM', label: 'Uzum', hint: 'Onlayn to‘lov' },
+  { value: 'CASH', label: t('Naqd pul'), hint: t('Ish tugagach ustaga qo‘lda to‘laysiz; usta olganini tasdiqlaydi') },
+  { value: 'CLICK', label: t('Click'), hint: t('Onlayn to‘lov') },
+  { value: 'PAYME', label: t('Payme'), hint: t('Onlayn to‘lov') },
+  { value: 'UZUM', label: t('Uzum'), hint: t('Onlayn to‘lov') },
 ];
 
 export const providerLabel = (provider: string) => PROVIDER_LABEL[provider as PaymentProvider] ?? provider;
 
 export const PAYMENT_STATUS_LABEL: Record<PaymentStatus, string> = {
-  PENDING: 'Kutilmoqda',
-  PROCESSING: 'Jarayonda',
-  SUCCEEDED: 'To‘langan',
-  FAILED: 'Muvaffaqiyatsiz',
-  CANCELLED: 'Bekor qilingan',
-  REFUNDED: 'Qaytarilgan',
-  PARTIALLY_REFUNDED: 'Qisman qaytarilgan',
+  PENDING: t('Kutilmoqda'),
+  PROCESSING: t('Jarayonda'),
+  SUCCEEDED: t('To‘langan'),
+  FAILED: t('Muvaffaqiyatsiz'),
+  CANCELLED: t('Bekor qilingan'),
+  REFUNDED: t('Qaytarilgan'),
+  PARTIALLY_REFUNDED: t('Qisman qaytarilgan'),
 };

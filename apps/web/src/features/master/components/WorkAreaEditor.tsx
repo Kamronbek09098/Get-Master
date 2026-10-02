@@ -12,6 +12,7 @@ import { CoverageMap } from '@/features/geo/components/CoverageMap';
 import { geoService } from '@/features/geo/geo.service';
 import { useUpdateWorkArea } from '../hooks/useMaster';
 import type { MasterProfile } from '../types';
+import { t } from '@/i18n';
 
 const RADIUS_PRESETS = [3, 5, 10, 20, 30, 50];
 
@@ -84,17 +85,17 @@ export function WorkAreaEditor({ profile }: { profile: MasterProfile }) {
   return (
     <form className="gm-form gm-workedit" onSubmit={handleSubmit}>
       {update.isError && <Alert tone="danger">{getErrorMessage(update.error)}</Alert>}
-      {update.isSuccess && !dirty && <Alert tone="success">Ish hududi saqlandi</Alert>}
+      {update.isSuccess && !dirty && <Alert tone="success">{t('Ish hududi saqlandi')}</Alert>}
 
       <section className="gm-workedit__block">
         <span className="gm-workedit__icon" aria-hidden="true">
           <Building2 size={20} />
         </span>
-        <h3>Ish joyingiz</h3>
-        <p className="gm-workarea__note">Ish xona, kompaniya yoki muassasa nomi. Mijozlar profilingizda shuni ko‘radi.</p>
+        <h3>{t('Ish joyingiz')}</h3>
+        <p className="gm-workarea__note">{t('Ish xona, kompaniya yoki muassasa nomi. Mijozlar profilingizda shuni ko‘radi.')}</p>
         <Input
-          label="Ish joyi nomi"
-          placeholder="Masalan: «Ofis №5» yoki «ABC Servis» MChJ"
+          label={t('Ish joyi nomi')}
+          placeholder={t('Masalan: «Ofis №5» yoki «ABC Servis» MChJ')}
           maxLength={150}
           value={workPlace}
           onChange={(event) => setWorkPlace(event.target.value)}
@@ -105,25 +106,25 @@ export function WorkAreaEditor({ profile }: { profile: MasterProfile }) {
         <span className="gm-workedit__icon" aria-hidden="true">
           <MapPin size={20} />
         </span>
-        <h3>Ish hududlari</h3>
-        <p className="gm-workarea__note">Manzilni yozing, xaritadan tanlang yoki joriy joylashuvingizni aniqlang — ish radiusi shu nuqtadan hisoblanadi.</p>
+        <h3>{t('Ish hududlari')}</h3>
+        <p className="gm-workarea__note">{t('Manzilni yozing, xaritadan tanlang yoki joriy joylashuvingizni aniqlang — ish radiusi shu nuqtadan hisoblanadi.')}</p>
 
-        <AddressPicker label="Ish hududi manzili" value={base} onChange={pickBase} />
+        <AddressPicker label={t('Ish hududi manzili')} value={base} onChange={pickBase} />
 
         <div className="gm-workedit__sub">
           <Input
-            label="Ish radiusi (km)"
+            label={t('Ish radiusi (km)')}
             type="number"
             inputMode="decimal"
             min={0.5}
             max={500}
             step="0.5"
-            hint="Shu manzildan qancha masofagacha buyurtma olasiz."
-            error={radiusInvalid ? 'Radius 0,5 dan 500 km gacha bo‘lishi kerak' : centerMissing ? 'Avval ish hududi manzilini tanlang' : undefined}
+            hint={t('Shu manzildan qancha masofagacha buyurtma olasiz.')}
+            error={radiusInvalid ? t('Radius 0,5 dan 500 km gacha bo‘lishi kerak') : centerMissing ? t('Avval ish hududi manzilini tanlang') : undefined}
             value={radius}
             onChange={(event) => setRadius(event.target.value)}
           />
-          <div className="gm-workarea__chips" role="group" aria-label="Tez tanlash">
+          <div className="gm-workarea__chips" role="group" aria-label={t('Tez tanlash')}>
             {RADIUS_PRESETS.map((km) => (
               <button key={km} type="button" className={radiusValue === km ? 'gm-chip gm-chip--on' : 'gm-chip'} onClick={() => setRadius(String(km))}>
                 {km} km
@@ -133,23 +134,21 @@ export function WorkAreaEditor({ profile }: { profile: MasterProfile }) {
         </div>
 
         <div className="gm-workedit__sub">
-          <span className="gm-workedit__label">Xaritada ko‘rish</span>
+          <span className="gm-workedit__label">{t('Xaritada ko‘rish')}</span>
           <CoverageMap latitude={base.latitude} longitude={base.longitude} radiusKm={radiusValue && !radiusInvalid ? radiusValue : null} height={280} />
           <Button type="button" size="sm" variant="secondary" className="gm-workedit__expand" disabled={base.latitude == null} onClick={() => setOpen(true)}>
-            <Expand size={15} /> Katta xaritada ochish
-          </Button>
-          {base.latitude != null && !radiusValue && <p className="gm-workarea__note">Radiusni kiriting — ishlay oladigan hudud xaritada doira bo‘lib ko‘rinadi.</p>}
+            <Expand size={15} />{' '}{t('Katta xaritada ochish')}</Button>
+          {base.latitude != null && !radiusValue && <p className="gm-workarea__note">{t('Radiusni kiriting — ishlay oladigan hudud xaritada doira bo‘lib ko‘rinadi.')}</p>}
         </div>
       </section>
 
       <Button type="submit" size="lg" fullWidth loading={update.isPending} disabled={!canSave}>
-        <Save size={18} /> Ish hududini saqlash
-      </Button>
+        <Save size={18} />{' '}{t('Ish hududini saqlash')}</Button>
 
       <CoverageDialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Ish hududim"
+        title={t('Ish hududim')}
         area={null}
         areas={pickedAreas ?? profile.serviceAreas ?? []}
         lat={base.latitude}

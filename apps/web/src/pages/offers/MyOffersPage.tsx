@@ -8,12 +8,13 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime, formatMoney } from '@/lib/utils';
 import { useMyOffers, useWithdrawOffer } from '@/features/offer/hooks/useOffers';
 import { OfferBadge } from '@/features/offer/components/OfferBadge';
+import { t } from '@/i18n';
 
 export function MyOffersPage() {
   const offers = useMyOffers();
   const withdraw = useWithdrawOffer();
 
-  if (offers.isLoading) return <PageLoader label="Takliflar yuklanmoqda…" />;
+  if (offers.isLoading) return <PageLoader label={t('Takliflar yuklanmoqda…')} />;
   if (offers.isError) return <Alert tone="danger">{getErrorMessage(offers.error)}</Alert>;
   const items = offers.data?.items ?? [];
 
@@ -21,24 +22,24 @@ export function MyOffersPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>Takliflarim</h1>
-          <p className="gm-page-lead">Siz yuborgan takliflar va ularning holati.</p>
+          <h1>{t('Takliflarim')}</h1>
+          <p className="gm-page-lead">{t('Siz yuborgan takliflar va ularning holati.')}</p>
         </div>
       </div>
       {withdraw.isError && <Alert tone="danger">{getErrorMessage(withdraw.error)}</Alert>}
       {items.length === 0 && (
         <EmptyState
           icon={<FileText size={34} strokeWidth={1.8} />}
-          title="Siz hali taklif yubormagansiz"
-          description="Mijozlar so‘rovlariga narx taklif qiling. Yuborgan takliflaringiz va ularning holati shu yerda ko‘rinadi."
+          title={t('Siz hali taklif yubormagansiz')}
+          description={t('Mijozlar so‘rovlariga narx taklif qiling. Yuborgan takliflaringiz va ularning holati shu yerda ko‘rinadi.')}
           steps={[
-            { icon: <Inbox size={16} aria-hidden="true" />, title: 'So‘rovni tanlang', text: '«Faol takliflar» bo‘limidan mos so‘rovni toping.' },
-            { icon: <Send size={16} aria-hidden="true" />, title: 'Narx yuboring', text: 'Narx va muddatni ko‘rsatib, taklif yuboring.' },
-            { icon: <CheckCircle2 size={16} aria-hidden="true" />, title: 'Javobni kuting', text: 'Mijoz qabul qilsa, buyurtma boshlanadi.' },
+            { icon: <Inbox size={16} aria-hidden="true" />, title: t('So‘rovni tanlang'), text: t('«Faol takliflar» bo‘limidan mos so‘rovni toping.') },
+            { icon: <Send size={16} aria-hidden="true" />, title: t('Narx yuboring'), text: t('Narx va muddatni ko‘rsatib, taklif yuboring.') },
+            { icon: <CheckCircle2 size={16} aria-hidden="true" />, title: t('Javobni kuting'), text: t('Mijoz qabul qilsa, buyurtma boshlanadi.') },
           ]}
           action={
             <Link to="/ustalar/faol-takliflar">
-              <Button>Faol takliflarni ko‘rish</Button>
+              <Button>{t('Faol takliflarni ko‘rish')}</Button>
             </Link>
           }
         />
@@ -51,13 +52,9 @@ export function MyOffersPage() {
               <OfferBadge status={offer.status} />
             </div>
             {offer.message && <p>{offer.message}</p>}
-            <p className="gm-card__meta">
-              Yuborildi: {formatDateTime(offer.createdAt)} · Muddati: {formatDateTime(offer.expiresAt)}
-            </p>
+            <p className="gm-card__meta">{t('Yuborildi: {dateTime} · Muddati: {dateTime2}', { dateTime: formatDateTime(offer.createdAt), dateTime2: formatDateTime(offer.expiresAt) })}</p>
             {offer.status === 'PENDING' && (
-              <Button size="sm" variant="secondary" loading={withdraw.isPending} onClick={() => withdraw.mutate(offer.id)}>
-                Qaytarib olish
-              </Button>
+              <Button size="sm" variant="secondary" loading={withdraw.isPending} onClick={() => withdraw.mutate(offer.id)}>{t('Qaytarib olish')}</Button>
             )}
           </div>
         ))}

@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import './Modal.css';
+import { t } from '@/i18n';
 
 export interface ModalProps {
   open: boolean;
@@ -79,7 +80,7 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
             {title}
           </h2>
           {dismissible && (
-            <button type="button" className="gm-modal__close" onClick={onClose} aria-label="Yopish">
+            <button type="button" className="gm-modal__close" onClick={onClose} aria-label={t('Yopish')}>
               ✕
             </button>
           )}

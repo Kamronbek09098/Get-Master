@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { ServiceChooser } from '@/features/service/components/ServiceChooser';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useSetRequestService } from '../hooks/useRequests';
+import { t } from '@/i18n';
 
 export function ServicePicker({ requestId }: { requestId: string }) {
   const [serviceId, setServiceId] = useState('');
@@ -11,16 +12,11 @@ export function ServicePicker({ requestId }: { requestId: string }) {
 
   return (
     <div className="gm-form">
-      <Alert tone="warning" title="Xizmat turi tanlanmagan">
-        Ustalarni topish uchun so‘rovingiz qaysi xizmatga tegishli ekanini tanlang. Tanlangach mos ustalar avtomatik
-        qidiriladi.
-      </Alert>
+      <Alert tone="warning" title={t('Xizmat turi tanlanmagan')}>{t('Ustalarni topish uchun so‘rovingiz qaysi xizmatga tegishli ekanini tanlang. Tanlangach mos ustalar avtomatik qidiriladi.')}</Alert>
       {setService.isError && <Alert tone="danger">{getErrorMessage(setService.error)}</Alert>}
-      <ServiceChooser label="Xizmat turi" value={serviceId} onChange={setServiceId} />
+      <ServiceChooser label={t('Xizmat turi')} value={serviceId} onChange={setServiceId} />
       <div>
-        <Button disabled={!serviceId} loading={setService.isPending} onClick={() => setService.mutate(serviceId)}>
-          Ustalarni izlash
-        </Button>
+        <Button disabled={!serviceId} loading={setService.isPending} onClick={() => setService.mutate(serviceId)}>{t('Ustalarni izlash')}</Button>
       </div>
     </div>
   );

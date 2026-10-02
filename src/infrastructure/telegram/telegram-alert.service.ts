@@ -32,6 +32,8 @@ export class TelegramAlertService implements OnModuleInit {
   private credentialsThreadId: number | undefined;
   private securityThreadId: number | undefined;
   private sessionsThreadId: number | undefined;
+  private alertsThreadId: number | undefined;
+  private blockedChatIds = new Set<string>();
   private minStatus = 500;
   private dedupeWindowMs = 300_000;
   private timeoutMs = 8_000;
@@ -51,6 +53,8 @@ export class TelegramAlertService implements OnModuleInit {
     this.credentialsThreadId = this.config.get<number | undefined>('telegram.credentialsThreadId', undefined);
     this.securityThreadId = this.config.get<number | undefined>('telegram.securityThreadId', undefined);
     this.sessionsThreadId = this.config.get<number | undefined>('telegram.sessionsThreadId', undefined);
+    this.alertsThreadId = this.config.get<number | undefined>('telegram.alertsThreadId', undefined);
+    this.blockedChatIds = new Set(this.config.get<string[]>('telegram.blockedChatIds', []));
     this.minStatus = this.config.get<number>('telegram.minStatus', 500);
     this.dedupeWindowMs = this.config.get<number>('telegram.dedupeWindowMs', 300_000);
     this.timeoutMs = this.config.get<number>('telegram.timeoutMs', 8_000);
@@ -316,15 +320,22 @@ export class TelegramAlertService implements OnModuleInit {
     void this.post(this.credentialsChatId, text, 'hisob tasdiqlandi', this.credentialsThreadId);
   }
 
+  /** Xato ogohlantirishlari: alohida guruh berilmagan bo‘lsa — asosiy («Get-Master») guruhning mavzusiga yuboriladi. */
+  private alertTarget(): { chatId: string; threadId?: number } {
+    if (this.chatId) return { chatId: this.chatId };
+    return { chatId: this.credentialsChatId, threadId: this.alertsThreadId ?? this.securityThreadId ?? this.credentialsThreadId };
+  }
+
   isEnabled(): boolean {
-    return !!this.botToken && !!this.chatId;
+    return !!this.botToken && !!this.alertTarget().chatId;
   }
 
   notifyError(alert: ErrorAlert): void {
     if (!this.isEnabled() || alert.status < this.minStatus) return;
     const key = `${alert.method ?? ''} ${alert.path ?? ''} ${alert.code} ${alert.message}`;
     if (!this.shouldSend(key)) return;
-    void this.post(this.chatId, this.format(alert), `xato ${alert.status} ${alert.code}`);
+    const target = this.alertTarget();
+    void this.post(target.chatId, this.format(alert), `xato ${alert.status} ${alert.code}`, target.threadId);
   }
 
   private shouldSend(key: string): boolean {
@@ -355,6 +366,11 @@ export class TelegramAlertService implements OnModuleInit {
   }
 
   private async post(chatId: string, text: string, label = 'xabar', threadId?: number): Promise<boolean> {
+    // Taqiqlangan guruhlarga hech qachon yuborilmaydi.
+    if (this.blockedChatIds.has(String(chatId).trim())) {
+      this.logger.warn(`Telegram: taqiqlangan guruhga yuborilmadi (${label}).`);
+      return false;
+    }
     let thread = threadId;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       const outcome = await this.postOnce(chatId, text, thread);

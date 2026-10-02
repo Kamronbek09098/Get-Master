@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { loginSecret } from '../login-secret';
 import { useAppStore } from '@/store/app.store';
 import { SESSION_EXPIRED_EVENT } from '@/services/api.client';
+import { t } from '@/i18n';
 
 export function useRegister() {
   const setPendingPhone = useAuthStore((s) => s.setPendingPhone);
@@ -31,7 +32,7 @@ export function useVerifyRegistration() {
     // pendingPhone bu yerda tozalanmaydi: aks holda OTP sahifasi login/parol kartasini ko‘rsatishga ulgurmay, ro‘yxatdan o‘tish sahifasiga qaytarib yuboradi.
     // U sahifaning o‘zida («Kirishga o‘tish» bosilganda) tozalanadi.
     onSuccess: () => {
-      pushToast('Ro‘yxatdan o‘tish tasdiqlandi. Endi tizimga kiring.', 'success');
+      pushToast(t('Ro‘yxatdan o‘tish tasdiqlandi. Endi tizimga kiring.'), 'success');
     },
   });
 }
@@ -122,7 +123,7 @@ export function useSessionExpiredListener() {
   useEffect(() => {
     function onExpired() {
       clear();
-      pushToast('Sessiya muddati tugadi. Iltimos, qayta kiring.', 'info');
+      pushToast(t('Sessiya muddati tugadi. Iltimos, qayta kiring.'), 'info');
       navigate('/login', { replace: true });
     }
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);

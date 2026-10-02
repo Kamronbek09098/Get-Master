@@ -9,11 +9,12 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime } from '@/lib/utils';
 import { usePaymentHistory } from '@/features/payment/hooks/usePayment';
 import { PaymentStatus } from '@/features/payment/components/PaymentStatus';
+import { t } from '@/i18n';
 
 export function PaymentHistoryPage() {
   const history = usePaymentHistory();
 
-  if (history.isLoading) return <PageLoader label="To‘lovlar yuklanmoqda…" />;
+  if (history.isLoading) return <PageLoader label={t('To‘lovlar yuklanmoqda…')} />;
   if (history.isError) return <Alert tone="danger">{getErrorMessage(history.error)}</Alert>;
   const items = history.data?.items ?? [];
 
@@ -23,23 +24,23 @@ export function PaymentHistoryPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>To‘lovlar tarixi</h1>
-          <p className="gm-page-lead">Barcha to‘lovlaringiz va ularning holati.</p>
+          <h1>{t('To‘lovlar tarixi')}</h1>
+          <p className="gm-page-lead">{t('Barcha to‘lovlaringiz va ularning holati.')}</p>
         </div>
       </div>
       {empty && (
         <EmptyState
           icon={<CreditCard size={34} strokeWidth={1.8} />}
-          title="Hali to‘lovlar yo‘q"
-          description="Ustani tanlab, buyurtma bergach, to‘lovlaringiz va ularning holati shu yerda ko‘rinadi."
+          title={t('Hali to‘lovlar yo‘q')}
+          description={t('Ustani tanlab, buyurtma bergach, to‘lovlaringiz va ularning holati shu yerda ko‘rinadi.')}
           steps={[
-            { icon: <ClipboardList size={16} aria-hidden="true" />, title: 'Buyurtma bering', text: 'So‘rov yarating va mos ustani tanlang.' },
-            { icon: <CreditCard size={16} aria-hidden="true" />, title: 'To‘lovni amalga oshiring', text: 'Qulay usulni tanlab, buyurtma uchun to‘lang.' },
-            { icon: <ReceiptText size={16} aria-hidden="true" />, title: 'Tarixni kuzating', text: 'Har bir to‘lov holati va qaytarishlar shu yerda.' },
+            { icon: <ClipboardList size={16} aria-hidden="true" />, title: t('Buyurtma bering'), text: t('So‘rov yarating va mos ustani tanlang.') },
+            { icon: <CreditCard size={16} aria-hidden="true" />, title: t('To‘lovni amalga oshiring'), text: t('Qulay usulni tanlab, buyurtma uchun to‘lang.') },
+            { icon: <ReceiptText size={16} aria-hidden="true" />, title: t('Tarixni kuzating'), text: t('Har bir to‘lov holati va qaytarishlar shu yerda.') },
           ]}
           action={
             <Link to="/mijozlar/sorov-yaratish">
-              <Button>Yangi buyurtma yaratish</Button>
+              <Button>{t('Yangi buyurtma yaratish')}</Button>
             </Link>
           }
         />
@@ -50,9 +51,9 @@ export function PaymentHistoryPage() {
             <PaymentStatus payment={payment} />
             <p className="gm-card__meta">
               {providerLabel(payment.provider)} · {formatDateTime(payment.createdAt)}
-              {payment.refundedAmount !== '0' && Number(payment.refundedAmount) > 0 && ` · Qaytarilgan: ${payment.refundedAmount}`}
+              {payment.refundedAmount !== '0' && Number(payment.refundedAmount) > 0 && t(' · Qaytarilgan: {refundedAmount}', { refundedAmount: payment.refundedAmount })}
             </p>
-            {payment.failureReason && <p className="gm-card__meta">Sabab: {payment.failureReason}</p>}
+            {payment.failureReason && <p className="gm-card__meta">{t('Sabab:')}{' '}{payment.failureReason}</p>}
           </Link>
         ))}
       </div>

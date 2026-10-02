@@ -5,6 +5,7 @@ import { geoService } from '../geo.service';
 import type { GeoPlace } from '../geo.service';
 import { MapPicker } from './MapPicker';
 import './geo.css';
+import { t } from '@/i18n';
 
 export interface PickedAddress {
   addressLine: string;
@@ -124,7 +125,7 @@ export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPick
         const result = await geoService.geocode(item.uri ? { uri: item.uri } : { q: item.addressLine });
         if (result.place) place = { ...item, ...result.place, addressLine: item.addressLine || result.place.addressLine };
       } catch {
-        setNote('Koordinatani aniqlab bo‘lmadi, manzil matn ko‘rinishida saqlanadi.');
+        setNote(t('Koordinatani aniqlab bo‘lmadi, manzil matn ko‘rinishida saqlanadi.'));
       } finally {
         setBusy(false);
       }
@@ -138,7 +139,7 @@ export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPick
   function locateMe() {
     setNote(null);
     if (!navigator.geolocation) {
-      setNote('Bu qurilmada joylashuvni aniqlab bo‘lmaydi.');
+      setNote(t('Bu qurilmada joylashuvni aniqlab bo‘lmaydi.'));
       return;
     }
     setBusy(true);
@@ -155,12 +156,12 @@ export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPick
             setText(next.addressLine);
             onChange(next);
           })
-          .catch(() => setNote('Manzilni aniqlab bo‘lmadi.'))
+          .catch(() => setNote(t('Manzilni aniqlab bo‘lmadi.')))
           .finally(() => setBusy(false));
       },
       () => {
         setBusy(false);
-        setNote('Joylashuvga ruxsat berilmadi.');
+        setNote(t('Joylashuvga ruxsat berilmadi.'));
       },
       { enableHighAccuracy: true, timeout: 10000 },
     );
@@ -181,7 +182,7 @@ export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPick
             value={text}
             autoComplete="off"
             required
-            placeholder="Ko‘cha, uy raqami yoki mo‘ljal…"
+            placeholder={t('Ko‘cha, uy raqami yoki mo‘ljal…')}
             role="combobox"
             aria-expanded={open}
             aria-autocomplete="list"
@@ -216,19 +217,16 @@ export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPick
 
       <div className="gm-addrpick__actions">
         <Button type="button" size="sm" variant="secondary" onClick={() => setMapOpen(true)}>
-          <MapIcon size={16} /> Xaritadan tanlash
-        </Button>
+          <MapIcon size={16} />{' '}{t('Xaritadan tanlash')}</Button>
         <Button type="button" size="sm" variant="secondary" onClick={() => locateMe()}>
-          <LocateFixed size={16} /> Joriy joylashuvim
-        </Button>
+          <LocateFixed size={16} />{' '}{t('Joriy joylashuvim')}</Button>
       </div>
 
       {located ? (
         <span className="gm-addrpick__coords">
-          <CheckCircle2 size={14} aria-hidden="true" /> Xaritada aniqlangan ({value.latitude?.toFixed(4)}, {value.longitude?.toFixed(4)})
-        </span>
+          <CheckCircle2 size={14} aria-hidden="true" />{' '}{t('Xaritada aniqlangan ({toFixed}, {toFixed2})', { toFixed: value.latitude?.toFixed(4), toFixed2: value.longitude?.toFixed(4) })}</span>
       ) : (
-        <p className="gm-addrpick__hint">{note ?? 'Manzilni yozing va ro‘yxatdan tanlang yoki xaritadan belgilang — usta aniq joyni ko‘radi.'}</p>
+        <p className="gm-addrpick__hint">{note ?? t('Manzilni yozing va ro‘yxatdan tanlang yoki xaritadan belgilang — usta aniq joyni ko‘radi.')}</p>
       )}
 
       {mapOpen && (

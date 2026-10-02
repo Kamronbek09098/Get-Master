@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { NewCredentialsCard } from '@/features/auth/components/NewCredentialsCard';
 import { OtpForm } from '@/features/auth/components/OtpForm';
 import { useVerifyOtp, useVerifyRegistration } from '@/features/auth/hooks/useAuth';
+import { googlePending } from '@/features/auth/google-pending';
 import { loginSecret } from '@/features/auth/login-secret';
 import { authService } from '@/features/auth/services/auth.service';
 import { useAppStore } from '@/store/app.store';
@@ -12,6 +13,7 @@ import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
 import { APP_TITLE } from '@/lib/panel';
 import { getNavItems } from '@/components/layout/nav-items';
+import { t } from '@/i18n';
 
 type Flow = 'register' | 'login';
 
@@ -34,7 +36,7 @@ export function OtpPage() {
   const verifyOtp = useVerifyOtp();
 
   useEffect(() => {
-    document.title = flow === 'register' ? `Ro‘yxatdan o‘tishni tasdiqlash — ${APP_TITLE}` : `Kirishni tasdiqlash — ${APP_TITLE}`;
+    document.title = flow === 'register' ? `${t('Ro‘yxatdan o‘tishni tasdiqlash')} — ${APP_TITLE}` : `${t('Kirishni tasdiqlash')} — ${APP_TITLE}`;
   }, [flow]);
 
   if (created) {
@@ -65,7 +67,7 @@ export function OtpPage() {
         ? await authService.resendRegistration(pendingPhone as string)
         : await authService.login({ phone: pendingPhone as string, password: password as string });
       setDevCode(result.developmentCode ?? null);
-      pushToast('Yangi kod yuborildi.', 'success');
+      pushToast(t('Yangi kod yuborildi.'), 'success');
       return true;
     } catch (error) {
       setResendError(error);
@@ -80,6 +82,23 @@ export function OtpPage() {
         {
           onSuccess: () => {
             // Login va parol bir marta ko‘rsatiladi; ko‘rsatiladigan narsa bo‘lmasa — to‘g‘ridan-to‘g‘ri kirishga.
+            const credential = googlePending.take();
+            if (credential) {
+              // Google orqali ro‘yxatdan o‘tgan: parol yo‘q, shuning uchun darhol Google bilan kiriladi.
+              void authService
+                .googleSignIn(credential)
+                .then(() => {
+                  useAuthStore.getState().setSession(true);
+                  setPendingPhone(null);
+                  const [firstItem] = getNavItems(preferredRole, { superAdmin: true });
+                  navigate(firstItem?.to ?? '/', { replace: true });
+                })
+                .catch(() => {
+                  setPendingPhone(null);
+                  navigate('/login', { replace: true });
+                });
+              return;
+            }
             if (hasNewCredentials) setCreated(true);
             else {
               setPendingPhone(null);
@@ -103,10 +122,10 @@ export function OtpPage() {
 
   return (
     <div className="gm-auth-page">
-      <h1>{isRegisterFlow ? 'Ro‘yxatdan o‘tishni tasdiqlash' : 'Kirishni tasdiqlash'}</h1>
+      <h1>{isRegisterFlow ? t('Ro‘yxatdan o‘tishni tasdiqlash') : t('Kirishni tasdiqlash')}</h1>
       {devCode && (
-        <Alert tone="info" title="Dev rejim">
-          Tasdiqlash kodi: <strong>{devCode}</strong>
+        <Alert tone="info" title={t('Dev rejim')}>
+          {t('Tasdiqlash kodi:')} <strong>{devCode}</strong>
         </Alert>
       )}
       {!isRegisterFlow && deviceLimit && (
@@ -115,17 +134,16 @@ export function OtpPage() {
             <MonitorSmartphone size={20} />
           </span>
           <div>
-            <strong>Qurilmalar limiti to‘lgan ({deviceLimit.active}/{deviceLimit.max})</strong>
+            <strong>{t('Qurilmalar limiti to‘lgan ({active}/{max})', { active: deviceLimit.active, max: deviceLimit.max })}</strong>
             <p>
-              Akkauntingizda faol qurilmalar soni chegaraga yetgan, shuning uchun bu qurilmadan kirish kodni to‘g‘ri kiritsangiz ham rad etiladi. Avval boshqa
-              qurilmangizdan «Sozlamalar → Faol qurilmalar» orqali chiqing, so‘ng bu yerga qaytib login qiling.
+              {t('Akkauntingizda faol qurilmalar soni chegaraga yetgan, shuning uchun bu qurilmadan kirish kodni to‘g‘ri kiritsangiz ham rad etiladi. Avval boshqa qurilmangizdan «Sozlamalar → Faol qurilmalar» orqali chiqing, so‘ng bu yerga qaytib login qiling.')}
             </p>
           </div>
         </div>
       )}
       {isRegisterFlow && verifyRegistration.isError && (
-        <Alert tone="info" title="Kod mos kelmadimi?">
-          Agar bu telefon raqami bilan avval ro‘yxatdan o‘tgan bo‘lsangiz, <Link to="/login">kirish sahifasidan</Link> foydalaning. Aks holda kodni qayta tekshirib kiriting.
+        <Alert tone="info" title={t('Kod mos kelmadimi?')}>
+          {t('Agar bu telefon raqami bilan avval ro‘yxatdan o‘tgan bo‘lsangiz,')} <Link to="/login">{t('kirish sahifasidan')}</Link> {t('foydalaning. Aks holda kodni qayta tekshirib kiriting.')}
         </Alert>
       )}
       {!!resendError && <Alert tone="danger">{getErrorMessage(resendError)}</Alert>}
@@ -137,8 +155,8 @@ export function OtpPage() {
         onResend={isRegisterFlow || loginSecret.get(pendingPhone) ? handleResend : undefined}
         onExpiredHint={
           isRegisterFlow
-            ? 'Kod eskirdi. Yangi kod yuborilishini so‘rang yoki qaytadan urinib ko‘ring.'
-            : 'Kod eskirdi. Login sahifasiga qaytib, telefon raqami va parolingizni qayta kiriting — yangi kod shu tarzda yuboriladi.'
+            ? t('Kod eskirdi. Yangi kod yuborilishini so‘rang yoki qaytadan urinib ko‘ring.')
+            : t('Kod eskirdi. Login sahifasiga qaytib, telefon raqami va parolingizni qayta kiriting — yangi kod shu tarzda yuboriladi.')
         }
       />
     </div>

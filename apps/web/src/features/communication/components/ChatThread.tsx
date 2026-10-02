@@ -13,6 +13,7 @@ import { canEdit, isOwnMessage } from '../format';
 import type { ChatMessage, Conversation } from '../types';
 import { Composer } from './Composer';
 import { MessageList } from './MessageList';
+import { t } from '@/i18n';
 
 /** Xabarlar ro‘yxati + yozish maydoni + tahrirlash/o‘chirish oqimlari. */
 export function ChatThread({ conversation }: { conversation: Conversation }) {
@@ -72,8 +73,7 @@ export function ChatThread({ conversation }: { conversation: Conversation }) {
       {error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
       {readOnly ? (
         <p className="gm-chat-readonly" role="note">
-          <ShieldCheck size={16} aria-hidden="true" /> Bu Admin xabari. Hozircha javob yozish yopiq — Admin ruxsat bersa, yozishingiz mumkin bo‘ladi.
-        </p>
+          <ShieldCheck size={16} aria-hidden="true" />{' '}{t('Bu Admin xabari. Hozircha javob yozish yopiq — Admin ruxsat bersa, yozishingiz mumkin bo‘ladi.')}</p>
       ) : (
       <Composer
         conversationId={conversation.id}
@@ -93,13 +93,13 @@ export function ChatThread({ conversation }: { conversation: Conversation }) {
       {orderOpen && <DirectOrderDialog conversationId={conversation.id} masterName={accountName(conversation.counterpart)} onClose={() => setOrderOpen(false)} />}
       <ConfirmDialog
         open={!!deleting}
-        title="Xabarni o‘chirish"
+        title={t('Xabarni o‘chirish')}
         description={
           deleting && isOwnMessage(deleting, me.data?.id) && deleteForAll
-            ? 'Xabar suhbatdan ikkala tomon uchun ham butunlay o‘chiriladi. Hech qanday iz qolmaydi.'
-            : 'Xabar faqat sizning suhbatingizdan o‘chadi. Suhbatdosh uni ko‘rishda davom etadi.'
+            ? t('Xabar suhbatdan ikkala tomon uchun ham butunlay o‘chiriladi. Hech qanday iz qolmaydi.')
+            : t('Xabar faqat sizning suhbatingizdan o‘chadi. Suhbatdosh uni ko‘rishda davom etadi.')
         }
-        confirmLabel="O‘chirish"
+        confirmLabel={t('O‘chirish')}
         tone="danger"
         loading={remove.isPending}
         onCancel={() => setDeleting(null)}
@@ -114,7 +114,7 @@ export function ChatThread({ conversation }: { conversation: Conversation }) {
         {deleting && isOwnMessage(deleting, me.data?.id) && (
           <label className="gm-delete-both">
             <input type="checkbox" checked={deleteForAll} onChange={(event) => setDeleteForAll(event.target.checked)} />
-            <span>{accountName(conversation.counterpart)} uchun ham o‘chirish</span>
+            <span>{accountName(conversation.counterpart)}{' '}{t('uchun ham o‘chirish')}</span>
           </label>
         )}
       </ConfirmDialog>

@@ -11,6 +11,7 @@ import { useMasters } from '@/features/master/hooks/useMaster';
 import { MasterCard } from '@/features/master/components/MasterCard';
 import { useServiceCategories } from '@/features/service/hooks/useServices';
 import '@/features/master/components/MasterCatalog.css';
+import { t } from '@/i18n';
 
 export function MasterPage() {
   const [search, setSearch] = useState('');
@@ -25,8 +26,8 @@ export function MasterPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>Ustalar katalogi</h1>
-          <p className="gm-page-lead">Tasdiqlangan ustalarni tanlang, profilini ko‘ring va chat orqali bog‘laning.</p>
+          <h1>{t('Ustalar katalogi')}</h1>
+          <p className="gm-page-lead">{t('Tasdiqlangan ustalarni tanlang, profilini ko‘ring va chat orqali bog‘laning.')}</p>
         </div>
       </div>
 
@@ -34,18 +35,16 @@ export function MasterPage() {
         <Search size={18} aria-hidden="true" />
         <input
           type="search"
-          aria-label="Usta qidirish"
-          placeholder="Ism, kasb yoki ID bo‘yicha qidiring"
+          aria-label={t('Usta qidirish')}
+          placeholder={t('Ism, kasb yoki ID bo‘yicha qidiring')}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
       </div>
 
       {(categories.data?.length ?? 0) > 0 && (
-        <div className="gm-masters-chips" role="group" aria-label="Kategoriyalar">
-          <button type="button" className="gm-masters-chip" aria-pressed={!categoryId} onClick={() => setCategoryId(undefined)}>
-            Barchasi
-          </button>
+        <div className="gm-masters-chips" role="group" aria-label={t('Kategoriyalar')}>
+          <button type="button" className="gm-masters-chip" aria-pressed={!categoryId} onClick={() => setCategoryId(undefined)}>{t('Barchasi')}</button>
           {categories.data?.map((category) => (
             <button
               key={category.id}
@@ -79,18 +78,16 @@ export function MasterPage() {
                   setSearch('');
                   setCategoryId(undefined);
                 }}
-              >
-                Filtrni tozalash
-              </Button>
+              >{t('Filtrni tozalash')}</Button>
             ) : undefined
           }
-          title="Usta topilmadi"
-          description={filtered ? 'Qidiruv yoki kategoriyani o‘zgartirib ko‘ring.' : 'Hozircha tasdiqlangan ustalar yo‘q.'}
+          title={t('Usta topilmadi')}
+          description={filtered ? t('Qidiruv yoki kategoriyani o‘zgartirib ko‘ring.') : t('Hozircha tasdiqlangan ustalar yo‘q.')}
         />
       )}
       {items.length > 0 && (
         <>
-          <p className="gm-masters-count">{items.length} ta usta{masters.hasNextPage ? '+' : ''}</p>
+          <p className="gm-masters-count">{items.length}{' '}{t('ta usta')}{masters.hasNextPage ? '+' : ''}</p>
           <div className="gm-masters-grid">
             {items.map((master) => (
               <MasterCard key={master.id} master={master} />

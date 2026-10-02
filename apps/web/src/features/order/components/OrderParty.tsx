@@ -5,6 +5,7 @@ import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { Button } from '@/components/ui/Button';
 import { formatDateTime, formatMoney } from '@/lib/utils';
 import type { OrderDetailsData } from '../types';
+import { t } from '@/i18n';
 
 export function OrderParty({ order }: { order: OrderDetailsData }) {
   const name = accountName(order.counterpart);
@@ -12,7 +13,7 @@ export function OrderParty({ order }: { order: OrderDetailsData }) {
   const role = order.viewerRole === 'MASTER' ? 'Mijoz' : 'Usta';
 
   return (
-    <aside className="gm-ocard gm-oparty" aria-label="Buyurtma ma’lumotlari">
+    <aside className="gm-ocard gm-oparty" aria-label={t('Buyurtma ma’lumotlari')}>
       <div className="gm-oparty__who">
         <ChatAvatar name={name} seed={order.counterpart.id} size="lg" />
         <div>
@@ -25,34 +26,33 @@ export function OrderParty({ order }: { order: OrderDetailsData }) {
       {order.conversationId && (
         <Link to={`${base}/chat?suhbat=${order.conversationId}`}>
           <Button variant="secondary" fullWidth>
-            <MessageCircle size={16} /> Chat orqali yozish
-          </Button>
+            <MessageCircle size={16} />{' '}{t('Chat orqali yozish')}</Button>
         </Link>
       )}
       <dl className="gm-oparty__facts">
         {order.service && (
           <>
-            <dt>Xizmat</dt>
+            <dt>{t('Xizmat')}</dt>
             <dd>{order.service.name}</dd>
           </>
         )}
-        <dt>Kelishilgan narx</dt>
+        <dt>{t('Kelishilgan narx')}</dt>
         <dd>{formatMoney(order.originalAmount, order.currency)}</dd>
         {Number(order.additionalAmount) > 0 && (
           <>
-            <dt>Qo‘shimcha ishlar</dt>
+            <dt>{t('Qo‘shimcha ishlar')}</dt>
             <dd>+ {formatMoney(order.additionalAmount, order.currency)}</dd>
           </>
         )}
-        <dt>Jami</dt>
+        <dt>{t('Jami')}</dt>
         <dd className="gm-oparty__total">{formatMoney(order.finalAmount, order.currency)}</dd>
         {order.scheduledStartAt && (
           <>
-            <dt>Boshlanish vaqti</dt>
+            <dt>{t('Boshlanish vaqti')}</dt>
             <dd>{formatDateTime(order.scheduledStartAt)}</dd>
           </>
         )}
-        <dt>Yaratildi</dt>
+        <dt>{t('Yaratildi')}</dt>
         <dd>{formatDateTime(order.createdAt)}</dd>
       </dl>
     </aside>

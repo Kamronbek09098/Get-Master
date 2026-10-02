@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useAddresses } from '@/features/customer/hooks/useCustomer';
 import { useCreateDirectOrder } from '@/features/order/hooks/useOrders';
+import { t } from '@/i18n';
 
 /** «datetime-local» maydoni uchun hozirgi mahalliy vaqt (YYYY-MM-DDTHH:mm): undan oldingi vaqtni tanlab bo‘lmaydi. */
 const nowLocal = () => {
@@ -48,40 +49,34 @@ export function DirectOrderDialog({ conversationId, masterName, onClose }: { con
     <Modal
       open
       onClose={create.isPending ? () => undefined : onClose}
-      title="Ustaga buyurtma yuborish"
+      title={t('Ustaga buyurtma yuborish')}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} disabled={create.isPending}>
-            Bekor qilish
-          </Button>
-          <Button loading={create.isPending} disabled={!valid} onClick={submit}>
-            Buyurtmani yuborish
-          </Button>
+          <Button variant="ghost" onClick={onClose} disabled={create.isPending}>{t('Bekor qilish')}</Button>
+          <Button loading={create.isPending} disabled={!valid} onClick={submit}>{t('Buyurtmani yuborish')}</Button>
         </>
       }
     >
       <div className="gm-form">
-        <Alert tone="info">
-          Buyurtma <strong>{masterName}</strong>ga yuboriladi. Usta qabul qilgach, ish odatdagi buyurtma kabi davom etadi: yo‘lga chiqish, ish, tasdiqlash va to‘lov.
-        </Alert>
+        <Alert tone="info">{t('Buyurtma')}{' '}<strong>{masterName}</strong>{t('ga yuboriladi. Usta qabul qilgach, ish odatdagi buyurtma kabi davom etadi: yo‘lga chiqish, ish, tasdiqlash va to‘lov.')}</Alert>
         {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
-        <Input label="Nima kerak?" required maxLength={255} placeholder="Masalan, kranni almashtirish" value={title} onChange={(event) => setTitle(event.target.value)} />
-        <Textarea label="Tavsif" required rows={3} maxLength={4000} hint="Muammo yoki ish haqida batafsil yozing" value={description} onChange={(event) => setDescription(event.target.value)} />
-        <Input label="Kelishilgan narx (so‘m)" required inputMode="numeric" placeholder="Masalan, 150000" value={price} onChange={(event) => setPrice(event.target.value.replace(/[^\d\s]/g, ''))} />
+        <Input label={t('Nima kerak?')} required maxLength={255} placeholder={t('Masalan, kranni almashtirish')} value={title} onChange={(event) => setTitle(event.target.value)} />
+        <Textarea label={t('Tavsif')} required rows={3} maxLength={4000} hint={t('Muammo yoki ish haqida batafsil yozing')} value={description} onChange={(event) => setDescription(event.target.value)} />
+        <Input label={t('Kelishilgan narx (so‘m)')} required inputMode="numeric" placeholder={t('Masalan, 150000')} value={price} onChange={(event) => setPrice(event.target.value.replace(/[^\d\s]/g, ''))} />
         <Input
-          label="Qachon kelsin? (ixtiyoriy)"
+          label={t('Qachon kelsin? (ixtiyoriy)')}
           type="datetime-local"
           min={nowLocal()}
           value={when}
-          error={inPast ? 'O‘tgan vaqtni tanlab bo‘lmaydi. Hozirgi yoki kelajakdagi vaqtni kiriting' : undefined}
+          error={inPast ? t('O‘tgan vaqtni tanlab bo‘lmaydi. Hozirgi yoki kelajakdagi vaqtni kiriting') : undefined}
           onChange={(event) => setWhen(event.target.value)}
         />
         {(addresses.data?.length ?? 0) > 0 && (
           <Select
-            label="Manzil (ixtiyoriy)"
+            label={t('Manzil (ixtiyoriy)')}
             value={addressId}
             onChange={(event) => setAddressId(event.target.value)}
-            options={[{ value: '', label: 'Manzil tanlanmagan' }, ...(addresses.data ?? []).map((address) => ({ value: address.id, label: [address.title, address.addressLine].filter(Boolean).join(' — ') }))]}
+            options={[{ value: '', label: t('Manzil tanlanmagan') }, ...(addresses.data ?? []).map((address) => ({ value: address.id, label: [address.title, address.addressLine].filter(Boolean).join(' — ') }))]}
           />
         )}
       </div>

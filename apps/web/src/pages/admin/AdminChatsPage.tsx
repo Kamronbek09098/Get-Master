@@ -18,29 +18,30 @@ import { AccountLink } from '@/features/admin/components/AccountLink';
 import { useAdminConversation, useAdminConversationMessages, useAdminConversations } from '@/features/admin/hooks/useAdmin';
 import type { AdminChatMessage, AdminChatPerson, AdminConversation } from '@/features/admin/types';
 import './AdminChatsPage.css';
+import { t } from '@/i18n';
 
-const TYPE_LABEL = { ORDER: 'Buyurtma', DIRECT: 'To‘g‘ridan-to‘g‘ri', SUPPORT: 'Yordam' } as const;
+const TYPE_LABEL = { ORDER: t('Buyurtma'), DIRECT: t('To‘g‘ridan-to‘g‘ri'), SUPPORT: t('Yordam') } as const;
 const TYPE_FILTERS = [
-  { value: '', label: 'Hammasi' },
-  { value: 'DIRECT', label: 'To‘g‘ridan-to‘g‘ri' },
-  { value: 'ORDER', label: 'Buyurtma' },
+  { value: '', label: t('Hammasi') },
+  { value: 'DIRECT', label: t('To‘g‘ridan-to‘g‘ri') },
+  { value: 'ORDER', label: t('Buyurtma') },
 ];
 const PANEL_LABEL: Record<string, string> = { CUSTOMER: 'mijoz', MASTER: 'usta', ADMIN: 'admin' };
 const ROLE_LABEL: Record<string, string> = { CUSTOMER: 'mijoz', MASTER: 'usta', ADMIN: 'admin' };
 const timeOf = (value: string) => formatDateTime(value).split(', ')[1] ?? '';
 const dayKey = (value: string) => value.slice(0, 10);
 const MSG_FILTERS = [
-  { value: 'all', label: 'Hammasi' },
-  { value: 'deleted', label: 'O‘chirilgan' },
-  { value: 'edited', label: 'Tahrirlangan' },
-  { value: 'files', label: 'Fayllar' },
+  { value: 'all', label: t('Hammasi') },
+  { value: 'deleted', label: t('O‘chirilgan') },
+  { value: 'edited', label: t('Tahrirlangan') },
+  { value: 'files', label: t('Fayllar') },
 ] as const;
 type MsgFilter = (typeof MSG_FILTERS)[number]['value'];
 
 function ConversationRow({ item, active, onSelect }: { item: AdminConversation; active: boolean; onSelect: () => void }) {
   const names = item.participants.map((p) => accountName(p.user)).join(' ↔ ');
   const last = item.lastMessage;
-  const preview = !last ? 'Xabar yo‘q' : last.deletedAt ? '🗑 O‘chirilgan xabar' : (last.text ?? '📎 Fayl');
+  const preview = !last ? t('Xabar yo‘q') : last.deletedAt ? t('🗑 O‘chirilgan xabar') : (last.text ?? t('📎 Fayl'));
   const deletedBy = item.participants.filter((p) => p.deletedAt);
   return (
     <button type="button" className={cx('gm-achat__row', active && 'gm-achat__row--active')} onClick={onSelect} aria-current={active ? 'true' : undefined}>
@@ -65,10 +66,9 @@ function ConversationRow({ item, active, onSelect }: { item: AdminConversation; 
             </Badge>
           )}
           {deletedBy.length > 0 && (
-            <span title={`${deletedBy.map((p) => accountName(p.user)).join(', ')} ro‘yxatidan o‘chirgan (xabarlar saqlangan)`}>
+            <span title={t('{join} ro‘yxatidan o‘chirgan (xabarlar saqlangan)', { join: deletedBy.map((p) => accountName(p.user)).join(', ') })}>
               <Badge tone="neutral">
-                <Trash2 size={11} /> {deletedBy.map((p) => accountName(p.user)).join(', ')} o‘chirgan
-              </Badge>
+                <Trash2 size={11} />{' '}{t('{join} o‘chirgan', { join: deletedBy.map((p) => accountName(p.user)).join(', ') })}</Badge>
             </span>
           )}
         </span>
@@ -93,12 +93,12 @@ function Reactions({ message, people }: { message: AdminChatMessage; people: Map
   }, [message.reactions]);
   if (groups.length === 0) return null;
   return (
-    <div className="gm-tg__reactions" aria-label="Reaksiyalar">
+    <div className="gm-tg__reactions" aria-label={t('Reaksiyalar')}>
       {groups.map(([emoji, list]) => {
         const names = list.map((reaction) => {
           const user = reaction.userId ? people.get(reaction.userId) : undefined;
           const role = reaction.panel ? (PANEL_LABEL[reaction.panel] ?? reaction.panel) : null;
-          return `${user ? accountName(user) : 'Noma‘lum'}${role ? ` (${role})` : ''}`;
+          return `${user ? accountName(user) : t('Noma‘lum')}${role ? ` (${role})` : ''}`;
         });
         return (
           <span key={emoji} className="gm-tg__reaction" title={`${emoji} ${names.join(', ')}`}>
@@ -143,13 +143,12 @@ function MessageBubble({ message, side, first, last, people }: { message: AdminC
         )}
         {deleted && (
           <span className="gm-tg__deleted-tag">
-            <Trash2 size={12} /> O‘chirilgan xabar · {formatDateTime(message.deletedAt)}
-          </span>
+            <Trash2 size={12} />{' '}{t('O‘chirilgan xabar · {dateTime}', { dateTime: formatDateTime(message.deletedAt) })}</span>
         )}
         {message.replyTo && (
           <blockquote className="gm-tg__reply">
-            <strong>Javob</strong>
-            <span>{message.replyTo.deletedAt ? 'O‘chirilgan xabar' : (message.replyTo.text ?? 'Fayl')}</span>
+            <strong>{t('Javob')}</strong>
+            <span>{message.replyTo.deletedAt ? t('O‘chirilgan xabar') : (message.replyTo.text ?? t('Fayl'))}</span>
           </blockquote>
         )}
         {message.attachments && message.attachments.length > 0 && (
@@ -162,9 +161,8 @@ function MessageBubble({ message, side, first, last, people }: { message: AdminC
         {(message.text || !message.attachments?.length) && <p className="gm-tg__text">{message.text ?? '—'}</p>}
         <span className="gm-tg__meta">
           {edited && (
-            <button type="button" className="gm-tg__edited" aria-expanded={open} onClick={() => setOpen((value) => !value)} title="Tahrirlash tarixini ko‘rish">
-              <Pencil size={11} /> tahrirlangan ({message.edits.length})
-            </button>
+            <button type="button" className="gm-tg__edited" aria-expanded={open} onClick={() => setOpen((value) => !value)} title={t('Tahrirlash tarixini ko‘rish')}>
+              <Pencil size={11} />{' '}{t('tahrirlangan ({length})', { length: message.edits.length })}</button>
           )}
           <time title={formatDateTime(message.createdAt)}>{timeOf(message.createdAt)}</time>
         </span>
@@ -174,7 +172,7 @@ function MessageBubble({ message, side, first, last, people }: { message: AdminC
         <ol className="gm-tg__history">
           {message.edits.map((edit) => (
             <li key={edit.id}>
-              <small>{formatDateTime(edit.editedAt)} da o‘zgartirilgan. Oldingi matn:</small>
+              <small>{formatDateTime(edit.editedAt)}{' '}{t('da o‘zgartirilgan. Oldingi matn:')}</small>
               <span>{edit.previousText ?? '—'}</span>
             </li>
           ))}
@@ -243,15 +241,13 @@ function Viewer({ id, onBack }: { id: string; onBack: () => void }) {
   return (
     <section className="gm-achat__viewer">
       <header className="gm-achat__viewer-head">
-        <button type="button" className="gm-achat__back" onClick={onBack} aria-label="Suhbatlar ro‘yxatiga qaytish">
+        <button type="button" className="gm-achat__back" onClick={onBack} aria-label={t('Suhbatlar ro‘yxatiga qaytish')}>
           <ArrowLeft size={18} />
         </button>
         <div className="gm-achat__viewer-title">
-          <h2>{conversation.data ? conversation.data.participants.map((p) => accountName(p.user)).join('  ↔  ') : 'Suhbat'}</h2>
+          <h2>{conversation.data ? conversation.data.participants.map((p) => accountName(p.user)).join('  ↔  ') : t('Suhbat')}</h2>
           {conversation.data && (
-            <p>
-              {TYPE_LABEL[conversation.data.type]} · {ordered.length} ta xabar yuklangan
-              {conversation.data.order && <> · buyurtma holati: {STATUS_TEXT[conversation.data.order.status as keyof typeof STATUS_TEXT] ?? conversation.data.order.status}</>}
+            <p>{t('{item} · {length} ta xabar yuklangan', { item: TYPE_LABEL[conversation.data.type], length: ordered.length })}{conversation.data.order && <>{' '}{t('· buyurtma holati:')}{' '}{STATUS_TEXT[conversation.data.order.status as keyof typeof STATUS_TEXT] ?? conversation.data.order.status}</>}
             </p>
           )}
         </div>
@@ -274,9 +270,9 @@ function Viewer({ id, onBack }: { id: string; onBack: () => void }) {
       <div className="gm-achat__toolbar">
         <div className="gm-achat__search gm-achat__search--inline">
           <Search size={16} aria-hidden="true" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Suhbat ichidan qidirish (matn, tahrirlangan matn, ism)" aria-label="Suhbat ichidan qidirish" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('Suhbat ichidan qidirish (matn, tahrirlangan matn, ism)')} aria-label={t('Suhbat ichidan qidirish')} />
         </div>
-        <div className="gm-achat__types" role="group" aria-label="Xabarlarni saralash">
+        <div className="gm-achat__types" role="group" aria-label={t('Xabarlarni saralash')}>
           {MSG_FILTERS.map((item) => (
             <button key={item.value} type="button" aria-pressed={filter === item.value} className={cx('gm-otab', filter === item.value && 'gm-otab--active')} onClick={() => setFilter(item.value)}>
               {item.label}
@@ -290,15 +286,13 @@ function Viewer({ id, onBack }: { id: string; onBack: () => void }) {
         {messages.isError && <Alert tone="danger">{getErrorMessage(messages.error)}</Alert>}
         {messages.hasNextPage && (
           <div className="gm-achat__older">
-            <Button size="sm" variant="secondary" loading={messages.isFetchingNextPage} onClick={loadOlder}>
-              Oldingi xabarlarni yuklash
-            </Button>
+            <Button size="sm" variant="secondary" loading={messages.isFetchingNextPage} onClick={loadOlder}>{t('Oldingi xabarlarni yuklash')}</Button>
           </div>
         )}
         {messages.isLoading ? (
           <Skeleton style={{ height: 160, borderRadius: 12 }} />
         ) : visible.length === 0 ? (
-          <EmptyState title={filtering ? 'Mos xabar topilmadi' : 'Xabar yo‘q'} description={filtering && messages.hasNextPage ? 'Eski xabarlar hali yuklanmagan bo‘lishi mumkin.' : undefined} />
+          <EmptyState title={filtering ? t('Mos xabar topilmadi') : t('Xabar yo‘q')} description={filtering && messages.hasNextPage ? t('Eski xabarlar hali yuklanmagan bo‘lishi mumkin.') : undefined} />
         ) : (
           <ul className="gm-achat__messages">
             {visible.map((message, index) => {
@@ -340,23 +334,21 @@ export function AdminChatsPage() {
     <div className="gm-achat">
       <div className="gm-page-header">
         <div>
-          <h1>Suhbatlar</h1>
-          <p className="gm-page-lead">Barcha suhbatlar: o‘chirilgan va tahrirlangan xabarlar, ularning asl matni bilan.</p>
+          <h1>{t('Suhbatlar')}</h1>
+          <p className="gm-page-lead">{t('Barcha suhbatlar: o‘chirilgan va tahrirlangan xabarlar, ularning asl matni bilan.')}</p>
         </div>
         <Link to="/admin/audit">
-          <Button size="sm" variant="secondary">
-            Audit jurnali
-          </Button>
+          <Button size="sm" variant="secondary">{t('Audit jurnali')}</Button>
         </Link>
       </div>
 
       <div className={cx('gm-achat__layout', selected && 'gm-achat__layout--open')}>
-        <aside className="gm-achat__list" aria-label="Suhbatlar ro‘yxati">
+        <aside className="gm-achat__list" aria-label={t('Suhbatlar ro‘yxati')}>
           <div className="gm-achat__search">
             <Search size={16} aria-hidden="true" />
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Ism, telefon yoki ID" aria-label="Qidirish" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Ism, telefon yoki ID')} aria-label={t('Qidirish')} />
           </div>
-          <div className="gm-achat__types" role="group" aria-label="Turi">
+          <div className="gm-achat__types" role="group" aria-label={t('Turi')}>
             {TYPE_FILTERS.map((item) => (
               <button key={item.value} type="button" aria-pressed={type === item.value} className={cx('gm-otab', type === item.value && 'gm-otab--active')} onClick={() => setType(item.value)}>
                 {item.label}
@@ -364,13 +356,11 @@ export function AdminChatsPage() {
             ))}
           </div>
           <label className="gm-achat__flagged">
-            <input type="checkbox" checked={flaggedOnly} onChange={(event) => setFlaggedOnly(event.target.checked)} />
-            Faqat o‘chirilgan / tahrirlangan xabarli suhbatlar
-          </label>
-          <small className="gm-achat__total">{items.length} ta suhbat</small>
+            <input type="checkbox" checked={flaggedOnly} onChange={(event) => setFlaggedOnly(event.target.checked)} />{t('Faqat o‘chirilgan / tahrirlangan xabarli suhbatlar')}</label>
+          <small className="gm-achat__total">{items.length}{' '}{t('ta suhbat')}</small>
           {conversations.isError && <Alert tone="danger">{getErrorMessage(conversations.error)}</Alert>}
           {conversations.isLoading && <Skeleton style={{ height: 120, borderRadius: 12 }} />}
-          {conversations.data && items.length === 0 && <EmptyState icon={<MessagesSquare size={26} />} title="Suhbat topilmadi" />}
+          {conversations.data && items.length === 0 && <EmptyState icon={<MessagesSquare size={26} />} title={t('Suhbat topilmadi')} />}
           {items.map((item) => (
             <ConversationRow key={item.id} item={item} active={selected === item.id} onSelect={() => setSelected(item.id)} />
           ))}
@@ -379,7 +369,7 @@ export function AdminChatsPage() {
           <Viewer key={selected} id={selected} onBack={() => setSelected(null)} />
         ) : (
           <div className="gm-achat__placeholder">
-            <EmptyState icon={<MessagesSquare size={26} />} title="Suhbatni tanlang" description="Chapdan suhbatni tanlang: barcha xabarlar, o‘chirilganlari va tahrir tarixi ko‘rinadi." />
+            <EmptyState icon={<MessagesSquare size={26} />} title={t('Suhbatni tanlang')} description={t('Chapdan suhbatni tanlang: barcha xabarlar, o‘chirilganlari va tahrir tarixi ko‘rinadi.')} />
           </div>
         )}
       </div>

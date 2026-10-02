@@ -13,6 +13,7 @@ import { TrustBadge } from '@/features/trust/components/TrustBadge';
 import { CoverageDialog } from '@/features/geo/components/CoverageDialog';
 import { CoverageMap } from '@/features/geo/components/CoverageMap';
 import { ReviewList } from '@/features/review/components/ReviewList';
+import { t } from '@/i18n';
 
 export function MasterDetailsPage() {
   const { id = '' } = useParams();
@@ -21,7 +22,7 @@ export function MasterDetailsPage() {
   const openChat = useOpenMasterChat();
   const [areaOpen, setAreaOpen] = useState<string | null>(null);
 
-  if (master.isLoading) return <PageLoader label="Usta yuklanmoqda…" />;
+  if (master.isLoading) return <PageLoader label={t('Usta yuklanmoqda…')} />;
   if (master.isError) return <Alert tone="danger">{getErrorMessage(master.error)}</Alert>;
   if (!master.data) return null;
 
@@ -37,7 +38,7 @@ export function MasterDetailsPage() {
           </span>
           <div className="gm-profile-hero__who">
             <h1>{name}</h1>
-            <p>{data.profession ?? 'Kasb ko‘rsatilmagan'}</p>
+            <p>{data.profession ?? t('Kasb ko‘rsatilmagan')}</p>
             {data.workPlace && <p>{data.workPlace}</p>}
             <div className="gm-profile-hero__badges">
               <TrustBadge verification={data.verification} />
@@ -48,22 +49,19 @@ export function MasterDetailsPage() {
         <dl className="gm-profile-hero__stats">
           <div>
             <dt>
-              <Star size={15} /> Reyting
-            </dt>
+              <Star size={15} />{' '}{t('Reyting')}</dt>
             <dd>
-              {Number(data.ratingAvg).toFixed(1)} <small>({data.ratingCount} ta sharh)</small>
+              {Number(data.ratingAvg).toFixed(1)} <small>{t('({ratingCount} ta sharh)', { ratingCount: data.ratingCount })}</small>
             </dd>
           </div>
           <div>
             <dt>
-              <Award size={15} /> Bajarilgan ishlar
-            </dt>
+              <Award size={15} />{' '}{t('Bajarilgan ishlar')}</dt>
             <dd>{data.completedOrders}</dd>
           </div>
           <div>
             <dt>
-              <CalendarClock size={15} /> Tajriba
-            </dt>
+              <CalendarClock size={15} />{' '}{t('Tajriba')}</dt>
             <dd>{data.experienceYears ? `${data.experienceYears} yil` : '—'}</dd>
           </div>
         </dl>
@@ -76,23 +74,20 @@ export function MasterDetailsPage() {
             loading={openChat.isPending}
             onClick={() => openChat.mutate(data.id, { onSuccess: (conversation) => navigate(`/mijozlar/chat?suhbat=${conversation.id}`) })}
           >
-            <MessageCircle size={20} /> Chat orqali bog‘lanish
-          </Button>
+            <MessageCircle size={20} />{' '}{t('Chat orqali bog‘lanish')}</Button>
         </div>
         {openChat.isError && <Alert tone="danger">{getErrorMessage(openChat.error)}</Alert>}
       </section>
 
       {data.coverage && (
         <section className="gm-detail-section">
-          <h2>Ish hududi</h2>
-          <p className="gm-card__meta" style={{ marginTop: 0 }}>
-            Usta markazdan <strong>{data.coverage.radiusKm} km</strong> masofagacha bo‘lgan manzillarga keladi. Hududni bossangiz, xaritada to‘liq ochiladi.
-          </p>
+          <h2>{t('Ish hududi')}</h2>
+          <p className="gm-card__meta" style={{ marginTop: 0 }}>{t('Usta markazdan')}{' '}<strong>{data.coverage.radiusKm} km</strong>{' '}{t('masofagacha bo‘lgan manzillarga keladi. Hududni bossangiz, xaritada to‘liq ochiladi.')}</p>
           {(data.serviceAreas ?? []).length > 0 && (
-            <ul className="gm-ptags" aria-label="Ish hududlari">
+            <ul className="gm-ptags" aria-label={t('Ish hududlari')}>
               {(data.serviceAreas ?? []).map((area) => (
                 <li key={area}>
-                  <button type="button" className="gm-ptags__btn" onClick={() => setAreaOpen(area)} aria-label={`${area} — xaritada ochish`}>
+                  <button type="button" className="gm-ptags__btn" onClick={() => setAreaOpen(area)} aria-label={t('{area} — xaritada ochish', { area })}>
                     <MapPin size={13} aria-hidden="true" /> {area}
                   </button>
                 </li>
@@ -104,13 +99,12 @@ export function MasterDetailsPage() {
           </div>
           <div className="gm-action-row" style={{ marginTop: 12 }}>
             <Button variant="secondary" size="sm" onClick={() => setAreaOpen('')}>
-              <MapPin size={15} /> Xaritada kattalashtirish
-            </Button>
+              <MapPin size={15} />{' '}{t('Xaritada kattalashtirish')}</Button>
           </div>
           <CoverageDialog
             open={areaOpen !== null}
             onClose={() => setAreaOpen(null)}
-            title={`${name} — ish hududi`}
+            title={t('{name} — ish hududi', { name })}
             area={areaOpen || null}
             areas={data.serviceAreas ?? []}
             lat={data.coverage.lat}
@@ -122,7 +116,7 @@ export function MasterDetailsPage() {
       )}
 
       <section className="gm-detail-section">
-        <h2>Sharhlar</h2>
+        <h2>{t('Sharhlar')}</h2>
         <ReviewList masterId={data.id} />
       </section>
     </div>

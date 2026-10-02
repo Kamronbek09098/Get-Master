@@ -1,14 +1,15 @@
 import { Badge } from '@/components/ui/Badge';
 import type { RequestStatus as RequestStatusEnum } from '@/types/common';
+import { t } from '@/i18n';
 
 const LABEL: Record<RequestStatusEnum, string> = {
-  DRAFT: 'Qoralama',
-  SUBMITTED: 'Yuborildi',
-  MATCHING: 'Mos usta izlanmoqda',
-  OFFERS_RECEIVED: 'Takliflar keldi',
-  BOOKED: 'Band qilindi',
-  CANCELLED: 'Bekor qilindi',
-  EXPIRED: 'Muddati tugadi',
+  DRAFT: t('Qoralama'),
+  SUBMITTED: t('Yuborildi'),
+  MATCHING: t('Mos usta izlanmoqda'),
+  OFFERS_RECEIVED: t('Takliflar keldi'),
+  BOOKED: t('Band qilindi'),
+  CANCELLED: t('Bekor qilindi'),
+  EXPIRED: t('Muddati tugadi'),
 };
 
 const TONE: Record<RequestStatusEnum, 'neutral' | 'primary' | 'success' | 'warning' | 'danger'> = {

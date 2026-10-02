@@ -6,6 +6,7 @@ import { cx } from '@/lib/utils';
 import { categoryIcon } from '../category-icon';
 import { useServiceCategories } from '../hooks/useServices';
 import './ServiceChooser.css';
+import { t } from '@/i18n';
 
 const INITIAL_VISIBLE = 8;
 
@@ -57,8 +58,8 @@ export function ServiceChooser({ label, value, onChange, required, error, hint }
         <Search size={18} aria-hidden="true" />
         <input
           type="search"
-          aria-label="Xizmat qidirish"
-          placeholder="Xizmatni qidiring: masalan, kran, rozetka…"
+          aria-label={t('Xizmat qidirish')}
+          placeholder={t('Xizmatni qidiring: masalan, kran, rozetka…')}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           autoComplete="off"
@@ -66,15 +67,13 @@ export function ServiceChooser({ label, value, onChange, required, error, hint }
       </div>
 
       {groups.length > 1 && (
-        <div className="gm-chooser__chips" role="group" aria-label="Kategoriyalar">
+        <div className="gm-chooser__chips" role="group" aria-label={t('Kategoriyalar')}>
           <button
             type="button"
             className={cx('gm-chooser__chip', activeCategory === 'all' && 'gm-chooser__chip--active')}
             aria-pressed={activeCategory === 'all'}
             onClick={() => setActiveCategory('all')}
-          >
-            Hammasi
-          </button>
+          >{t('Hammasi')}</button>
           {groups.map((category) => {
             const Icon = categoryIcon(category.name);
             const active = activeCategory === category.id;
@@ -100,7 +99,7 @@ export function ServiceChooser({ label, value, onChange, required, error, hint }
           ))}
         </div>
       ) : services.length === 0 ? (
-        <EmptyState title="Hech narsa topilmadi" description="Qidiruvni o‘zgartiring yoki boshqa kategoriyani tanlang." />
+        <EmptyState title={t('Hech narsa topilmadi')} description={t('Qidiruvni o‘zgartiring yoki boshqa kategoriyani tanlang.')} />
       ) : (
         <div className="gm-chooser__grid" role="radiogroup" aria-label={label} aria-required={required}>
           {visible.map((service) => {
@@ -133,14 +132,12 @@ export function ServiceChooser({ label, value, onChange, required, error, hint }
       )}
 
       {collapsible && (
-        <button type="button" className="gm-chooser__more" onClick={() => setExpanded(true)}>
-          Yana {services.length - INITIAL_VISIBLE} ta xizmatni ko‘rsatish
-        </button>
+        <button type="button" className="gm-chooser__more" onClick={() => setExpanded(true)}>{t('Yana {p} ta xizmatni ko‘rsatish', { p: services.length - INITIAL_VISIBLE })}</button>
       )}
 
       {selected && (
         <p className="gm-chooser__selected" role="status">
-          <Check size={16} aria-hidden="true" /> Tanlandi: <strong>{selected.name}</strong>
+          <Check size={16} aria-hidden="true" />{' '}{t('Tanlandi:')}{' '}<strong>{selected.name}</strong>
         </p>
       )}
       {hint && !error && <p className="gm-field__hint">{hint}</p>}

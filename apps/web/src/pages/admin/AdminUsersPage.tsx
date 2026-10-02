@@ -18,35 +18,36 @@ import { UserActionDialog } from '@/features/admin/components/UserActionDialog';
 import { displayName } from '@/features/admin/user-actions';
 import type { UserAction } from '@/features/admin/user-actions';
 import type { AdminUser, ManagedStatus, UserFilters } from '@/features/admin/types';
+import { t } from '@/i18n';
 
 const STATUS: Record<ManagedStatus, { label: string; tone: BadgeTone }> = {
-  ACTIVE: { label: 'Akkaunt faol', tone: 'success' },
-  PENDING: { label: 'Telefon tasdiqlanmagan', tone: 'neutral' },
-  SUSPENDED: { label: 'Akkaunt muzlatilgan', tone: 'warning' },
-  BLOCKED: { label: 'Akkaunt bloklangan', tone: 'danger' },
-  DELETED: { label: 'O‘chirilgan', tone: 'neutral' },
+  ACTIVE: { label: t('Akkaunt faol'), tone: 'success' },
+  PENDING: { label: t('Telefon tasdiqlanmagan'), tone: 'neutral' },
+  SUSPENDED: { label: t('Akkaunt muzlatilgan'), tone: 'warning' },
+  BLOCKED: { label: t('Akkaunt bloklangan'), tone: 'danger' },
+  DELETED: { label: t('O‘chirilgan'), tone: 'neutral' },
 };
 
 const ROLE_TABS: Array<{ value: UserFilters['role'] | ''; label: string }> = [
-  { value: '', label: 'Hammasi' },
-  { value: 'CUSTOMER', label: 'Mijozlar' },
-  { value: 'MASTER', label: 'Ustalar' },
+  { value: '', label: t('Hammasi') },
+  { value: 'CUSTOMER', label: t('Mijozlar') },
+  { value: 'MASTER', label: t('Ustalar') },
 ];
 
 const STATUS_OPTIONS = [
-  { value: '', label: 'Barcha holatlar' },
+  { value: '', label: t('Barcha holatlar') },
   ...(Object.keys(STATUS) as ManagedStatus[]).map((value) => ({ value, label: STATUS[value].label })),
 ];
 
 function masterWorkState(user: AdminUser): { label: string; tone: BadgeTone } | null {
   const profile = user.masterProfile;
   if (!profile) return null;
-  if (user.status === 'SUSPENDED' || user.status === 'BLOCKED' || user.status === 'DELETED') return { label: 'Usta: cheklangan', tone: 'danger' };
-  if (profile.verification !== 'VERIFIED') return { label: 'Usta: nofaol', tone: 'neutral' };
-  if (profile.status === 'ACTIVE') return { label: 'Usta: faol', tone: 'success' };
-  if (profile.status === 'BUSY') return { label: 'Usta: band', tone: 'warning' };
-  if (profile.status === 'RESTRICTED' || profile.status === 'SUSPENDED') return { label: 'Usta: cheklangan', tone: 'danger' };
-  return { label: 'Usta: nofaol', tone: 'neutral' };
+  if (user.status === 'SUSPENDED' || user.status === 'BLOCKED' || user.status === 'DELETED') return { label: t('Usta: cheklangan'), tone: 'danger' };
+  if (profile.verification !== 'VERIFIED') return { label: t('Usta: nofaol'), tone: 'neutral' };
+  if (profile.status === 'ACTIVE') return { label: t('Usta: faol'), tone: 'success' };
+  if (profile.status === 'BUSY') return { label: t('Usta: band'), tone: 'warning' };
+  if (profile.status === 'RESTRICTED' || profile.status === 'SUSPENDED') return { label: t('Usta: cheklangan'), tone: 'danger' };
+  return { label: t('Usta: nofaol'), tone: 'neutral' };
 }
 
 function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminUser, action: UserAction) => void }) {
@@ -62,7 +63,7 @@ function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminU
       className="gm-card gm-card--clickable gm-user-card"
       role="link"
       tabIndex={0}
-      aria-label={`${displayName(user)} profilini ochish`}
+      aria-label={t('{displayName} profilini ochish', { displayName: displayName(user) })}
       onClick={() => navigate(profilePath)}
       onKeyDown={(event) => {
         if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return;
@@ -77,49 +78,40 @@ function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminU
         <div className="gm-user-card__info">
           <div className="gm-user-card__title">
             <h3>{displayName(user)}</h3>
-            {user.roles.includes('CUSTOMER') && <Badge tone="primary">Mijoz</Badge>}
-            {user.roles.includes('MASTER') && <Badge tone="primary">Usta</Badge>}
-            {isAdmin && <Badge tone="warning">Admin</Badge>}
+            {user.roles.includes('CUSTOMER') && <Badge tone="primary">{t('Mijoz')}</Badge>}
+            {user.roles.includes('MASTER') && <Badge tone="primary">{t('Usta')}</Badge>}
+            {isAdmin && <Badge tone="warning">{t('Admin')}</Badge>}
             <Badge tone={STATUS[user.status].tone}>{STATUS[user.status].label}</Badge>
             {workState && <Badge tone={workState.tone}>{workState.label}</Badge>}
           </div>
-          <p className="gm-card__meta">
-            ID {user.accountNumber} · {user.phone}
-            {user.email && ` · ${user.email}`} · Ro‘yxatdan o‘tgan: {formatDateTime(user.createdAt)}
-          </p>
+          <p className="gm-card__meta">{t('ID {accountNumber} · {phone} {p} · Ro‘yxatdan o‘tgan: {dateTime}', { accountNumber: user.accountNumber, phone: user.phone, p: user.email && ` · ${user.email}`, dateTime: formatDateTime(user.createdAt) })}</p>
           {user.masterProfile && (
             <p className="gm-card__meta gm-user-card__master">
-              {user.masterProfile.profession ?? 'Kasb ko‘rsatilmagan'} ·{' '}
-              <TrustBadge verification={user.masterProfile.verification} /> · Reyting{' '}
-              {Number(user.masterProfile.ratingAvg).toFixed(1)} · {user.masterProfile.completedOrders} ta ish
-            </p>
+              {user.masterProfile.profession ?? t('Kasb ko‘rsatilmagan')} ·{' '}
+              <TrustBadge verification={user.masterProfile.verification} />{' '}{t('· Reyting {toFixed} · {completedOrders} ta ish', { toFixed: Number(user.masterProfile.ratingAvg).toFixed(1), completedOrders: user.masterProfile.completedOrders })}</p>
           )}
         </div>
       </div>
 
       {isAdmin && (
-        <p className="gm-card__meta">Admin akkauntlarni bu yerdan muzlatish, bloklash yoki o‘chirish mumkin emas.</p>
+        <p className="gm-card__meta">{t('Admin akkauntlarni bu yerdan muzlatish, bloklash yoki o‘chirish mumkin emas.')}</p>
       )}
 
       {!deleted && !isAdmin && (
         <div className="gm-action-row" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
           {restricted ? (
             <Button size="sm" onClick={() => onAction(user, 'ACTIVATE')}>
-              <CheckCircle2 size={16} /> Faollashtirish
-            </Button>
+              <CheckCircle2 size={16} />{' '}{t('Faollashtirish')}</Button>
           ) : (
             <>
               <Button size="sm" variant="secondary" onClick={() => onAction(user, 'SUSPEND')}>
-                <Snowflake size={16} /> Muzlatish
-              </Button>
+                <Snowflake size={16} />{' '}{t('Muzlatish')}</Button>
               <Button size="sm" variant="secondary" onClick={() => onAction(user, 'BLOCK')}>
-                <Ban size={16} /> Bloklash
-              </Button>
+                <Ban size={16} />{' '}{t('Bloklash')}</Button>
             </>
           )}
           <Button size="sm" variant="ghost" onClick={() => onAction(user, 'DELETE')}>
-            <Trash2 size={16} /> O‘chirish
-          </Button>
+            <Trash2 size={16} />{' '}{t('O‘chirish')}</Button>
         </div>
       )}
     </div>
@@ -150,12 +142,12 @@ export function AdminUsersPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>Foydalanuvchilar</h1>
-          <p className="gm-page-lead">Mijozlar va ustalarni boshqaring.</p>
+          <h1>{t('Foydalanuvchilar')}</h1>
+          <p className="gm-page-lead">{t('Mijozlar va ustalarni boshqaring.')}</p>
         </div>
       </div>
 
-      <div className="gm-tabs" role="tablist" aria-label="Rol bo‘yicha">
+      <div className="gm-tabs" role="tablist" aria-label={t('Rol bo‘yicha')}>
         {ROLE_TABS.map((tab) => (
           <Button
             key={tab.label}
@@ -173,20 +165,20 @@ export function AdminUsersPage() {
       <div className="gm-toolbar">
         <div style={{ flex: '1 1 260px' }}>
           <Input
-            label="Qidirish"
-            placeholder="Ism, familiya, telefon yoki ID"
+            label={t('Qidirish')}
+            placeholder={t('Ism, familiya, telefon yoki ID')}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             autoComplete="off"
           />
         </div>
-        <Select label="Holat" options={STATUS_OPTIONS} value={status} onChange={(event) => setStatus(event.target.value as ManagedStatus | '')} />
+        <Select label={t('Holat')} options={STATUS_OPTIONS} value={status} onChange={(event) => setStatus(event.target.value as ManagedStatus | '')} />
       </div>
 
-      {users.isLoading && <PageLoader label="Foydalanuvchilar yuklanmoqda…" />}
+      {users.isLoading && <PageLoader label={t('Foydalanuvchilar yuklanmoqda…')} />}
       {users.isError && <Alert tone="danger">{getErrorMessage(users.error)}</Alert>}
       {users.data && items.length === 0 && (
-        <EmptyState icon={<Search size={28} />} title="Foydalanuvchi topilmadi" description="Qidiruv yoki filtrni o‘zgartirib ko‘ring." />
+        <EmptyState icon={<Search size={28} />} title={t('Foydalanuvchi topilmadi')} description={t('Qidiruv yoki filtrni o‘zgartirib ko‘ring.')} />
       )}
 
       <div className="gm-list">
@@ -197,9 +189,7 @@ export function AdminUsersPage() {
 
       {users.hasNextPage && (
         <div style={{ marginTop: 'var(--gm-space-4)', textAlign: 'center' }}>
-          <Button variant="secondary" loading={users.isFetchingNextPage} onClick={() => void users.fetchNextPage()}>
-            Yana yuklash
-          </Button>
+          <Button variant="secondary" loading={users.isFetchingNextPage} onClick={() => void users.fetchNextPage()}>{t('Yana yuklash')}</Button>
         </div>
       )}
 

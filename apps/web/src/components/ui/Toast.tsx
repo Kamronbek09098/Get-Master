@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useAppStore } from '@/store/app.store';
 import { cx } from '@/lib/utils';
 import './Toast.css';
+import { t } from '@/i18n';
 
 const AUTO_DISMISS_MS = 5000;
 
@@ -39,7 +40,7 @@ function ToastItem({
   return (
     <div className={cx('gm-toast', `gm-toast--${variant}`)} role={variant === 'error' ? 'alert' : 'status'}>
       <span>{message}</span>
-      <button type="button" className="gm-toast__close" onClick={() => onDismiss(id)} aria-label="Xabarni yopish">
+      <button type="button" className="gm-toast__close" onClick={() => onDismiss(id)} aria-label={t('Xabarni yopish')}>
         ✕
       </button>
     </div>

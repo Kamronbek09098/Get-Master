@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { Role } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/login.dto';
+import { GoogleRegisterDto, GoogleSignInDto } from './dto/google.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LogoutDto } from './dto/logout.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -23,6 +24,20 @@ export class AuthController {
   @Post('register')
   register(@Body() dto: RegisterDto, @Req() req: Request) {
     return this.authService.register(dto, req);
+  }
+
+  @Public()
+  @RateLimit({ policy: 'login', scope: 'ip', escalate: true })
+  @Post('google')
+  google(@Body() dto: GoogleSignInDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    return this.authService.googleSignIn(dto, req, res);
+  }
+
+  @Public()
+  @RateLimit({ policy: 'register', scope: 'ip', escalate: true })
+  @Post('google/register')
+  googleRegister(@Body() dto: GoogleRegisterDto, @Req() req: Request) {
+    return this.authService.googleRegister(dto, req);
   }
 
   @Public()

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { t } from '@/i18n';
 
 export type VoiceState = 'idle' | 'recording';
 
@@ -46,7 +47,7 @@ export function useVoiceRecorder() {
     setError(null);
     const format = pickMimeType();
     if (!format || !navigator.mediaDevices?.getUserMedia) {
-      setError('Bu qurilmada ovoz yozib bo‘lmaydi');
+      setError(t('Bu qurilmada ovoz yozib bo‘lmaydi'));
       return;
     }
     try {
@@ -65,7 +66,7 @@ export function useVoiceRecorder() {
       timer.current = window.setInterval(() => setSeconds(Math.floor((Date.now() - startedAt.current) / 1000)), 250);
     } catch {
       release();
-      setError('Mikrofonga ruxsat berilmadi');
+      setError(t('Mikrofonga ruxsat berilmadi'));
     }
   }, [release]);
 

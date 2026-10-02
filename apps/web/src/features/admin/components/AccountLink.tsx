@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useMe } from '@/features/session/hooks/useMe';
+import { t } from '@/i18n';
 
 /** Profil manzili raqamli ID bilan: o‘zingizniki — shaxsiy bo‘lim, boshqaniki — foydalanuvchi profili. */
 export function accountPath(accountNumber: number, myNumber: number | undefined) {
@@ -11,7 +12,7 @@ export function AccountLink({ accountNumber, className, children }: { accountNum
   const me = useMe();
   const own = accountNumber === me.data?.accountNumber;
   return (
-    <Link to={accountPath(accountNumber, me.data?.accountNumber)} className={className} title={own ? 'Mening profilim' : 'Profilni ochish'}>
+    <Link to={accountPath(accountNumber, me.data?.accountNumber)} className={className} title={own ? t('Mening profilim') : t('Profilni ochish')}>
       {children}
     </Link>
   );

@@ -13,6 +13,7 @@ import { usePolicies, usePolicy } from '@/features/legal/hooks/useLegal';
 import { POLICY_TYPE_LABEL } from '@/features/legal/types';
 import type { PolicyType } from '@/features/legal/types';
 import './TermsPage.css';
+import { t } from '@/i18n';
 
 const ICONS: Partial<Record<PolicyType, LucideIcon>> = { TERMS: FileText, PRIVACY: Lock, PLATFORM_RULES: ScrollText, WARRANTY: ShieldCheck };
 
@@ -78,9 +79,8 @@ export function TermsPage() {
     <div className="gm-terms">
       <header className="gm-terms__bar">
         <button type="button" className="gm-terms__back" onClick={goBack}>
-          <ArrowLeft size={18} aria-hidden="true" /> Orqaga
-        </button>
-        <Link to="/" aria-label="GetMaster — bosh sahifa">
+          <ArrowLeft size={18} aria-hidden="true" />{' '}{t('Orqaga')}</button>
+        <Link to="/" aria-label={t('GetMaster — bosh sahifa')}>
           <Logo />
         </Link>
       </header>
@@ -90,14 +90,14 @@ export function TermsPage() {
           <span className="gm-terms__hero-icon" aria-hidden="true">
             <ScrollText size={26} />
           </span>
-          <h1>Foydalanish shartlari va siyosatlar</h1>
-          <p className="gm-terms__lead">Ro‘yxatdan o‘tishdan oldin hujjatlar bilan tanishib chiqing. Ularni kirmasdan ham o‘qish mumkin.</p>
-          {items.length > 0 && <span className="gm-terms__count">{items.length} ta hujjat</span>}
+          <h1>{t('Foydalanish shartlari va siyosatlar')}</h1>
+          <p className="gm-terms__lead">{t('Ro‘yxatdan o‘tishdan oldin hujjatlar bilan tanishib chiqing. Ularni kirmasdan ham o‘qish mumkin.')}</p>
+          {items.length > 0 && <span className="gm-terms__count">{items.length}{' '}{t('ta hujjat')}</span>}
         </section>
 
-        {policies.isLoading && <PageLoader label="Hujjatlar yuklanmoqda…" />}
+        {policies.isLoading && <PageLoader label={t('Hujjatlar yuklanmoqda…')} />}
         {policies.isError && <Alert tone="danger">{getErrorMessage(policies.error)}</Alert>}
-        {!policies.isLoading && !policies.isError && items.length === 0 && <EmptyState title="Hozircha hujjatlar e’lon qilinmagan" />}
+        {!policies.isLoading && !policies.isError && items.length === 0 && <EmptyState title={t('Hozircha hujjatlar e’lon qilinmagan')} />}
 
         <ul className="gm-terms__list">
           {items.map((policy) => {
@@ -130,7 +130,7 @@ export function TermsPage() {
         </ul>
 
         <footer className="gm-terms__foot">
-          <p>© {new Date().getFullYear()} GetMaster. Savollar bo‘lsa, ilovadagi «Shikoyatlar» bo‘limi orqali murojaat qiling.</p>
+          <p>{t('© {getFullYear} GetMaster. Savollar bo‘lsa, ilovadagi «Shikoyatlar» bo‘limi orqali murojaat qiling.', { getFullYear: new Date().getFullYear() })}</p>
         </footer>
       </main>
     </div>

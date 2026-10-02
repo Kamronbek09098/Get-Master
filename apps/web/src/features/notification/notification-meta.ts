@@ -2,6 +2,7 @@ import { Banknote, BadgeCheck, Bell, CalendarCheck, CalendarClock, ClipboardList
 import type { LucideIcon } from 'lucide-react';
 import { STATUS_TEXT } from '@/features/order/order-flow';
 import type { AppNotification } from './types';
+import { t } from '@/i18n';
 
 export type NotificationTone = 'primary' | 'success' | 'warning' | 'danger' | 'neutral';
 
@@ -77,20 +78,20 @@ export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/us
 type Recipient = 'customer' | 'master';
 const LEGACY: Record<Recipient, Record<string, { title: string; body: string }>> = {
   customer: {
-    CONFIRMED: { title: 'Usta buyurtmani tasdiqladi', body: 'Usta buyurtmangizni qabul qildi va tasdiqladi.' },
-    ON_THE_WAY: { title: 'Usta yo‘lga chiqdi', body: 'Usta sizning manzilingizga qarab yo‘lda.' },
-    ARRIVED: { title: 'Usta yetib keldi', body: 'Usta manzilingizga yetib keldi.' },
-    IN_PROGRESS: { title: 'Usta ishni boshladi', body: 'Buyurtmangiz bo‘yicha ish boshlandi.' },
-    WAITING_CONFIRMATION: { title: 'Usta ishni tugatdi', body: 'Ish bajarildi. Iltimos, natijani ko‘rib chiqib, tasdiqlang.' },
-    COMPLETED: { title: 'Buyurtma yakunlandi', body: 'Buyurtma yakunlandi.' },
-    CANCELLED: { title: 'Buyurtma bekor qilindi', body: 'Buyurtma bekor qilindi.' },
-    EXPIRED: { title: 'Buyurtma muddati tugadi', body: 'Usta belgilangan vaqtda tasdiqlamagani uchun buyurtma bekor bo‘ldi.' },
-    DISPUTED: { title: 'Buyurtma bo‘yicha nizo ochildi', body: 'Administrator nizoni ko‘rib chiqadi.' },
+    CONFIRMED: { title: t('Usta buyurtmani tasdiqladi'), body: t('Usta buyurtmangizni qabul qildi va tasdiqladi.') },
+    ON_THE_WAY: { title: t('Usta yo‘lga chiqdi'), body: t('Usta sizning manzilingizga qarab yo‘lda.') },
+    ARRIVED: { title: t('Usta yetib keldi'), body: t('Usta manzilingizga yetib keldi.') },
+    IN_PROGRESS: { title: t('Usta ishni boshladi'), body: t('Buyurtmangiz bo‘yicha ish boshlandi.') },
+    WAITING_CONFIRMATION: { title: t('Usta ishni tugatdi'), body: t('Ish bajarildi. Iltimos, natijani ko‘rib chiqib, tasdiqlang.') },
+    COMPLETED: { title: t('Buyurtma yakunlandi'), body: t('Buyurtma yakunlandi.') },
+    CANCELLED: { title: t('Buyurtma bekor qilindi'), body: t('Buyurtma bekor qilindi.') },
+    EXPIRED: { title: t('Buyurtma muddati tugadi'), body: t('Usta belgilangan vaqtda tasdiqlamagani uchun buyurtma bekor bo‘ldi.') },
+    DISPUTED: { title: t('Buyurtma bo‘yicha nizo ochildi'), body: t('Administrator nizoni ko‘rib chiqadi.') },
   },
   master: {
-    COMPLETED: { title: 'Mijoz ishni tasdiqladi', body: 'Buyurtma muvaffaqiyatli yakunlandi.' },
-    CANCELLED: { title: 'Mijoz buyurtmani bekor qildi', body: 'Mijoz buyurtmani bekor qildi.' },
-    DISPUTED: { title: 'Mijoz nizo ochdi', body: 'Buyurtma bo‘yicha nizo ochildi. Administrator ko‘rib chiqadi.' },
+    COMPLETED: { title: t('Mijoz ishni tasdiqladi'), body: t('Buyurtma muvaffaqiyatli yakunlandi.') },
+    CANCELLED: { title: t('Mijoz buyurtmani bekor qildi'), body: t('Mijoz buyurtmani bekor qildi.') },
+    DISPUTED: { title: t('Mijoz nizo ochdi'), body: t('Buyurtma bo‘yicha nizo ochildi. Administrator ko‘rib chiqadi.') },
   },
 };
 const STATUS_BY_LABEL = Object.fromEntries(Object.entries(STATUS_TEXT).map(([code, label]) => [label, code]));
@@ -108,5 +109,5 @@ export function notificationText(item: AppNotification, base: '/mijozlar' | '/us
   const known = newStatus ? LEGACY[base === '/ustalar' ? 'master' : 'customer'][newStatus] : undefined;
   if (known) return known;
   const label = newStatus ? (STATUS_TEXT as Record<string, string>)[newStatus] : undefined;
-  return label ? { title: 'Buyurtma yangilandi', body: `Buyurtmaning hozirgi holati: ${label}.` } : { title: item.title, body: item.body };
+  return label ? { title: t('Buyurtma yangilandi'), body: t('Buyurtmaning hozirgi holati: {label}.', { label }) } : { title: item.title, body: item.body };
 }

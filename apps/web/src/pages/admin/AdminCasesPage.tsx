@@ -13,6 +13,7 @@ import { formatDateTime } from '@/lib/utils';
 import { useAdminCases, useUpdateCase } from '@/features/admin/hooks/useAdmin';
 import { CASE_STATUS_LABEL } from '@/features/dispute/types';
 import type { CaseItem, CaseStatus } from '@/features/dispute/types';
+import { t } from '@/i18n';
 
 const STATUS_OPTIONS = (Object.keys(CASE_STATUS_LABEL) as CaseStatus[]).map((value) => ({
   value,
@@ -50,42 +51,40 @@ function CaseCard({ item, kind }: { item: CaseItem; kind: 'complaints' | 'disput
         {item.orderId && (
           <>
             {' · '}
-            <Link to={`/admin/buyurtmalar/${item.orderId}`}>Buyurtmani ochish</Link>
+            <Link to={`/admin/buyurtmalar/${item.orderId}`}>{t('Buyurtmani ochish')}</Link>
           </>
         )}
-        {' · Yuboruvchi: '}
+        {t(' · Yuboruvchi: ')}
         <UserRef id={item.openedById} />
         {item.targetUserId && (
           <>
-            {' · Nishon: '}
+            {t(' · Nishon: ')}
             <UserRef id={item.targetUserId} />
           </>
         )}
       </p>
       {finished ? (
         <div style={{ marginTop: 'var(--gm-space-3)' }}>
-          <Alert tone="info">Bu ish yakunlangan ({CASE_STATUS_LABEL[item.status]}). Yakunlangan holatni qayta o‘zgartirib bo‘lmaydi.</Alert>
+          <Alert tone="info">{t('Bu ish yakunlangan ({item}). Yakunlangan holatni qayta o‘zgartirib bo‘lmaydi.', { item: CASE_STATUS_LABEL[item.status] })}</Alert>
           {item.decision && (
             <p className="gm-card__meta" style={{ marginTop: 'var(--gm-space-2)' }}>
-              <strong>Qaror:</strong> {item.decision}
+              <strong>{t('Qaror:')}</strong> {item.decision}
             </p>
           )}
         </div>
       ) : (
         <div className="gm-form" style={{ marginTop: 'var(--gm-space-3)' }}>
           {update.isError && <Alert tone="danger">{getErrorMessage(update.error)}</Alert>}
-          <Select label="Yangi holat" options={options} value={status} onChange={(e) => setStatus(e.target.value as CaseStatus)} />
-          <Textarea label="Qaror / izoh" rows={2} maxLength={2000} value={decision} onChange={(e) => setDecision(e.target.value)} />
+          <Select label={t('Yangi holat')} options={options} value={status} onChange={(e) => setStatus(e.target.value as CaseStatus)} />
+          <Textarea label={t('Qaror / izoh')} rows={2} maxLength={2000} value={decision} onChange={(e) => setDecision(e.target.value)} />
           <div>
             <Button
               size="sm"
               loading={update.isPending}
               disabled={status === item.status}
               onClick={() => update.mutate({ id: item.id, status, decision: decision.trim() || undefined })}
-            >
-              Saqlash
-            </Button>
-            {status === item.status && <span className="gm-card__meta" style={{ marginLeft: 'var(--gm-space-3)' }}>Saqlash uchun yangi holatni tanlang</span>}
+            >{t('Saqlash')}</Button>
+            {status === item.status && <span className="gm-card__meta" style={{ marginLeft: 'var(--gm-space-3)' }}>{t('Saqlash uchun yangi holatni tanlang')}</span>}
           </div>
         </div>
       )}
@@ -105,29 +104,25 @@ export function AdminCasesPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>Shikoyat va nizolar</h1>
-          <p className="gm-page-lead">Kelgan shikoyat va nizolarni hal qiling.</p>
+          <h1>{t('Shikoyat va nizolar')}</h1>
+          <p className="gm-page-lead">{t('Kelgan shikoyat va nizolarni hal qiling.')}</p>
         </div>
       </div>
       <div className="gm-tabs">
-        <Button size="sm" variant={kind === 'complaints' ? 'primary' : 'secondary'} onClick={() => setKind('complaints')}>
-          Shikoyatlar
-        </Button>
-        <Button size="sm" variant={kind === 'disputes' ? 'primary' : 'secondary'} onClick={() => setKind('disputes')}>
-          Nizolar
-        </Button>
+        <Button size="sm" variant={kind === 'complaints' ? 'primary' : 'secondary'} onClick={() => setKind('complaints')}>{t('Shikoyatlar')}</Button>
+        <Button size="sm" variant={kind === 'disputes' ? 'primary' : 'secondary'} onClick={() => setKind('disputes')}>{t('Nizolar')}</Button>
       </div>
       <div className="gm-toolbar">
         <Select
-          label="Holat bo‘yicha"
-          options={[{ value: '', label: 'Hammasi' }, ...STATUS_OPTIONS]}
+          label={t('Holat bo‘yicha')}
+          options={[{ value: '', label: t('Hammasi') }, ...STATUS_OPTIONS]}
           value={status}
           onChange={(e) => setStatus(e.target.value as CaseStatus | '')}
         />
       </div>
       {cases.isLoading && <PageLoader />}
       {cases.isError && <Alert tone="danger">{getErrorMessage(cases.error)}</Alert>}
-      {cases.data && items.length === 0 && <EmptyState title="Ro‘yxat bo‘sh" />}
+      {cases.data && items.length === 0 && <EmptyState title={t('Ro‘yxat bo‘sh')} />}
       <div className="gm-list">
         {items.map((item) => (
           <CaseCard key={`${kind}-${item.id}-${item.status}`} item={item} kind={kind} />

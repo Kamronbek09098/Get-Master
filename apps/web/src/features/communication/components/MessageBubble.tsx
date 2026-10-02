@@ -11,6 +11,7 @@ import type { ChatAttachment, ChatMessage } from '../types';
 import { Linkified } from './Linkified';
 import { ChatOrderCard } from './ChatOrderCard';
 import { VoicePlayer } from './VoicePlayer';
+import { t } from '@/i18n';
 
 const isVoice = (item: ChatAttachment) => /^voice-/i.test(item.name) || item.mimeType.startsWith('audio/');
 
@@ -36,9 +37,9 @@ export interface MessageBubbleProps {
 }
 
 function Ticks({ message, read }: { message: ChatMessage; read: boolean }) {
-  if (message.status === 'pending') return <Clock size={13} aria-label="Yuborilmoqda" />;
-  if (message.status === 'failed') return <AlertCircle size={13} aria-label="Yuborilmadi" />;
-  return read ? <CheckCheck size={15} aria-label="O‘qildi" /> : <Check size={15} aria-label="Yuborildi" />;
+  if (message.status === 'pending') return <Clock size={13} aria-label={t('Yuborilmoqda')} />;
+  if (message.status === 'failed') return <AlertCircle size={13} aria-label={t('Yuborilmadi')} />;
+  return read ? <CheckCheck size={15} aria-label={t('O‘qildi')} /> : <Check size={15} aria-label={t('Yuborildi')} />;
 }
 
 function FileChip({ attachment }: { attachment: ChatAttachment }) {
@@ -231,7 +232,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
           </button>
         )}
         {message.deleted ? (
-          <span className="gm-bubble__text">Xabar o‘chirilgan</span>
+          <span className="gm-bubble__text">{t('Xabar o‘chirilgan')}</span>
         ) : (
           <>
             {message.type === 'ORDER' && message.orderId && <ChatOrderCard orderId={message.orderId} />}
@@ -257,7 +258,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
           <button
             type="button"
             className="gm-bubble__menu-trigger gm-bubble__menu-trigger--float"
-            aria-label="Xabar amallari"
+            aria-label={t('Xabar amallari')}
             aria-haspopup="menu"
             aria-expanded={!!menu}
             onClick={(event) => {
@@ -271,7 +272,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
       </div>
 
       {groups.size > 0 && (
-        <div className="gm-reactions" role="group" aria-label="Reaksiyalar">
+        <div className="gm-reactions" role="group" aria-label={t('Reaksiyalar')}>
           {[...groups.entries()].map(([emoji, value]) => (
             <button
               key={emoji}
@@ -289,8 +290,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
 
       {failed && (
         <button type="button" className="gm-msg__retry" onClick={() => onRetry(message)}>
-          <RotateCw size={13} /> Yuborilmadi — qayta urinish
-        </button>
+          <RotateCw size={13} />{' '}{t('Yuborilmadi — qayta urinish')}</button>
       )}
 
       {menu && (
@@ -302,7 +302,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
                   key={emoji}
                   type="button"
                   className={cx(myReaction === emoji && 'is-active')}
-                  aria-label={`Reaksiya ${emoji}`}
+                  aria-label={t('Reaksiya {emoji}', { emoji })}
                   onClick={() => {
                     setMenu(null);
                     onReact(message, myReaction === emoji ? null : emoji);
@@ -315,8 +315,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
           )}
           {onReply && (
             <button type="button" role="menuitem" onClick={() => { setMenu(null); onReply(message); }}>
-              <CornerUpLeft size={16} /> Javob berish
-            </button>
+              <CornerUpLeft size={16} />{' '}{t('Javob berish')}</button>
           )}
           {hasText && (
             <button
@@ -327,18 +326,15 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
                 void navigator.clipboard?.writeText(message.text ?? '');
               }}
             >
-              <Copy size={16} /> Nusxalash
-            </button>
+              <Copy size={16} />{' '}{t('Nusxalash')}</button>
           )}
           {editable && (
             <button type="button" role="menuitem" onClick={() => { setMenu(null); onEdit(message); }}>
-              <Pencil size={16} /> Tahrirlash
-            </button>
+              <Pencil size={16} />{' '}{t('Tahrirlash')}</button>
           )}
           {deletable && (
             <button type="button" role="menuitem" className="gm-ctx__danger" onClick={() => { setMenu(null); onDelete(message); }}>
-              <Trash2 size={16} /> O‘chirish
-            </button>
+              <Trash2 size={16} />{' '}{t('O‘chirish')}</button>
           )}
         </div>
       )}

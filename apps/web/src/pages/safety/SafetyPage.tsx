@@ -11,6 +11,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime, formatMoney } from '@/lib/utils';
 import { useCreateAppeal, useMyActions, useMyAppeals, useMyCompensations } from '@/features/safety/hooks/useSafety';
 import { ACTION_LABEL, APPEAL_LABEL, COMPENSATION_LABEL, RESTRICTION_LABEL } from '@/features/safety/types';
+import { t } from '@/i18n';
 
 export function SafetyPage() {
   const actions = useMyActions();
@@ -34,16 +35,16 @@ export function SafetyPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>Choralar va apellyatsiya</h1>
-          <p className="gm-page-lead">Akkauntingizga qo‘llangan choralar va apellyatsiya holati.</p>
+          <h1>{t('Choralar va apellyatsiya')}</h1>
+          <p className="gm-page-lead">{t('Akkauntingizga qo‘llangan choralar va apellyatsiya holati.')}</p>
         </div>
       </div>
 
       <section className="gm-detail-section">
-        <h2>Menga qo‘llangan choralar</h2>
+        <h2>{t('Menga qo‘llangan choralar')}</h2>
         {actions.isLoading && <PageLoader />}
         {actions.isError && <Alert tone="danger">{getErrorMessage(actions.error)}</Alert>}
-        {actions.data && actions.data.length === 0 && <EmptyState title="Sizga nisbatan chora qo‘llanmagan" />}
+        {actions.data && actions.data.length === 0 && <EmptyState title={t('Sizga nisbatan chora qo‘llanmagan')} />}
         <div className="gm-list">
           {(actions.data ?? []).map((action) => (
             <div key={action.id} className="gm-card">
@@ -52,12 +53,10 @@ export function SafetyPage() {
                   {ACTION_LABEL[action.type]}
                   {action.restrictionType && ` — ${RESTRICTION_LABEL[action.restrictionType]}`}
                 </h3>
-                {action.liftedAt ? <Badge tone="neutral">Bekor qilingan</Badge> : <Badge tone="danger">Amalda</Badge>}
+                {action.liftedAt ? <Badge tone="neutral">{t('Bekor qilingan')}</Badge> : <Badge tone="danger">{t('Amalda')}</Badge>}
               </div>
               <p>{action.reason}</p>
-              <p className="gm-card__meta">
-                Boshlangan: {formatDateTime(action.startsAt)}
-                {action.expiresAt && ` · Tugaydi: ${formatDateTime(action.expiresAt)}`}
+              <p className="gm-card__meta">{t('Boshlangan: {dateTime}', { dateTime: formatDateTime(action.startsAt) })}{action.expiresAt && t(' · Tugaydi: {dateTime}', { dateTime: formatDateTime(action.expiresAt) })}
               </p>
             </div>
           ))}
@@ -65,33 +64,31 @@ export function SafetyPage() {
       </section>
 
       <section className="gm-detail-section">
-        <h2>Apellyatsiya yuborish</h2>
+        <h2>{t('Apellyatsiya yuborish')}</h2>
         <form className="gm-form" onSubmit={handleAppeal}>
           {createAppeal.isError && <Alert tone="danger">{getErrorMessage(createAppeal.error)}</Alert>}
-          {createAppeal.isSuccess && <Alert tone="success">Apellyatsiya yuborildi.</Alert>}
+          {createAppeal.isSuccess && <Alert tone="success">{t('Apellyatsiya yuborildi.')}</Alert>}
           {activeActions.length > 0 && (
             <Select
-              label="Qaysi chora ustidan"
+              label={t('Qaysi chora ustidan')}
               value={actionId}
               onChange={(e) => setActionId(e.target.value)}
               options={[
-                { value: '', label: 'Tanlanmagan' },
+                { value: '', label: t('Tanlanmagan') },
                 ...activeActions.map((action) => ({ value: action.id, label: `${ACTION_LABEL[action.type]} — ${formatDateTime(action.createdAt)}` })),
               ]}
             />
           )}
-          <Textarea label="Sabab" required rows={4} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
+          <Textarea label={t('Sabab')} required rows={4} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
           <div>
-            <Button type="submit" loading={createAppeal.isPending} disabled={!reason.trim()}>
-              Yuborish
-            </Button>
+            <Button type="submit" loading={createAppeal.isPending} disabled={!reason.trim()}>{t('Yuborish')}</Button>
           </div>
         </form>
       </section>
 
       <section className="gm-detail-section">
-        <h2>Mening apellyatsiyalarim</h2>
-        {appeals.data && appeals.data.length === 0 && <EmptyState title="Apellyatsiyalar yo‘q" />}
+        <h2>{t('Mening apellyatsiyalarim')}</h2>
+        {appeals.data && appeals.data.length === 0 && <EmptyState title={t('Apellyatsiyalar yo‘q')} />}
         <div className="gm-list">
           {(appeals.data ?? []).map((appeal) => (
             <div key={appeal.id} className="gm-card">
@@ -102,15 +99,15 @@ export function SafetyPage() {
                 </Badge>
               </div>
               <p>{appeal.reason}</p>
-              {appeal.decision && <p className="gm-card__meta">Qaror: {appeal.decision}</p>}
+              {appeal.decision && <p className="gm-card__meta">{t('Qaror:')}{' '}{appeal.decision}</p>}
             </div>
           ))}
         </div>
       </section>
 
       <section className="gm-detail-section">
-        <h2>Kompensatsiyalar</h2>
-        {compensations.data && compensations.data.length === 0 && <EmptyState title="Kompensatsiyalar yo‘q" />}
+        <h2>{t('Kompensatsiyalar')}</h2>
+        {compensations.data && compensations.data.length === 0 && <EmptyState title={t('Kompensatsiyalar yo‘q')} />}
         <div className="gm-list">
           {(compensations.data ?? []).map((item) => (
             <div key={item.id} className="gm-card">

@@ -8,13 +8,14 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatMoney } from '@/lib/utils';
 import { useAdditionalWork, useAnswerAdditionalWork, useCreateAdditionalWork } from '../hooks/useAdditionalWork';
 import type { AdditionalWorkStatus } from '../types';
+import { t } from '@/i18n';
 
 const STATUS_LABEL: Record<AdditionalWorkStatus, string> = {
-  PENDING: 'Kutilmoqda',
-  APPROVED: 'Tasdiqlandi',
-  REJECTED: 'Rad etildi',
-  CANCELLED: 'Bekor qilindi',
-  EXPIRED: 'Muddati tugadi',
+  PENDING: t('Kutilmoqda'),
+  APPROVED: t('Tasdiqlandi'),
+  REJECTED: t('Rad etildi'),
+  CANCELLED: t('Bekor qilindi'),
+  EXPIRED: t('Muddati tugadi'),
 };
 
 const STATUS_TONE: Record<AdditionalWorkStatus, 'warning' | 'success' | 'danger' | 'neutral'> = {
@@ -61,7 +62,7 @@ export function AdditionalWorkPanel({
     <div className="gm-form">
       {list.isError && <Alert tone="danger">{getErrorMessage(list.error)}</Alert>}
       {answer.isError && <Alert tone="danger">{getErrorMessage(answer.error)}</Alert>}
-      {items.length === 0 && <p>Qo‘shimcha ish so‘ralmagan.</p>}
+      {items.length === 0 && <p>{t('Qo‘shimcha ish so‘ralmagan.')}</p>}
       <div className="gm-list">
         {items.map((work) => (
           <div key={work.id} className="gm-card">
@@ -74,12 +75,8 @@ export function AdditionalWorkPanel({
             </p>
             {!isMaster && work.status === 'PENDING' && (
               <div className="gm-action-row">
-                <Button size="sm" onClick={() => answer.mutate({ id: work.id, approve: true })}>
-                  Tasdiqlash
-                </Button>
-                <Button size="sm" variant="danger" onClick={() => answer.mutate({ id: work.id, approve: false })}>
-                  Rad etish
-                </Button>
+                <Button size="sm" onClick={() => answer.mutate({ id: work.id, approve: true })}>{t('Tasdiqlash')}</Button>
+                <Button size="sm" variant="danger" onClick={() => answer.mutate({ id: work.id, approve: false })}>{t('Rad etish')}</Button>
               </div>
             )}
           </div>
@@ -89,7 +86,7 @@ export function AdditionalWorkPanel({
         <form className="gm-form" onSubmit={handleSubmit}>
           {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
           <Input
-            label="Sabab"
+            label={t('Sabab')}
             required
             autoComplete="off"
             value={reason}
@@ -99,7 +96,7 @@ export function AdditionalWorkPanel({
             }}
           />
           <Input
-            label="Tavsif"
+            label={t('Tavsif')}
             required
             autoComplete="off"
             value={description}
@@ -109,7 +106,7 @@ export function AdditionalWorkPanel({
             }}
           />
           <Input
-            label="Summa (so‘m)"
+            label={t('Summa (so‘m)')}
             type="number"
             min={1}
             required
@@ -121,9 +118,7 @@ export function AdditionalWorkPanel({
               if (create.isError) create.reset();
             }}
           />
-          <Button type="submit" loading={create.isPending} disabled={!reason || !description || !amount}>
-            Qo‘shimcha ish so‘rash
-          </Button>
+          <Button type="submit" loading={create.isPending} disabled={!reason || !description || !amount}>{t('Qo‘shimcha ish so‘rash')}</Button>
         </form>
       )}
     </div>

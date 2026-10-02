@@ -26,10 +26,11 @@ import {
   RESTRICTION_LABEL,
 } from '@/features/safety/types';
 import type { AppealStatus, CompensationType, RestrictionType, UserActionType } from '@/features/safety/types';
+import { t } from '@/i18n';
 
 const ACTION_OPTIONS = (Object.keys(ACTION_LABEL) as UserActionType[]).map((value) => ({ value, label: ACTION_LABEL[value] }));
 const RESTRICTION_OPTIONS = [
-  { value: '', label: 'Yo‘q' },
+  { value: '', label: t('Yo‘q') },
   ...(Object.keys(RESTRICTION_LABEL) as RestrictionType[]).map((value) => ({ value, label: RESTRICTION_LABEL[value] })),
 ];
 const COMPENSATION_OPTIONS = (Object.keys(COMPENSATION_LABEL) as CompensationType[]).map((value) => ({
@@ -63,16 +64,14 @@ function ActionForm() {
   return (
     <form className="gm-form" onSubmit={handleSubmit}>
       {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
-      {create.isSuccess && <Alert tone="success">Chora qo‘llandi.</Alert>}
-      <UserNumberField label="Foydalanuvchi ID" onResolve={setUserId} />
-      <Select label="Chora turi" options={ACTION_OPTIONS} value={type} onChange={(e) => setType(e.target.value as UserActionType)} />
-      <Select label="Cheklov turi" options={RESTRICTION_OPTIONS} value={restriction} onChange={(e) => setRestriction(e.target.value)} />
-      <Input label="Tugash vaqti (ixtiyoriy)" type="datetime-local" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
-      <Textarea label="Sabab" required rows={3} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
+      {create.isSuccess && <Alert tone="success">{t('Chora qo‘llandi.')}</Alert>}
+      <UserNumberField label={t('Foydalanuvchi ID')} onResolve={setUserId} />
+      <Select label={t('Chora turi')} options={ACTION_OPTIONS} value={type} onChange={(e) => setType(e.target.value as UserActionType)} />
+      <Select label={t('Cheklov turi')} options={RESTRICTION_OPTIONS} value={restriction} onChange={(e) => setRestriction(e.target.value)} />
+      <Input label={t('Tugash vaqti (ixtiyoriy)')} type="datetime-local" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} />
+      <Textarea label={t('Sabab')} required rows={3} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
       <div>
-        <Button type="submit" loading={create.isPending} disabled={!userId || !reason.trim()}>
-          Qo‘llash
-        </Button>
+        <Button type="submit" loading={create.isPending} disabled={!userId || !reason.trim()}>{t('Qo‘llash')}</Button>
       </div>
     </form>
   );
@@ -96,15 +95,13 @@ function CompensationForm() {
   return (
     <form className="gm-form" onSubmit={handleSubmit}>
       {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
-      {create.isSuccess && <Alert tone="success">Kompensatsiya yaratildi.</Alert>}
-      <UserNumberField label="Oluvchi ID" onResolve={setRecipientId} />
-      <Select label="Turi" options={COMPENSATION_OPTIONS} value={type} onChange={(e) => setType(e.target.value as CompensationType)} />
-      <Input label="Summa (ixtiyoriy)" type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} />
-      <Textarea label="Sabab" required rows={3} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
+      {create.isSuccess && <Alert tone="success">{t('Kompensatsiya yaratildi.')}</Alert>}
+      <UserNumberField label={t('Oluvchi ID')} onResolve={setRecipientId} />
+      <Select label={t('Turi')} options={COMPENSATION_OPTIONS} value={type} onChange={(e) => setType(e.target.value as CompensationType)} />
+      <Input label={t('Summa (ixtiyoriy)')} type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <Textarea label={t('Sabab')} required rows={3} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
       <div>
-        <Button type="submit" loading={create.isPending} disabled={!recipientId || !reason.trim()}>
-          Yaratish
-        </Button>
+        <Button type="submit" loading={create.isPending} disabled={!recipientId || !reason.trim()}>{t('Yaratish')}</Button>
       </div>
     </form>
   );
@@ -129,12 +126,12 @@ function AppealCard({ id, status: initial, reason, decision: initialDecision, cr
         <Badge tone={initial === 'ACCEPTED' ? 'success' : initial === 'REJECTED' ? 'danger' : 'warning'}>{APPEAL_LABEL[initial]}</Badge>
       </div>
       <p>{reason}</p>
-      <p className="gm-card__meta">Foydalanuvchi: <UserRef id={userId} /></p>
-      {decision && closed && <p className="gm-card__meta">Qaror: {decision}</p>}
+      <p className="gm-card__meta">{t('Foydalanuvchi:')}{' '}<UserRef id={userId} /></p>
+      {decision && closed && <p className="gm-card__meta">{t('Qaror:')}{' '}{decision}</p>}
       {!closed && (
         <div className="gm-form">
           {resolve.isError && <Alert tone="danger">{getErrorMessage(resolve.error)}</Alert>}
-          <Textarea label="Qaror" rows={2} maxLength={2000} value={decision} onChange={(e) => setDecision(e.target.value)} />
+          <Textarea label={t('Qaror')} rows={2} maxLength={2000} value={decision} onChange={(e) => setDecision(e.target.value)} />
           <div className="gm-action-row">
             {RESOLVE_OPTIONS.map((status) => (
               <Button
@@ -164,8 +161,8 @@ export function AdminSafetyPage() {
     <div>
       <div className="gm-page-header">
         <div>
-          <h1>Choralar va apellyatsiya</h1>
-          <p className="gm-page-lead">Akkauntingizga qo‘llangan choralar va apellyatsiya holati.</p>
+          <h1>{t('Choralar va apellyatsiya')}</h1>
+          <p className="gm-page-lead">{t('Akkauntingizga qo‘llangan choralar va apellyatsiya holati.')}</p>
         </div>
       </div>
       <div className="gm-tabs">
@@ -173,7 +170,7 @@ export function AdminSafetyPage() {
           [
             ['appeals', 'Apellyatsiyalar'],
             ['actions', 'Choralar'],
-            ['create', 'Chora qo‘llash'],
+            ['create', t('Chora qo‘llash')],
             ['compensation', 'Kompensatsiya'],
           ] as const
         ).map(([key, label]) => (
@@ -186,7 +183,7 @@ export function AdminSafetyPage() {
       {tab === 'appeals' && (
         <div className="gm-list">
           {appeals.isError && <Alert tone="danger">{getErrorMessage(appeals.error)}</Alert>}
-          {appeals.data && appeals.data.length === 0 && <EmptyState title="Apellyatsiyalar yo‘q" />}
+          {appeals.data && appeals.data.length === 0 && <EmptyState title={t('Apellyatsiyalar yo‘q')} />}
           {(appeals.data ?? []).map((appeal) => (
             <AppealCard key={`${appeal.id}-${appeal.status}`} {...appeal} />
           ))}
@@ -197,7 +194,7 @@ export function AdminSafetyPage() {
         <div className="gm-list">
           {actions.isError && <Alert tone="danger">{getErrorMessage(actions.error)}</Alert>}
           {lift.isError && <Alert tone="danger">{getErrorMessage(lift.error)}</Alert>}
-          {actions.data && actions.data.length === 0 && <EmptyState title="Choralar yo‘q" />}
+          {actions.data && actions.data.length === 0 && <EmptyState title={t('Choralar yo‘q')} />}
           {(actions.data ?? []).map((action) => (
             <div key={action.id} className="gm-card">
               <div className="gm-card__header">
@@ -205,17 +202,14 @@ export function AdminSafetyPage() {
                   {ACTION_LABEL[action.type]}
                   {action.restrictionType && ` — ${RESTRICTION_LABEL[action.restrictionType]}`}
                 </h3>
-                {action.liftedAt ? <Badge tone="neutral">Bekor qilingan</Badge> : <Badge tone="danger">Amalda</Badge>}
+                {action.liftedAt ? <Badge tone="neutral">{t('Bekor qilingan')}</Badge> : <Badge tone="danger">{t('Amalda')}</Badge>}
               </div>
               <p>{action.reason}</p>
-              <p className="gm-card__meta">
-                Foydalanuvchi: <UserRef id={action.userId} /> · {formatDateTime(action.createdAt)}
-                {action.expiresAt && ` · Tugaydi: ${formatDateTime(action.expiresAt)}`}
+              <p className="gm-card__meta">{t('Foydalanuvchi:')}{' '}<UserRef id={action.userId} /> · {formatDateTime(action.createdAt)}
+                {action.expiresAt && t(' · Tugaydi: {dateTime}', { dateTime: formatDateTime(action.expiresAt) })}
               </p>
               {!action.liftedAt && (
-                <Button size="sm" variant="secondary" loading={lift.isPending} onClick={() => lift.mutate(action.id)}>
-                  Bekor qilish
-                </Button>
+                <Button size="sm" variant="secondary" loading={lift.isPending} onClick={() => lift.mutate(action.id)}>{t('Bekor qilish')}</Button>
               )}
             </div>
           ))}

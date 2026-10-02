@@ -16,15 +16,16 @@ import { cx } from '@/lib/utils';
 import { useCreateRequest } from '../hooks/useRequests';
 import type { ProblemRequest } from '../types';
 import './RequestForm.css';
+import { t } from '@/i18n';
 
 const TITLE_MAX = 255;
 const DESCRIPTION_MIN_GOOD = 40;
 
 const schema = z.object({
-  serviceId: z.string().uuid('Xizmat turini tanlang'),
-  addressId: z.string().min(1, 'Manzilni tanlang yoki qo‘shing'),
-  title: z.string().trim().min(1, 'Sarlavhani kiriting').max(TITLE_MAX),
-  description: z.string().trim().min(1, 'Muammoni tavsiflab bering'),
+  serviceId: z.string().uuid(t('Xizmat turini tanlang')),
+  addressId: z.string().min(1, t('Manzilni tanlang yoki qo‘shing')),
+  title: z.string().trim().min(1, t('Sarlavhani kiriting')).max(TITLE_MAX),
+  description: z.string().trim().min(1, t('Muammoni tavsiflab bering')),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -71,10 +72,10 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
   );
 
   const checklist = [
-    { label: 'Xizmat turi tanlandi', done: !!serviceId },
-    { label: 'Sarlavha yozildi', done: title.trim().length > 0 },
-    { label: 'Muammo tavsiflandi', done: description.trim().length > 0 },
-    { label: 'Manzil tanlandi', done: !!addressId },
+    { label: t('Xizmat turi tanlandi'), done: !!serviceId },
+    { label: t('Sarlavha yozildi'), done: title.trim().length > 0 },
+    { label: t('Muammo tavsiflandi'), done: description.trim().length > 0 },
+    { label: t('Manzil tanlandi'), done: !!addressId },
   ];
   const remaining = checklist.filter((item) => !item.done).length;
   const descriptionLength = description.trim().length;
@@ -88,46 +89,46 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
       <form className="gm-reqform__form" onSubmit={(e) => void handleSubmit(onSubmit)(e)} noValidate>
         {createRequest.isError && <Alert tone="danger">{getErrorMessage(createRequest.error)}</Alert>}
 
-        <Section step={1} title="Qanday xizmat kerak?" hint="Ustalar shu xizmat bo‘yicha qidiriladi.">
+        <Section step={1} title={t('Qanday xizmat kerak?')} hint={t('Ustalar shu xizmat bo‘yicha qidiriladi.')}>
           <Controller
             control={control}
             name="serviceId"
             render={({ field }) => (
-              <ServiceChooser label="Xizmat turi" required value={field.value} onChange={field.onChange} error={errors.serviceId?.message} />
+              <ServiceChooser label={t('Xizmat turi')} required value={field.value} onChange={field.onChange} error={errors.serviceId?.message} />
             )}
           />
         </Section>
 
-        <Section step={2} title="Muammoni tushuntiring" hint="Qancha aniq yozsangiz, ustalar shuncha aniq narx taklif qiladi.">
+        <Section step={2} title={t('Muammoni tushuntiring')} hint={t('Qancha aniq yozsangiz, ustalar shuncha aniq narx taklif qiladi.')}>
           <Input
-            label="Muammo sarlavhasi"
+            label={t('Muammo sarlavhasi')}
             required
             maxLength={TITLE_MAX}
-            placeholder={serviceName ? `Masalan: ${serviceName.toLowerCase()} kerak` : 'Masalan: Kran suv oqizyapti'}
+            placeholder={serviceName ? t('Masalan: {toLowerCase} kerak', { toLowerCase: serviceName.toLowerCase() }) : t('Masalan: Kran suv oqizyapti')}
             error={errors.title?.message}
             {...register('title')}
           />
           <Textarea
-            label="Batafsil tavsif"
+            label={t('Batafsil tavsif')}
             required
             rows={5}
-            placeholder="Nima buzilgan? Qachondan beri? Avval nima qilib ko‘rdingiz?"
+            placeholder={t('Nima buzilgan? Qachondan beri? Avval nima qilib ko‘rdingiz?')}
             error={errors.description?.message}
             {...register('description')}
           />
           <p className={cx('gm-reqform__meter', descriptionLength >= DESCRIPTION_MIN_GOOD && 'gm-reqform__meter--good')} aria-live="polite">
             {descriptionLength === 0
-              ? 'Kamida bir-ikki gap yozing'
+              ? t('Kamida bir-ikki gap yozing')
               : descriptionLength < DESCRIPTION_MIN_GOOD
-                ? `Yana biroz batafsilroq yozing (${descriptionLength}/${DESCRIPTION_MIN_GOOD})`
-                : 'Yaxshi tavsif — ustalar tushunadi'}
+                ? t('Yana biroz batafsilroq yozing ({descriptionLength}/{DESCRIPTION_MIN_GOOD})', { descriptionLength, DESCRIPTION_MIN_GOOD })
+                : t('Yaxshi tavsif — ustalar tushunadi')}
           </p>
         </Section>
 
-        <Section step={3} title="Usta qayerga borsin?" hint="Majburiy — usta aniq shu manzilga keladi va yo‘l vaqtini hisoblab narx aytadi.">
+        <Section step={3} title={t('Usta qayerga borsin?')} hint={t('Majburiy — usta aniq shu manzilga keladi va yo‘l vaqtini hisoblab narx aytadi.')}>
           {addressList.length > 0 ? (
             <>
-              <div className="gm-reqform__addresses" role="radiogroup" aria-label="Manzil" aria-required="true" aria-invalid={!!errors.addressId}>
+              <div className="gm-reqform__addresses" role="radiogroup" aria-label={t('Manzil')} aria-required="true" aria-invalid={!!errors.addressId}>
                 {addressList.map((address) => (
                   <label key={address.id} className={cx('gm-reqform__address', addressId === address.id && 'gm-reqform__address--checked')}>
                     <input
@@ -139,7 +140,7 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
                     />
                     <MapPin size={18} aria-hidden="true" />
                     <span>
-                      <strong>{address.title || 'Manzil'}</strong>
+                      <strong>{address.title || t('Manzil')}</strong>
                       <small>{address.addressLine}</small>
                     </span>
                     {addressId === address.id && <Check size={16} className="gm-reqform__address-check" aria-hidden="true" />}
@@ -147,32 +148,28 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
                 ))}
               </div>
               <Link to="/mijozlar/manzillar" className="gm-reqform__add-address">
-                <Plus size={16} aria-hidden="true" /> Yangi manzil qo‘shish
-              </Link>
+                <Plus size={16} aria-hidden="true" />{' '}{t('Yangi manzil qo‘shish')}</Link>
             </>
           ) : (
             <Link to="/mijozlar/manzillar" className="gm-reqform__add-address">
-              <Plus size={16} aria-hidden="true" /> Manzil qo‘shish
-            </Link>
+              <Plus size={16} aria-hidden="true" />{' '}{t('Manzil qo‘shish')}</Link>
           )}
           {errors.addressId && (
             <p className="gm-reqform__error" role="alert">
-              {addressList.length > 0 ? errors.addressId.message : 'So‘rov yuborish uchun avval manzil qo‘shing'}
+              {addressList.length > 0 ? errors.addressId.message : t('So‘rov yuborish uchun avval manzil qo‘shing')}
             </p>
           )}
         </Section>
 
         <div className="gm-reqform__submit">
-          <Button type="submit" size="lg" loading={createRequest.isPending}>
-            Davom etish
-          </Button>
-          <span>{remaining > 0 ? `Yana ${remaining} ta maydon qoldi` : 'Hammasi tayyor. Keyingi bosqichda rasm qo‘shasiz.'}</span>
+          <Button type="submit" size="lg" loading={createRequest.isPending}>{t('Davom etish')}</Button>
+          <span>{remaining > 0 ? t('Yana {remaining} ta maydon qoldi', { remaining }) : t('Hammasi tayyor. Keyingi bosqichda rasm qo‘shasiz.')}</span>
         </div>
       </form>
 
-      <aside className="gm-reqform__aside" aria-label="Maslahatlar">
+      <aside className="gm-reqform__aside" aria-label={t('Maslahatlar')}>
         <div className="gm-reqform__card">
-          <h3>Tayyorlik</h3>
+          <h3>{t('Tayyorlik')}</h3>
           <ul className="gm-reqform__checklist">
             {checklist.map((item) => (
               <li key={item.label} className={cx(item.done && 'gm-reqform__checklist--done')}>
@@ -183,19 +180,19 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
           </ul>
         </div>
         <div className="gm-tips">
-          <h3>Yaxshi so‘rov uchun</h3>
+          <h3>{t('Yaxshi so‘rov uchun')}</h3>
           <ul>
             <li>
               <ListChecks size={18} />
-              <span>Nima buzilganini va qachondan beri ekanini yozing.</span>
+              <span>{t('Nima buzilganini va qachondan beri ekanini yozing.')}</span>
             </li>
             <li>
               <Camera size={18} />
-              <span>Keyingi bosqichda muammoning suratini biriktiring — ustalar aniqroq narx beradi.</span>
+              <span>{t('Keyingi bosqichda muammoning suratini biriktiring — ustalar aniqroq narx beradi.')}</span>
             </li>
             <li>
               <MapPin size={18} />
-              <span>Manzil majburiy: usta yo‘l vaqtini hisoblab, aniq narx aytadi.</span>
+              <span>{t('Manzil majburiy: usta yo‘l vaqtini hisoblab, aniq narx aytadi.')}</span>
             </li>
           </ul>
         </div>

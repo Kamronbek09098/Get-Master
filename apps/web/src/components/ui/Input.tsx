@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import type { InputHTMLAttributes } from 'react';
 import { cx } from '@/lib/utils';
 import './Field.css';
+import { t } from '@/i18n';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -82,7 +83,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               className="gm-field__reveal"
-              aria-label={revealed ? 'Parolni yashirish' : 'Parolni ko‘rsatish'}
+              aria-label={revealed ? t('Parolni yashirish') : t('Parolni ko‘rsatish')}
               aria-pressed={revealed}
               onClick={() => setRevealed((value) => !value)}
             >

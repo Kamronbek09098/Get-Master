@@ -8,6 +8,7 @@ import { useDeleteUser, useSetRegistrationBlock, useSetUserStatus } from '../hoo
 import { USER_ACTION_COPY, displayName } from '../user-actions';
 import type { UserAction } from '../user-actions';
 import type { AdminUser } from '../types';
+import { t } from '@/i18n';
 
 export function UserActionDialog({ user, action, onClose, onDeleted }: { user: AdminUser; action: UserAction; onClose: () => void; onDeleted?: () => void }) {
   const copy = USER_ACTION_COPY[action];
@@ -36,9 +37,7 @@ export function UserActionDialog({ user, action, onClose, onDeleted }: { user: A
       title={copy.title}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose} disabled={pending}>
-            Bekor qilish
-          </Button>
+          <Button variant="ghost" onClick={onClose} disabled={pending}>{t('Bekor qilish')}</Button>
           <Button variant={copy.variant} loading={pending} disabled={!valid} onClick={confirm}>
             {copy.confirm}
           </Button>
@@ -52,15 +51,15 @@ export function UserActionDialog({ user, action, onClose, onDeleted }: { user: A
         <Alert tone={copy.variant === 'danger' ? 'warning' : 'info'}>{copy.text}</Alert>
         {error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
         {(action === 'BLOCK_REGISTRATION' || action === 'ALLOW_REGISTRATION') && (
-          <Textarea label="Izoh (ixtiyoriy)" rows={2} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} />
+          <Textarea label={t('Izoh (ixtiyoriy)')} rows={2} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} />
         )}
         {copy.reasonRequired && (
           <Textarea
-            label="Sabab"
+            label={t('Sabab')}
             required
             rows={3}
             maxLength={500}
-            hint="Audit jurnaliga yoziladi (kamida 3 ta belgi)"
+            hint={t('Audit jurnaliga yoziladi (kamida 3 ta belgi)')}
             value={reason}
             onChange={(event) => setReason(event.target.value)}
           />

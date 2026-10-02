@@ -6,13 +6,14 @@ import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useCreateOffer } from '../hooks/useOffers';
+import { t } from '@/i18n';
 
 export function OfferForm({
   requestId,
   onDone,
   initialPrice,
   initialMinutes,
-  submitLabel = 'Taklif yuborish',
+  submitLabel = t('Taklif yuborish'),
 }: {
   requestId: string;
   onDone?: () => void;
@@ -41,15 +42,15 @@ export function OfferForm({
   return (
     <form className="gm-form" onSubmit={handleSubmit}>
       {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
-      <Input label="Narx (so‘m)" type="number" required min={1} value={price} onChange={(e) => setPrice(e.target.value)} />
+      <Input label={t('Narx (so‘m)')} type="number" required min={1} value={price} onChange={(e) => setPrice(e.target.value)} />
       <Input
-        label="Taxminiy davomiylik (daqiqa, ixtiyoriy)"
+        label={t('Taxminiy davomiylik (daqiqa, ixtiyoriy)')}
         type="number"
         min={5}
         value={minutes}
         onChange={(e) => setMinutes(e.target.value)}
       />
-      <Textarea label="Xabar (ixtiyoriy)" rows={3} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} />
+      <Textarea label={t('Xabar (ixtiyoriy)')} rows={3} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} />
       <div>
         <Button type="submit" loading={create.isPending} disabled={!price}>
           {submitLabel}

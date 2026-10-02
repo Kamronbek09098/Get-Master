@@ -21,12 +21,13 @@ function buildCsp(html: string, apiBase: string | undefined): string {
   const inlineHashes = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => `'sha256-${createHash('sha256').update(m[1] ?? '').digest('base64')}'`);
   return [
     "default-src 'self'",
-    `script-src 'self' ${inlineHashes.join(' ')}`.trim(),
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    `script-src 'self' https://accounts.google.com ${inlineHashes.join(' ')}`.trim(),
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     `img-src 'self' data: blob: https: ${apiOrigin}`.trim(),
     `media-src 'self' blob: https: ${apiOrigin}`.trim(),
-    `connect-src 'self' ${apiOrigin}`.trim(),
+    `connect-src 'self' https://accounts.google.com ${apiOrigin}`.trim(),
+    "frame-src https://accounts.google.com",
     "worker-src 'self' blob:",
     "object-src 'none'",
     "base-uri 'self'",

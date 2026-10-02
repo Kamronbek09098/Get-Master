@@ -1,38 +1,39 @@
+import { t } from '@/i18n';
 export type UserActionType = 'WARNING' | 'FINE' | 'RESTRICTION' | 'SUSPENSION' | 'BAN';
 export type RestrictionType = 'REQUESTS' | 'OFFERS' | 'BOOKING' | 'CHAT' | 'PAYMENTS' | 'FULL_ACCOUNT';
 export type AppealStatus = 'OPEN' | 'UNDER_REVIEW' | 'ACCEPTED' | 'REJECTED' | 'CLOSED';
 export type CompensationType = 'REFUND' | 'PARTIAL_REFUND' | 'CREDIT' | 'OTHER';
 
 export const ACTION_LABEL: Record<UserActionType, string> = {
-  WARNING: 'Ogohlantirish',
-  FINE: 'Jarima',
-  RESTRICTION: 'Cheklov',
-  SUSPENSION: 'To‘xtatib qo‘yish',
-  BAN: 'Bloklash',
+  WARNING: t('Ogohlantirish'),
+  FINE: t('Jarima'),
+  RESTRICTION: t('Cheklov'),
+  SUSPENSION: t('To‘xtatib qo‘yish'),
+  BAN: t('Bloklash'),
 };
 
 export const RESTRICTION_LABEL: Record<RestrictionType, string> = {
-  REQUESTS: 'So‘rovlar',
-  OFFERS: 'Takliflar',
-  BOOKING: 'Bronlar',
-  CHAT: 'Chat',
-  PAYMENTS: 'To‘lovlar',
-  FULL_ACCOUNT: 'Butun akkaunt',
+  REQUESTS: t('So‘rovlar'),
+  OFFERS: t('Takliflar'),
+  BOOKING: t('Bronlar'),
+  CHAT: t('Chat'),
+  PAYMENTS: t('To‘lovlar'),
+  FULL_ACCOUNT: t('Butun akkaunt'),
 };
 
 export const APPEAL_LABEL: Record<AppealStatus, string> = {
-  OPEN: 'Ochiq',
-  UNDER_REVIEW: 'Ko‘rib chiqilmoqda',
-  ACCEPTED: 'Qabul qilindi',
-  REJECTED: 'Rad etildi',
-  CLOSED: 'Yopildi',
+  OPEN: t('Ochiq'),
+  UNDER_REVIEW: t('Ko‘rib chiqilmoqda'),
+  ACCEPTED: t('Qabul qilindi'),
+  REJECTED: t('Rad etildi'),
+  CLOSED: t('Yopildi'),
 };
 
 export const COMPENSATION_LABEL: Record<CompensationType, string> = {
-  REFUND: 'To‘liq qaytarish',
-  PARTIAL_REFUND: 'Qisman qaytarish',
-  CREDIT: 'Kredit',
-  OTHER: 'Boshqa',
+  REFUND: t('To‘liq qaytarish'),
+  PARTIAL_REFUND: t('Qisman qaytarish'),
+  CREDIT: t('Kredit'),
+  OTHER: t('Boshqa'),
 };
 
 export interface UserAction {

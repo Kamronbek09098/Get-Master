@@ -8,11 +8,12 @@ import { MediaThumbnail } from '@/features/media/components/MediaThumbnail';
 import { useAddWorkProof, useRemoveWorkProof, useWorkProofs } from '../hooks/useOrders';
 import type { WorkStage } from '@/types/common';
 import './WorkProofPanel.css';
+import { t } from '@/i18n';
 
 const STAGE_TITLE: Record<WorkStage, string> = {
-  BEFORE: 'Ishdan oldingi holat',
-  DURING: 'Ish jarayoni',
-  AFTER: 'Ishdan keyingi natija',
+  BEFORE: t('Ishdan oldingi holat'),
+  DURING: t('Ish jarayoni'),
+  AFTER: t('Ishdan keyingi natija'),
 };
 
 interface WorkProofPanelProps {
@@ -51,7 +52,7 @@ export function WorkProofPanel({ orderId, stage, canEdit = false, required = fal
                 <Button
                   size="sm"
                   variant="ghost"
-                  aria-label="Rasmni o‘chirish"
+                  aria-label={t('Rasmni o‘chirish')}
                   loading={removeWorkProof.isPending && removeWorkProof.variables === proof.id}
                   onClick={() => removeWorkProof.mutate(proof.id)}
                 >
@@ -66,7 +67,7 @@ export function WorkProofPanel({ orderId, stage, canEdit = false, required = fal
       {canEdit && (
         <MediaUploadField
           key={uploadKey}
-          label="Foto yoki video qo‘shish"
+          label={t('Foto yoki video qo‘shish')}
           kind="WORK_PROOF"
           linkType="Order"
           linkId={orderId}

@@ -7,6 +7,7 @@ import { buildTimeline, isOwnMessage, isRead } from '../format';
 import { useMarkRead, useMessages } from '../hooks/useCommunication';
 import type { ChatMessage, Conversation } from '../types';
 import { MessageBubble } from './MessageBubble';
+import { t } from '@/i18n';
 
 export interface MessageListProps {
   conversation: Conversation;
@@ -74,7 +75,7 @@ export function MessageList({ conversation, meId, onEdit, onDelete, onRetry, onR
 
   return (
     <div className="gm-thread">
-      <div className="gm-thread__scroll" ref={scroller} onScroll={onScroll} role="log" aria-live="polite" aria-label="Xabarlar">
+      <div className="gm-thread__scroll" ref={scroller} onScroll={onScroll} role="log" aria-live="polite" aria-label={t('Xabarlar')}>
         {messages.isLoading && (
           <div className="gm-thread__loading" aria-busy="true">
             {[0, 1, 2].map((index) => (
@@ -88,8 +89,8 @@ export function MessageList({ conversation, meId, onEdit, onDelete, onRetry, onR
             <span>
               <MessageCircle size={30} strokeWidth={1.6} />
             </span>
-            <strong>Suhbatni boshlang</strong>
-            <p>Birinchi xabarni yozing — usta javob bergach, shu yerda ko‘rasiz.</p>
+            <strong>{t('Suhbatni boshlang')}</strong>
+            <p>{t('Birinchi xabarni yozing — usta javob bergach, shu yerda ko‘rasiz.')}</p>
           </div>
         )}
 
@@ -119,7 +120,7 @@ export function MessageList({ conversation, meId, onEdit, onDelete, onRetry, onR
       </div>
 
       {unseen > 0 && (
-        <button type="button" className="gm-thread__jump" onClick={() => scrollToBottom(true)} aria-label={`${unseen} ta yangi xabar, pastga tushish`}>
+        <button type="button" className="gm-thread__jump" onClick={() => scrollToBottom(true)} aria-label={t('{unseen} ta yangi xabar, pastga tushish', { unseen })}>
           <ArrowDown size={18} />
           <span>{unseen}</span>
         </button>
