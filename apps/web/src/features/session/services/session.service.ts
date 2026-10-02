@@ -5,6 +5,9 @@ export const sessionService = {
   updateName(input: { firstName: string; lastName: string }) {
     return apiPatch<Me>('/users/me/name', input);
   },
+  setTwoFactor(input: { enabled: boolean; password?: string }) {
+    return apiPatch<Me>('/users/me/two-factor', input);
+  },
   me() {
     return apiGet<Me>('/users/me');
   },

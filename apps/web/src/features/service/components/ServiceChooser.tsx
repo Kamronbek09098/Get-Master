@@ -51,7 +51,6 @@ export function ServiceChooser({ label, value, onChange, required, error, hint }
     <fieldset className={cx('gm-chooser', error && 'gm-chooser--error')}>
       <legend className="gm-field__label">
         {label}
-        {required && <span aria-hidden="true"> *</span>}
       </legend>
 
       <div className="gm-chooser__search">
@@ -103,7 +102,7 @@ export function ServiceChooser({ label, value, onChange, required, error, hint }
       ) : services.length === 0 ? (
         <EmptyState title="Hech narsa topilmadi" description="Qidiruvni o‘zgartiring yoki boshqa kategoriyani tanlang." />
       ) : (
-        <div className="gm-chooser__grid" role="radiogroup" aria-label={label}>
+        <div className="gm-chooser__grid" role="radiogroup" aria-label={label} aria-required={required}>
           {visible.map((service) => {
             const Icon = categoryIcon(`${service.category.name} ${service.name}`);
             const checked = service.id === value;

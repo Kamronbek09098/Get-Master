@@ -2,6 +2,7 @@ import { DeviceList } from '@/features/auth/components/DeviceList';
 import { useState } from 'react';
 import { UI_SIZES, getUiSize, setUiSize, type UiSize } from '@/lib/ui-size';
 import { Button } from '@/components/ui/Button';
+import { TwoFactorSettings } from '@/features/session/components/TwoFactorSettings';
 import './SettingsPage.css';
 
 export function SettingsPage() {
@@ -43,6 +44,8 @@ export function SettingsPage() {
           <Button size="lg">Katta tugma</Button>
         </div>
       </section>
+
+      <TwoFactorSettings />
 
       <section className="gm-detail-section">
         <h2>Faol qurilmalar</h2>

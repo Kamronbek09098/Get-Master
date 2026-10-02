@@ -31,7 +31,7 @@ export function MatchingResults({ requestId, serviceSelected = true }: { request
   const results = matching.data.results;
   return (
     <div className="gm-list">
-      <p>{STATUS_LABEL[matching.data.run.status] ?? matching.data.run.status}</p>
+      <p className="gm-rqd__run">{STATUS_LABEL[matching.data.run.status] ?? matching.data.run.status}</p>
       {results.length === 0 && (
         <EmptyState
           title="Hozircha mos usta topilmadi"

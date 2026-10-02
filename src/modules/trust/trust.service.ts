@@ -12,6 +12,8 @@ import { ERRORS } from '../../common/constants/error-messages';
 const MAX_OPEN_DOCUMENTS = 10;
 const SINGLE_DOCUMENT_TYPES: VerificationDocumentType[] = ['IDENTITY', 'LICENSE'];
 const OPEN_STATUSES: MasterVerificationStatus[] = ['PENDING', 'UNDER_REVIEW'];
+/** Shu holatdagi hujjat o‘rniga shu turdagi yangisini yuborish mumkin; yangisi yuborilgach eskisi INACTIVE bo‘ladi. */
+const REPLACEABLE_STATUSES: MasterVerificationStatus[] = ['CORRECTION_REQUESTED', 'REJECTED', 'EXPIRED'];
 
 const OWN_DOCUMENT_SELECT = {
   id: true,
@@ -35,6 +37,8 @@ export function deriveVerification(
   documents: Array<Pick<MasterVerification, 'documentType' | 'status' | 'expiresAt' | 'createdAt'>>,
   now = new Date(),
 ): MasterVerificationStatus {
+  // Almashtirilgan (nofaol) hujjatlar umumiy holatni belgilamaydi.
+  documents = documents.filter((d) => d.status !== 'INACTIVE');
   const live = (d: { expiresAt: Date | null }) => !d.expiresAt || d.expiresAt > now;
   if (!documents.some((d) => d.documentType === 'IDENTITY')) return 'PENDING';
   if (documents.some((d) => d.documentType === 'IDENTITY' && d.status === 'VERIFIED' && live(d))) return 'VERIFIED';
@@ -83,7 +87,11 @@ export class TrustService {
       if (asset.status !== 'READY') throw new ConflictException(ERRORS.MEDIA_NOT_READY(asset.status));
 
       if (SINGLE_DOCUMENT_TYPES.includes(dto.documentType)) {
-        const existing = await tx.masterVerification.count({ where: { masterId: master.id, documentType: dto.documentType } });
+        // Tekshiruvda turgan yoki tasdiqlangan hujjat bo‘lsa — almashtirish uchun avval o‘chirish kerak.
+        // Rad etilgan / tuzatish so‘ralgan / muddati tugagan bo‘lsa — yangisini yuborish mumkin.
+        const existing = await tx.masterVerification.count({
+          where: { masterId: master.id, documentType: dto.documentType, status: { notIn: [...REPLACEABLE_STATUSES, 'INACTIVE'] } },
+        });
         if (existing > 0) throw new ConflictException(ERRORS.DOCUMENT_TYPE_ALREADY_UPLOADED(dto.documentType));
       }
 
@@ -112,13 +120,18 @@ export class TrustService {
         }
         throw error;
       }
+      // Shu turdagi eski (almashtiriladigan) hujjatlar nofaol holatga o‘tadi.
+      const superseded = await tx.masterVerification.updateMany({
+        where: { masterId: master.id, documentType: dto.documentType, id: { not: created.id }, status: { in: REPLACEABLE_STATUSES } },
+        data: { status: 'INACTIVE' },
+      });
       await tx.auditLog.create({
         data: {
           actorId: userId,
           action: 'VERIFICATION_SUBMITTED',
           targetType: 'MasterVerification',
           targetId: created.id,
-          after: { documentType: dto.documentType },
+          after: { documentType: dto.documentType, supersededDocuments: superseded.count },
         },
       });
       await this.recompute(tx, master.id);

@@ -172,7 +172,7 @@ export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPick
     <div className="gm-addrpick" ref={wrap}>
       <div className="gm-field">
         <label htmlFor="gm-addr-input" className="gm-field__label">
-          {label} <span aria-hidden="true">*</span>
+          {label}
         </label>
         <div className="gm-field__wrap gm-field__wrap--icon">
           <input

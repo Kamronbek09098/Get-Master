@@ -21,7 +21,6 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       <div className="gm-field">
         <label htmlFor={fieldId} className="gm-field__label">
           {label}
-          {required && <span aria-hidden="true"> *</span>}
         </label>
         <textarea
           ref={ref}

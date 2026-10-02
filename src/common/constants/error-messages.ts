@@ -37,6 +37,9 @@ export const ERRORS = {
   REFRESH_TOKEN_REUSED: 'Yangilash tokeni qayta ishlatilgani aniqlandi',
   LOGIN_LOCKED: (seconds: number) =>
     `Noto‘g‘ri urinishlar ko‘p bo‘ldi. ${seconds} soniyadan so‘ng qayta urinib ko‘ring.`,
+  TWO_FACTOR_PASSWORD_REQUIRED: 'Ikki bosqichli autentifikatsiyani o‘chirish uchun joriy parolni kiriting',
+  TWO_FACTOR_ADMIN_REQUIRED: 'Administrator akkaunti uchun ikki bosqichli autentifikatsiyani o‘chirib bo‘lmaydi',
+  CURRENT_PASSWORD_INVALID: 'Parol noto‘g‘ri',
   INVALID_CREDENTIALS: 'Telefon raqam yoki parol noto‘g‘ri',
   PHONE_ALREADY_REGISTERED: 'Bu telefon raqam allaqachon ro‘yxatdan o‘tgan',
   EMAIL_ALREADY_REGISTERED: 'Bu email manzil allaqachon ro‘yxatdan o‘tgan',
@@ -127,6 +130,7 @@ export const ERRORS = {
 
   REQUEST_NOT_FOUND: 'So‘rov topilmadi',
   NOT_REQUEST_OWNER: 'Bu so‘rov sizga tegishli emas',
+  REQUEST_ADDRESS_REQUIRED: 'Manzilni kiriting: usta qayerga borishi kerakligi ko‘rsatilishi shart',
   ONLY_DRAFT_EDITABLE: 'Faqat qoralama holatidagi so‘rovni tahrirlash mumkin',
   REQUEST_NO_ATTACHMENTS: 'Bu so‘rovga endi fayl biriktirib bo‘lmaydi',
   REQUEST_CANNOT_RECLASSIFY: 'Bu so‘rovni endi qayta tasniflab bo‘lmaydi',

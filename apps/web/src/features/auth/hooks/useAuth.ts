@@ -44,6 +44,15 @@ export function useLogin() {
     mutationFn: (input: LoginInput) => authService.login(input),
     gcTime: 0,
     onSuccess: (result, variables) => {
+      if (!result.verificationRequired) {
+        // Ikki bosqichli autentifikatsiya o‘chirilgan: sessiya ochildi, OTP bosqichi yo‘q.
+        loginSecret.clear();
+        useAuthStore.getState().setSession(true);
+        setPendingPhone(null);
+        setDevCode(null);
+        setDeviceLimit(null);
+        return;
+      }
       loginSecret.set(variables.phone, variables.password);
       setPendingPhone(variables.phone);
       setDevCode(result.developmentCode ?? null);

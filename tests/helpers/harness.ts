@@ -221,6 +221,8 @@ export async function openRequest(h: Harness, customer: TestUser, serviceId: str
     title: `Scenario ${randomUUID().slice(0, 8)}`,
     description: DESCRIPTION,
     serviceId,
+    latitude: 41.311,
+    longitude: 69.279,
   });
   if (created.status !== 201) throw new Error(`request create failed: ${JSON.stringify(created.body)}`);
   await h.db.problemRequest.update({

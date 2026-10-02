@@ -192,3 +192,10 @@
     padding: var(--gm-space-4);
   }
 }
+
+.gm-reqform__error {
+  margin: 0;
+  color: var(--gm-color-danger);
+  font-size: 13px;
+  font-weight: 600;
+}

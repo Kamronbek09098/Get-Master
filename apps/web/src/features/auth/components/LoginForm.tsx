@@ -5,6 +5,8 @@ import { ArrowRight } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { getNavItems } from '@/components/layout/nav-items';
+import { useAuthStore } from '@/store/auth.store';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useLogin } from '../hooks/useAuth';
 import { formatLocalPhone, toLocalDigits, loginSchema, toFullPhone, type LoginFormValues } from '../validation';
@@ -21,7 +23,16 @@ export function LoginForm() {
   function onSubmit(values: LoginFormValues) {
     login.mutate(
       { phone: toFullPhone(toLocalDigits(values.phoneLocal)), password: values.password },
-      { onSuccess: () => navigate('/otp', { state: { flow: 'login' } }) },
+      {
+        onSuccess: (result) => {
+          if (result.verificationRequired) {
+            navigate('/otp', { state: { flow: 'login' } });
+            return;
+          }
+          const [firstItem] = getNavItems(useAuthStore.getState().preferredRole);
+          navigate(firstItem?.to ?? '/', { replace: true });
+        },
+      },
     );
   }
 

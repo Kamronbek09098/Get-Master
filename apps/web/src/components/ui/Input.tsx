@@ -28,7 +28,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <div className="gm-field">
         <label htmlFor={inputId} className="gm-field__label">
           {label}
-          {required && <span aria-hidden="true"> *</span>}
         </label>
         <div className={cx('gm-field__wrap', isPassword && 'gm-field__wrap--password', prefix && 'gm-field__wrap--prefixed')}>
           {prefix && (

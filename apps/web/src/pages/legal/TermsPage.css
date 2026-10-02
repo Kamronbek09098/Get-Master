@@ -7,6 +7,8 @@
 .gm-terms__bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   max-width: 860px;
   margin: 0 auto;
   padding: 18px 20px 0;
@@ -227,4 +229,32 @@
   .gm-terms__item:hover {
     transform: none;
   }
+}
+
+.gm-terms__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px 0 12px;
+  border: 1px solid var(--gm-color-border);
+  border-radius: 999px;
+  background: var(--gm-color-surface);
+  color: var(--gm-color-text);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.gm-terms__back:hover {
+  border-color: var(--gm-color-primary);
+  color: var(--gm-color-primary);
+}
+.gm-terms__back:active {
+  background: var(--gm-color-primary-soft);
+}
+.gm-terms__back:focus-visible {
+  outline: 2px solid var(--gm-focus-ring);
+  outline-offset: 2px;
 }

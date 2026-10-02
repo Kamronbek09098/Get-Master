@@ -28,8 +28,8 @@ export class AuthController {
   @Public()
   @RateLimit({ policy: 'login', scope: 'ip+phone', escalate: true })
   @Post('login')
-  login(@Body() dto: SignInDto, @Req() req: Request) {
-    return this.authService.signIn(dto, req);
+  login(@Body() dto: SignInDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    return this.authService.signIn(dto, req, res);
   }
 
   @Public()

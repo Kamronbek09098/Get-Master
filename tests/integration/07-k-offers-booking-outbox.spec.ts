@@ -51,7 +51,7 @@ describe('K07 — offers', () => {
     expect((await h.post('/offers', m.token, { requestId, price: 100, availableAt: '2020-01-01T00:00:00Z' })).status).toBe(400);
     expect((await h.post('/offers', m.token, { requestId, price: 100, expiresAt: '2020-01-01T00:00:00Z' })).status).toBe(400);
     expect((await h.post('/offers', m.token, { requestId: MISSING_UUID, price: 100 })).status).toBe(404);
-    const draft = (await h.post('/problem-requests', customer.token, { title: 'Draft one', description: 'still a draft, not open' })).data.id;
+    const draft = (await h.post('/problem-requests', customer.token, { title: 'Draft one', description: 'still a draft, not open', latitude: 41.311, longitude: 69.279 })).data.id;
     const notOpen = await h.post('/offers', m.token, { requestId: draft, price: 100 });
     expect(notOpen.status).toBe(409);
     expect(notOpen.body.code).toBe('REQUEST_NOT_OPEN_FOR_OFFERS');
@@ -324,7 +324,7 @@ describe('Outbox → Redis/BullMQ → worker', () => {
   });
 
   it('domain writes and their events commit together: a rolled-back submit leaves no event behind', async () => {
-    const draftId = (await h.post('/problem-requests', customer.token, { title: 'Atomic', description: 'atomicity check request' })).data.id;
+    const draftId = (await h.post('/problem-requests', customer.token, { title: 'Atomic', description: 'atomicity check request', latitude: 41.311, longitude: 69.279 })).data.id;
     const before = await h.db.outboxEvent.count({ where: { aggregateId: draftId } });
     await h.post(`/problem-requests/${draftId}/cancel`, customer.token, { reason: 'x' });
     expect((await h.post(`/problem-requests/${draftId}/submit`, customer.token)).status).toBe(409);

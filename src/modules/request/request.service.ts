@@ -30,6 +30,8 @@ export class RequestService {
   ) {}
 
   async create(customerId: string, dto: CreateRequestDto) {
+    // Manzil majburiy: saqlangan manzil yoki aniq koordinatalar.
+    if (!dto.addressId && (dto.latitude == null || dto.longitude == null)) throw new BadRequestException(ERRORS.REQUEST_ADDRESS_REQUIRED);
     const selection = await this.validateReferences(customerId, dto);
     const duplicate = await this.db.problemRequest.findFirst({
       where: {
@@ -94,6 +96,8 @@ export class RequestService {
     if (request.status !== 'DRAFT') {
       throw new InvalidTransitionException(request.status, 'SUBMITTED');
     }
+    // Manzilsiz (eski) qoralama yuborilmaydi.
+    if (!request.addressId && (request.latitude == null || request.longitude == null)) throw new BadRequestException(ERRORS.REQUEST_ADDRESS_REQUIRED);
     return this.db.$transaction(async (tx) => {
       const updated = await tx.problemRequest.update({
         where: { id: requestId },

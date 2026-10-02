@@ -16,6 +16,7 @@ import { CANCELLABLE_STATUSES, OFFER_ELIGIBLE_STATUSES } from '@/features/reques
 import { OfferList } from '@/features/offer/components/OfferList';
 import { ServicePicker } from '@/features/request/components/ServicePicker';
 import { MatchingResults } from '@/features/matching/components/MatchingResults';
+import './RequestDetails.css';
 
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -35,19 +36,30 @@ export function RequestDetailsPage() {
   const canReceiveOffers = OFFER_ELIGIBLE_STATUSES.includes(data.status);
 
   return (
-    <div>
-      <Link to="/mijozlar/buyurtmalar" className="gm-pay__back" style={{ marginBottom: 'var(--gm-space-3)', display: 'inline-flex' }}>
-        <ArrowLeft size={16} /> Buyurtmalarga qaytish
+    <div className="gm-rqd">
+      <Link to="/mijozlar/buyurtmalar" className="gm-pay__back gm-rqd__back">
+        <ArrowLeft size={16} aria-hidden="true" /> Buyurtmalarga qaytish
       </Link>
-      <div className="gm-page-header">
-        <h1>{data.title}</h1>
-        <RequestStatus status={data.status} />
-      </div>
-      <p>{data.description}</p>
-      <p style={{ fontSize: 12, color: 'var(--gm-color-text-muted)', marginTop: 'var(--gm-space-2)' }}>
-        Yaratildi: {formatDateTime(data.createdAt)}
-        {data.expiresAt && ` · Amal qilish muddati: ${formatDateTime(data.expiresAt)}`}
-      </p>
+
+      <header className="gm-rqd__hero">
+        <div className="gm-rqd__hero-top">
+          <h1>{data.title}</h1>
+          <RequestStatus status={data.status} />
+        </div>
+        <p className="gm-rqd__desc">{data.description}</p>
+        <dl className="gm-rqd__meta">
+          <div>
+            <dt>Yaratildi</dt>
+            <dd>{formatDateTime(data.createdAt)}</dd>
+          </div>
+          {data.expiresAt && (
+            <div>
+              <dt>Amal qilish muddati</dt>
+              <dd>{formatDateTime(data.expiresAt)}</dd>
+            </div>
+          )}
+        </dl>
+      </header>
 
       {data.status === 'DRAFT' && (
         <div className="gm-detail-section">
@@ -70,7 +82,7 @@ export function RequestDetailsPage() {
         <div className="gm-detail-section">
           <h2>Takliflar</h2>
           <OfferList requestId={id} />
-          <aside className="gm-tips" style={{ marginTop: 'var(--gm-space-4)' }}>
+          <aside className="gm-tips gm-rqd__how">
             <h3>Takliflar qanday keladi?</h3>
             <ul>
               <li>
@@ -121,7 +133,8 @@ export function RequestDetailsPage() {
       )}
 
       {canCancel && (
-        <div className="gm-detail-section">
+        <div className="gm-rqd__danger">
+          <p>So‘rov kerak bo‘lmay qolgan bo‘lsa, uni bekor qilishingiz mumkin.</p>
           <Button variant="danger" size="sm" onClick={() => setCancelOpen(true)}>
             So‘rovni bekor qilish
           </Button>

@@ -26,7 +26,8 @@ export interface DeviceLimitInfo {
 }
 
 export interface LoginResult {
-  verificationRequired: true;
+  /** false — ikki bosqichli autentifikatsiya o‘chirilgan: OTP so‘ralmaydi, sessiya shu javobda ochilgan. */
+  verificationRequired: boolean;
   /** Yangi qurilma uchun faol qurilmalar limiti to‘lgan bo‘lsa — kod kiritishdan oldin ogohlantirish uchun. */
   deviceLimit?: DeviceLimitInfo;
   developmentCode?: string;

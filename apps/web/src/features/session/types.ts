@@ -11,5 +11,7 @@ export interface Me {
   roles: Role[];
   createdAt?: string;
   phoneVerifiedAt?: string | null;
+  /** Kirishda OTP so‘ralishi (ikki bosqichli autentifikatsiya). */
+  twoFactorEnabled?: boolean;
   masterProfile: { id: string; status: string; verification: string } | null;
 }

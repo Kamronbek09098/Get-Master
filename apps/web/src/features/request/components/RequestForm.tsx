@@ -22,7 +22,7 @@ const DESCRIPTION_MIN_GOOD = 40;
 
 const schema = z.object({
   serviceId: z.string().uuid('Xizmat turini tanlang'),
-  addressId: z.string().optional(),
+  addressId: z.string().min(1, 'Manzilni tanlang yoki qo‘shing'),
   title: z.string().trim().min(1, 'Sarlavhani kiriting').max(TITLE_MAX),
   description: z.string().trim().min(1, 'Muammoni tavsiflab bering'),
 });
@@ -61,7 +61,7 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
 
   useEffect(() => {
     if (addressId || addressList.length === 0) return;
-    const preferred = addressList.find((address) => address.isDefault);
+    const preferred = addressList.find((address) => address.isDefault) ?? addressList[0];
     if (preferred) setValue('addressId', preferred.id);
   }, [addressList, addressId, setValue]);
 
@@ -74,12 +74,13 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
     { label: 'Xizmat turi tanlandi', done: !!serviceId },
     { label: 'Sarlavha yozildi', done: title.trim().length > 0 },
     { label: 'Muammo tavsiflandi', done: description.trim().length > 0 },
+    { label: 'Manzil tanlandi', done: !!addressId },
   ];
   const remaining = checklist.filter((item) => !item.done).length;
   const descriptionLength = description.trim().length;
 
   function onSubmit(values: FormValues) {
-    createRequest.mutate({ ...values, addressId: values.addressId || undefined }, { onSuccess: onCreated });
+    createRequest.mutate(values, { onSuccess: onCreated });
   }
 
   return (
@@ -123,39 +124,41 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
           </p>
         </Section>
 
-        <Section step={3} title="Usta qayerga borsin?" hint="Ixtiyoriy — keyinroq ham qo‘shishingiz mumkin.">
+        <Section step={3} title="Usta qayerga borsin?" hint="Majburiy — usta aniq shu manzilga keladi va yo‘l vaqtini hisoblab narx aytadi.">
           {addressList.length > 0 ? (
-            <div className="gm-reqform__addresses" role="radiogroup" aria-label="Manzil">
-              <label className={cx('gm-reqform__address', !addressId && 'gm-reqform__address--checked')}>
-                <input type="radio" value="" className="gm-visually-hidden" checked={!addressId} onChange={() => setValue('addressId', '')} />
-                <MapPin size={18} aria-hidden="true" />
-                <span>
-                  <strong>Manzilsiz</strong>
-                  <small>Keyinroq kelishaman</small>
-                </span>
-              </label>
-              {addressList.map((address) => (
-                <label key={address.id} className={cx('gm-reqform__address', addressId === address.id && 'gm-reqform__address--checked')}>
-                  <input
-                    type="radio"
-                    value={address.id}
-                    className="gm-visually-hidden"
-                    checked={addressId === address.id}
-                    onChange={() => setValue('addressId', address.id)}
-                  />
-                  <MapPin size={18} aria-hidden="true" />
-                  <span>
-                    <strong>{address.title || 'Manzil'}</strong>
-                    <small>{address.addressLine}</small>
-                  </span>
-                  {addressId === address.id && <Check size={16} className="gm-reqform__address-check" aria-hidden="true" />}
-                </label>
-              ))}
-            </div>
+            <>
+              <div className="gm-reqform__addresses" role="radiogroup" aria-label="Manzil" aria-required="true" aria-invalid={!!errors.addressId}>
+                {addressList.map((address) => (
+                  <label key={address.id} className={cx('gm-reqform__address', addressId === address.id && 'gm-reqform__address--checked')}>
+                    <input
+                      type="radio"
+                      value={address.id}
+                      className="gm-visually-hidden"
+                      checked={addressId === address.id}
+                      onChange={() => setValue('addressId', address.id, { shouldValidate: true })}
+                    />
+                    <MapPin size={18} aria-hidden="true" />
+                    <span>
+                      <strong>{address.title || 'Manzil'}</strong>
+                      <small>{address.addressLine}</small>
+                    </span>
+                    {addressId === address.id && <Check size={16} className="gm-reqform__address-check" aria-hidden="true" />}
+                  </label>
+                ))}
+              </div>
+              <Link to="/mijozlar/manzillar" className="gm-reqform__add-address">
+                <Plus size={16} aria-hidden="true" /> Yangi manzil qo‘shish
+              </Link>
+            </>
           ) : (
             <Link to="/mijozlar/manzillar" className="gm-reqform__add-address">
               <Plus size={16} aria-hidden="true" /> Manzil qo‘shish
             </Link>
+          )}
+          {errors.addressId && (
+            <p className="gm-reqform__error" role="alert">
+              {addressList.length > 0 ? errors.addressId.message : 'So‘rov yuborish uchun avval manzil qo‘shing'}
+            </p>
           )}
         </Section>
 
@@ -192,7 +195,7 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
             </li>
             <li>
               <MapPin size={18} />
-              <span>Manzil qo‘shsangiz, usta yo‘l vaqtini hisoblab narx aytadi.</span>
+              <span>Manzil majburiy: usta yo‘l vaqtini hisoblab, aniq narx aytadi.</span>
             </li>
           </ul>
         </div>

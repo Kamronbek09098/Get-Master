@@ -28,7 +28,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       <div className="gm-field">
         <label htmlFor={fieldId} className="gm-field__label">
           {label}
-          {required && <span aria-hidden="true"> *</span>}
         </label>
         <select
           ref={ref}

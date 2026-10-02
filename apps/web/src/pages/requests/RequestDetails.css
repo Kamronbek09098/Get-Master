@@ -1,0 +1,218 @@
+/* ===== So‘rov tafsiloti sahifasi ===== */
+.gm-rqd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gm-space-4);
+  max-width: 860px;
+  margin-inline: auto;
+}
+.gm-rqd > .gm-detail-section {
+  margin-top: 0;
+}
+.gm-rqd__back {
+  min-height: 36px;
+}
+
+/* Hero: sarlavha, holat, tavsif, sanalar */
+.gm-rqd__hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gm-space-3);
+  padding: var(--gm-card-pad);
+  border: var(--gm-card-border);
+  border-radius: var(--gm-card-radius-lg);
+  background: var(--gm-color-surface);
+  box-shadow: var(--gm-card-shadow);
+}
+.gm-rqd__hero-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+.gm-rqd__hero-top h1 {
+  flex: 1 1 260px;
+  min-width: 0;
+  margin: 0;
+  font-size: clamp(22px, 3vw, 28px);
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+.gm-rqd__desc {
+  margin: 0;
+  color: var(--gm-color-text);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+.gm-rqd__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+  padding-top: var(--gm-space-3);
+  border-top: 1px solid var(--gm-color-border);
+}
+.gm-rqd__meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gm-rqd__meta dt {
+  color: var(--gm-color-text-muted);
+  font-size: var(--gm-card-label-size);
+  font-weight: 700;
+}
+.gm-rqd__meta dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Bo‘lim sarlavhalari */
+.gm-rqd .gm-detail-section > h2 {
+  margin-bottom: var(--gm-space-4);
+}
+
+/* Taklif kartasi */
+.gm-offer {
+  display: grid;
+  gap: var(--gm-space-3);
+}
+.gm-offer__main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--gm-space-3);
+}
+.gm-offer__who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.gm-offer__who h3 {
+  margin: 0;
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+.gm-offer__rating {
+  color: var(--gm-color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.gm-offer__rating small {
+  font-weight: 500;
+}
+.gm-offer__price {
+  font-family: var(--gm-font-display);
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.gm-offer__details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: var(--gm-card-radius-sm);
+  background: var(--gm-color-surface-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.gm-offer__details p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.gm-offer__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding-top: var(--gm-space-3);
+  border-top: 1px solid var(--gm-color-border);
+}
+.gm-offer__foot .gm-card__meta {
+  margin: 0;
+}
+.gm-offer__foot .gm-button {
+  min-height: 44px;
+  padding-inline: 22px;
+}
+
+/* «Takliflar qanday keladi?» */
+.gm-rqd__how {
+  margin-top: var(--gm-space-4);
+  padding: var(--gm-card-pad);
+  border-radius: var(--gm-card-radius);
+}
+.gm-rqd__how h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.gm-rqd__how ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gm-space-3) var(--gm-space-5);
+}
+.gm-rqd__how li {
+  align-items: flex-start;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+/* Mos ustalar holati */
+.gm-rqd__run {
+  display: inline-flex;
+  align-self: flex-start;
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Bekor qilish: ikkinchi darajali, sokin blok */
+.gm-rqd__danger {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 14px var(--gm-card-pad);
+  border: 1px dashed var(--gm-color-border-strong);
+  border-radius: var(--gm-card-radius);
+}
+.gm-rqd__danger p {
+  margin: 0;
+  color: var(--gm-color-text-muted);
+  font-size: 13.5px;
+}
+.gm-rqd__danger .gm-button {
+  min-height: 44px;
+}
+
+@media (max-width: 640px) {
+  .gm-rqd {
+    gap: var(--gm-space-3);
+  }
+  .gm-rqd__how ul {
+    grid-template-columns: 1fr;
+  }
+  .gm-offer__foot,
+  .gm-rqd__danger {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .gm-offer__foot .gm-button,
+  .gm-rqd__danger .gm-button {
+    width: 100%;
+  }
+}

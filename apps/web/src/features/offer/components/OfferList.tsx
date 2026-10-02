@@ -44,27 +44,34 @@ export function OfferList({ requestId }: { requestId: string }) {
       {items.map((offer) => {
         const name = accountName(offer.master?.user);
         return (
-          <div key={offer.id} className="gm-card">
-            <div className="gm-card__header">
-              <h3>
-                {name} — {formatMoney(offer.price, offer.currency)}
-              </h3>
+          <article key={offer.id} className="gm-card gm-offer">
+            <div className="gm-offer__main">
+              <div className="gm-offer__who">
+                <h3>{name}</h3>
+                {offer.master && (
+                  <span className="gm-offer__rating">
+                    ★ {Number(offer.master.ratingAvg).toFixed(1)} <small>({offer.master.ratingCount} ta sharh)</small>
+                  </span>
+                )}
+              </div>
               <OfferBadge status={offer.status} />
             </div>
-            {offer.master && (
-              <p className="gm-card__meta">
-                Reyting: {Number(offer.master.ratingAvg).toFixed(1)} ({offer.master.ratingCount} ta sharh)
-              </p>
+            <div className="gm-offer__price">{formatMoney(offer.price, offer.currency)}</div>
+            {(offer.estimatedMinutes || offer.message) && (
+              <div className="gm-offer__details">
+                {offer.estimatedMinutes && <p>Taxminiy davomiylik: <strong>{offer.estimatedMinutes} daqiqa</strong></p>}
+                {offer.message && <p>{offer.message}</p>}
+              </div>
             )}
-            {offer.estimatedMinutes && <p>Taxminiy davomiylik: {offer.estimatedMinutes} daqiqa</p>}
-            {offer.message && <p>{offer.message}</p>}
-            <p className="gm-card__meta">Amal qilish muddati: {formatDateTime(offer.expiresAt)}</p>
-            {offer.status === 'PENDING' && (
-              <Button size="sm" loading={accept.isPending && pendingId === offer.id} onClick={() => handleAccept(offer.id)}>
-                Qabul qilish
-              </Button>
-            )}
-          </div>
+            <div className="gm-offer__foot">
+              <span className="gm-card__meta">Amal qilish muddati: {formatDateTime(offer.expiresAt)}</span>
+              {offer.status === 'PENDING' && (
+                <Button size="sm" loading={accept.isPending && pendingId === offer.id} onClick={() => handleAccept(offer.id)}>
+                  Qabul qilish
+                </Button>
+              )}
+            </div>
+          </article>
         );
       })}
     </div>

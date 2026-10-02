@@ -320,7 +320,7 @@ export class AuthService {
     return updated;
   }
 
-  async signIn(dto: SignInDto, req: Request) {
+  async signIn(dto: SignInDto, req: Request, res?: Response) {
     const phone = this.normalizePhone(dto.phone);
     const attemptKey = `${this.clientIp(req) ?? 'unknown'}:${phone}:${panelOf(req) ?? 'any'}`;
     await this.assertLoginNotLocked(attemptKey);
@@ -332,6 +332,11 @@ export class AuthService {
         passwordHash: true,
         status: true,
         deletedAt: true,
+        twoFactorEnabled: true,
+        accountNumber: true,
+        firstName: true,
+        lastName: true,
+        userRoles: { select: { role: true } },
       },
     });
 
@@ -357,6 +362,19 @@ export class AuthService {
 
     if (user.status !== UserStatus.ACTIVE) {
       throw new ForbiddenException(ERRORS.ACCOUNT_VERIFICATION_REQUIRED);
+    }
+
+    // Ikki bosqichli autentifikatsiya o‘chirilgan bo‘lsa (administrator bundan mustasno): faqat login va parol — OTP so‘ralmaydi.
+    if (res && !user.twoFactorEnabled && !user.userRoles.some((item) => item.role === Role.ADMIN)) {
+      const session = await this.createSession(
+        user.id,
+        user.userRoles.map((item) => item.role),
+        user.status,
+        req,
+        res,
+      );
+      this.notifySession('login', user, req);
+      return { verificationRequired: false as const, ...session };
     }
 
     // Kod yuborish va qurilmalar limitini tekshirish parallel bajariladi (kutish vaqti qisqaradi).

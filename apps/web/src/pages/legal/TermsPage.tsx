@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
-import { ChevronDown, FileText, Lock, ScrollText, ShieldCheck } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ChevronDown, FileText, Lock, ScrollText, ShieldCheck } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Logo } from '@/components/common/Logo';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -65,6 +65,10 @@ function PolicyBody({ id, fallback }: { id: string; fallback?: string }) {
 /** Hammaga ochiq sahifa: kirmasdan ham foydalanish shartlari va siyosatlarni o‘qish mumkin. */
 export function TermsPage() {
   const policies = usePolicies();
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Oldingi oynaga qaytadi; sahifa to‘g‘ridan-to‘g‘ri ochilgan bo‘lsa (tarix yo‘q) — bosh sahifaga.
+  const goBack = () => (location.key !== 'default' ? navigate(-1) : navigate('/', { replace: true }));
   const [openId, setOpenId] = useState<string | null | undefined>(undefined);
   const items = (policies.data ?? []).filter((policy) => policy.status === 'PUBLISHED');
   // Birinchi hujjat dastlab ochiq turadi.
@@ -73,6 +77,9 @@ export function TermsPage() {
   return (
     <div className="gm-terms">
       <header className="gm-terms__bar">
+        <button type="button" className="gm-terms__back" onClick={goBack}>
+          <ArrowLeft size={18} aria-hidden="true" /> Orqaga
+        </button>
         <Link to="/" aria-label="GetMaster — bosh sahifa">
           <Logo />
         </Link>

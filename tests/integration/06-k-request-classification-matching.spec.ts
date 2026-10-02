@@ -23,12 +23,17 @@ afterAll(async () => {
 const draft = (over: Record<string, unknown> = {}) => ({
   title: `Leaky tap ${Math.random().toString(36).slice(2, 8)}`,
   description: 'Water drips from the kitchen tap all night long.',
+  latitude: 41.311,
+  longitude: 69.279,
   ...over,
 });
 
 describe('K05 — request lifecycle', () => {
   it('validates input and is CUSTOMER-only', async () => {
     expect((await h.post('/problem-requests', customer.token, { description: 'x' })).status).toBe(400);
+    // Manzil majburiy: saqlangan manzil yoki koordinatalarsiz so'rov yaratilmaydi.
+    const noAddress = await h.post('/problem-requests', customer.token, { title: 'No address', description: 'Request without any address or coordinates.' });
+    expect(noAddress.status).toBe(400);
     expect((await h.post('/problem-requests', customer.token, draft({ latitude: 200 }))).status).toBe(400);
     expect((await h.post('/problem-requests', customer.token, draft({ status: 'BOOKED' }))).status).toBe(400);
     expect((await h.post('/problem-requests', customer.token, draft({ serviceId: 'nope' }))).status).toBe(400);
