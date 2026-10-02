@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, Copy, Eye, EyeOff, KeyRound, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/store/auth.store';
@@ -32,8 +32,15 @@ export function NewCredentialsCard({ onContinue }: { onContinue: () => void }) {
   const setNewCredentials = useAuthStore((s) => s.setNewCredentials);
   const [shown, setShown] = useState(true);
   const [saved, setSaved] = useState(false);
+  const clearTimer = useRef(0);
 
-  useEffect(() => () => setNewCredentials(null), [setNewCredentials]);
+  // Haqiqiy yopilishda xotiradan o‘chiriladi. StrictMode'ning sinov (mount→unmount→mount) siklida o‘chirib yubormaslik uchun kechiktirilgan va qayta mount bo‘lsa bekor qilinadi.
+  useEffect(() => {
+    if (clearTimer.current) window.clearTimeout(clearTimer.current);
+    return () => {
+      clearTimer.current = window.setTimeout(() => setNewCredentials(null), 0);
+    };
+  }, [setNewCredentials]);
 
   if (!credentials) return null;
 

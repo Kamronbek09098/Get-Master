@@ -198,7 +198,11 @@ describe('K02 — registration & login', () => {
     await vi.waitFor(async () => expect(await h.db.auditLog.count({ where: { action: 'AUTH_REGISTER_DUPLICATE_ATTEMPT', targetId: user.id } })).toBeGreaterThan(0));
     const again = await registerAgain(PASSWORD, '10.1.0.22');
     expect(again.status).toBe(201);
-    expect(again.data).toMatchObject({ existingAccount: true, accountNumber: before, verificationRequired: true });
+    // Parol TO‘G‘RI bo‘lsa ham ro‘yxatdan o‘tish orqali kirib bo‘lmaydi: javob soxta, kod yuborilmaydi.
+    expect(Object.keys(again.data).sort()).toEqual(['userId', 'verificationRequired']);
+    expect(again.data.existingAccount).toBeUndefined();
+    expect(await h.db.otpCode.count({ where: { phone } })).toBe(otpBefore);
+    expect(await h.db.user.findUniqueOrThrow({ where: { phone } })).toMatchObject({ accountNumber: before });
     expect(await h.db.user.count({ where: { phone } })).toBe(1);
   });
 

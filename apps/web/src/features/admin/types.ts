@@ -212,6 +212,7 @@ export interface AdminUserDetail {
   recentOrders?: Array<{ id: string; orderNumber: number; status: string; finalAmount: string; currency: string; createdAt: string; side: 'CUSTOMER' | 'MASTER' }>;
   masterExtra?: {
     ratingCount: number;
+    workPlace?: string | null;
     completionRate: string;
     responseRate: string;
     workRadiusKm: string | null;

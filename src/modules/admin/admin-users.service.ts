@@ -97,6 +97,7 @@ export class AdminUsersService {
             where: { id: base.masterProfile.id },
             select: {
               ratingCount: true,
+              workPlace: true,
               completionRate: true,
               responseRate: true,
               workRadiusKm: true,

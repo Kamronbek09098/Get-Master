@@ -238,6 +238,8 @@ export class CommunicationService {
     const items = await Promise.all(
       page.items
         .filter((row) => row.participants.length > 1)
+        // Hali bitta ham xabar yozilmagan ustoz–mijoz suhbati ro‘yxatda ko‘rinmaydi (yangi akkauntda «bo‘sh chat» chiqmasin).
+        .filter((row) => row.type !== 'DIRECT' || row.messages.length > 0)
         // Telegram uslubida: men o'chirgan suhbat ro'yxatimda yashiriladi, faqat o'chirgandan keyin yangi faollik bo'lsa qayta chiqadi.
         .filter((row) => {
           const mine = row.participants.find((p) => p.userId === userId);

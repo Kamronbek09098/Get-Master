@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/auth.service';
 import type { LoginInput, RegisterInput, VerifyOtpInput } from '../types';
 import { useAuthStore } from '@/store/auth.store';
+import { loginSecret } from '../login-secret';
 import { useAppStore } from '@/store/app.store';
 import { SESSION_EXPIRED_EVENT } from '@/services/api.client';
 
@@ -43,6 +44,7 @@ export function useLogin() {
     mutationFn: (input: LoginInput) => authService.login(input),
     gcTime: 0,
     onSuccess: (result, variables) => {
+      loginSecret.set(variables.phone, variables.password);
       setPendingPhone(variables.phone);
       setDevCode(result.developmentCode ?? null);
       setDeviceLimit(result.deviceLimit ? { max: result.deviceLimit.max, active: result.deviceLimit.active } : null);
@@ -56,6 +58,7 @@ export function useVerifyOtp() {
   return useMutation({
     mutationFn: (input: VerifyOtpInput) => authService.verifyOtp(input),
     onSuccess: () => {
+      loginSecret.clear();
       setSession(true);
       setPendingPhone(null);
       useAuthStore.getState().setDevCode(null);

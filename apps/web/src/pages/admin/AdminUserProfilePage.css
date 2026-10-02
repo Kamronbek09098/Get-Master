@@ -395,3 +395,43 @@
     transform: none;
   }
 }
+
+/* Usta profili kartasi */
+.gm-uprofile__grid {
+  align-items: start;
+}
+.gm-uprofile__inline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.gm-uprofile__services {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--gm-color-border);
+}
+.gm-uprofile__services-title {
+  color: var(--gm-color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.gm-uprofile__card > .gm-uprofile__link {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--gm-color-primary) 30%, var(--gm-color-border));
+  border-radius: 12px;
+  background: var(--gm-color-primary-soft);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.gm-uprofile__card > .gm-uprofile__link:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--gm-shadow-sm);
+}

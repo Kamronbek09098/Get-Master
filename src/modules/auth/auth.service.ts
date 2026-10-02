@@ -77,16 +77,10 @@ export class AuthService {
       select: { id: true, deletedAt: true, status: true, passwordHash: true, accountNumber: true },
     });
     if (existing) {
-      // Har holatda aynan bitta og‘ir (cost 12) amal bajariladi: haqiqiy taqqoslash yoki soxta — vaqtga qarab farqlab bo‘lmasin.
-      const canOwn = existing.deletedAt === null && existing.status === UserStatus.ACTIVE && !!existing.passwordHash;
-      const owner = (await verifySecret(dto.password, canOwn ? (existing.passwordHash as string) : await this.dummyPasswordHash())) && canOwn;
-      // Telefon band, lekin parol mos emas: «band» deb aytmaymiz (raqamlarni taxmin qilib aniqlashning oldini olish).
-      if (!owner) return this.decoyRegistration(dto, req, phone, 'phone', existing.id, false);
-      if (panelOf(req) !== 'MASTER') {
-        await this.db.userRole.createMany({ data: [{ userId: existing.id, role: Role.CUSTOMER }], skipDuplicates: true });
-      }
-      const signedIn = await this.signIn({ phone: dto.phone, password: dto.password }, req);
-      return { ...signedIn, existingAccount: true, accountNumber: existing.accountNumber };
+      // Telefon band bo‘lsa, parol to‘g‘ri bo‘lsa ham ro‘yxatdan o‘tish orqali kirish MUMKIN EMAS: faqat «Kirish» sahifasi orqali kiriladi.
+      // Tashqaridan javob yangi ro‘yxatdan o‘tishdan farq qilmaydi; adminga ogohlantirish ketadi. Vaqt bir xil bo‘lishi uchun bitta cost-12 amal bajariladi.
+      await verifySecret(dto.password, await this.dummyPasswordHash());
+      return this.decoyRegistration(dto, req, phone, 'phone', existing.id, false);
     }
 
     if (email) {

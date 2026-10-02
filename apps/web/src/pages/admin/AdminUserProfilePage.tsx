@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { Check, Copy, KeyRound, MessageCircle, Ban, CheckCircle2, MapPin, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench, ChevronRight } from 'lucide-react';
+import { Check, Copy, KeyRound, MessageCircle, Ban, CheckCircle2, MapPin, Building2, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -228,7 +228,10 @@ export function AdminUserProfilePage() {
                   {data.masterProfile.experienceYears != null && ` · ${data.masterProfile.experienceYears} yil tajriba`}
                 </Field>
                 <Field icon={<ShieldCheck size={16} />} label="Holati">
-                  {statusLabel(data.masterProfile.status)}
+                  <span className="gm-uprofile__inline">
+                    {data.masterExtra?.isPaused ? 'Pauzada' : statusLabel(data.masterProfile.status)}
+                    <TrustBadge verification={data.masterProfile.verification} />
+                  </span>
                 </Field>
                 {data.masterProfile.bio && <p className="gm-uprofile__bio">{data.masterProfile.bio}</p>}
                 {data.masterExtra && (
@@ -239,20 +242,25 @@ export function AdminUserProfilePage() {
                     <Field icon={<ShieldCheck size={16} />} label="Ishonchlilik">
                       Yakunlash {Math.round(Number(data.masterExtra.completionRate))}% · Javob berish {Math.round(Number(data.masterExtra.responseRate))}%
                     </Field>
+                    <Field icon={<Building2 size={16} />} label="Ish joyi">
+                      {data.masterExtra.workPlace || '—'}
+                    </Field>
                     <Field icon={<MapPin size={16} />} label="Ish hududi">
-                      {data.masterExtra.workRadiusKm ? `${Number(data.masterExtra.workRadiusKm)} km` : '—'}
-                      {Array.isArray(data.masterExtra.serviceAreas) && data.masterExtra.serviceAreas.length > 0 && ` · ${(data.masterExtra.serviceAreas as string[]).join(', ')}`}
-                      {data.masterExtra.isPaused && ' · pauzada'}
+                      {Array.isArray(data.masterExtra.serviceAreas) && data.masterExtra.serviceAreas.length > 0 ? (data.masterExtra.serviceAreas as string[]).join(', ') : '—'}
+                      {data.masterExtra.workRadiusKm ? <small className="gm-uprofile__ua">Ish radiusi: {Number(data.masterExtra.workRadiusKm)} km</small> : <small className="gm-uprofile__ua">Radius belgilanmagan</small>}
                     </Field>
                     {data.masterExtra.services.length > 0 && (
-                      <ul className="gm-uprofile__tags" aria-label="Xizmatlari">
-                        {data.masterExtra.services.map((service) => (
-                          <li key={service.name}>
-                            {service.name}
-                            {service.basePrice && ` · ${formatMoney(service.basePrice)}`}
-                          </li>
-                        ))}
-                      </ul>
+                      <div className="gm-uprofile__services">
+                        <span className="gm-uprofile__services-title">Xizmatlari</span>
+                        <ul className="gm-uprofile__tags" aria-label="Xizmatlari">
+                          {data.masterExtra.services.map((service) => (
+                            <li key={service.name}>
+                              {service.name}
+                              {service.basePrice && ` · ${formatMoney(service.basePrice)}`}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                   </>
                 )}

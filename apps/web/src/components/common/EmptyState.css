@@ -33,3 +33,64 @@
   font-size: 14px;
   max-width: 400px;
 }
+
+/* ===== Bo‘sh holat: tartibli joylashuv, tugma matnga yopishmaydi, har qanday ekranda mos ===== */
+.gm-empty-state.gm-empty-state {
+  width: 100%;
+  min-height: clamp(240px, 38vh, 380px);
+  justify-content: center;
+  gap: var(--gm-space-2);
+  padding: var(--gm-space-8) var(--gm-space-5);
+  box-sizing: border-box;
+}
+
+.gm-empty-state .gm-empty-state__description {
+  width: 100%;
+  max-width: 440px;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.gm-empty-state .gm-empty-state__title {
+  line-height: 1.3;
+}
+
+/* Amal tugmasi (Link ichidagi Button): matndan ajralib turadi */
+.gm-empty-state > a,
+.gm-empty-state > button {
+  margin-top: var(--gm-space-4);
+  max-width: 100%;
+}
+
+.gm-empty-state > a .gm-button,
+.gm-empty-state > button.gm-button {
+  min-height: 44px;
+  padding-inline: var(--gm-space-5);
+  white-space: normal;
+}
+
+@media (max-width: 899px) {
+  .gm-empty-state.gm-empty-state {
+    min-height: min(52vh, 360px);
+    padding: var(--gm-space-6) var(--gm-space-4);
+  }
+
+  .gm-empty-state > a,
+  .gm-empty-state > button {
+    align-self: stretch;
+    margin-top: var(--gm-space-4);
+  }
+
+  .gm-empty-state > a .gm-button,
+  .gm-empty-state > button.gm-button {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+@media (min-width: 900px) {
+  .gm-empty-state > a,
+  .gm-empty-state > button {
+    align-self: center;
+  }
+}

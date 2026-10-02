@@ -90,7 +90,7 @@ export function CustomerOrdersPage() {
   const empty = !loading && items.length === 0;
 
   return (
-    <div className="gm-opage gm-mopage">
+    <div className={cx('gm-opage gm-mopage', empty && 'gm-mopage--empty')}>
       <div className="gm-page-header" style={{ marginBottom: 0 }}>
         <div>
           <h1>Buyurtmalar</h1>
@@ -128,18 +128,37 @@ export function CustomerOrdersPage() {
       )}
 
       {empty && (
-        <EmptyState
-          icon={<ClipboardList size={28} />}
-          title="Hali buyurtma yo‘q"
-          description="Muammoingizni tasvirlab, birinchi buyurtmangizni yarating. Mos ustalar sizga narx bilan taklif yuboradi."
-          action={
-            <Link to="/mijozlar/sorov-yaratish">
-              <Button>
-                <Plus size={16} /> Yangi buyurtma yaratish
-              </Button>
-            </Link>
-          }
-        />
+        <section className="gm-mempty" aria-labelledby="gm-mempty-title">
+          <span className="gm-mempty__icon" aria-hidden="true">
+            <ClipboardList size={34} strokeWidth={1.8} />
+          </span>
+          <div className="gm-mempty__text">
+            <h2 id="gm-mempty-title">Hali buyurtma yo‘q</h2>
+            <p>Muammoingizni tasvirlab, birinchi buyurtmangizni yarating. Mos ustalar sizga narx bilan taklif yuboradi.</p>
+          </div>
+          <ol className="gm-mempty__steps">
+            <li>
+              <span className="gm-mempty__num">1</span>
+              <strong>Muammoni tasvirlang</strong>
+              <span>Nima buzilganini yozing va kerak bo‘lsa rasm qo‘shing.</span>
+            </li>
+            <li>
+              <span className="gm-mempty__num">2</span>
+              <strong>Takliflarni oling</strong>
+              <span>Mos ustalar narx va muddat bilan taklif yuboradi.</span>
+            </li>
+            <li>
+              <span className="gm-mempty__num">3</span>
+              <strong>Ustani tanlang</strong>
+              <span>Reyting va narxni solishtirib, o‘zingizga qulayini tanlang.</span>
+            </li>
+          </ol>
+          <Link to="/mijozlar/sorov-yaratish" className="gm-mempty__cta">
+            <Button>
+              <Plus size={18} /> Yangi buyurtma yaratish
+            </Button>
+          </Link>
+        </section>
       )}
 
       {items.length > 0 && (

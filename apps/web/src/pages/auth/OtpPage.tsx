@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { NewCredentialsCard } from '@/features/auth/components/NewCredentialsCard';
 import { OtpForm } from '@/features/auth/components/OtpForm';
 import { useVerifyOtp, useVerifyRegistration } from '@/features/auth/hooks/useAuth';
+import { loginSecret } from '@/features/auth/login-secret';
 import { authService } from '@/features/auth/services/auth.service';
 import { useAppStore } from '@/store/app.store';
 import { useAuthStore } from '@/store/auth.store';
@@ -53,7 +54,10 @@ export function OtpPage() {
   async function handleResend(): Promise<boolean> {
     setResendError(null);
     try {
-      const result = await authService.resendRegistration(pendingPhone as string);
+      const password = isRegisterFlow ? null : loginSecret.get(pendingPhone as string);
+      const result = isRegisterFlow
+        ? await authService.resendRegistration(pendingPhone as string)
+        : await authService.login({ phone: pendingPhone as string, password: password as string });
       setDevCode(result.developmentCode ?? null);
       pushToast('Yangi kod yuborildi.', 'success');
       return true;
@@ -115,13 +119,13 @@ export function OtpPage() {
           Agar bu telefon raqami bilan avval ro‘yxatdan o‘tgan bo‘lsangiz, <Link to="/login">kirish sahifasidan</Link> foydalaning. Aks holda kodni qayta tekshirib kiriting.
         </Alert>
       )}
-      {isRegisterFlow && !!resendError && <Alert tone="danger">{getErrorMessage(resendError)}</Alert>}
+      {!!resendError && <Alert tone="danger">{getErrorMessage(resendError)}</Alert>}
       <OtpForm
         phone={pendingPhone}
         loading={mutation.isPending}
         error={mutation.error}
         onSubmit={handleSubmit}
-        onResend={isRegisterFlow ? handleResend : undefined}
+        onResend={isRegisterFlow || loginSecret.get(pendingPhone) ? handleResend : undefined}
         onExpiredHint={
           isRegisterFlow
             ? 'Kod eskirdi. Yangi kod yuborilishini so‘rang yoki qaytadan urinib ko‘ring.'

@@ -748,3 +748,75 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* ===== Telefon/planshet: barcha kirish sahifalari (OTP, ro‘yxatdan o‘tish) ekranda vertikal markazda ===== */
+@media (max-width: 899px) {
+  .gm-auth-layout .gm-auth-layout__main,
+  .gm-auth-layout:not(.gm-auth-layout--login) .gm-auth-layout__main {
+    justify-content: flex-start;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-top: calc(var(--gm-safe-top, 0px) + 56px);
+    padding-bottom: calc(var(--gm-space-5) + env(safe-area-inset-bottom));
+    gap: var(--gm-space-4);
+  }
+
+  /* Birinchi va oxirgi blok auto-margin bilan bo‘sh joyni teng bo‘lib, tarkibni o‘rtaga qo‘yadi;
+     tarkib ekrandan katta bo‘lsa (klaviatura, kichik ekran) odatdagidek pastga scroll bo‘ladi. */
+  .gm-auth-layout .gm-auth-hero {
+    margin-top: auto;
+    flex: none;
+  }
+
+  .gm-auth-layout .gm-auth-layout__main > :last-child {
+    margin-bottom: auto;
+  }
+
+  .gm-auth-layout:not(.gm-auth-layout--login) .gm-auth-layout__panel {
+    padding: var(--gm-space-5) var(--gm-space-4);
+    gap: var(--gm-space-4);
+    flex: none;
+  }
+
+  .gm-auth-layout:not(.gm-auth-layout--login) .gm-auth-page__subtitle {
+    display: block;
+  }
+
+  /* Tugmalar bir-biriga yopishmasin */
+  .gm-auth-layout .gm-auth-form,
+  .gm-auth-layout .gm-auth-page {
+    gap: var(--gm-space-4);
+  }
+
+  .gm-auth-layout .gm-auth-form .gm-button + .gm-button,
+  .gm-auth-layout .gm-auth-form .gm-button + a,
+  .gm-auth-layout .gm-auth-form .gm-button + button {
+    margin-top: var(--gm-space-2);
+  }
+}
+
+@media (max-width: 899px) and (max-height: 640px) {
+  .gm-auth-layout .gm-auth-layout__main,
+  .gm-auth-layout:not(.gm-auth-layout--login) .gm-auth-layout__main {
+    padding-top: calc(var(--gm-safe-top, 0px) + 48px);
+    gap: var(--gm-space-3);
+  }
+  .gm-auth-layout .gm-auth-hero__mark {
+    width: 52px;
+    height: 52px;
+  }
+  .gm-auth-layout .gm-auth-hero__tagline {
+    display: none;
+  }
+}
+
+@media (max-width: 359px) {
+  .gm-auth-layout .gm-auth-layout__main {
+    padding-left: var(--gm-space-3);
+    padding-right: var(--gm-space-3);
+  }
+  .gm-auth-layout .gm-auth-layout__panel {
+    padding: var(--gm-space-4) var(--gm-space-3);
+    border-radius: 20px;
+  }
+}
