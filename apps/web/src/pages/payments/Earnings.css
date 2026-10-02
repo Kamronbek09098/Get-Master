@@ -431,3 +431,215 @@
     display: none;
   }
 }
+
+/* =====================================================================
+   Daromad sahifasi: yozuvlar bir-biriga mos, har qanday ekranda tartibli
+   ===================================================================== */
+.gm-earn {
+  gap: 16px;
+}
+
+/* Sarlavha: o‘rtada, davr tanlash — bitta segment tugma */
+.gm-earn > .gm-page-header {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 0;
+  text-align: center;
+}
+.gm-earn > .gm-page-header > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+.gm-earn .gm-earn__ranges {
+  display: flex;
+  flex-direction: row;
+  align-self: center;
+  gap: 4px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--gm-color-surface-muted);
+}
+.gm-earn .gm-earn__ranges .gm-otab {
+  flex: 1 1 0;
+  justify-content: center;
+  min-width: 76px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Asosiy karta */
+.gm-earn .gm-earn__hero-label {
+  font-size: 14px;
+}
+.gm-earn .gm-earn__hero-sub {
+  font-size: 14px;
+}
+.gm-earn .gm-earn__delta {
+  padding: 4px 12px;
+  font-size: 13px;
+}
+.gm-earn .gm-earn__hero-side {
+  gap: 10px;
+}
+.gm-earn .gm-earn__hero-side div {
+  padding: 12px 14px;
+}
+.gm-earn .gm-earn__hero-side small {
+  margin-bottom: 2px;
+  font-size: 13px;
+}
+.gm-earn .gm-earn__hero-side strong {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 760px) {
+  .gm-earn .gm-earn__hero {
+    padding: 18px 16px;
+  }
+  .gm-earn .gm-earn__hero-side {
+    flex-direction: row;
+  }
+  .gm-earn .gm-earn__hero-side div {
+    flex: 1 1 0;
+  }
+}
+
+/* Ko‘rsatkichlar: telefonda 2×2, kompyuterda 4 ustun */
+.gm-earn .gm-earn__kpis {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (min-width: 900px) {
+  .gm-earn .gm-earn__kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.gm-earn .gm-earn__kpi {
+  gap: 3px;
+  padding: 16px;
+}
+.gm-earn .gm-earn__kpi small {
+  font-size: 13px;
+  font-weight: 600;
+}
+.gm-earn .gm-earn__kpi strong {
+  font-size: 19px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.gm-earn .gm-earn__kpi em {
+  font-size: 12.5px;
+}
+
+/* Bo‘lim sarlavhalari */
+.gm-earn .gm-earn__panel {
+  padding: 18px 20px;
+}
+.gm-earn .gm-earn__panel header {
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+.gm-earn .gm-earn__panel h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+.gm-earn .gm-earn__panel header span {
+  font-size: 13.5px;
+}
+@media (max-width: 560px) {
+  .gm-earn .gm-earn__panel {
+    padding: 16px;
+  }
+  .gm-earn .gm-earn__panel header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}
+
+/* Grafik ostidagi faktlar */
+.gm-earn .gm-earn__facts {
+  gap: 10px 24px;
+  font-size: 14px;
+}
+@media (max-width: 560px) {
+  .gm-earn .gm-earn__facts {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+.gm-earn .gm-chart__hint,
+.gm-earn .gm-chart__y,
+.gm-earn .gm-chart__x {
+  font-size: 12.5px;
+}
+
+/* To‘lov usullari */
+.gm-earn .gm-earn__methods li {
+  grid-template-columns: 96px minmax(0, 1fr) auto 48px;
+  gap: 8px 14px;
+  font-size: 14px;
+}
+.gm-earn .gm-earn__methods li > span:first-child {
+  font-weight: 600;
+}
+.gm-earn .gm-earn__methods li strong {
+  font-variant-numeric: tabular-nums;
+}
+.gm-earn .gm-earn__methods small {
+  font-size: 13px;
+}
+@media (max-width: 560px) {
+  .gm-earn .gm-earn__methods li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'name amount'
+      'bar bar';
+  }
+  .gm-earn .gm-earn__methods li > span:first-child {
+    grid-area: name;
+  }
+  .gm-earn .gm-earn__methods li > .gm-earn__track {
+    grid-area: bar;
+  }
+  .gm-earn .gm-earn__methods li > strong {
+    grid-area: amount;
+  }
+  .gm-earn .gm-earn__methods li > small {
+    display: none;
+  }
+}
+
+/* Yig‘iladigan bo‘limlar */
+.gm-earn .gm-earn__collapse > button {
+  min-height: 60px;
+  padding: 12px 18px;
+}
+.gm-earn .gm-earn__collapse > button strong {
+  font-size: 15px;
+  line-height: 1.3;
+}
+.gm-earn .gm-earn__collapse > button small {
+  font-size: 13px;
+}
+.gm-earn .gm-earn__collapse-body {
+  padding: 0 18px 18px;
+}
+.gm-earn .gm-earn__table {
+  font-size: 14px;
+}
+.gm-earn .gm-earn__table th {
+  font-size: 12px;
+}

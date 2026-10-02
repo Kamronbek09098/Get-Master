@@ -395,3 +395,27 @@ export interface AdminOrderDetail {
   conversationId: string | null;
   allowedActions: { cancel: boolean; resolve: boolean };
 }
+
+/** Admin akkaunti (superadmin ko‘radigan «Adminlar» ro‘yxati). */
+export interface AdminAccount {
+  id: string;
+  accountNumber: number;
+  phone: string;
+  firstName: string | null;
+  lastName: string | null;
+  status: ManagedStatus;
+  isSuperAdmin: boolean;
+  adminPermissions?: string[];
+  isSelf?: boolean;
+  createdAt: string;
+  lastLoginAt?: string | null;
+}
+
+export interface CreateAdminInput {
+  phone: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  isSuperAdmin?: boolean;
+  permissions?: string[];
+}

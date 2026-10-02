@@ -16,7 +16,6 @@ import { OrderTimeline } from '@/features/order/components/OrderTimeline';
 import { ScheduleCard } from '@/features/order/components/ScheduleCard';
 import { WorkProofPanel } from '@/features/order/components/WorkProofPanel';
 import { OrderPaymentCard } from '@/features/order/components/OrderPaymentCard';
-import { PaymentMethodCards } from '@/features/payment/components/PaymentMethodCards';
 import type { PaymentProvider } from '@/types/common';
 import { ReviewForm } from '@/features/review/components/ReviewForm';
 import { AdditionalWorkPanel } from '@/features/work/components/AdditionalWorkPanel';
@@ -170,25 +169,28 @@ export function OrderDetailsPage() {
         <WorkProofPanel orderId={id} stage="BEFORE" />
         <WorkProofPanel orderId={id} stage="DURING" />
       </StepCard>;
-    else if (status === 'WAITING_CONFIRMATION')
+    else if (status === 'WAITING_CONFIRMATION') {
+      // Mijoz to‘lov usulini avval tanlagan bo‘lsa (kutilayotgan to‘lov bor), o‘sha usul oldindan tanlangan turadi — qayta tanlash shart emas.
+      const existing = data.payment && data.payment.status !== 'FAILED' && data.payment.status !== 'CANCELLED' ? data.payment.provider : '';
+      const chosen: PaymentProvider | '' = method || existing;
       step = (
         <StepCard tone="next" icon={<CheckCircle2 size={22} />} title="Ishni ko‘rib chiqing" lead="Usta ishni tugatdi. Natijani tekshiring va tasdiqlang. Muammo bo‘lsa, nizo oching.">
           <WorkProofPanel orderId={id} stage="BEFORE" />
           <WorkProofPanel orderId={id} stage="AFTER" />
-          <div className="gm-opaypick">
-            <h3 className="gm-opaypick__title">To‘lov usulini tanlang <small>(majburiy)</small></h3>
-            <PaymentMethodCards value={method} onChange={setMethod} compact />
-            {!method && <p className="gm-ocard__lead">Ishni tasdiqlash uchun avval to‘lov usulini tanlang.</p>}
-          </div>
+          {!chosen && (
+            <p className="gm-ocard__lead">
+              Ishni tasdiqlash uchun avval pastdagi <a href="#tolov">«To‘lov» kartasida</a> to‘lov usulini tanlang.
+            </p>
+          )}
           <div className="gm-oactions">
-            <Button loading={confirmCompletion.isPending} disabled={!method} onClick={() => method && confirmCompletion.mutate(method)}>Ishni tasdiqlash</Button>
+            <Button loading={confirmCompletion.isPending} disabled={!chosen} onClick={() => chosen && confirmCompletion.mutate(chosen)}>Ishni tasdiqlash</Button>
           </div>
         </StepCard>
       );
-    else if (status === 'COMPLETED')
+    } else if (status === 'COMPLETED')
       step = (
         <StepCard tone="done" icon={<Star size={22} />} title="Buyurtma yakunlandi" lead="Ustani baholang. Fikringiz boshqa mijozlarga yordam beradi.">
-          <ReviewForm orderId={id} />
+          <ReviewForm orderId={id} existing={data.review} />
 
         </StepCard>
       );
@@ -224,7 +226,7 @@ export function OrderDetailsPage() {
 
           <ScheduleCard order={data} />
 
-          <OrderPaymentCard order={data} />
+          <OrderPaymentCard order={data} selectedMethod={method} onSelectMethod={setMethod} />
 
           {data.request?.description && (
             <section className="gm-ocard">

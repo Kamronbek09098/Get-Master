@@ -29,7 +29,7 @@ export function LoginForm() {
             navigate('/otp', { state: { flow: 'login' } });
             return;
           }
-          const [firstItem] = getNavItems(useAuthStore.getState().preferredRole);
+          const [firstItem] = getNavItems(useAuthStore.getState().preferredRole, { superAdmin: true });
           navigate(firstItem?.to ?? '/', { replace: true });
         },
       },

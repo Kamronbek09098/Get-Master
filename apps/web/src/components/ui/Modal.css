@@ -184,3 +184,11 @@
     min-width: 0;
   }
 }
+
+.gm-modal--large {
+  max-width: 720px;
+}
+
+.gm-modal.gm-modal--wide {
+  max-width: min(1400px, calc(100vw - 32px));
+}

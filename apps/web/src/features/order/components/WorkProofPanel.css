@@ -56,3 +56,29 @@
   width: 96px;
   height: 96px;
 }
+
+/* Rasm kartasi: o‘chirish tugmasi rasm burchagida, aniq va bosishga qulay */
+.gm-work-proof-panel__grid li {
+  position: relative;
+}
+.gm-work-proof-panel__grid .gm-media-thumb {
+  border-radius: var(--gm-card-radius-sm);
+  overflow: hidden;
+}
+.gm-work-proof-panel__grid li > .gm-button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--gm-color-danger);
+  box-shadow: 0 1px 4px rgba(11, 18, 32, 0.28);
+}
+.gm-work-proof-panel__grid li > .gm-button:hover {
+  background: var(--gm-color-danger-bg);
+}

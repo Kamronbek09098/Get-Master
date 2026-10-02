@@ -5,7 +5,8 @@ export type MasterVerificationStatus =
   | 'CORRECTION_REQUESTED'
   | 'VERIFIED'
   | 'REJECTED'
-  | 'EXPIRED';
+  | 'EXPIRED'
+  | 'INACTIVE';
 
 export interface MasterProfile {
   id: string;

@@ -1,3 +1,4 @@
+import { ADMIN_PERMISSIONS } from '../../src/common/constants/admin-permissions';
 import { createHmac, randomUUID } from 'node:crypto';
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
@@ -124,8 +125,25 @@ export async function createUser(h: Harness, roles: Role[] = ['CUSTOMER'], extra
   return { id: user.id, phone, token, roles };
 }
 
-export async function createAdmin(h: Harness): Promise<TestUser> {
-  return createUser(h, ['ADMIN'], { firstName: 'Admin' });
+/** Mavjud foydalanuvchi uchun sessiyali kirish tokeni (API orqali yaratilgan akkauntlar uchun). */
+export async function tokenFor(h: Harness, userId: string, roles: Role[]): Promise<string> {
+  const deviceId = `dev-${randomUUID()}`;
+  await h.db.deviceSession.create({ data: { userId, deviceId } });
+  return createJwt<AccessClaims>({ sub: userId, roles, status: 'ACTIVE', deviceId, type: 'access' }, TEST_ENV.JWT_SECRET, 3600);
+}
+
+/** Barcha bo‘limlarga huquqi bor oddiy admin (superadmin emas). */
+export async function createAdmin(h: Harness, permissions: readonly string[] = ADMIN_PERMISSIONS): Promise<TestUser> {
+  const user = await createUser(h, ['ADMIN'], { firstName: 'Admin' });
+  await h.db.user.update({ where: { id: user.id }, data: { adminPermissions: [...permissions] } });
+  return user;
+}
+
+/** Superadmin: boshqa adminlarni yaratish va boshqarish huquqiga ega admin. */
+export async function createSuperAdmin(h: Harness): Promise<TestUser> {
+  const user = await createUser(h, ['ADMIN'], { firstName: 'Superadmin' });
+  await h.db.user.update({ where: { id: user.id }, data: { isSuperAdmin: true } });
+  return user;
 }
 
 export async function firstService(h: Harness) {

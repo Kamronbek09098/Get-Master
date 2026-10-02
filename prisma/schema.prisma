@@ -355,6 +355,10 @@ model User {
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
   twoFactorEnabled         Boolean                   @default(true) @map("two_factor_enabled")
+  /// Superadmin: boshqa adminlarni yaratish va boshqarish huquqi (oddiy admin — yo‘q).
+  isSuperAdmin             Boolean                   @default(false) @map("is_super_admin")
+  /// Oddiy adminning huquqlari (bo‘limlar); superadmin uchun e’tiborga olinmaydi.
+  adminPermissions         String[]                  @default([]) @map("admin_permissions")
   deletedAt                DateTime?                 @map("deleted_at")
   masterProfile            MasterProfile?
   addresses                Address[]

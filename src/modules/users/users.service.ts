@@ -1,5 +1,4 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { verifySecret } from '../../common/security/hash';
 import { SetTwoFactorDto } from './dto/two-factor.dto';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
@@ -24,6 +23,8 @@ export class UsersService {
         status: true,
         phoneVerifiedAt: true,
         twoFactorEnabled: true,
+        isSuperAdmin: true,
+        adminPermissions: true,
         createdAt: true,
         userRoles: { select: { role: true } },
         masterProfile: { select: { id: true, status: true, verification: true } },
@@ -60,7 +61,6 @@ export class UsersService {
     if (!user) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
 
     if (!dto.enabled) {
-      if (user.userRoles.some((item) => item.role === Role.ADMIN)) throw new ForbiddenException(ERRORS.TWO_FACTOR_ADMIN_REQUIRED);
       if (!dto.password) throw new BadRequestException(ERRORS.TWO_FACTOR_PASSWORD_REQUIRED);
       const valid = !!user.passwordHash && (await verifySecret(dto.password, user.passwordHash));
       if (!valid) throw new UnauthorizedException(ERRORS.CURRENT_PASSWORD_INVALID);

@@ -123,7 +123,7 @@ export function AdminUserProfilePage() {
                   <Ban size={16} /> {data.registrationBlocked ? 'Ro‘yxatdan o‘tishga ruxsat berish' : 'Qayta ro‘yxatdan o‘tishni bloklash'}
                 </Button>
               )}
-              {data.roles.includes('ADMIN') && data.status !== 'DELETED' && data.id !== me.data?.id && (
+              {data.roles.includes('ADMIN') && data.status !== 'DELETED' && data.id !== me.data?.id && !!me.data?.isSuperAdmin && (
                 <Button size="sm" variant="ghost" className="gm-btn-danger-text" onClick={() => setAction('DELETE')}>
                   <Trash2 size={16} /> Adminni o‘chirish
                 </Button>

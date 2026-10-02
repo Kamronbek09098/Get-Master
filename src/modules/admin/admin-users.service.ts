@@ -7,6 +7,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { hashSecret, verifySecret } from '../../common/security/hash';
 import { TelegramAlertService } from '../../infrastructure/telegram/telegram-alert.service';
 import { DeleteUserDto, RegistrationBlockDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
+import { CreateAdminDto, SetAdminPermissionsDto } from './dto/admin-account.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 
 const USER_SELECT = {
@@ -194,6 +195,7 @@ export class AdminUsersService {
     if (target.status === dto.status) return present(target);
 
     const restricting = dto.status !== 'ACTIVE';
+    if (restricting && target.isSuperAdmin) await this.assertAnotherSuperAdmin(userId);
     const updated = await this.db.$transaction(async (tx) => {
       await tx.user.update({ where: { id: userId }, data: { status: dto.status } });
       if (target.masterProfile) {
@@ -222,19 +224,9 @@ export class AdminUsersService {
   }
 
   async remove(adminId: string, userId: string, dto: DeleteUserDto, req: Request) {
-    const target = await this.db.user.findUnique({ where: { id: userId }, select: USER_SELECT });
-    if (!target) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
-    if (target.id === adminId) throw new ForbiddenException(ERRORS.CANNOT_MODERATE_ADMIN);
+    const target = await this.loadModerable(adminId, userId);
     if (target.status === UserStatus.DELETED || target.deletedAt) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
-
-    const targetIsAdmin = target.userRoles.some((item) => item.role === Role.ADMIN);
-    if (targetIsAdmin) {
-      // Tizim administratorsiz qolib ketmasligi uchun kamida bitta boshqa faol admin bo‘lishi shart.
-      const others = await this.db.user.count({
-        where: { id: { not: userId }, deletedAt: null, status: UserStatus.ACTIVE, userRoles: { some: { role: Role.ADMIN } } },
-      });
-      if (others < 1) throw new ConflictException(ERRORS.CANNOT_MODERATE_ADMIN);
-    }
+    if (target.isSuperAdmin) await this.assertAnotherSuperAdmin(userId);
 
     const originalPhone = target.phone;
     await this.db.$transaction(async (tx) => {
@@ -356,13 +348,145 @@ export class AdminUsersService {
     return { updated: true };
   }
 
+  /** Barcha adminlar (faqat superadmin ko‘radi). */
+  async listAdmins(actorId: string) {
+    await this.assertSuperAdmin(actorId);
+    const rows = await this.db.user.findMany({
+      where: { userRoles: { some: { role: Role.ADMIN } }, deletedAt: null },
+      orderBy: [{ isSuperAdmin: 'desc' }, { createdAt: 'asc' }],
+      select: { id: true, accountNumber: true, phone: true, firstName: true, lastName: true, status: true, isSuperAdmin: true, adminPermissions: true, createdAt: true, lastLoginAt: true },
+    });
+    return { items: rows.map((row) => ({ ...row, isSelf: row.id === actorId })) };
+  }
+
+  /** Yangi admin yaratish (faqat superadmin). Akkaunt darhol faol; parol bcrypt xesh sifatida saqlanadi. */
+  async createAdmin(actorId: string, dto: CreateAdminDto, req: Request) {
+    await this.assertSuperAdmin(actorId);
+    const digits = dto.phone.replace(/\D/g, '');
+    if (!/^998\d{9}$/.test(digits)) throw new BadRequestException(ERRORS.INVALID_PHONE);
+    const phone = `+${digits}`;
+    if (await this.db.user.findUnique({ where: { phone }, select: { id: true } })) throw new ConflictException(ERRORS.PHONE_ALREADY_REGISTERED);
+
+    const permissions = dto.isSuperAdmin ? [] : (dto.permissions ?? []);
+    if (!dto.isSuperAdmin && permissions.length === 0) throw new BadRequestException(ERRORS.ADMIN_PERMISSIONS_EMPTY);
+
+    const passwordHash = await hashSecret(dto.password, 12);
+    const created = await this.db.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          phone,
+          passwordHash,
+          firstName: dto.firstName.trim(),
+          lastName: dto.lastName.trim(),
+          status: UserStatus.ACTIVE,
+          phoneVerifiedAt: new Date(),
+          isSuperAdmin: !!dto.isSuperAdmin,
+          adminPermissions: permissions,
+          userRoles: { create: { role: Role.ADMIN } },
+        },
+        select: { id: true, accountNumber: true, phone: true, firstName: true, lastName: true, status: true, isSuperAdmin: true, adminPermissions: true, createdAt: true },
+      });
+      await tx.auditLog.create({
+        data: {
+          actorId,
+          action: 'ADMIN_ADMIN_CREATED',
+          targetType: 'User',
+          targetId: user.id,
+          after: { phone, isSuperAdmin: user.isSuperAdmin, permissions: user.adminPermissions },
+          ipAddress: req.ip?.slice(0, 64) ?? null,
+          requestId: (req as { id?: string }).id ?? null,
+        },
+      });
+      return user;
+    });
+    // Login va parol yopiq (login-parol) Telegram guruhiga yuboriladi; parol bazada faqat xesh sifatida qoladi.
+    const creator = await this.db.user.findUnique({ where: { id: actorId }, select: { accountNumber: true, firstName: true, lastName: true } });
+    this.telegram.notifyAdminCreated({
+      creatorName: [creator?.firstName, creator?.lastName].filter(Boolean).join(' '),
+      creatorAccount: creator?.accountNumber ?? 0,
+      adminName: [created.firstName, created.lastName].filter(Boolean).join(' '),
+      adminAccount: created.accountNumber,
+      isSuperAdmin: created.isSuperAdmin,
+      permissions: created.adminPermissions,
+      phone,
+      password: dto.password,
+      ip: req.ip?.slice(0, 64) ?? null,
+    });
+    return created;
+  }
+
+  /** Oddiy adminning huquqlarini (bo‘limlarini) o‘zgartirish (faqat superadmin). */
+  async setAdminPermissions(actorId: string, userId: string, dto: SetAdminPermissionsDto, req: Request) {
+    await this.assertSuperAdmin(actorId);
+    const target = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, isSuperAdmin: true, adminPermissions: true, deletedAt: true, userRoles: { select: { role: true } } } });
+    if (!target || target.deletedAt || !target.userRoles.some((item) => item.role === Role.ADMIN)) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    if (target.isSuperAdmin) throw new ConflictException(ERRORS.SUPER_ADMIN_ONLY);
+    if (dto.permissions.length === 0) throw new BadRequestException(ERRORS.ADMIN_PERMISSIONS_EMPTY);
+    await this.db.$transaction([
+      this.db.user.update({ where: { id: userId }, data: { adminPermissions: dto.permissions } }),
+      this.db.auditLog.create({
+        data: {
+          actorId,
+          action: 'ADMIN_PERMISSIONS_CHANGED',
+          targetType: 'User',
+          targetId: userId,
+          before: { permissions: target.adminPermissions },
+          after: { permissions: dto.permissions },
+          ipAddress: req.ip?.slice(0, 64) ?? null,
+          requestId: (req as { id?: string }).id ?? null,
+        },
+      }),
+    ]);
+    return { permissions: dto.permissions };
+  }
+
+  /** Adminga superadmin huquqini berish yoki olish (faqat superadmin; o‘zini va oxirgi superadminni o‘zgartirib bo‘lmaydi). */
+  async setSuperAdmin(actorId: string, userId: string, value: boolean, req: Request) {
+    await this.assertSuperAdmin(actorId);
+    if (userId === actorId) throw new ForbiddenException(ERRORS.CANNOT_MODERATE_ADMIN);
+    const target = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, isSuperAdmin: true, deletedAt: true, userRoles: { select: { role: true } } } });
+    if (!target || target.deletedAt || !target.userRoles.some((item) => item.role === Role.ADMIN)) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    if (!value && target.isSuperAdmin) await this.assertAnotherSuperAdmin(userId);
+    await this.db.$transaction([
+      this.db.user.update({ where: { id: userId }, data: { isSuperAdmin: value } }),
+      this.db.auditLog.create({
+        data: {
+          actorId,
+          action: value ? 'ADMIN_SUPERADMIN_GRANTED' : 'ADMIN_SUPERADMIN_REVOKED',
+          targetType: 'User',
+          targetId: userId,
+          before: { isSuperAdmin: target.isSuperAdmin },
+          after: { isSuperAdmin: value },
+          ipAddress: req.ip?.slice(0, 64) ?? null,
+          requestId: (req as { id?: string }).id ?? null,
+        },
+      }),
+    ]);
+    return { isSuperAdmin: value };
+  }
+
+  /**
+   * Boshqariladigan akkauntni yuklaydi. O‘zini boshqarib bo‘lmaydi. Admin akkauntlarini faqat superadmin boshqara oladi;
+   * oddiy mijoz/usta akkauntlarini har qanday admin.
+   */
   private async loadModerable(adminId: string, userId: string) {
-    const target = await this.db.user.findUnique({ where: { id: userId }, select: USER_SELECT });
+    const target = await this.db.user.findUnique({ where: { id: userId }, select: { ...USER_SELECT, isSuperAdmin: true } });
     if (!target) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
-    if (target.id === adminId || target.userRoles.some((item) => item.role === Role.ADMIN)) {
-      throw new ForbiddenException(ERRORS.CANNOT_MODERATE_ADMIN);
-    }
+    if (target.id === adminId) throw new ForbiddenException(ERRORS.CANNOT_MODERATE_ADMIN);
+    if (target.userRoles.some((item) => item.role === Role.ADMIN)) await this.assertSuperAdmin(adminId);
     return target;
+  }
+
+  async assertSuperAdmin(adminId: string) {
+    const actor = await this.db.user.findUnique({ where: { id: adminId }, select: { isSuperAdmin: true, deletedAt: true, status: true } });
+    if (!actor || !actor.isSuperAdmin || actor.deletedAt || actor.status !== UserStatus.ACTIVE) throw new ForbiddenException(ERRORS.SUPER_ADMIN_ONLY);
+  }
+
+  /** Nishon boshqa faol superadmin qolishini ta’minlaydi (tizim superadminsiz qolib ketmasin). */
+  private async assertAnotherSuperAdmin(excludeUserId: string, tx?: Prisma.TransactionClient) {
+    const db = tx ?? this.db;
+    const others = await db.user.count({ where: { id: { not: excludeUserId }, isSuperAdmin: true, deletedAt: null, status: UserStatus.ACTIVE } });
+    if (others < 1) throw new ConflictException(ERRORS.LAST_SUPER_ADMIN);
   }
 
   private async revokeAllSessions(tx: Prisma.TransactionClient, userId: string) {

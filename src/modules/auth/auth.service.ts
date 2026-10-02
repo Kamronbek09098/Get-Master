@@ -364,8 +364,8 @@ export class AuthService {
       throw new ForbiddenException(ERRORS.ACCOUNT_VERIFICATION_REQUIRED);
     }
 
-    // Ikki bosqichli autentifikatsiya o‘chirilgan bo‘lsa (administrator bundan mustasno): faqat login va parol — OTP so‘ralmaydi.
-    if (res && !user.twoFactorEnabled && !user.userRoles.some((item) => item.role === Role.ADMIN)) {
+    // Ikki bosqichli autentifikatsiya o‘chirilgan bo‘lsa (administrator uchun ham): faqat login va parol — OTP so‘ralmaydi.
+    if (res && !user.twoFactorEnabled) {
       const session = await this.createSession(
         user.id,
         user.userRoles.map((item) => item.role),

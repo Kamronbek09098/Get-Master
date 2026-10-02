@@ -1,11 +1,13 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { RequiresPermission } from '../../common/decorators/permission.decorator';
 import { AuditQueryDto } from './dto/audit-query.dto';
 import { AuditService } from './audit.service';
 
 @Controller('audit-logs')
 @Roles(Role.ADMIN)
+@RequiresPermission('AUDIT')
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 

@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import type { CaseStatus } from '@/features/dispute/types';
 import { adminService } from '../services/admin.service';
 import type { DateRange } from '../services/admin.service';
-import type { AdminOrderFilters, AuditFilters, DevOpsWindow, UserFilters, VerificationDecision } from '../types';
+import type { AdminOrderFilters, AuditFilters, CreateAdminInput, DevOpsWindow, UserFilters, VerificationDecision } from '../types';
 
 export function useDashboard(range: DateRange) {
   return useQuery({ queryKey: ['admin', 'dashboard', range], queryFn: () => adminService.dashboard(range) });
@@ -217,4 +217,34 @@ export function useAuditSummary(filters: AuditFilters) {
 
 export function useAdminUserByNumber(accountNumber: number | null) {
   return useQuery({ queryKey: ['admin', 'user-number', accountNumber], queryFn: () => adminService.userByNumber(accountNumber as number), enabled: accountNumber !== null, retry: false });
+}
+
+/** Adminlar ro‘yxati (faqat superadmin). Kalit ['admin','users',…] ostida: foydalanuvchi amallari (muzlatish/o‘chirish/parol) ro‘yxatni avtomatik yangilaydi. */
+export function useAdminAccounts(enabled = true) {
+  return useQuery({ queryKey: ['admin', 'users', 'admins'], queryFn: () => adminService.admins(), enabled });
+}
+
+export function useCreateAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateAdminInput) => adminService.createAdmin(input),
+    gcTime: 0,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  });
+}
+
+export function useSetSuperAdmin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, value }: { id: string; value: boolean }) => adminService.setSuperAdmin(id, value),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  });
+}
+
+export function useSetAdminPermissions() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, permissions }: { id: string; permissions: string[] }) => adminService.setAdminPermissions(id, permissions),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  });
 }

@@ -5,7 +5,7 @@ import type { AlertTone } from '@/components/ui/Alert';
 import { useMyMasterProfile } from '@/features/master/hooks/useMaster';
 import type { MasterVerificationStatus } from '@/features/master/types';
 
-type Unverified = Exclude<MasterVerificationStatus, 'VERIFIED'>;
+type Unverified = Exclude<MasterVerificationStatus, 'VERIFIED' | 'INACTIVE'>;
 
 const NOTICE: Record<Unverified, { tone: AlertTone; title: string; text: string; action: string | null }> = {
   PENDING: {
@@ -47,7 +47,7 @@ export function VerificationBanner() {
   const profile = useMyMasterProfile();
   const { pathname } = useLocation();
   const verification = profile.data?.verification;
-  if (!verification || verification === 'VERIFIED') return null;
+  if (!verification || verification === 'VERIFIED' || verification === 'INACTIVE') return null;
 
   const notice = NOTICE[verification];
   return (

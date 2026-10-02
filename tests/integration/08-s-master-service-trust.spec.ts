@@ -288,15 +288,16 @@ describe('S05 — trust / verification', () => {
     expect(await h.db.notification.count({ where: { userId: user.id, template: 'trust.review' } })).toBe(1);
 
     const doc2 = await uploadImage(h, user.token, 'MASTER_VERIFICATION_DOCUMENT', 'MasterProfile', profile.id, 82);
-    expect((await h.post('/trust/verifications', user.token, { documentType: 'IDENTITY', mediaAssetId: doc2 })).status).toBe(409);
+    // Tuzatish so‘ralgan hujjat o‘rniga yangisini yuborish mumkin: eskisi nofaol (INACTIVE) bo‘ladi.
+    const second = await h.post('/trust/verifications', user.token, { documentType: 'IDENTITY', mediaAssetId: doc2 });
+    expect(second.status).toBe(201);
+    expect((await h.db.masterVerification.findUniqueOrThrow({ where: { id: submitted.data.id } })).status).toBe('INACTIVE');
+    expect((await h.get('/trust/status', user.token)).data.verification).toBe('UNDER_REVIEW');
     expect((await h.del(`/trust/verifications/${submitted.data.id}`, rival.token)).status).toBe(404);
     const removed = await h.del(`/trust/verifications/${submitted.data.id}`, user.token);
     expect(removed.status).toBe(200);
-    expect(removed.data).toMatchObject({ deleted: true, verification: 'PENDING' });
+    expect(removed.data).toMatchObject({ deleted: true, verification: 'UNDER_REVIEW' });
     expect(await h.db.mediaAsset.count({ where: { id: doc } })).toBe(0);
-    expect((await h.get('/trust/status', user.token)).data.verification).toBe('PENDING');
-    const second = await h.post('/trust/verifications', user.token, { documentType: 'IDENTITY', mediaAssetId: doc2 });
-    expect((await h.get('/trust/status', user.token)).data.verification).toBe('UNDER_REVIEW');
     const race = await Promise.all(Array.from({ length: 4 }, () => h.post(`${queue}/${second.data.id}/review`, admin.token, { decision: 'APPROVE' })));
     expect(race.filter((r) => r.status === 201)).toHaveLength(1);
     expect(race.filter((r) => r.status === 409)).toHaveLength(3);

@@ -14,6 +14,10 @@ export function useCreateReview() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateReviewInput) => reviewService.create(input),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['reviews'] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['reviews'] });
+      // Buyurtma sahifasi sharh qoldirilganini ko‘rsatishi uchun.
+      void queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
   });
 }

@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from 
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { RequiresPermission } from '../../common/decorators/permission.decorator';
 import { ComplaintQueryDto } from './dto/complaint-query.dto';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { UpdateComplaintStatusDto } from './dto/update-complaint-status.dto';
@@ -24,6 +25,7 @@ export class ComplaintController {
 
   @Get('admin/all')
   @Roles(Role.ADMIN)
+  @RequiresPermission('CASES')
   findAllForAdmin(@Query() query: ComplaintQueryDto) {
     return this.complaintService.findAllForAdmin(query);
   }
@@ -35,6 +37,7 @@ export class ComplaintController {
 
   @Patch(':id/status')
   @Roles(Role.ADMIN)
+  @RequiresPermission('CASES')
   updateStatus(
     @CurrentUser('sub') adminId: string,
     @Param('id', ParseUUIDPipe) id: string,

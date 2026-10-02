@@ -194,3 +194,106 @@ html {
     justify-content: center;
   }
 }
+
+/* Faqat ikonkali tugma (masalan, o‘chirish): hech qachon mayda bo‘lib qolmasin — barmoq bilan bosishga qulay */
+.gm-button:has(> svg:only-child) {
+  min-width: 36px;
+  min-height: 36px;
+  padding-inline: 8px;
+}
+@media (pointer: coarse) {
+  .gm-button:has(> svg:only-child) {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Qoldirilgan sharh: tinch holat, qayta yuborish tugmasi o‘chiq */
+.gm-review-done {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gm-review-done__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--gm-color-success);
+  font-weight: 700;
+}
+.gm-review-done__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--gm-card-radius-sm);
+  background: var(--gm-color-surface-muted);
+}
+.gm-review-done__body p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.gm-review-done__body small {
+  color: var(--gm-color-text-muted);
+}
+.gm-review-done .gm-button:disabled {
+  align-self: flex-start;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ===== Belgi (checkbox): butun ilovada kvadrat emas — yumaloq, aniq va bir xil =====
+   Faqat oddiy belgilash qutilari; «switch» (yoqish/o‘chirish) tugmasi bundan mustasno. */
+input[type='checkbox']:not([role='switch']) {
+  --gm-check: var(--gm-color-primary);
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-grid;
+  flex: none;
+  place-content: center;
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  border: 2px solid var(--gm-color-border-strong);
+  border-radius: 50%;
+  background: var(--gm-color-surface);
+  vertical-align: middle;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+input[type='checkbox']:not([role='switch'])::after {
+  content: '';
+  width: 6px;
+  height: 11px;
+  margin-top: -2px;
+  border: solid #fff;
+  border-width: 0 2.5px 2.5px 0;
+  border-radius: 1px;
+  opacity: 0;
+  transform: rotate(45deg) scale(0.6);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+input[type='checkbox']:not([role='switch']):hover {
+  border-color: var(--gm-check);
+}
+input[type='checkbox']:not([role='switch']):checked {
+  border-color: var(--gm-check);
+  background: var(--gm-check);
+}
+input[type='checkbox']:not([role='switch']):checked::after {
+  opacity: 1;
+  transform: rotate(45deg) scale(1);
+}
+input[type='checkbox']:not([role='switch']):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gm-check) 28%, transparent);
+}
+input[type='checkbox']:not([role='switch']):disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* Xavfli amal (masalan, «hamma uchun o‘chirish») belgisi qizil */
+.gm-delete-both input[type='checkbox']:not([role='switch']) {
+  --gm-check: var(--gm-color-danger);
+}

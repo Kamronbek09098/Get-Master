@@ -41,6 +41,8 @@ export interface OrderDetailsData extends Order {
   conversationId: string | null;
   counterpart: OrderParty;
   payment: { id: string; provider: PaymentProvider; status: PaymentStatus; amount: string; currency: string } | null;
+  /** Mijoz qoldirgan sharh (bo‘lmasa null). */
+  review: { rating: number; comment: string | null; createdAt: string } | null;
 }
 
 export interface OrderListItem extends Order {

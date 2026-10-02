@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { badgeText, useNavBadges } from '@/features/admin/hooks/useNavBadges';
 import { useAuthStore } from '@/store/auth.store';
+import { useMe } from '@/features/session/hooks/useMe';
 import { getNavItems } from './nav-items';
 import type { NavItem } from './nav-items';
 import './Sidebar.css';
@@ -13,7 +14,8 @@ function groupItems(items: NavItem[]): Array<[string, NavItem[]]> {
 
 export function Sidebar() {
   const preferredRole = useAuthStore((state) => state.preferredRole);
-  const groups = groupItems(getNavItems(preferredRole));
+  const me = useMe();
+  const groups = groupItems(getNavItems(preferredRole, { superAdmin: !!me.data?.isSuperAdmin, permissions: me.data?.adminPermissions }));
   const { pathname } = useLocation();
   const badges = useNavBadges(preferredRole, pathname);
 

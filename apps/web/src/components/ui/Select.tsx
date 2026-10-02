@@ -37,6 +37,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           aria-describedby={describedBy}
           className={cx('gm-field__control', error && 'gm-field__control--error', className)}
           defaultValue=""
+          autoComplete="off"
           {...rest}
         >
           {placeholder && (

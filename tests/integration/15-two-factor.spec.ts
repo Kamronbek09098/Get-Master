@@ -61,10 +61,12 @@ describe('two-factor authentication toggle', () => {
     expect(res.status).toBe(401);
   });
 
-  it('administrators cannot turn it off', async () => {
+  it('administrators can turn it off too (password required)', async () => {
     const admin = await userWithPassword(['ADMIN']);
-    expect((await setTwoFactor(admin.token, { enabled: false, password: PASSWORD })).status).toBe(403);
     expect((await login(admin.phone, '10.15.0.5')).data.verificationRequired).toBe(true);
+    expect((await setTwoFactor(admin.token, { enabled: false, password: 'Wrong-Pass-123' })).status).toBe(401);
+    expect((await setTwoFactor(admin.token, { enabled: false, password: PASSWORD })).status).toBe(200);
+    expect((await login(admin.phone, '10.15.0.6')).data.verificationRequired).toBe(false);
   });
 
   it('requires authentication', async () => {

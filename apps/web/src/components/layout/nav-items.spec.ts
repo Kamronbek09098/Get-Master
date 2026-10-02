@@ -3,7 +3,7 @@ import { getNavItems } from './nav-items';
 
 describe('getNavItems', () => {
   it('gives admins only admin sections plus shared ones', () => {
-    const paths = getNavItems('ADMIN').map((item) => item.to);
+    const paths = getNavItems('ADMIN', { superAdmin: true }).map((item) => item.to);
     expect(paths[0]).toBe('/admin');
     expect(paths).toContain('/admin/tasdiqlash');
     expect(paths).not.toContain('/mijozlar/sorovlar');
@@ -41,5 +41,20 @@ describe('getNavItems', () => {
       }
       expect(items.filter((item) => item.primary).length).toBeLessThanOrEqual(4);
     }
+  });
+});
+
+describe('getNavItems — admin permissions', () => {
+  it('shows a plain admin only the sections they were granted', () => {
+    const paths = getNavItems('ADMIN', { permissions: ['ORDERS'] }).map((item) => item.to);
+    expect(paths).toContain('/admin/buyurtmalar');
+    expect(paths).not.toContain('/admin/foydalanuvchilar');
+    expect(paths).not.toContain('/admin/audit');
+    expect(paths).not.toContain('/admin/adminlar');
+  });
+
+  it('a superadmin sees everything including the admins section', () => {
+    const paths = getNavItems('ADMIN', { superAdmin: true }).map((item) => item.to);
+    expect(paths).toEqual(expect.arrayContaining(['/admin/adminlar', '/admin/audit', '/admin/foydalanuvchilar']));
   });
 });

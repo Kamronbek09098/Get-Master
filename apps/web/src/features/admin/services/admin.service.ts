@@ -8,8 +8,10 @@ import type {
   AdminOrderFilters,
   AdminOrderRow,
   AdminOrdersSummary,
+  AdminAccount,
   AdminUserDetail,
   AdminUser,
+  CreateAdminInput,
   AdminChatMessage,
   AdminConversation,
   AdminPortfolioItem,
@@ -59,6 +61,19 @@ export const adminService = {
   },
   setRegistrationBlock(id: string, blocked: boolean, reason?: string) {
     return apiPost<{ registrationBlocked: boolean }>(`/admin/users/${id}/${blocked ? 'registration-block' : 'registration-unblock'}`, { reason });
+  },
+
+  admins() {
+    return apiGet<{ items: AdminAccount[] }>('/admin/admins');
+  },
+  createAdmin(input: CreateAdminInput) {
+    return apiPost<AdminAccount>('/admin/admins', input);
+  },
+  setAdminPermissions(id: string, permissions: string[]) {
+    return apiPatch<{ permissions: string[] }>(`/admin/admins/${id}/permissions`, { permissions });
+  },
+  setSuperAdmin(id: string, value: boolean) {
+    return apiPatch<{ isSuperAdmin: boolean }>(`/admin/admins/${id}/super`, { value });
   },
 
   deleteUser(id: string, reason: string) {

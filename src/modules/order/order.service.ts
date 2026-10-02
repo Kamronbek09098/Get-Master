@@ -86,6 +86,7 @@ export class OrderService {
           },
         },
         conversation: { select: { id: true } },
+        review: { select: { rating: true, comment: true, createdAt: true } },
         payments: { orderBy: { createdAt: 'desc' }, take: 1, select: { id: true, provider: true, status: true, amount: true, currency: true } },
       },
     });
@@ -94,12 +95,14 @@ export class OrderService {
     const isMaster = order.master.user.id === userId;
     const viewerRole = this.viewerRole(isCustomer, isMaster, panel);
     if (!viewerRole) throw new ForbiddenException(ERRORS.NOT_ORDER_PARTICIPANT);
-    const { booking, customer, master, conversation, payments, ...rest } = order;
+    const { booking, customer, master, conversation, payments, review, ...rest } = order;
     const orderNumber = await this.ordinalFor(order, viewerRole);
     return {
       ...rest,
       orderNumber,
       payment: payments[0] ?? null,
+      // Mijoz allaqachon sharh qoldirgan bo‘lsa — shu yerda ko‘rinadi (qayta qoldirib bo‘lmaydi).
+      review: review ?? null,
       viewerRole,
       service: booking.service,
       request: booking.request,

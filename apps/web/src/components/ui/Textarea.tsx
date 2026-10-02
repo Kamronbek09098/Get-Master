@@ -29,6 +29,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           aria-invalid={!!error}
           aria-describedby={describedBy}
           className={cx('gm-field__control', error && 'gm-field__control--error', className)}
+          autoComplete="off"
           {...rest}
         />
         {hint && !error && (

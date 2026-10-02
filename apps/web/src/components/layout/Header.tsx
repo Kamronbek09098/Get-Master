@@ -22,8 +22,8 @@ export function Header() {
   const unread = useUnreadCount();
 
   const name = [me.data?.firstName, me.data?.lastName].filter(Boolean).join(' ') || me.data?.phone || '';
-  const home = getNavItems(preferredRole)[0]?.to ?? '/';
-  const roleText = currentPanelLabel ?? (preferredRole ? ROLE_LABEL[preferredRole] : null);
+  const home = getNavItems(preferredRole, { superAdmin: true })[0]?.to ?? '/';
+  const roleText = preferredRole === 'ADMIN' && me.data?.isSuperAdmin ? 'Superadmin paneli' : (currentPanelLabel ?? (preferredRole ? ROLE_LABEL[preferredRole] : null));
   const count = unread.data?.count ?? 0;
 
   return (

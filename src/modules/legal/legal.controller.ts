@@ -3,6 +3,7 @@ import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { RequiresPermission } from '../../common/decorators/permission.decorator';
 import { CreatePolicyDto } from './dto/create-policy.dto';
 import { PolicyQueryDto } from './dto/policy-query.dto';
 import { UpdatePolicyDto } from './dto/update-policy.dto';
@@ -20,6 +21,7 @@ export class LegalController {
 
   @Get('admin/policies')
   @Roles(Role.ADMIN)
+  @RequiresPermission('POLICIES')
   findAllForAdmin(@Query() query: PolicyQueryDto) {
     return this.legalService.findAllForAdmin(query);
   }
@@ -37,12 +39,14 @@ export class LegalController {
 
   @Post('policies')
   @Roles(Role.ADMIN)
+  @RequiresPermission('POLICIES')
   create(@CurrentUser('sub') adminId: string, @Body() dto: CreatePolicyDto) {
     return this.legalService.create(adminId, dto);
   }
 
   @Patch('policies/:id')
   @Roles(Role.ADMIN)
+  @RequiresPermission('POLICIES')
   update(
     @CurrentUser('sub') adminId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -53,6 +57,7 @@ export class LegalController {
 
   @Post('policies/:id/publish')
   @Roles(Role.ADMIN)
+  @RequiresPermission('POLICIES')
   publish(@CurrentUser('sub') adminId: string, @Param('id', ParseUUIDPipe) id: string) {
     return this.legalService.publish(adminId, id);
   }

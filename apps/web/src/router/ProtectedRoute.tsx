@@ -18,7 +18,7 @@ export function RedirectIfAuthed({ children }: { children: ReactNode }) {
   const preferredRole = useAuthStore((s) => s.preferredRole);
 
   if (hasSession) {
-    const [firstItem] = getNavItems(preferredRole);
+    const [firstItem] = getNavItems(preferredRole, { superAdmin: true });
     return <Navigate to={firstItem?.to ?? '/'} replace />;
   }
   return children;

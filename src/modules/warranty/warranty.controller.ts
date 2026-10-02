@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestj
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { RequiresPermission } from '../../common/decorators/permission.decorator';
 import { CreateWarrantyClaimDto } from './dto/create-warranty-claim.dto';
 import { CreateWarrantyDto } from './dto/create-warranty.dto';
 import { UpdateWarrantyClaimDto } from './dto/update-warranty-claim.dto';
@@ -44,6 +45,7 @@ export class WarrantyController {
 
   @Patch('warranty-claims/:id')
   @Roles(Role.ADMIN)
+  @RequiresPermission('CASES')
   updateClaim(
     @CurrentUser('sub') adminId: string,
     @Param('id', ParseUUIDPipe) id: string,

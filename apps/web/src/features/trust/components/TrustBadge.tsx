@@ -9,6 +9,7 @@ const LABEL: Record<MasterVerificationStatus, string> = {
   VERIFIED: 'Tasdiqlangan',
   REJECTED: 'Rad etilgan',
   EXPIRED: 'Muddati tugagan',
+  INACTIVE: 'Nofaol',
 };
 
 const TONE: Record<MasterVerificationStatus, BadgeTone> = {
@@ -18,6 +19,7 @@ const TONE: Record<MasterVerificationStatus, BadgeTone> = {
   VERIFIED: 'success',
   REJECTED: 'danger',
   EXPIRED: 'danger',
+  INACTIVE: 'neutral',
 };
 
 export function TrustBadge({ verification }: { verification: MasterVerificationStatus }) {

@@ -72,7 +72,7 @@ export function ScheduleCard({ order }: { order: OrderDetailsData }) {
       <h2 className="gm-ocard__title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <CalendarClock size={20} /> Belgilangan vaqt
       </h2>
-      <p className="gm-ocard__lead">{order.scheduledStartAt ? formatDateTime(order.scheduledStartAt) : 'Vaqt belgilanmagan'}</p>
+      <p className="gm-ocard__value">{order.scheduledStartAt ? formatDateTime(order.scheduledStartAt) : 'Vaqt belgilanmagan'}</p>
       {error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
 
       {order.reschedule ? (

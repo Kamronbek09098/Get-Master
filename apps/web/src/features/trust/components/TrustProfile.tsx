@@ -37,8 +37,14 @@ export function TrustProfile({ masterId }: { masterId: string }) {
   if (!trust.data) return null;
 
   const documents = trust.data.documents;
-  const uploaded = new Set(documents.map((document) => document.documentType));
-  const lockedTypes = SINGLE_TYPES.filter((type) => uploaded.has(type));
+  // Tekshiruvda turgan yoki tasdiqlangan hujjat turi qulflanadi (avval o‘chirish kerak).
+  // Rad etilgan / tuzatish so‘ralgan / muddati tugagan hujjat turini qayta yuborish mumkin: eskisi nofaol bo‘ladi.
+  const BLOCKING = ['PENDING', 'UNDER_REVIEW', 'VERIFIED'];
+  const lockedTypes = SINGLE_TYPES.filter((type) => documents.some((document) => document.documentType === type && BLOCKING.includes(String(document.status))));
+  const REPLACEABLE = ['CORRECTION_REQUESTED', 'REJECTED', 'EXPIRED'];
+  const replaceableTypes = [...new Set(documents.filter((document) => REPLACEABLE.includes(String(document.status))).map((document) => document.documentType))].filter(
+    (type) => !lockedTypes.includes(type as VerificationDocumentType),
+  );
   const options = DOCUMENT_OPTIONS.filter((option) => !lockedTypes.includes(option.value as VerificationDocumentType));
   const selectedType = options.some((option) => option.value === documentType) ? documentType : (options[0]?.value as VerificationDocumentType);
 
@@ -73,7 +79,7 @@ export function TrustProfile({ masterId }: { masterId: string }) {
           const status = String(document.status);
           const Icon = status === 'VERIFIED' || status === 'APPROVED' ? FileCheck2 : status === 'REJECTED' ? FileX2 : FileText;
           return (
-            <div key={document.id} className="gm-doc-card">
+            <div key={document.id} className={status === 'INACTIVE' ? 'gm-doc-card gm-doc-card--inactive' : 'gm-doc-card'}>
               <span className={`gm-doc-card__icon gm-doc-card__icon--${status.toLowerCase()}`} aria-hidden="true">
                 <Icon size={20} />
               </span>
@@ -83,11 +89,13 @@ export function TrustProfile({ masterId }: { masterId: string }) {
                   <TrustBadge verification={document.status} />
                   <span>Yuborildi: {formatDate(document.createdAt)}</span>
                 </div>
-                {document.rejectionReason && <p className="gm-doc-card__reason">Sabab: {document.rejectionReason}</p>}
+                {document.rejectionReason && status !== 'INACTIVE' && <p className="gm-doc-card__reason">Sabab: {document.rejectionReason}</p>}
               </div>
-              <Button size="sm" variant="secondary" className="gm-btn-tone gm-btn-tone--danger gm-doc-card__delete" onClick={() => setToDelete(document)}>
-                <Trash2 size={15} /> O‘chirish
-              </Button>
+              {status !== 'INACTIVE' && (
+                <Button size="sm" variant="secondary" className="gm-btn-tone gm-btn-tone--danger gm-doc-card__delete" onClick={() => setToDelete(document)}>
+                  <Trash2 size={15} /> O‘chirish
+                </Button>
+              )}
             </div>
           );
         })}
@@ -100,6 +108,12 @@ export function TrustProfile({ masterId }: { masterId: string }) {
         <Alert tone="info">
           {lockedTypes.map((type) => DOCUMENT_OPTIONS.find((option) => option.value === type)?.label).join(' va ')} yuklangan. Almashtirish uchun avval yuqoridan
           o‘chiring, keyin yangisini yuklang.
+        </Alert>
+      )}
+      {replaceableTypes.length > 0 && (
+        <Alert tone="warning">
+          {replaceableTypes.map((type) => DOCUMENT_OPTIONS.find((option) => option.value === type)?.label).join(' va ')} qayta yuborilishi kerak. Shu hujjat turini tanlab yangisini yuklang —
+          oldingisi nofaol holatga o‘tadi.
         </Alert>
       )}
       {submit.isError && <Alert tone="danger">{getErrorMessage(submit.error)}</Alert>}

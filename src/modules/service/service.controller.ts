@@ -3,6 +3,7 @@ import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { RequiresPermission } from '../../common/decorators/permission.decorator';
 import { ServiceService } from './service.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -34,12 +35,14 @@ export class ServiceController {
 
   @Post('service-categories')
   @Roles(Role.ADMIN)
+  @RequiresPermission('CATALOG')
   createCategory(@CurrentUser('sub') actorId: string, @Body() dto: CreateCategoryDto) {
     return this.serviceService.createCategory(actorId, dto);
   }
 
   @Patch('service-categories/:id')
   @Roles(Role.ADMIN)
+  @RequiresPermission('CATALOG')
   updateCategory(
     @CurrentUser('sub') actorId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -50,18 +53,21 @@ export class ServiceController {
 
   @Delete('service-categories/:id')
   @Roles(Role.ADMIN)
+  @RequiresPermission('CATALOG')
   removeCategory(@CurrentUser('sub') actorId: string, @Param('id', ParseUUIDPipe) id: string) {
     return this.serviceService.removeCategory(actorId, id);
   }
 
   @Post('services')
   @Roles(Role.ADMIN)
+  @RequiresPermission('CATALOG')
   create(@CurrentUser('sub') actorId: string, @Body() dto: CreateServiceDto) {
     return this.serviceService.create(actorId, dto);
   }
 
   @Patch('services/:id')
   @Roles(Role.ADMIN)
+  @RequiresPermission('CATALOG')
   update(
     @CurrentUser('sub') actorId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -72,6 +78,7 @@ export class ServiceController {
 
   @Delete('services/:id')
   @Roles(Role.ADMIN)
+  @RequiresPermission('CATALOG')
   remove(@CurrentUser('sub') actorId: string, @Param('id', ParseUUIDPipe) id: string) {
     return this.serviceService.remove(actorId, id);
   }

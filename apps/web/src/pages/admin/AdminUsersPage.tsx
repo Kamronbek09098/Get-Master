@@ -31,7 +31,6 @@ const ROLE_TABS: Array<{ value: UserFilters['role'] | ''; label: string }> = [
   { value: '', label: 'Hammasi' },
   { value: 'CUSTOMER', label: 'Mijozlar' },
   { value: 'MASTER', label: 'Ustalar' },
-  { value: 'ADMIN', label: 'Adminlar' },
 ];
 
 const STATUS_OPTIONS = [
@@ -127,7 +126,7 @@ function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminU
   );
 }
 
-const VALID_ROLES = new Set(['CUSTOMER', 'MASTER', 'ADMIN']);
+const VALID_ROLES = new Set(['CUSTOMER', 'MASTER']);
 
 export function AdminUsersPage() {
   const [searchParams] = useSearchParams();
@@ -152,7 +151,7 @@ export function AdminUsersPage() {
       <div className="gm-page-header">
         <div>
           <h1>Foydalanuvchilar</h1>
-          <p className="gm-page-lead">Mijozlar va ustalarni boshqaring, adminlarni ko‘ring.</p>
+          <p className="gm-page-lead">Mijozlar va ustalarni boshqaring.</p>
         </div>
       </div>
 

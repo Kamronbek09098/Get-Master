@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutGrid, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
+import { useMe } from '@/features/session/hooks/useMe';
 import { badgeText, useNavBadges } from '@/features/admin/hooks/useNavBadges';
 import { getNavItems } from './nav-items';
 import './MobileNavigation.css';
 
 export function MobileNavigation() {
   const preferredRole = useAuthStore((state) => state.preferredRole);
-  const items = getNavItems(preferredRole);
+  const me = useMe();
+  const items = getNavItems(preferredRole, { superAdmin: !!me.data?.isSuperAdmin, permissions: me.data?.adminPermissions });
   const primary = items.filter((item) => item.primary).slice(0, 4);
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();

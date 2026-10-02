@@ -50,7 +50,7 @@ export function RoleGuard({ roles, children }: { roles: Role[]; children: ReactN
     return <Navigate to="/ustalar/profil" replace />;
   }
   if (!roles.includes(role)) {
-    const [first] = getNavItems(role);
+    const [first] = getNavItems(role, { superAdmin: true }); // bosh sahifa; bo‘lim huquqlarini «/admin» o‘zi tekshiradi
     return <Navigate to={first?.to ?? '/'} replace />;
   }
   return children;

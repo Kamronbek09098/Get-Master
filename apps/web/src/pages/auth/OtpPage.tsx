@@ -94,7 +94,7 @@ export function OtpPage() {
       { phone: pendingPhone as string, code: values.code },
       {
         onSuccess: () => {
-          const [firstItem] = getNavItems(preferredRole);
+          const [firstItem] = getNavItems(preferredRole, { superAdmin: true });
           navigate(firstItem?.to ?? '/', { replace: true });
         },
       },

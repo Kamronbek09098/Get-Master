@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcryptjs';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { bootHarness, createAdmin, createMaster, createUser, firstService, type Harness, type TestMaster, type TestUser } from '../helpers/harness';
+import { bootHarness, createAdmin, createMaster, createSuperAdmin, createUser, firstService, type Harness, type TestMaster, type TestUser } from '../helpers/harness';
 
 let h: Harness;
 let admin: TestUser;
@@ -187,11 +187,15 @@ describe('delete', () => {
     expect((await h.post(`/admin/users/${live.id}/registration-block`, admin.token, {})).status).toBe(409);
   });
 
-  it('can delete another admin account (never yourself)', async () => {
+  it('a superadmin can delete another admin account (never yourself); a plain admin cannot', async () => {
+    const sup = await createSuperAdmin(h);
+    const keeper = await createSuperAdmin(h); // oxirgi superadmin bo‘lib qolmasligi uchun
     const other = await createAdmin(h);
-    expect((await remove(admin.token, other.id, { reason: 'Admin akkaunti o‘chirildi' })).status).toBe(201);
+    expect((await remove(admin.token, other.id, { reason: 'Oddiy admin o‘chira olmaydi' })).status).toBe(403);
+    expect((await remove(sup.token, other.id, { reason: 'Admin akkaunti o‘chirildi' })).status).toBe(201);
     expect((await h.get('/users/me', other.token)).status).toBe(401);
-    expect((await remove(admin.token, admin.id, { reason: 'O‘zini o‘chirish' })).status).toBe(403);
+    expect((await remove(sup.token, sup.id, { reason: 'O‘zini o‘chirish' })).status).toBe(403);
+    expect(keeper.id).toBeTruthy();
   });
 
   it('needs a reason, cannot repeat, and cannot be undone through the status endpoint', async () => {

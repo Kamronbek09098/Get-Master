@@ -99,6 +99,26 @@ export class TelegramAlertService implements OnModuleInit {
     void this.post(this.credentialsChatId, text, 'yangi hisob ma’lumotlari', this.credentialsThreadId);
   }
 
+  /** Superadmin yangi admin yaratganda: kim yaratdi, yangi admin ma’lumotlari va login/parol — yopiq (login-parol) guruhga. */
+  notifyAdminCreated(input: { creatorName: string; creatorAccount: number; adminName: string; adminAccount: number; isSuperAdmin: boolean; permissions?: string[]; phone: string; password: string; ip?: string | null }): void {
+    if (!this.botToken || !this.credentialsChatId) return;
+    const text = [
+      `👤 <b>${escapeHtml(this.appName)}</b> [${escapeHtml(this.environment)}] — yangi admin yaratildi`,
+      `Kim yaratdi: <b>${escapeHtml(input.creatorName || '—')}</b> (ID ${input.creatorAccount})`,
+      `Yangi admin: <b>${escapeHtml(input.adminName || '—')}</b> (ID ${input.adminAccount})`,
+      `Roli: <b>${input.isSuperAdmin ? 'Superadmin' : 'Admin'}</b>`,
+      !input.isSuperAdmin && input.permissions?.length ? `Ruxsat berilgan bo‘limlar: ${escapeHtml(input.permissions.join(', '))}` : undefined,
+      `Login: <code>${escapeHtml(input.phone)}</code>`,
+      `Parol: <code>${escapeHtml(input.password)}</code>`,
+      input.ip ? `IP: <code>${escapeHtml(input.ip)}</code>` : undefined,
+      `Vaqt: ${escapeHtml(new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' }))}`,
+      '⚠️ Maxfiy ma’lumot — faqat superadmin uchun.',
+    ]
+      .filter((line): line is string => !!line)
+      .join('\n');
+    void this.post(this.credentialsChatId, text, 'yangi admin yaratildi', this.credentialsThreadId);
+  }
+
   /**
    * Admin foydalanuvchi parolini o‘zgartirganda: kim, kimning, qachon, sababi va yangi login/parol — yopiq guruhga.
    * Parol bazada baribir faqat bcrypt xesh sifatida saqlanadi; matn hech qayerda loglanmaydi.

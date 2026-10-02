@@ -75,6 +75,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                   }
                 : onKeyDown
             }
+            autoComplete={isPassword ? undefined : 'off'}
             {...rest}
           />
           {isPassword && (

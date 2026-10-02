@@ -39,9 +39,10 @@ import { PaymentHistoryPage } from '@/pages/payments/PaymentHistoryPage';
 import { LegalPage } from '@/pages/legal/LegalPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { SafetyPage } from '@/pages/safety/SafetyPage';
-import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage';
+import { AdminHome } from '@/pages/admin/AdminHome';
 import { AdminReportsPage } from '@/pages/admin/AdminReportsPage';
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage';
+import { AdminAdminsPage } from '@/pages/admin/AdminAdminsPage';
 import { AdminUserProfilePage } from '@/pages/admin/AdminUserProfilePage';
 import { AdminOrdersPage } from '@/pages/admin/AdminOrdersPage';
 import { AdminOrderDetailPage } from '@/pages/admin/AdminOrderDetailPage';
@@ -137,9 +138,10 @@ export const router = createBrowserRouter([
           { path: '/ustalar/daromad', element: master(<EarningsPage />) },
           { path: '/huquqiy', element: shared(<LegalPage />) },
           { path: '/xavfsizlik', element: shared(<SafetyPage />) },
-          { path: '/admin', element: admin(<AdminDashboardPage />) },
+          { path: '/admin', element: admin(<AdminHome />) },
           { path: '/admin/hisobot', element: admin(<AdminReportsPage />) },
           { path: '/admin/foydalanuvchilar', element: admin(<AdminUsersPage />) },
+          { path: '/admin/adminlar', element: admin(<AdminAdminsPage />) },
           { path: '/admin/foydalanuvchilar/:id', element: admin(<AdminUserProfilePage />) },
           { path: '/admin/buyurtmalar', element: admin(<AdminOrdersPage />) },
           { path: '/admin/buyurtmalar/:id', element: admin(<AdminOrderDetailPage />) },

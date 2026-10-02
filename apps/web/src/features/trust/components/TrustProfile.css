@@ -176,3 +176,9 @@
     width: 100%;
   }
 }
+
+/* Almashtirilgan (nofaol) hujjat: xira, harakatsiz */
+.gm-doc-card--inactive {
+  opacity: 0.6;
+  box-shadow: none;
+}

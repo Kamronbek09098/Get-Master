@@ -1,0 +1,261 @@
+import { useState } from "react";
+import { Check, CheckCircle2, Copy, RefreshCw } from "lucide-react";
+import { Alert } from "@/components/ui/Alert";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Modal } from "@/components/ui/Modal";
+import { getErrorMessage } from "@/lib/error-messages";
+import {
+  formatLocalPhone,
+  toFullPhone,
+  toLocalDigits,
+} from "@/features/auth/validation";
+import { useCreateAdmin } from "../hooks/useAdmin";
+import { ADMIN_PERMISSION_OPTIONS } from "../permissions";
+import { PermissionPicker } from "./PermissionPicker";
+
+/** Tasodifiy, o‘qish oson (o‘xshash belgilarsiz) parol. */
+function generatePassword(length = 12): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+  const bytes = crypto.getRandomValues(new Uint32Array(length));
+  return Array.from(bytes, (value) => chars.charAt(value % chars.length)).join(
+    "",
+  );
+}
+
+function CopyRow({ label, value }: { label: string; value: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <div className="gm-save__field">
+      <span className="gm-save__label">{label}</span>
+      <div className="gm-save__box">
+        <span className="gm-save__value">{value}</span>
+        <button
+          type="button"
+          className={done ? "gm-save__btn gm-save__btn--done" : "gm-save__btn"}
+          aria-label={`${label}ni nusxalash`}
+          onClick={() => {
+            void navigator.clipboard?.writeText(value).then(() => {
+              setDone(true);
+              window.setTimeout(() => setDone(false), 1800);
+            });
+          }}
+        >
+          {done ? (
+            <Check size={16} aria-hidden="true" />
+          ) : (
+            <Copy size={16} aria-hidden="true" />
+          )}
+          <span>{done ? "Nusxalandi" : "Nusxa"}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Yangi admin yaratish (faqat superadmin). Yaratilgach login va parol bir marta ko‘rsatiladi. */
+export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
+  const create = useCreateAdmin();
+  const [phone, setPhone] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [password, setPassword] = useState(() => generatePassword());
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [created, setCreated] = useState<{
+    phone: string;
+    password: string;
+    name: string;
+    isSuperAdmin: boolean;
+    permissionCount: number;
+  } | null>(null);
+
+  const digits = toLocalDigits(phone);
+  const valid =
+    digits.length === 9 &&
+    firstName.trim().length > 0 &&
+    lastName.trim().length > 0 &&
+    password.length >= 8 &&
+    (isSuperAdmin || permissions.length > 0);
+
+  function submit() {
+    if (!valid) return;
+    const fullPhone = toFullPhone(digits);
+    create.mutate(
+      {
+        phone: fullPhone,
+        password,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        isSuperAdmin,
+        permissions: isSuperAdmin ? [] : permissions,
+      },
+      {
+        onSuccess: () =>
+          setCreated({
+            phone: fullPhone,
+            password,
+            name: `${firstName.trim()} ${lastName.trim()}`,
+            isSuperAdmin,
+            permissionCount: isSuperAdmin
+              ? ADMIN_PERMISSION_OPTIONS.length
+              : permissions.length,
+          }),
+      },
+    );
+  }
+
+  if (created) {
+    return (
+      <Modal
+        open
+        onClose={onClose}
+        title="Admin yaratildi"
+        footer={<Button onClick={onClose}>Tayyor</Button>}
+      >
+        <div className="gm-newadm gm-newadm--done">
+          <div className="gm-newadm__ok">
+            <span className="gm-newadm__ok-icon" aria-hidden="true">
+              <CheckCircle2 size={26} />
+            </span>
+            <div>
+              <strong>{created.name}</strong>
+              <p>
+                admin sifatida qo‘shildi
+                {created.isSuperAdmin
+                  ? " (superadmin: barcha bo‘limlar)"
+                  : ` (${created.permissionCount} ta bo‘limga ruxsat bilan)`}
+                .
+              </p>
+            </div>
+          </div>
+          <div className="gm-newadm__creds">
+            <CopyRow label="Login (telefon)" value={created.phone} />
+            <CopyRow label="Parol" value={created.password} />
+          </div>
+          <p className="gm-newadm__warn" role="note">
+            Login va parolni adminga xavfsiz yo‘l bilan yetkazing.{" "}
+            <strong>Parol keyin qayta ko‘rsatilmaydi.</strong>
+          </p>
+        </div>
+      </Modal>
+    );
+  }
+
+  return (
+    <Modal
+      open
+      onClose={create.isPending ? () => undefined : onClose}
+      title="Yangi admin yaratish"
+      large
+      footer={
+        <>
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            disabled={create.isPending}
+          >
+            Bekor qilish
+          </Button>
+          <Button loading={create.isPending} disabled={!valid} onClick={submit}>
+            Admin yaratish
+          </Button>
+        </>
+      }
+    >
+      <form
+        className="gm-newadm"
+        onSubmit={(event) => {
+          event.preventDefault();
+          submit();
+        }}
+        noValidate
+      >
+        {create.isError && (
+          <Alert tone="danger">{getErrorMessage(create.error)}</Alert>
+        )}
+        <section className="gm-newadm__sec" aria-labelledby="gm-newadm-s1">
+          <h3 id="gm-newadm-s1" className="gm-newadm__sec-title">
+            Shaxsiy ma’lumotlar
+          </h3>
+          <Input
+            label="Telefon raqami"
+            prefix="+998"
+            inputMode="numeric"
+            placeholder="90 123 45 67"
+            maxLength={12}
+            formatValue={formatLocalPhone}
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            autoFocus
+          />
+          <div className="gm-newadm__row">
+            <Input
+              label="Ism"
+              placeholder="Ism"
+              value={firstName}
+              maxLength={100}
+              onChange={(event) => setFirstName(event.target.value)}
+            />
+            <Input
+              label="Familiya"
+              placeholder="Familiya"
+              value={lastName}
+              maxLength={100}
+              onChange={(event) => setLastName(event.target.value)}
+            />
+          </div>
+        </section>
+
+        <section className="gm-newadm__sec" aria-labelledby="gm-newadm-s2">
+          <h3 id="gm-newadm-s2" className="gm-newadm__sec-title">
+            Kirish paroli
+          </h3>
+          <div className="gm-newadm__pw">
+            <Input
+              label="Parol"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+            <div className="gm-newadm__pwbar">
+              <span>Kamida 8 ta belgi</span>
+              <button
+                type="button"
+                onClick={() => setPassword(generatePassword())}
+              >
+                <RefreshCw size={14} aria-hidden="true" /> Yangi parol yaratish
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="gm-newadm__sec" aria-labelledby="gm-newadm-s3">
+          <h3 id="gm-newadm-s3" className="gm-newadm__sec-title">
+            Huquqlar
+          </h3>
+          <label className="gm-newadm__super">
+            <input
+              type="checkbox"
+              checked={isSuperAdmin}
+              onChange={(event) => setIsSuperAdmin(event.target.checked)}
+            />
+            <span>
+              <strong>Superadmin huquqi</strong>
+              <small>
+                Boshqa adminlarni yaratish va boshqarish mumkin bo‘ladi. Odatda
+                kerak emas.
+              </small>
+            </span>
+          </label>
+          {!isSuperAdmin && (
+            <PermissionPicker
+              value={permissions}
+              onChange={setPermissions}
+              disabled={create.isPending}
+            />
+          )}
+        </section>
+      </form>
+    </Modal>
+  );
+}

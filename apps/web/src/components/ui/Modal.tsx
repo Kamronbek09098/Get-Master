@@ -12,12 +12,14 @@ export interface ModalProps {
   dismissible?: boolean;
   /** Katta kontent (rasm, hujjat) uchun kengaytirilgan oyna. */
   wide?: boolean;
+  /** O‘rtacha kengaytirilgan oyna (forma + ro‘yxat uchun, 720px). */
+  large?: boolean;
 }
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export function Modal({ open, onClose, title, children, footer, dismissible = true, wide = false }: ModalProps) {
+export function Modal({ open, onClose, title, children, footer, dismissible = true, wide = false, large = false }: ModalProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -66,7 +68,7 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
     <div className="gm-modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         ref={panelRef}
-        className={wide ? 'gm-modal gm-modal--wide' : 'gm-modal'}
+        className={wide ? 'gm-modal gm-modal--wide' : large ? 'gm-modal gm-modal--large' : 'gm-modal'}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

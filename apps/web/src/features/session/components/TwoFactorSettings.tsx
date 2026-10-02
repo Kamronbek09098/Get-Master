@@ -31,7 +31,6 @@ export function TwoFactorSettings() {
   if (me.isLoading || !me.data) return <Skeleton style={{ height: 120, borderRadius: 16 }} />;
   const wrongPassword = setTwoFactor.error instanceof ApiError && setTwoFactor.error.code === 'UNAUTHORIZED';
   const enabled = me.data.twoFactorEnabled !== false;
-  const isAdmin = me.data.roles.includes('ADMIN');
 
   function closeConfirm() {
     if (setTwoFactor.isPending) return;
@@ -82,9 +81,8 @@ export function TwoFactorSettings() {
       {setTwoFactor.isError && !confirmOpen && <Alert tone="danger">{twoFactorError(setTwoFactor.error)}</Alert>}
 
       <div className="gm-twofa__switch">
-        <Switch label={enabled ? 'Kirishda kod so‘ralsin' : 'Kirishda kod so‘ralmaydi'} checked={enabled} disabled={isAdmin || setTwoFactor.isPending} onChange={handleToggle} />
+        <Switch label={enabled ? 'Kirishda kod so‘ralsin' : 'Kirishda kod so‘ralmaydi'} checked={enabled} disabled={setTwoFactor.isPending} onChange={handleToggle} />
       </div>
-      {isAdmin && <p className="gm-twofa__hint">Administrator akkaunti uchun ikki bosqichli autentifikatsiyani o‘chirib bo‘lmaydi.</p>}
 
       <Modal
         open={confirmOpen}

@@ -22,6 +22,7 @@ import {
   Settings,
   ShieldAlert,
   ShieldCheck,
+  UserCog,
   UserRound,
   Users,
   Wallet,
@@ -36,29 +37,33 @@ export interface NavItem {
   group: string;
   primary?: boolean;
   short?: string;
+  /** Faqat shu huquqi bor admin (yoki superadmin) ko‘radi. */
+  permission?: string;
 }
 
 const ACCOUNT = 'Akkaunt';
 
-export function getNavItems(role: Role | null): NavItem[] {
+export function getNavItems(role: Role | null, options: { superAdmin?: boolean; permissions?: string[] } = {}): NavItem[] {
   if (role === 'ADMIN') {
+    const allowed = (item: NavItem) => options.superAdmin || !item.permission || !!options.permissions?.includes(item.permission);
     return [
-      { to: '/admin', label: 'Boshqaruv paneli', short: 'Panel', icon: LayoutDashboard, group: 'Umumiy', primary: true },
-      { to: '/admin/hisobot', label: 'Hisobotlar', short: 'Hisobot', icon: BarChart3, group: 'Umumiy', primary: true },
-      { to: '/admin/devops', label: 'DevOps', icon: Activity, group: 'Umumiy' },
-      { to: '/admin/foydalanuvchilar', label: 'Foydalanuvchilar', icon: Users, group: 'Boshqaruv' },
-      { to: '/admin/buyurtmalar', label: 'Buyurtmalar', icon: PackageCheck, group: 'Boshqaruv' },
-      { to: '/admin/suhbatlar', label: 'Suhbatlar', icon: MessagesSquare, group: 'Boshqaruv' },
+      { to: '/admin', label: 'Boshqaruv paneli', short: 'Panel', icon: LayoutDashboard, group: 'Umumiy', primary: true, permission: 'REPORTS' },
+      { to: '/admin/hisobot', label: 'Hisobotlar', short: 'Hisobot', icon: BarChart3, group: 'Umumiy', primary: true, permission: 'REPORTS' },
+      { to: '/admin/devops', label: 'DevOps', icon: Activity, group: 'Umumiy', permission: 'DEVOPS' },
+      { to: '/admin/foydalanuvchilar', label: 'Foydalanuvchilar', icon: Users, group: 'Boshqaruv', permission: 'USERS' },
+      ...(options.superAdmin ? [{ to: '/admin/adminlar', label: 'Adminlar', icon: UserCog, group: 'Boshqaruv' } satisfies NavItem] : []),
+      { to: '/admin/buyurtmalar', label: 'Buyurtmalar', icon: PackageCheck, group: 'Boshqaruv', permission: 'ORDERS' },
+      { to: '/admin/suhbatlar', label: 'Suhbatlar', icon: MessagesSquare, group: 'Boshqaruv', permission: 'CHATS' },
       { to: '/admin/xabarlar', label: 'Xabarlar', icon: MessageCircle, group: 'Boshqaruv' },
-      { to: '/admin/tasdiqlash', label: 'Ustalarni tasdiqlash', short: 'Tasdiq', icon: BadgeCheck, group: 'Boshqaruv', primary: true },
-      { to: '/admin/shikoyatlar', label: 'Shikoyat va nizolar', short: 'Nizolar', icon: Scale, group: 'Boshqaruv', primary: true },
-      { to: '/admin/xavfsizlik', label: 'Choralar va apellyatsiya', icon: ShieldAlert, group: 'Boshqaruv' },
-      { to: '/admin/katalog', label: 'Xizmatlar katalogi', icon: Blocks, group: 'Kontent' },
-      { to: '/admin/siyosatlar', label: 'Siyosatlar', icon: FileText, group: 'Kontent' },
-      { to: '/admin/audit', label: 'Audit jurnali', icon: ScrollText, group: 'Kontent' },
+      { to: '/admin/tasdiqlash', label: 'Ustalarni tasdiqlash', short: 'Tasdiq', icon: BadgeCheck, group: 'Boshqaruv', primary: true, permission: 'VERIFICATIONS' },
+      { to: '/admin/shikoyatlar', label: 'Shikoyat va nizolar', short: 'Nizolar', icon: Scale, group: 'Boshqaruv', primary: true, permission: 'CASES' },
+      { to: '/admin/xavfsizlik', label: 'Choralar va apellyatsiya', icon: ShieldAlert, group: 'Boshqaruv', permission: 'SAFETY' },
+      { to: '/admin/katalog', label: 'Xizmatlar katalogi', icon: Blocks, group: 'Kontent', permission: 'CATALOG' },
+      { to: '/admin/siyosatlar', label: 'Siyosatlar', icon: FileText, group: 'Kontent', permission: 'POLICIES' },
+      { to: '/admin/audit', label: 'Audit jurnali', icon: ScrollText, group: 'Kontent', permission: 'AUDIT' },
       { to: '/bildirishnomalar', label: 'Bildirishnomalar', icon: Bell, group: ACCOUNT },
       { to: '/sozlamalar', label: 'Sozlamalar', icon: Settings, group: ACCOUNT },
-    ];
+    ].filter(allowed);
   }
   if (role === 'MASTER') {
     return [

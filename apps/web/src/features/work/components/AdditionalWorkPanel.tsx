@@ -17,6 +17,14 @@ const STATUS_LABEL: Record<AdditionalWorkStatus, string> = {
   EXPIRED: 'Muddati tugadi',
 };
 
+const STATUS_TONE: Record<AdditionalWorkStatus, 'warning' | 'success' | 'danger' | 'neutral'> = {
+  PENDING: 'warning',
+  APPROVED: 'success',
+  REJECTED: 'danger',
+  CANCELLED: 'neutral',
+  EXPIRED: 'neutral',
+};
+
 export function AdditionalWorkPanel({
   orderId,
   isMaster,
@@ -59,7 +67,7 @@ export function AdditionalWorkPanel({
           <div key={work.id} className="gm-card">
             <div className="gm-card__header">
               <h3>{formatMoney(work.amount, work.currency)}</h3>
-              <Badge tone="warning">{STATUS_LABEL[work.status]}</Badge>
+              <Badge tone={STATUS_TONE[work.status]}>{STATUS_LABEL[work.status]}</Badge>
             </div>
             <p>
               <strong>{work.reason}</strong> — {work.description}
@@ -80,15 +88,38 @@ export function AdditionalWorkPanel({
       {isMaster && canRequest && (
         <form className="gm-form" onSubmit={handleSubmit}>
           {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
-          <Input label="Sabab" required value={reason} onChange={(event) => setReason(event.target.value)} />
-          <Input label="Tavsif" required value={description} onChange={(event) => setDescription(event.target.value)} />
+          <Input
+            label="Sabab"
+            required
+            autoComplete="off"
+            value={reason}
+            onChange={(event) => {
+              setReason(event.target.value);
+              if (create.isError) create.reset();
+            }}
+          />
+          <Input
+            label="Tavsif"
+            required
+            autoComplete="off"
+            value={description}
+            onChange={(event) => {
+              setDescription(event.target.value);
+              if (create.isError) create.reset();
+            }}
+          />
           <Input
             label="Summa (so‘m)"
             type="number"
             min={1}
             required
+            inputMode="numeric"
+            autoComplete="off"
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
+            onChange={(event) => {
+              setAmount(event.target.value);
+              if (create.isError) create.reset();
+            }}
           />
           <Button type="submit" loading={create.isPending} disabled={!reason || !description || !amount}>
             Qo‘shimcha ish so‘rash
