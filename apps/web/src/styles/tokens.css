@@ -47,6 +47,18 @@
   --gm-shadow-md: 0 6px 20px rgba(11, 18, 32, 0.08);
   --gm-shadow-lg: 0 18px 44px rgba(11, 18, 32, 0.16);
 
+  /* ===== Karta (card) dizayn tizimi: barcha kartalar shu qiymatlardan foydalanadi ===== */
+  --gm-card-radius: 16px; /* oddiy sirt kartalari */
+  --gm-card-radius-lg: 24px; /* hero / panel / bo‘sh holat / auth kartalari */
+  --gm-card-radius-sm: 12px; /* karta ichidagi mayda bloklar */
+  --gm-card-pad: 20px;
+  --gm-card-pad-sm: 12px 16px; /* ixcham (qator-kartalar) */
+  --gm-card-border: 1px solid var(--gm-color-border);
+  --gm-card-shadow: var(--gm-shadow-sm);
+  --gm-card-hover-border: color-mix(in srgb, var(--gm-color-primary) 40%, var(--gm-color-border));
+  --gm-card-title-size: 16px;
+  --gm-card-label-size: 12.5px;
+
   /* Tugma o‘lchamlari (Sozlamalar → Ko‘rinish orqali o‘zgaradi) */
   --gm-btn-h-sm: 32px;
   --gm-btn-h-md: 40px;

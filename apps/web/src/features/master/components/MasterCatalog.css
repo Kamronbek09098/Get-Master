@@ -201,3 +201,70 @@
   height: 210px;
   border-radius: var(--gm-radius-lg);
 }
+
+/* ===== Katalog: har qanday ekran va natijalar soniga moslashuv ===== */
+.gm-masters-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  align-items: stretch;
+}
+/* Bitta usta chiqsa — chetda qolmay, o‘rtada va mutanosib kenglikda */
+.gm-masters-grid:has(> :only-child) {
+  grid-template-columns: minmax(0, 520px);
+  justify-content: center;
+}
+.gm-masters-count {
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Kategoriya tugmalari: kompyuterda qatorga sig‘masa pastga o‘tadi, telefonda yon tomonga suriladi */
+@media (min-width: 900px) {
+  .gm-masters-chips {
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow: visible;
+  }
+}
+@media (max-width: 899px) {
+  .gm-masters-chips {
+    margin-inline: calc(-1 * var(--gm-space-4));
+    padding-inline: var(--gm-space-4);
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+  .gm-masters-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .gm-masters-chip {
+    min-height: 40px;
+    scroll-snap-align: start;
+  }
+  .gm-masters-search input {
+    font-size: 16px;
+  }
+  .gm-masters-count {
+    text-align: left;
+  }
+}
+
+/* «Batafsil» — aniq tugma ko‘rinishida */
+.gm-master__cta {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--gm-color-primary-soft);
+  transition: background 0.15s, color 0.15s;
+}
+.gm-master:hover .gm-master__cta {
+  background: var(--gm-color-primary);
+  color: var(--gm-color-primary-contrast);
+}
+@media (max-width: 380px) {
+  .gm-master__foot {
+    flex-wrap: wrap;
+  }
+  .gm-master__cta {
+    width: 100%;
+    justify-content: center;
+  }
+}

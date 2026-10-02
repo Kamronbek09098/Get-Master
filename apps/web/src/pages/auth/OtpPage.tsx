@@ -25,6 +25,7 @@ export function OtpPage() {
   const hasNewCredentials = useAuthStore((s) => s.newCredentials !== null);
   const [created, setCreated] = useState(false);
   const setDevCode = useAuthStore((s) => s.setDevCode);
+  const setPendingPhone = useAuthStore((s) => s.setPendingPhone);
   const pushToast = useAppStore((s) => s.pushToast);
   const [resendError, setResendError] = useState<unknown>(null);
   const flow: Flow = (location.state as { flow?: Flow } | null)?.flow ?? 'login';
@@ -39,7 +40,12 @@ export function OtpPage() {
   if (created) {
     return (
       <div className="gm-auth-page">
-        <NewCredentialsCard onContinue={() => navigate('/login', { replace: true })} />
+        <NewCredentialsCard
+          onContinue={() => {
+            setPendingPhone(null);
+            navigate('/login', { replace: true });
+          }}
+        />
       </div>
     );
   }
@@ -75,7 +81,10 @@ export function OtpPage() {
           onSuccess: () => {
             // Login va parol bir marta ko‘rsatiladi; ko‘rsatiladigan narsa bo‘lmasa — to‘g‘ridan-to‘g‘ri kirishga.
             if (hasNewCredentials) setCreated(true);
-            else navigate('/login', { replace: true });
+            else {
+              setPendingPhone(null);
+              navigate('/login', { replace: true });
+            }
           },
         },
       );

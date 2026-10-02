@@ -153,60 +153,168 @@
   color: var(--gm-color-text-muted);
   font-size: 0.85rem;
 }
-.gm-earn__chart svg {
+/* ===== Kunlik daromad grafigi ===== */
+.gm-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gm-space-2);
+}
+.gm-chart__plot {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--gm-space-2);
+  padding-top: 8px;
+}
+.gm-chart__y {
+  position: relative;
+  min-width: 44px;
+  margin-bottom: 26px;
+  color: var(--gm-color-text-muted);
+  font-size: 0.72rem;
+  text-align: right;
+}
+.gm-chart__y span {
+  position: absolute;
+  right: 0;
+  transform: translateY(50%);
+  white-space: nowrap;
+}
+.gm-chart__area {
+  position: relative;
+  height: 240px;
+  padding-bottom: 26px;
+}
+.gm-chart__bars,
+.gm-chart__grid {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+.gm-chart__bars {
+  top: 0;
+  bottom: 26px;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+}
+.gm-chart__grid {
+  bottom: 0;
+  margin-bottom: 26px;
+  height: 0;
+  border-top: 1px dashed var(--gm-color-border);
+  pointer-events: none;
+}
+.gm-chart__grid--base {
+  border-top: 1px solid var(--gm-color-border-strong);
+}
+.gm-chart__col {
+  display: flex;
+  flex: 1 1 0;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  cursor: pointer;
+}
+.gm-chart__col:focus-visible {
+  outline: 2px solid var(--gm-focus-ring);
+  outline-offset: 1px;
+}
+.gm-chart__col--on {
+  background: color-mix(in srgb, var(--gm-color-primary) 8%, transparent);
+}
+.gm-chart__bar {
   display: block;
   width: 100%;
-  height: 200px;
+  max-width: 28px;
+  border-radius: 4px 4px 0 0;
+  background: color-mix(in srgb, var(--gm-color-primary) 50%, var(--gm-color-surface));
+  transition: background-color 0.15s ease;
 }
-.gm-earn__readout {
+.gm-chart__bar--best,
+.gm-chart__bar--today {
+  background: color-mix(in srgb, var(--gm-color-primary) 78%, var(--gm-color-surface));
+}
+.gm-chart__bar--zero {
+  border-radius: 0;
+  background: var(--gm-color-border);
+}
+.gm-chart__col--on .gm-chart__bar:not(.gm-chart__bar--zero) {
+  background: var(--gm-color-primary);
+}
+.gm-chart__x {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  min-height: 28px;
-  margin-bottom: 6px;
+  gap: 2px;
+  height: 22px;
   color: var(--gm-color-text-muted);
-  font-size: 0.85rem;
+  font-size: 0.72rem;
 }
-.gm-earn__readout strong {
+.gm-chart__x span {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.gm-chart__x em {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  font-style: normal;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.gm-chart__x span:last-child em {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.gm-chart__tip {
+  position: absolute;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 124px;
+  padding: 8px 12px;
+  border: 1px solid var(--gm-color-border);
+  border-radius: 12px;
+  background: var(--gm-color-surface);
+  box-shadow: var(--gm-shadow-md);
+  color: var(--gm-color-text-muted);
+  font-size: 0.78rem;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+.gm-chart__tip strong {
   color: var(--gm-color-text);
   font-family: var(--gm-font-display);
-  font-size: 1.15rem;
+  font-size: 1rem;
 }
-.gm-earn__grid {
-  stroke: var(--gm-color-border);
-  stroke-width: 1;
-  stroke-dasharray: 3 4;
-}
-.gm-earn__avg {
-  stroke: var(--gm-color-warning);
-  stroke-width: 1.5;
-  stroke-dasharray: 5 4;
-}
-.gm-earn__bar {
-  fill: color-mix(in srgb, var(--gm-color-primary) 55%, var(--gm-color-surface));
-  transition: fill 0.15s ease;
-}
-.gm-earn__bar--today {
-  fill: var(--gm-color-primary);
-}
-.gm-earn__bar--zero {
-  fill: var(--gm-color-border);
-}
-.gm-earn__bar--on {
-  fill: var(--gm-color-success);
-}
-.gm-earn__chart rect[tabindex] {
-  cursor: pointer;
-  outline: none;
-}
-.gm-earn__axis {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 6px;
+.gm-chart__hint {
+  margin: 0;
   color: var(--gm-color-text-muted);
   font-size: 0.75rem;
+  text-align: center;
+}
+@media (max-width: 640px) {
+  .gm-chart__area {
+    height: 200px;
+  }
+  .gm-chart__bars,
+  .gm-chart__x {
+    gap: 1px;
+  }
+  .gm-chart__y {
+    min-width: 36px;
+    font-size: 0.68rem;
+  }
 }
 .gm-earn__facts {
   display: flex;

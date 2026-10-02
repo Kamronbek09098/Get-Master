@@ -47,6 +47,14 @@ export function useSetUserPassword() {
   });
 }
 
+export function useSetRegistrationBlock() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, blocked, reason }: { id: string; blocked: boolean; reason?: string }) => adminService.setRegistrationBlock(id, blocked, reason),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  });
+}
+
 export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({

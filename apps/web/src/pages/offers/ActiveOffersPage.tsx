@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarClock, CheckCircle2, Timer, Users } from 'lucide-react';
+import { CalendarClock, CheckCircle2, Inbox, Send, Timer, Users } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
@@ -39,12 +39,13 @@ export function ActiveOffersPage() {
   return (
     <div>
       <div className="gm-page-header">
-        <h1>Faol takliflar</h1>
+        <div>
+          <h1>Faol takliflar</h1>
+          <p className="gm-page-lead">
+            Mijozlar yuborgan va hozir ustalarni kutayotgan so‘rovlar. Yoqqanini «Qabul qilish» bilan oling — narxingiz mijozga taklif sifatida boradi.
+          </p>
+        </div>
       </div>
-      <p className="gm-card__meta" style={{ marginBottom: 'var(--gm-space-4)', maxWidth: 640 }}>
-        Mijozlar yuborgan va hozir ustalarni kutayotgan so‘rovlar. Yoqqanini «Qabul qilish» bilan oling — narxingiz mijozga
-        taklif sifatida boradi.
-      </p>
 
       <div className="gm-tabs" role="tablist" aria-label="Ko‘rinish">
         {TABS.map((tab) => (
@@ -65,6 +66,12 @@ export function ActiveOffersPage() {
       {requests.isError && <Alert tone="danger">{getErrorMessage(requests.error)}</Alert>}
       {requests.data && items.length === 0 && (
         <EmptyState
+          icon={<Inbox size={34} strokeWidth={1.8} />}
+          steps={[
+            { icon: <Send size={16} aria-hidden="true" />, title: 'Mijoz so‘rov yuboradi', text: 'Yangi so‘rov kelganda shu yerda paydo bo‘ladi.' },
+            { icon: <CheckCircle2 size={16} aria-hidden="true" />, title: 'Qabul qilasiz', text: '«Qabul qilish» tugmasi bilan narxingizni taklif qilasiz.' },
+            { icon: <Users size={16} aria-hidden="true" />, title: 'Mijoz tanlaydi', text: 'Mijoz takliflarni solishtirib, ustani tanlaydi.' },
+          ]}
           title="Hozircha faol takliflar yo‘q"
           description={
             scope === 'mine'

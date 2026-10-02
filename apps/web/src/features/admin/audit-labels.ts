@@ -67,6 +67,8 @@ export const AUDIT_ACTIONS: Record<string, AuditActionInfo> = {
   AUTH_REGISTER_DUPLICATE_ATTEMPT: { label: 'Takroriy ro‘yxatdan o‘tish urinishi', verb: 'mavjud raqam/email bilan ro‘yxatdan o‘tmoqchi bo‘ldi', group: 'users', tone: 'warning' },
   ADMIN_USER_PASSWORD_RESET: { label: 'Parol o‘zgartirildi', verb: 'foydalanuvchi parolini o‘zgartirdi', group: 'users', tone: 'warning' },
   ADMIN_USER_DELETED: { label: 'Foydalanuvchi o‘chirildi', verb: 'foydalanuvchini o‘chirdi', group: 'users', tone: 'danger' },
+  ADMIN_REGISTRATION_BLOCKED: { label: 'Qayta ro‘yxatdan o‘tish bloklandi', verb: 'qayta ro‘yxatdan o‘tishni blokladi', group: 'users', tone: 'danger' },
+  ADMIN_REGISTRATION_ALLOWED: { label: 'Qayta ro‘yxatdan o‘tishga ruxsat berildi', verb: 'qayta ro‘yxatdan o‘tishga ruxsat berdi', group: 'users', tone: 'success' },
   USER_ACTION_CREATED: { label: 'Choralar qo‘llandi', verb: 'foydalanuvchiga chora qo‘lladi', group: 'users', tone: 'warning' },
 
   MASTER_PROFILE_CREATED: { label: 'Usta profili yaratildi', verb: 'usta profilini yaratdi', group: 'profile', tone: 'primary' },

@@ -25,12 +25,12 @@ export function useRegister() {
 }
 
 export function useVerifyRegistration() {
-  const setPendingPhone = useAuthStore((s) => s.setPendingPhone);
   const pushToast = useAppStore((s) => s.pushToast);
   return useMutation({
     mutationFn: ({ phone, code }: { phone: string; code: string }) => authService.verifyRegistration(phone, code),
+    // pendingPhone bu yerda tozalanmaydi: aks holda OTP sahifasi login/parol kartasini ko‘rsatishga ulgurmay, ro‘yxatdan o‘tish sahifasiga qaytarib yuboradi.
+    // U sahifaning o‘zida («Kirishga o‘tish» bosilganda) tozalanadi.
     onSuccess: () => {
-      setPendingPhone(null);
       pushToast('Ro‘yxatdan o‘tish tasdiqlandi. Endi tizimga kiring.', 'success');
     },
   });

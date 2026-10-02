@@ -6,7 +6,7 @@ export function NotificationsPage() {
       <div className="gm-page-header">
         <div>
           <h1>Bildirishnomalar</h1>
-          <p style={{ margin: 0, color: 'var(--gm-color-text-muted)' }}>Buyurtma, chat va tasdiqlash bo‘yicha yangiliklar.</p>
+          <p className="gm-page-lead">Buyurtma, chat va tasdiqlash bo‘yicha yangiliklar.</p>
         </div>
       </div>
       <NotificationList />

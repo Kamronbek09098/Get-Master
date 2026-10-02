@@ -1,3 +1,4 @@
+import { CheckCircle2, PenLine, Search, ShieldAlert } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
@@ -13,7 +14,18 @@ export function ComplaintList() {
 
   if (complaints.isLoading) return <PageLoader label="Shikoyatlar yuklanmoqda…" />;
   if (complaints.isError) return <Alert tone="danger">{getErrorMessage(complaints.error)}</Alert>;
-  if (items.length === 0) return <EmptyState title="Shikoyatlar yo‘q" />;
+  if (items.length === 0) return (
+      <EmptyState
+        icon={<ShieldAlert size={34} strokeWidth={1.8} />}
+        title="Shikoyatlar yo‘q"
+        description="Xizmat sifatidan norozi bo‘lsangiz, quyidagi shakl orqali shikoyat yuboring. Yuborilganlar shu yerda ko‘rinadi."
+        steps={[
+          { icon: <PenLine size={16} aria-hidden="true" />, title: 'Shikoyat yozing', text: 'Mavzu va batafsil tavsifni kiriting.' },
+          { icon: <Search size={16} aria-hidden="true" />, title: 'Ko‘rib chiqiladi', text: 'Murojaatingiz administrator tomonidan o‘rganiladi.' },
+          { icon: <CheckCircle2 size={16} aria-hidden="true" />, title: 'Javob oling', text: 'Qaror shu yerda holati bilan ko‘rinadi.' },
+        ]}
+      />
+    );
 
   return (
     <div className="gm-list">

@@ -135,7 +135,7 @@ export function AdminUsersPage() {
   const [role, setRole] = useState<UserFilters['role'] | ''>(
     initialRole && VALID_ROLES.has(initialRole) ? (initialRole as UserFilters['role']) : '',
   );
-  const [status, setStatus] = useState<ManagedStatus | ''>('');
+  const [status, setStatus] = useState<ManagedStatus | ''>(searchParams.get('status') === 'DELETED' ? 'DELETED' : '');
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search.trim(), 350);
   const [dialog, setDialog] = useState<{ user: AdminUser; action: UserAction } | null>(null);

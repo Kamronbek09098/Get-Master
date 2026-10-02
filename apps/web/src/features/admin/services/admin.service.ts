@@ -57,6 +57,10 @@ export const adminService = {
   setUserPassword(id: string, password: string, reason?: string) {
     return apiPost<{ updated: boolean }>(`/admin/users/${id}/password`, { password, reason: reason || undefined });
   },
+  setRegistrationBlock(id: string, blocked: boolean, reason?: string) {
+    return apiPost<{ registrationBlocked: boolean }>(`/admin/users/${id}/${blocked ? 'registration-block' : 'registration-unblock'}`, { reason });
+  },
+
   deleteUser(id: string, reason: string) {
     return apiPost<{ deleted: boolean }>(`/admin/users/${id}/delete`, { reason });
   },

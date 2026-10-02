@@ -106,10 +106,28 @@ export function AdminUserProfilePage() {
                   </Badge>
                 ))}
                 <Badge tone={status.tone}>{status.label}</Badge>
+                {data.status === 'DELETED' && (
+                  <Badge tone={data.registrationBlocked ? 'danger' : 'success'}>{data.registrationBlocked ? 'Qayta ro‘yxatdan o‘tish bloklangan' : 'Qayta ro‘yxatdan o‘tish mumkin'}</Badge>
+                )}
                 {data.masterProfile && <TrustBadge verification={data.masterProfile.verification} />}
               </div>
             </div>
             <div className="gm-uprofile__actions">
+              {data.status === 'DELETED' && !data.roles.includes('ADMIN') && (
+                <Button
+                  size="sm"
+                  variant={data.registrationBlocked ? 'secondary' : 'ghost'}
+                  className={data.registrationBlocked ? undefined : 'gm-btn-danger-text'}
+                  onClick={() => setAction(data.registrationBlocked ? 'ALLOW_REGISTRATION' : 'BLOCK_REGISTRATION')}
+                >
+                  <Ban size={16} /> {data.registrationBlocked ? 'Ro‘yxatdan o‘tishga ruxsat berish' : 'Qayta ro‘yxatdan o‘tishni bloklash'}
+                </Button>
+              )}
+              {data.roles.includes('ADMIN') && data.status !== 'DELETED' && data.id !== me.data?.id && (
+                <Button size="sm" variant="ghost" className="gm-btn-danger-text" onClick={() => setAction('DELETE')}>
+                  <Trash2 size={16} /> Adminni o‘chirish
+                </Button>
+              )}
               {!data.roles.includes('ADMIN') && data.status !== 'DELETED' && (
                 <>
                   {data.status === 'SUSPENDED' || data.status === 'BLOCKED' ? (
@@ -333,7 +351,13 @@ export function AdminUserProfilePage() {
         </>
       )}
       {data && passwordOpen && <PasswordResetDialog userId={data.id} name={accountName(data)} phone={data.phone} onClose={() => setPasswordOpen(false)} />}
-      {data && action && <UserActionDialog user={data as AdminUser} action={action} onClose={() => setAction(null)} />}
+      {data && action && <UserActionDialog
+          user={data as AdminUser}
+          action={action}
+          onClose={() => setAction(null)}
+          // O‘chirilgach profil yopiladi; akkaunt «O‘chirilgan» ro‘yxatida qoladi.
+          onDeleted={() => navigate('/admin/foydalanuvchilar?status=DELETED', { replace: true })}
+        />}
     </div>
   );
 }

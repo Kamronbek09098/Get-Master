@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CalendarClock, Send, UserCheck } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
@@ -27,6 +28,12 @@ export function CreateOfferPage() {
       </div>
       {items.length === 0 && (
         <EmptyState
+          icon={<Send size={34} strokeWidth={1.8} />}
+          steps={[
+            { icon: <UserCheck size={16} aria-hidden="true" />, title: 'Profil tasdiqlangan', text: 'Hujjatlaringiz admin tomonidan tasdiqlangan bo‘lsin.' },
+            { icon: <CalendarClock size={16} aria-hidden="true" />, title: 'Ish jadvali to‘ldirilgan', text: 'Mijozlar band qila oladigan ish vaqtlarini kiriting.' },
+            { icon: <Send size={16} aria-hidden="true" />, title: 'So‘rovlar keladi', text: 'Mos so‘rovlar avtomatik shu yerda ko‘rinadi.' },
+          ]}
           title="Hozircha yangi so‘rovlar yo‘q"
           description="Profilingiz faol, tasdiqlangan va ish jadvalingiz to‘ldirilgan bo‘lsa, mos so‘rovlar shu yerda ko‘rinadi."
         />

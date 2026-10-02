@@ -5,9 +5,11 @@ import type { AdminUser } from '../types';
 
 const setStatus = vi.fn();
 const deleteUser = vi.fn();
+const regBlock = vi.fn();
 vi.mock('../hooks/useAdmin', () => ({
   useSetUserStatus: () => ({ mutate: setStatus, isPending: false, error: null }),
   useDeleteUser: () => ({ mutate: deleteUser, isPending: false, error: null }),
+  useSetRegistrationBlock: () => ({ mutate: regBlock, isPending: false, error: null }),
 }));
 
 import { UserActionDialog } from './UserActionDialog';
@@ -30,6 +32,7 @@ describe('UserActionDialog', () => {
   beforeEach(() => {
     setStatus.mockClear();
     deleteUser.mockClear();
+    regBlock.mockClear();
   });
 
   it('names the account and explains what freezing does', () => {

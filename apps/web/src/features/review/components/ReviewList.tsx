@@ -18,10 +18,13 @@ export function ReviewList({ masterId }: { masterId: string }) {
       {items.map((review) => (
         <div key={review.id} className="gm-card">
           <div className="gm-card__header">
-            <h3>{'★'.repeat(review.rating) + '☆'.repeat(5 - review.rating)}</h3>
+            <h3 className="gm-review-stars" aria-label={`${review.rating} / 5`}>
+              {'★'.repeat(review.rating)}
+              <span className="gm-review-stars__off">{'★'.repeat(5 - review.rating)}</span>
+            </h3>
             <span className="gm-card__meta">{formatDate(review.createdAt)}</span>
           </div>
-          {review.comment && <p>{review.comment}</p>}
+          {review.comment ? <p>{review.comment}</p> : <p className="gm-card__meta gm-review-nocomment">Izoh qoldirilmagan</p>}
         </div>
       ))}
     </div>

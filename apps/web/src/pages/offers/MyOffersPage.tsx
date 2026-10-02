@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+import { CheckCircle2, FileText, Inbox, Send } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
@@ -24,7 +26,23 @@ export function MyOffersPage() {
         </div>
       </div>
       {withdraw.isError && <Alert tone="danger">{getErrorMessage(withdraw.error)}</Alert>}
-      {items.length === 0 && <EmptyState title="Siz hali taklif yubormagansiz" />}
+      {items.length === 0 && (
+        <EmptyState
+          icon={<FileText size={34} strokeWidth={1.8} />}
+          title="Siz hali taklif yubormagansiz"
+          description="Mijozlar so‘rovlariga narx taklif qiling. Yuborgan takliflaringiz va ularning holati shu yerda ko‘rinadi."
+          steps={[
+            { icon: <Inbox size={16} aria-hidden="true" />, title: 'So‘rovni tanlang', text: '«Faol takliflar» bo‘limidan mos so‘rovni toping.' },
+            { icon: <Send size={16} aria-hidden="true" />, title: 'Narx yuboring', text: 'Narx va muddatni ko‘rsatib, taklif yuboring.' },
+            { icon: <CheckCircle2 size={16} aria-hidden="true" />, title: 'Javobni kuting', text: 'Mijoz qabul qilsa, buyurtma boshlanadi.' },
+          ]}
+          action={
+            <Link to="/ustalar/faol-takliflar">
+              <Button>Faol takliflarni ko‘rish</Button>
+            </Link>
+          }
+        />
+      )}
       <div className="gm-list">
         {items.map((offer) => (
           <div key={offer.id} className="gm-card">

@@ -436,6 +436,17 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+/// Admin tomonidan qayta ro‘yxatdan o‘tishi taqiqlangan (o‘chirilgan akkaunt) telefon raqamlari.
+model BlockedPhone {
+  id          String   @id @default(uuid()) @db.Uuid
+  phone       String   @unique @db.VarChar(32)
+  reason      String?  @db.VarChar(500)
+  blockedById String?  @map("blocked_by_id") @db.Uuid
+  createdAt   DateTime @default(now())
+
+  @@map("blocked_phones")
+}
+
 model OtpCode {
   id          String     @id @default(uuid()) @db.Uuid
   userId      String?    @db.Uuid

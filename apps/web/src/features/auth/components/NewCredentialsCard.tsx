@@ -1,30 +1,53 @@
-import { useEffect, useRef, useState } from 'react';
-import { Check, Copy, Eye, EyeOff, KeyRound, ShieldAlert } from 'lucide-react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { Check, CheckCircle2, Copy, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuthStore } from '@/store/auth.store';
 
-function CopyButton({ text, label }: { text: string; label: string }) {
+/** Clipboard API bo‘lmasa (eski brauzer / ruxsatsiz muhit) — matnni belgilab, eski usulda nusxalaydi. */
+async function copyText(text: string, fallbackTarget: HTMLElement | null): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    if (!fallbackTarget) return false;
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(fallbackTarget);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    try {
+      return document.execCommand('copy');
+    } catch {
+      return false;
+    }
+  }
+}
+
+function CopyButton({ text, label, target, onCopied }: { text: string; label: string; target: React.RefObject<HTMLElement>; onCopied: (message: string) => void }) {
   const [done, setDone] = useState(false);
+  const timer = useRef(0);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  async function handleClick() {
+    const ok = await copyText(text, target.current);
+    onCopied(ok ? `${label}: nusxalandi` : 'Nusxalab bo‘lmadi, matnni qo‘lda belgilab nusxalang');
+    if (!ok) return;
+    setDone(true);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setDone(false), 1800);
+  }
+
   return (
-    <button
-      type="button"
-      className="gm-cred-card__copy"
-      aria-label={label}
-      onClick={() => {
-        void navigator.clipboard?.writeText(text).then(() => {
-          setDone(true);
-          window.setTimeout(() => setDone(false), 1500);
-        });
-      }}
-    >
-      {done ? <Check size={16} /> : <Copy size={16} />} {done ? 'Nusxalandi' : 'Nusxalash'}
+    <button type="button" className={done ? 'gm-save__btn gm-save__btn--done' : 'gm-save__btn'} aria-label={label} onClick={() => void handleClick()}>
+      {done ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+      <span>{done ? 'Nusxalandi' : 'Nusxa'}</span>
     </button>
   );
 }
 
 /**
  * Ro‘yxatdan o‘tishdan keyin login va parol faqat BIR MARTA ko‘rsatiladi. Parol serverda faqat xesh ko‘rinishida
- * saqlanadi (hech kim, administrator ham ko‘ra olmaydi va tiklab bo‘lmaydi); shu sabab uni o‘zingiz saqlab qo‘yishingiz kerak.
+ * saqlanadi (qaytarib bo‘lmaydi); shu sabab uni o‘zingiz saqlab qo‘yishingiz kerak.
  * Kartochka yopilganda parol xotiradan o‘chiriladi.
  */
 export function NewCredentialsCard({ onContinue }: { onContinue: () => void }) {
@@ -32,7 +55,11 @@ export function NewCredentialsCard({ onContinue }: { onContinue: () => void }) {
   const setNewCredentials = useAuthStore((s) => s.setNewCredentials);
   const [shown, setShown] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
   const clearTimer = useRef(0);
+  const loginRef = useRef<HTMLSpanElement>(null);
+  const passwordRef = useRef<HTMLSpanElement>(null);
+  const uid = useId();
 
   // Haqiqiy yopilishda xotiradan o‘chiriladi. StrictMode'ning sinov (mount→unmount→mount) siklida o‘chirib yubormaslik uchun kechiktirilgan va qayta mount bo‘lsa bekor qilinadi.
   useEffect(() => {
@@ -44,52 +71,76 @@ export function NewCredentialsCard({ onContinue }: { onContinue: () => void }) {
 
   if (!credentials) return null;
 
+  const titleId = `${uid}-title`;
+  const loginLabelId = `${uid}-login`;
+  const passwordLabelId = `${uid}-password`;
+  const checkId = `${uid}-saved`;
+
   return (
-    <div className="gm-cred-card">
-      <div className="gm-cred-card__head">
-        <span className="gm-cred-card__icon" aria-hidden="true">
-          <KeyRound size={22} />
-        </span>
-        <div>
-          <h2>Hisobingiz yaratildi</h2>
-          <p>Kirish uchun login va parolingiz</p>
-        </div>
-      </div>
-
-      <div className="gm-cred-card__rows">
-        <div className="gm-cred-card__row">
-          <span className="gm-cred-card__label">Login (telefon)</span>
-          <strong className="gm-cred-card__value">{credentials.phone}</strong>
-          <CopyButton text={credentials.phone} label="Loginni nusxalash" />
-        </div>
-        <div className="gm-cred-card__row">
-          <span className="gm-cred-card__label">Parol</span>
-          <strong className="gm-cred-card__value gm-cred-card__value--mono">{shown ? credentials.password : '•'.repeat(Math.min(credentials.password.length, 14))}</strong>
-          <span className="gm-cred-card__tools">
-            <button type="button" className="gm-cred-card__copy" onClick={() => setShown((value) => !value)} aria-label={shown ? 'Parolni yashirish' : 'Parolni ko‘rsatish'}>
-              {shown ? <EyeOff size={16} /> : <Eye size={16} />} {shown ? 'Yashirish' : 'Ko‘rsatish'}
-            </button>
-            <CopyButton text={credentials.password} label="Parolni nusxalash" />
-          </span>
-        </div>
-      </div>
-
-      <div className="gm-cred-card__warn" role="alert">
-        <ShieldAlert size={18} aria-hidden="true" />
-        <p>
-          <strong>Login va parolni o‘zingiz uchun saqlab qo‘ying.</strong> Ular faqat hozir, bir marta ko‘rsatiladi. Parol xavfsizlik uchun xeshlangan holda saqlanadi —
-          uni hech kim, administrator ham ko‘ra olmaydi va tiklab bo‘lmaydi.
+    <section className="gm-save" aria-labelledby={titleId}>
+      <span className="gm-save__ok">
+        <CheckCircle2 size={16} aria-hidden="true" /> Hisobingiz yaratildi
+      </span>
+      <header className="gm-save__head">
+        <h2 id={titleId}>Login va parolingizni saqlang</h2>
+        <p role="note">
+          Iltimos, login va parolni ishonchli joyda saqlang, chunki <strong>parolni keyin qayta ko‘ra olmaysiz</strong>. Uni yo‘qotsangiz, yangi parol o‘rnatish uchun administratorga murojaat qilishingiz kerak bo‘ladi.
         </p>
+      </header>
+
+      <div className="gm-save__field">
+        <span className="gm-save__label" id={loginLabelId}>
+          Login (telefon)
+        </span>
+        <div className="gm-save__box">
+          <span ref={loginRef} className="gm-save__value" role="textbox" aria-readonly="true" aria-labelledby={loginLabelId} tabIndex={0}>
+            {credentials.phone}
+          </span>
+          <CopyButton text={credentials.phone} label="Loginni nusxalash" target={loginRef} onCopied={setAnnouncement} />
+        </div>
       </div>
 
-      <label className="gm-cred-card__confirm">
-        <input type="checkbox" checked={saved} onChange={(event) => setSaved(event.target.checked)} />
-        Login va parolni saqlab oldim
+      <div className="gm-save__field">
+        <span className="gm-save__label" id={passwordLabelId}>
+          Parol
+        </span>
+        <div className="gm-save__box">
+          <span
+            ref={passwordRef}
+            className={shown ? 'gm-save__value' : 'gm-save__value gm-save__value--masked'}
+            role="textbox"
+            aria-readonly="true"
+            aria-labelledby={passwordLabelId}
+            aria-description={shown ? undefined : 'Parol yashirilgan'}
+            tabIndex={0}
+          >
+            {shown ? credentials.password : '•'.repeat(Math.min(credentials.password.length, 14))}
+          </span>
+          <button
+            type="button"
+            className="gm-save__btn gm-save__btn--icon"
+            aria-pressed={shown}
+            aria-label={shown ? 'Parolni yashirish' : 'Parolni ko‘rsatish'}
+            onClick={() => setShown((value) => !value)}
+          >
+            {shown ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+          </button>
+          <CopyButton text={credentials.password} label="Parolni nusxalash" target={passwordRef} onCopied={setAnnouncement} />
+        </div>
+      </div>
+
+      <label className="gm-save__confirm" htmlFor={checkId}>
+        <input id={checkId} type="checkbox" required checked={saved} onChange={(event) => setSaved(event.target.checked)} />
+        <span>Login va parolni saqlab oldim</span>
       </label>
 
-      <Button fullWidth className="gm-auth-submit" disabled={!saved} onClick={onContinue}>
+      <Button fullWidth className="gm-save__cta" disabled={!saved} onClick={onContinue}>
         Kirishga o‘tish
       </Button>
-    </div>
+
+      <p className="gm-save__sr" role="status" aria-live="polite">
+        {announcement}
+      </p>
+    </section>
   );
 }

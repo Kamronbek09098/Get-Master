@@ -15,7 +15,7 @@ import { AdminOrderActionDto, AdminOrderQueryDto, AdminOrderResolveDto } from '.
 import { AdminConversationQueryDto } from './dto/chat-query.dto';
 import { CursorQueryDto } from '../../common/dto/cursor-query.dto';
 import { PortfolioQueryDto, ReviewPortfolioDto } from './dto/portfolio-review.dto';
-import { DeleteUserDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
+import { DeleteUserDto, RegistrationBlockDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { AdminService } from './admin.service';
 import { DashboardQueryDto } from './dto/dashboard-query.dto';
@@ -128,6 +128,26 @@ export class AdminController {
     @Req() req: Request,
   ) {
     return this.users.remove(adminId, id, dto, req);
+  }
+
+  @Post('users/:id/registration-block')
+  blockRegistration(
+    @CurrentUser('sub') adminId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RegistrationBlockDto,
+    @Req() req: Request,
+  ) {
+    return this.users.setRegistrationBlock(adminId, id, true, dto, req);
+  }
+
+  @Post('users/:id/registration-unblock')
+  unblockRegistration(
+    @CurrentUser('sub') adminId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RegistrationBlockDto,
+    @Req() req: Request,
+  ) {
+    return this.users.setRegistrationBlock(adminId, id, false, dto, req);
   }
 
   @Get('portfolio')

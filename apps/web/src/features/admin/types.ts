@@ -192,6 +192,8 @@ export interface AdminUserDetail {
   status: 'PENDING' | 'ACTIVE' | 'BLOCKED' | 'SUSPENDED' | 'DELETED';
   createdAt: string;
   deletedAt: string | null;
+  /** O‘chirilgan akkaunt raqamidan qayta ro‘yxatdan o‘tish admin tomonidan taqiqlanganmi. */
+  registrationBlocked?: boolean;
   lastLoginAt: string | null;
   phoneVerifiedAt: string | null;
   roles: Array<'CUSTOMER' | 'MASTER' | 'ADMIN'>;

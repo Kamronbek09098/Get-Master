@@ -72,10 +72,25 @@ export class AuthService {
       throw new BadRequestException(ERRORS.INVALID_POLICY_ACCEPTANCE);
     }
 
-    const existing = await this.db.user.findUnique({
+    // Admin qayta ro‘yxatdan o‘tishni taqiqlagan raqam: tashqaridan oddiy ro‘yxatdan o‘tishdan farq qilmaydi, hisob yaratilmaydi.
+    const blockedPhone = await this.db.blockedPhone.findUnique({ where: { phone }, select: { id: true } });
+    if (blockedPhone) {
+      await verifySecret(dto.password, await this.dummyPasswordHash());
+      return this.decoyRegistration(dto, req, phone, 'phone', blockedPhone.id, false);
+    }
+
+    let existing = await this.db.user.findUnique({
       where: { phone },
       select: { id: true, deletedAt: true, status: true, passwordHash: true, accountNumber: true },
     });
+    // Admin o‘chirgan (eski usulda raqami band qolgan) akkaunt: raqam bo‘shatiladi va yangi ro‘yxatdan o‘tishga yo‘l ochiladi.
+    if (existing && (existing.deletedAt !== null || existing.status === UserStatus.DELETED)) {
+      await this.db.user.update({
+        where: { id: existing.id },
+        data: { phone: `del${existing.accountNumber}_${phone}`.slice(0, 32), email: null, passwordHash: null },
+      });
+      existing = null;
+    }
     if (existing) {
       // Telefon band bo‘lsa, parol to‘g‘ri bo‘lsa ham ro‘yxatdan o‘tish orqali kirish MUMKIN EMAS: faqat «Kirish» sahifasi orqali kiriladi.
       // Tashqaridan javob yangi ro‘yxatdan o‘tishdan farq qilmaydi; adminga ogohlantirish ketadi. Vaqt bir xil bo‘lishi uchun bitta cost-12 amal bajariladi.
@@ -84,10 +99,14 @@ export class AuthService {
     }
 
     if (email) {
-      const emailUser = await this.db.user.findUnique({
+      let emailUser = await this.db.user.findUnique({
         where: { email },
-        select: { id: true },
+        select: { id: true, deletedAt: true, status: true },
       });
+      if (emailUser && (emailUser.deletedAt !== null || emailUser.status === UserStatus.DELETED)) {
+        await this.db.user.update({ where: { id: emailUser.id }, data: { email: null } });
+        emailUser = null;
+      }
       // Email band bo‘lsa ham javob yangi ro‘yxatdan o‘tishdan farq qilmaydi (email mavjudligi oshkor bo‘lmaydi).
       if (emailUser) return this.decoyRegistration(dto, req, phone, 'email', emailUser.id, true);
     }

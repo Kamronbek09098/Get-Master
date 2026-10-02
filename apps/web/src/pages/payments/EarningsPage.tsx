@@ -50,65 +50,67 @@ function Collapse({ title, hint, children }: { title: string; hint: string; chil
   );
 }
 
-function Chart({ daily, average, currency }: { daily: EarningsDay[]; average: number; currency: string }) {
+function Chart({ daily, currency }: { daily: EarningsDay[]; currency: string }) {
   const [active, setActive] = useState<number | null>(null);
   const max = Math.max(...daily.map((day) => day.net), 1);
+  const count = daily.length;
   const shown = active !== null ? daily[active] : null;
-  const height = 180;
-  const step = 100 / daily.length;
+  const tickEvery = count <= 7 ? 1 : count <= 31 ? 5 : 15;
+  const pct = (value: number) => `${Math.min(100, (value / max) * 100)}%`;
+  const bestIndex = daily.reduce((best, day, index) => (day.net > (daily[best]?.net ?? 0) ? index : best), 0);
+  const left = active !== null ? ((active + 0.5) / count) * 100 : 0;
+
   return (
-    <div className="gm-earn__chart">
-      <div className="gm-earn__readout" aria-live="polite">
-        {shown ? (
-          <>
-            <strong>{formatMoney(shown.net, currency)}</strong>
-            <span>
-              {shortDate(shown.date)}, {weekday(shown.date)} · {shown.count} ta to‘lov
-            </span>
-          </>
-        ) : (
-          <span>Kunni tanlash uchun ustiga boring yoki bosing</span>
-        )}
-      </div>
-      <svg viewBox={`0 0 100 ${height}`} preserveAspectRatio="none" role="img" aria-label="Kunlik daromad grafigi" onMouseLeave={() => setActive(null)}>
-        {[0.25, 0.5, 0.75].map((line) => (
-          <line key={line} x1="0" x2="100" y1={height - line * (height - 10)} y2={height - line * (height - 10)} className="gm-earn__grid" vectorEffect="non-scaling-stroke" />
-        ))}
-        {average > 0 && <line x1="0" x2="100" y1={height - (average / max) * (height - 10)} y2={height - (average / max) * (height - 10)} className="gm-earn__avg" vectorEffect="non-scaling-stroke" />}
-        {daily.map((day, index) => {
-          const barHeight = day.net > 0 ? Math.max((day.net / max) * (height - 10), 3) : 1.5;
-          const isToday = index === daily.length - 1;
-          return (
-            <g key={day.date}>
-              <rect
-                x={index * step + step * 0.12}
-                y={height - barHeight}
-                width={step * 0.76}
-                height={barHeight}
-                rx="1"
-                className={cx('gm-earn__bar', isToday && 'gm-earn__bar--today', day.net === 0 && 'gm-earn__bar--zero', active === index && 'gm-earn__bar--on')}
-              />
-              <rect
-                x={index * step}
-                y="0"
-                width={step}
-                height={height}
-                fill="transparent"
-                tabIndex={0}
-                aria-label={`${shortDate(day.date)}: ${formatMoney(day.net, currency)}`}
+    <div className="gm-chart">
+      <div className="gm-chart__plot">
+        <div className="gm-chart__y" aria-hidden="true">
+          <span style={{ bottom: '100%' }}>{compact(max)}</span>
+          <span style={{ bottom: '50%' }}>{compact(max / 2)}</span>
+          <span style={{ bottom: '0%' }}>0</span>
+        </div>
+        <div className="gm-chart__area" onMouseLeave={() => setActive(null)}>
+          <span className="gm-chart__grid" style={{ bottom: '100%' }} aria-hidden="true" />
+          <span className="gm-chart__grid" style={{ bottom: '50%' }} aria-hidden="true" />
+          <span className="gm-chart__grid gm-chart__grid--base" style={{ bottom: '0%' }} aria-hidden="true" />
+          <div className="gm-chart__bars" role="list" aria-label="Kunlik daromad grafigi">
+            {daily.map((day, index) => (
+              <button
+                key={day.date}
+                type="button"
+                role="listitem"
+                className={cx('gm-chart__col', active === index && 'gm-chart__col--on')}
+                aria-label={`${shortDate(day.date)}, ${weekday(day.date)}: ${formatMoney(day.net, currency)}, ${day.count} ta to‘lov`}
                 onMouseEnter={() => setActive(index)}
                 onFocus={() => setActive(index)}
-                onClick={() => setActive(index)}
-              />
-            </g>
-          );
-        })}
-      </svg>
-      <div className="gm-earn__axis">
-        <span>{shortDate(daily[0]!.date)}</span>
-        <span className="gm-earn__axis-max">eng ko‘pi: {compact(max)}</span>
-        <span>Bugun</span>
+                onBlur={() => setActive(null)}
+                onClick={() => setActive(active === index ? null : index)}
+              >
+                <span
+                  className={cx('gm-chart__bar', day.net === 0 && 'gm-chart__bar--zero', index === count - 1 && 'gm-chart__bar--today', index === bestIndex && day.net > 0 && 'gm-chart__bar--best')}
+                  style={{ height: day.net > 0 ? `max(${pct(day.net)}, 4px)` : '2px' }}
+                />
+              </button>
+            ))}
+          </div>
+          {shown && (
+            <div className="gm-chart__tip" style={{ left: `clamp(70px, ${left}%, calc(100% - 70px))` }} role="status">
+              <strong>{formatMoney(shown.net, currency)}</strong>
+              <span>
+                {shortDate(shown.date)}, {weekday(shown.date)}
+              </span>
+              <span>{shown.count > 0 ? `${shown.count} ta to‘lov` : 'To‘lov bo‘lmagan'}</span>
+            </div>
+          )}
+          <div className="gm-chart__x" aria-hidden="true">
+            {daily.map((day, index) => {
+              const isLast = index === count - 1;
+              const show = isLast || (index % tickEvery === 0 && count - 1 - index >= Math.ceil(tickEvery / 2));
+              return <span key={day.date}>{show ? <em>{isLast ? 'Bugun' : shortDate(day.date)}</em> : null}</span>;
+            })}
+          </div>
+        </div>
       </div>
+      <p className="gm-chart__hint">Kunni ko‘rish uchun ustuniga bosing yoki ustiga boring</p>
     </div>
   );
 }
@@ -202,7 +204,7 @@ export function EarningsPage() {
                 Oxirgi {days} kun: <strong>{formatMoney(data.range.net, data.currency)}</strong>
               </span>
             </header>
-            <Chart daily={data.daily} average={data.range.average} currency={data.currency} />
+            <Chart daily={data.daily} currency={data.currency} />
             <div className="gm-earn__facts">
               <div>
                 <Trophy size={16} aria-hidden="true" />

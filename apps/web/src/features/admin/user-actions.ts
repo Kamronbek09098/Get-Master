@@ -1,6 +1,6 @@
 import type { AdminUser } from './types';
 
-export type UserAction = 'SUSPEND' | 'BLOCK' | 'ACTIVATE' | 'DELETE';
+export type UserAction = 'SUSPEND' | 'BLOCK' | 'ACTIVATE' | 'DELETE' | 'BLOCK_REGISTRATION' | 'ALLOW_REGISTRATION';
 
 interface Copy {
   title: string;
@@ -38,6 +38,20 @@ export const USER_ACTION_COPY: Record<UserAction, Copy> = {
     confirm: 'O‘chirish',
     variant: 'danger',
     reasonRequired: true,
+  },
+  BLOCK_REGISTRATION: {
+    title: 'Qayta ro‘yxatdan o‘tishni bloklash',
+    text: 'Bu telefon raqami bilan yangi akkaunt ochib bo‘lmaydi: ro‘yxatdan o‘tishga urinish tashqaridan oddiy ko‘rinadi, lekin akkaunt yaratilmaydi va kod yuborilmaydi. Istalgan payt blokni bekor qilish mumkin.',
+    confirm: 'Bloklash',
+    variant: 'danger',
+    reasonRequired: false,
+  },
+  ALLOW_REGISTRATION: {
+    title: 'Qayta ro‘yxatdan o‘tishga ruxsat berish',
+    text: 'Bu telefon raqami bilan yana yangi akkaunt ochish mumkin bo‘ladi.',
+    confirm: 'Ruxsat berish',
+    variant: 'primary',
+    reasonRequired: false,
   },
 };
 

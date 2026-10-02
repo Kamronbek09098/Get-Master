@@ -29,3 +29,10 @@ export class DeleteUserDto {
   @MaxLength(500)
   reason!: string;
 }
+
+export class RegistrationBlockDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
+}

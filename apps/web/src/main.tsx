@@ -5,6 +5,7 @@ import '@/styles/global.css';
 import { applyUiSize, getUiSize } from '@/lib/ui-size';
 import '@/styles/polish.css';
 import '@/styles/compact.css';
+import '@/styles/cards.css';
 
 applyUiSize(getUiSize());
 

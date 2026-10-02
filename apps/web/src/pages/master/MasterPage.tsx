@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
+import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import { Pagination } from '@/components/ui/Pagination';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -22,9 +23,11 @@ export function MasterPage() {
 
   return (
     <div>
-      <div className="gm-masters-head">
-        <h1>Ustalar katalogi</h1>
-        <p>Tasdiqlangan ustalarni tanlang, profilini ko‘ring va chat orqali bog‘laning.</p>
+      <div className="gm-page-header">
+        <div>
+          <h1>Ustalar katalogi</h1>
+          <p className="gm-page-lead">Tasdiqlangan ustalarni tanlang, profilini ko‘ring va chat orqali bog‘laning.</p>
+        </div>
       </div>
 
       <div className="gm-masters-search">
@@ -67,6 +70,20 @@ export function MasterPage() {
       )}
       {!masters.isLoading && !masters.isError && items.length === 0 && (
         <EmptyState
+          icon={<Search size={28} strokeWidth={1.8} />}
+          action={
+            filtered ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setSearch('');
+                  setCategoryId(undefined);
+                }}
+              >
+                Filtrni tozalash
+              </Button>
+            ) : undefined
+          }
           title="Usta topilmadi"
           description={filtered ? 'Qidiruv yoki kategoriyani o‘zgartirib ko‘ring.' : 'Hozircha tasdiqlangan ustalar yo‘q.'}
         />

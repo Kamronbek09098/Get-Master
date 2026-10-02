@@ -127,3 +127,70 @@ html {
 .gm-verification-banner__link:hover svg {
   transform: translateX(3px);
 }
+
+/* Sharhlar: yulduzlar rangli, izohsiz sharh ham tartibli */
+.gm-review-stars {
+  margin: 0;
+  color: #f5a524;
+  font-size: 1.05rem;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+.gm-review-stars__off {
+  color: var(--gm-color-border-strong);
+}
+.gm-review-nocomment {
+  margin: 0;
+  font-style: italic;
+}
+
+/* ===== Mijoz va usta panellari: sarlavha, izoh va tablar chetga yopishmasin — kontent o‘qi bo‘yicha o‘rtada ===== */
+@media (min-width: 641px) {
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-page-header,
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-ohead,
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-masters-head {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gm-space-3);
+    text-align: center;
+  }
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-page-header > div,
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-ohead > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+  }
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-page-header h1,
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-ohead h1,
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-masters-head h1 {
+    margin: 0;
+  }
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-page-lead,
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-ohead p,
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-masters-head p {
+    display: block;
+    max-width: 64ch;
+    margin: 0 auto;
+    text-wrap: balance;
+  }
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-page-header + * {
+    margin-top: 0;
+  }
+
+  /* Tablar: o‘rtada */
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-tabs,
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-olist-tabs,
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-earn__ranges {
+    align-self: center;
+    margin-inline: auto;
+    width: fit-content;
+    max-width: 100%;
+  }
+  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-tabs {
+    display: flex;
+    justify-content: center;
+  }
+}

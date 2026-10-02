@@ -1,12 +1,12 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { MasterStatus, Prisma, Role, SessionStatus, UserStatus } from '@prisma/client';
+import { MasterStatus, OfferStatus, Prisma, RequestStatus, Role, SessionStatus, UserStatus } from '@prisma/client';
 import type { Request } from 'express';
 import { ERRORS } from '../../common/constants/error-messages';
 import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { hashSecret, verifySecret } from '../../common/security/hash';
 import { TelegramAlertService } from '../../infrastructure/telegram/telegram-alert.service';
-import { DeleteUserDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
+import { DeleteUserDto, RegistrationBlockDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 
 const USER_SELECT = {
@@ -27,8 +27,15 @@ const USER_SELECT = {
 
 type UserRow = Prisma.UserGetPayload<{ select: typeof USER_SELECT }>;
 
+/**
+ * O‘chirilgan akkauntning telefon/emaili band qolmasligi uchun «qabr belgisi» bilan almashtiriladi
+ * (asl raqam auditda saqlanadi). Admin ro‘yxatida esa asl ko‘rinishida ko‘rsatiladi.
+ */
+const TOMBSTONE = /^del\d+_/;
+const tombstonePhone = (accountNumber: number, phone: string) => `del${accountNumber}_${phone}`.slice(0, 32);
+
 function present({ userRoles, ...user }: UserRow) {
-  return { ...user, roles: userRoles.map((item) => item.role) };
+  return { ...user, phone: user.phone.replace(TOMBSTONE, ''), roles: userRoles.map((item) => item.role) };
 }
 
 @Injectable()
@@ -157,8 +164,13 @@ export class AdminUsersService {
       user.masterProfile ? this.db.order.count({ where: { masterId: user.masterProfile.id } }) : Promise.resolve(0),
     ]);
     const { userRoles, _count, ...rest } = user;
+    const realPhone = rest.phone.replace(TOMBSTONE, '');
+    const registrationBlocked =
+      rest.status === UserStatus.DELETED ? !!(await this.db.blockedPhone.findUnique({ where: { phone: realPhone }, select: { id: true } })) : false;
     return {
       ...rest,
+      phone: realPhone,
+      registrationBlocked,
       roles: userRoles.map((item) => item.role),
       stats: { orders: _count.ordersAsCustomer + ordersAsMaster, requests: _count.requests, messages: _count.sentMessages, reviews: _count.reviews, activeDevices },
       lastSession,
@@ -210,14 +222,43 @@ export class AdminUsersService {
   }
 
   async remove(adminId: string, userId: string, dto: DeleteUserDto, req: Request) {
-    const target = await this.loadModerable(adminId, userId);
+    const target = await this.db.user.findUnique({ where: { id: userId }, select: USER_SELECT });
+    if (!target) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    if (target.id === adminId) throw new ForbiddenException(ERRORS.CANNOT_MODERATE_ADMIN);
     if (target.status === UserStatus.DELETED || target.deletedAt) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
 
+    const targetIsAdmin = target.userRoles.some((item) => item.role === Role.ADMIN);
+    if (targetIsAdmin) {
+      // Tizim administratorsiz qolib ketmasligi uchun kamida bitta boshqa faol admin bo‘lishi shart.
+      const others = await this.db.user.count({
+        where: { id: { not: userId }, deletedAt: null, status: UserStatus.ACTIVE, userRoles: { some: { role: Role.ADMIN } } },
+      });
+      if (others < 1) throw new ConflictException(ERRORS.CANNOT_MODERATE_ADMIN);
+    }
+
+    const originalPhone = target.phone;
     await this.db.$transaction(async (tx) => {
-      await tx.user.update({ where: { id: userId }, data: { status: UserStatus.DELETED, deletedAt: new Date() } });
+      // Telefon va email bo‘shatiladi: shu raqam/email bilan yangi akkaunt ochish mumkin bo‘ladi, eski akkaunt hech qayerda qolmaydi.
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          status: UserStatus.DELETED,
+          deletedAt: new Date(),
+          phone: tombstonePhone(target.accountNumber, originalPhone),
+          email: null,
+          passwordHash: null,
+        },
+      });
       if (target.masterProfile) {
         await tx.masterProfile.update({ where: { id: target.masterProfile.id }, data: { status: MasterStatus.SUSPENDED } });
+        await tx.offer.updateMany({ where: { masterId: target.masterProfile.id, status: OfferStatus.PENDING }, data: { status: OfferStatus.WITHDRAWN } });
       }
+      // Ochiq so‘rovlar yopiladi: boshqa foydalanuvchilarda o‘chirilgan akkauntning so‘rovi qolib ketmasin.
+      await tx.problemRequest.updateMany({
+        where: { customerId: userId, status: { in: [RequestStatus.DRAFT, RequestStatus.SUBMITTED, RequestStatus.MATCHING, RequestStatus.OFFERS_RECEIVED] } },
+        data: { status: RequestStatus.CANCELLED },
+      });
+      await tx.otpCode.deleteMany({ where: { OR: [{ userId }, { phone: originalPhone }] } });
       await this.revokeAllSessions(tx, userId);
       await tx.auditLog.create({
         data: {
@@ -225,7 +266,7 @@ export class AdminUsersService {
           action: 'ADMIN_USER_DELETED',
           targetType: 'User',
           targetId: userId,
-          before: { status: target.status },
+          before: { status: target.status, phone: originalPhone, email: target.email, roles: target.userRoles.map((item) => item.role) },
           after: { status: UserStatus.DELETED },
           reason: dto.reason.trim(),
           ipAddress: req.ip?.slice(0, 64) ?? null,
@@ -234,6 +275,43 @@ export class AdminUsersService {
       });
     });
     return { deleted: true };
+  }
+
+  /**
+   * O‘chirilgan akkaunt raqamidan qayta ro‘yxatdan o‘tishni taqiqlaydi yoki ruxsat beradi.
+   * Odatiy holatda o‘chirilgan raqam bilan yangi akkaunt ochish mumkin; taqiq faqat admin qo‘ysa ishlaydi.
+   */
+  async setRegistrationBlock(adminId: string, userId: string, blocked: boolean, dto: RegistrationBlockDto, req: Request) {
+    const target = await this.db.user.findUnique({ where: { id: userId }, select: USER_SELECT });
+    if (!target) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    if (target.status !== UserStatus.DELETED && !target.deletedAt) throw new ConflictException(ERRORS.USER_STATUS_TRANSITION_INVALID(target.status, 'DELETED'));
+    const phone = target.phone.replace(TOMBSTONE, '');
+    const reason = dto.reason?.trim() || null;
+
+    await this.db.$transaction(async (tx) => {
+      if (blocked) {
+        await tx.blockedPhone.upsert({
+          where: { phone },
+          create: { phone, reason, blockedById: adminId },
+          update: { reason, blockedById: adminId },
+        });
+      } else {
+        await tx.blockedPhone.deleteMany({ where: { phone } });
+      }
+      await tx.auditLog.create({
+        data: {
+          actorId: adminId,
+          action: blocked ? 'ADMIN_REGISTRATION_BLOCKED' : 'ADMIN_REGISTRATION_ALLOWED',
+          targetType: 'User',
+          targetId: userId,
+          after: { phone, registrationBlocked: blocked },
+          reason,
+          ipAddress: req.ip?.slice(0, 64) ?? null,
+          requestId: (req as { id?: string }).id ?? null,
+        },
+      });
+    });
+    return { registrationBlocked: blocked };
   }
 
   /**

@@ -116,7 +116,7 @@ describe('freeze / block / reactivate', () => {
     const user = await createUser(h, ['CUSTOMER']);
     expect((await setStatus(admin.token, other.id, { status: 'BLOCKED', reason: 'Sinov' })).status).toBe(403);
     expect((await setStatus(admin.token, admin.id, { status: 'BLOCKED', reason: 'Sinov' })).status).toBe(403);
-    expect((await remove(admin.token, other.id, { reason: 'Sinov' })).status).toBe(403);
+    expect((await remove(admin.token, admin.id, { reason: 'Sinov' })).status).toBe(403);
     expect((await setStatus(user.token, user.id, { status: 'BLOCKED', reason: 'Sinov' })).status).toBe(403);
     expect((await setStatus(undefined, user.id, { status: 'BLOCKED', reason: 'Sinov' })).status).toBe(401);
     expect((await setStatus(admin.token, '00000000-0000-4000-8000-00000000dead', { status: 'BLOCKED', reason: 'Sinov' })).status).toBe(404);
@@ -141,6 +141,57 @@ describe('delete', () => {
     expect(active.data.items).toEqual([]);
     const deleted = await h.get(`/admin/users?status=DELETED&search=${encodeURIComponent(master.phone)}`, admin.token);
     expect(deleted.data.items.map((item: { id: string }) => item.id)).toEqual([master.id]);
+  });
+
+  it('frees the phone and email so the same number can register again, and cleans up open work', async () => {
+    const user = await createUser(h, ['CUSTOMER']);
+    expect((await remove(admin.token, user.id, { reason: 'Qayta ro‘yxatdan o‘tish uchun' })).status).toBe(201);
+    expect(await h.db.user.findUnique({ where: { phone: user.phone } })).toBeNull();
+    const row = await h.db.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(row.phone).not.toBe(user.phone);
+    expect(row.email).toBeNull();
+    expect(row.passwordHash).toBeNull();
+    const audit = await h.db.auditLog.findFirstOrThrow({ where: { targetId: user.id, action: 'ADMIN_USER_DELETED' } });
+    expect((audit.before as { phone: string }).phone).toBe(user.phone);
+    // Eski token ishlamaydi.
+    expect((await h.get('/users/me', user.token)).status).toBe(401);
+  });
+
+  it('a deleted number can register again — unless an admin blocks re-registration', async () => {
+    const policies = (await h.db.policyVersion.findMany({ where: { status: 'PUBLISHED' }, select: { id: true } })).map((p) => p.id);
+    const body = (phone: string) => ({ phone, password: 'Test-Pass-12345', firstName: 'Qayta', lastName: 'Royxat', acceptedPolicyIds: policies });
+    const regState = (phone: string) => h.db.user.findUnique({ where: { phone }, select: { status: true } });
+
+    // Oddiy holat: o‘chirilgan raqam bilan yangi akkaunt ochiladi.
+    const a = await createUser(h, ['CUSTOMER']);
+    expect((await remove(admin.token, a.id, { reason: 'Sinov o‘chirish' })).status).toBe(201);
+    expect((await h.api('POST', '/auth/register', { ip: '10.9.1.1', body: body(a.phone) })).status).toBe(201);
+    expect((await regState(a.phone))?.status).toBe('PENDING');
+
+    // Admin bloklasa: akkaunt yaratilmaydi.
+    const b = await createUser(h, ['CUSTOMER']);
+    await remove(admin.token, b.id, { reason: 'Sinov o‘chirish' });
+    expect((await h.post(`/admin/users/${b.id}/registration-block`, admin.token, { reason: 'Firibgarlik' })).status).toBe(201);
+    expect((await h.api('POST', '/auth/register', { ip: '10.9.1.2', body: body(b.phone) })).status).toBe(201); // tashqaridan farq qilmaydi
+    expect(await regState(b.phone)).toBeNull();
+    const detail = await h.get(`/admin/users/${b.id}`, admin.token);
+    expect(detail.data).toMatchObject({ phone: b.phone, registrationBlocked: true });
+
+    // Ruxsat berilsa: yana ochiladi.
+    expect((await h.post(`/admin/users/${b.id}/registration-unblock`, admin.token, {})).status).toBe(201);
+    expect((await h.api('POST', '/auth/register', { ip: '10.9.1.3', body: body(b.phone) })).status).toBe(201);
+    expect((await regState(b.phone))?.status).toBe('PENDING');
+
+    // Faol akkauntga blok qo‘yib bo‘lmaydi.
+    const live = await createUser(h, ['CUSTOMER']);
+    expect((await h.post(`/admin/users/${live.id}/registration-block`, admin.token, {})).status).toBe(409);
+  });
+
+  it('can delete another admin account (never yourself)', async () => {
+    const other = await createAdmin(h);
+    expect((await remove(admin.token, other.id, { reason: 'Admin akkaunti o‘chirildi' })).status).toBe(201);
+    expect((await h.get('/users/me', other.token)).status).toBe(401);
+    expect((await remove(admin.token, admin.id, { reason: 'O‘zini o‘chirish' })).status).toBe(403);
   });
 
   it('needs a reason, cannot repeat, and cannot be undone through the status endpoint', async () => {
