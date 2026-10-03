@@ -2,6 +2,7 @@ import { DeviceList } from '@/features/auth/components/DeviceList';
 import { useState } from 'react';
 import { UI_SIZES, getUiSize, setUiSize, type UiSize } from '@/lib/ui-size';
 import { Button } from '@/components/ui/Button';
+import { GoogleLinkSettings } from '@/features/session/components/GoogleLinkSettings';
 import { TwoFactorSettings } from '@/features/session/components/TwoFactorSettings';
 import { LanguageSettings } from '@/features/session/components/LanguageSettings';
 import './SettingsPage.css';
@@ -50,6 +51,8 @@ export function SettingsPage() {
       <LanguageSettings />
 
       <TwoFactorSettings />
+
+      <GoogleLinkSettings />
 
       <section className="gm-detail-section">
         <h2>{t('Faol qurilmalar')}</h2>

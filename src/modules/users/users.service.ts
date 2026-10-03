@@ -1,5 +1,5 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
-import { verifySecret } from '../../common/security/hash';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { hashSecret, verifySecret } from '../../common/security/hash';
 import { SetTwoFactorDto } from './dto/two-factor.dto';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { UpdateNameDto } from './dto/update-name.dto';
@@ -23,6 +23,9 @@ export class UsersService {
         status: true,
         phoneVerifiedAt: true,
         twoFactorEnabled: true,
+        googleId: true,
+        googleEmail: true,
+        passwordHash: true,
         isSuperAdmin: true,
         adminPermissions: true,
         createdAt: true,
@@ -36,9 +39,25 @@ export class UsersService {
 
     return {
       ...user,
+      googleId: undefined,
+      passwordHash: undefined,
+      hasPassword: user.passwordHash !== null,
+      googleLinked: user.googleId !== null,
       roles: user.userRoles.map((item) => item.role),
       userRoles: undefined,
     };
+  }
+
+  /** Faqat parol hali yo‘q akkauntga: birinchi parol o‘rnatiladi (mavjud parolni almashtirish boshqa yo‘l bilan). */
+  async setInitialPassword(userId: string, password: string) {
+    const user = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, passwordHash: true } });
+    if (!user) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    if (user.passwordHash) throw new ConflictException(ERRORS.PASSWORD_ALREADY_SET);
+    const passwordHash = await hashSecret(password, 12);
+    const result = await this.db.user.updateMany({ where: { id: userId, passwordHash: null }, data: { passwordHash } });
+    if (result.count !== 1) throw new ConflictException(ERRORS.PASSWORD_ALREADY_SET);
+    await this.db.auditLog.create({ data: { actorId: userId, action: 'USER_PASSWORD_SET', targetType: 'User', targetId: userId } });
+    return this.findMe(userId);
   }
 
   async updateName(userId: string, dto: UpdateNameDto) {

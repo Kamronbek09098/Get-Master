@@ -14,7 +14,8 @@ import { formatDateTime, formatMoney, formatRelativeTime } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { TrustBadge } from '@/features/trust/components/TrustBadge';
-import { useAdminUserByNumber } from '@/features/admin/hooks/useAdmin';
+import { Switch } from '@/components/ui/Switch';
+import { useAdminUserByNumber, useSetUserTwoFactor } from '@/features/admin/hooks/useAdmin';
 import { accountPath } from '@/features/admin/components/AccountLink';
 import { actionInfo } from '@/features/admin/audit-labels';
 import { useMe } from '@/features/session/hooks/useMe';
@@ -73,6 +74,7 @@ export function AdminUserProfilePage() {
   const [loginCopied, setLoginCopied] = useState(false);
   const navigate = useNavigate();
   const openChat = useOpenSupportChat();
+  const setTwoFactor = useSetUserTwoFactor();
   const number = id && /^\d{1,9}$/.test(id) ? Number(id) : null;
   const user = useAdminUserByNumber(number);
 
@@ -158,6 +160,24 @@ export function AdminUserProfilePage() {
               </Link>
             </div>
           </header>
+
+          {!!me.data?.isSuperAdmin && data.status !== 'DELETED' && (
+            <section className="gm-uprofile__card" aria-label={t('Kirishda tasdiqlash kodi')}>
+              <h2>{t('Kirishda tasdiqlash kodi (OTP)')}</h2>
+              <p className="gm-twofa__text">
+                {data.twoFactorEnabled !== false
+                  ? t('Bu akkaunt kirganda telefonga tasdiqlash kodi yuboriladi.')
+                  : t('Bu akkauntga faqat login va parol bilan kiriladi, kod yuborilmaydi.')}
+              </p>
+              {setTwoFactor.isError && <Alert tone="danger">{getErrorMessage(setTwoFactor.error)}</Alert>}
+              <Switch
+                label={data.twoFactorEnabled !== false ? t('Kirishda kod so‘ralsin') : t('Kirishda kod so‘ralmaydi')}
+                checked={data.twoFactorEnabled !== false}
+                disabled={setTwoFactor.isPending}
+                onChange={(enabled) => setTwoFactor.mutate({ id: data.id, enabled })}
+              />
+            </section>
+          )}
 
           <section className="gm-uprofile__stats" aria-label={t('Statistika')}>
             <Stat icon={<Package size={18} />} value={data.stats.orders} label={t('Buyurtmalar')} />

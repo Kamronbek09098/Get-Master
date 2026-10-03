@@ -51,7 +51,7 @@ function CopyButton({ text, label, target, onCopied }: { text: string; label: st
  * saqlanadi (qaytarib bo‘lmaydi); shu sabab uni o‘zingiz saqlab qo‘yishingiz kerak.
  * Kartochka yopilganda parol xotiradan o‘chiriladi.
  */
-export function NewCredentialsCard({ onContinue }: { onContinue: () => void }) {
+export function NewCredentialsCard({ onContinue, badge, continueLabel }: { onContinue: () => void; badge?: string; continueLabel?: string }) {
   const credentials = useAuthStore((s) => s.newCredentials);
   const setNewCredentials = useAuthStore((s) => s.setNewCredentials);
   const [shown, setShown] = useState(true);
@@ -80,7 +80,7 @@ export function NewCredentialsCard({ onContinue }: { onContinue: () => void }) {
   return (
     <section className="gm-save" aria-labelledby={titleId}>
       <span className="gm-save__ok">
-        <CheckCircle2 size={16} aria-hidden="true" /> {t('Hisobingiz yaratildi')}
+        <CheckCircle2 size={16} aria-hidden="true" /> {badge ?? t('Hisobingiz yaratildi')}
       </span>
       <header className="gm-save__head">
         <h2 id={titleId}>{t('Login va parolingizni saqlang')}</h2>
@@ -136,7 +136,7 @@ export function NewCredentialsCard({ onContinue }: { onContinue: () => void }) {
       </label>
 
       <Button fullWidth className="gm-save__cta" disabled={!saved} onClick={onContinue}>
-        {t('Kirishga o‘tish')}
+        {continueLabel ?? t('Kirishga o‘tish')}
       </Button>
 
       <p className="gm-save__sr" role="status" aria-live="polite">

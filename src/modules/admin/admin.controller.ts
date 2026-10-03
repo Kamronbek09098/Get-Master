@@ -18,7 +18,7 @@ import { CursorQueryDto } from '../../common/dto/cursor-query.dto';
 import { PortfolioQueryDto, ReviewPortfolioDto } from './dto/portfolio-review.dto';
 import { DeleteUserDto, RegistrationBlockDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
 import { UserQueryDto } from './dto/user-query.dto';
-import { CreateAdminDto, SetAdminPermissionsDto, SetSuperAdminDto } from './dto/admin-account.dto';
+import { CreateAdminDto, SetAdminPermissionsDto, SetSuperAdminDto, SetTwoFactorValueDto } from './dto/admin-account.dto';
 import { AdminService } from './admin.service';
 import { DashboardQueryDto } from './dto/dashboard-query.dto';
 import { RevenueReportQueryDto } from './dto/revenue-report-query.dto';
@@ -175,6 +175,16 @@ export class AdminController {
     @Req() req: Request,
   ) {
     return this.users.setSuperAdmin(adminId, id, dto.value, req);
+  }
+
+  @Patch('users/:id/two-factor')
+  setUserTwoFactor(
+    @CurrentUser('sub') adminId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SetTwoFactorValueDto,
+    @Req() req: Request,
+  ) {
+    return this.users.setUserTwoFactor(adminId, id, dto.enabled, req);
   }
 
   @RequiresPermission('USERS')

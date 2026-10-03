@@ -47,6 +47,14 @@ export function useSetUserPassword() {
   });
 }
 
+export function useSetUserTwoFactor() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) => adminService.setUserTwoFactor(id, enabled),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
+  });
+}
+
 export function useSetRegistrationBlock() {
   const queryClient = useQueryClient();
   return useMutation({

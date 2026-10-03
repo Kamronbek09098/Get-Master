@@ -26,7 +26,7 @@ export const authService = {
     return apiPost<GoogleSignInResult>('/auth/google', { credential });
   },
   googleRegister(signupToken: string, phone: string) {
-    return apiPost<RegisterResult>('/auth/google/register', { signupToken, phone, acceptedPolicyIds: REQUIRED_POLICY_IDS });
+    return apiPost<{ verificationRequired: false }>('/auth/google/register', { signupToken, phone, acceptedPolicyIds: REQUIRED_POLICY_IDS });
   },
   login(input: LoginInput) {
     return apiPost<LoginResult>('/auth/login', input);

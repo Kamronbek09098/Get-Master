@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { SetPasswordDto } from './dto/set-password.dto';
 import { SetTwoFactorDto } from './dto/two-factor.dto';
 import { UpdateNameDto } from './dto/update-name.dto';
 import { UsersService } from './users.service';
@@ -16,6 +17,12 @@ export class UsersController {
   @Patch('me/two-factor')
   setTwoFactor(@CurrentUser('sub') userId: string, @Body() dto: SetTwoFactorDto) {
     return this.usersService.setTwoFactor(userId, dto);
+  }
+
+  /** Parolsiz (masalan, Google orqali ochilgan) akkauntga birinchi marta parol o‘rnatish. */
+  @Post('me/password')
+  setPassword(@CurrentUser('sub') userId: string, @Body() dto: SetPasswordDto) {
+    return this.usersService.setInitialPassword(userId, dto.password);
   }
 
   @Patch('me/name')

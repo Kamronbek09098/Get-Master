@@ -5,14 +5,14 @@ import { Input } from '@/components/ui/Input';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { Modal } from '@/components/ui/Modal';
 import { env } from '@/lib/env';
 import { getErrorMessage } from '@/lib/error-messages';
 import { getNavItems } from '@/components/layout/nav-items';
 import { useAuthStore } from '@/store/auth.store';
 import { authService } from '../services/auth.service';
-import { googlePending } from '../google-pending';
 import { formatLocalPhone, localPhoneSchema, toFullPhone, toLocalDigits } from '../validation';
-import { t, lang } from '@/i18n';
+import { t } from '@/i18n';
 
 interface GoogleIdentity {
   accounts: {
@@ -28,9 +28,13 @@ declare global {
   }
 }
 
+export const GOOGLE_LOGO = (
+  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7a14.500 14.500 0 0 1 0-9.4l-7.9-6.1a24 24 0 0 0 0 21.600l7.9-6.100z"/><path fill="#34A853" d="M24 48c6.500 0 11.900-2.100 15.900-5.800l-7.500-5.800c-2.100 1.400-4.800 2.300-8.400 2.300-6.300 0-11.600-4-13.500-9.800l-7.900 6.100C6.500 42.600 14.600 48 24 48z"/></svg>
+);
+
 const SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
 let scriptPromise: Promise<void> | null = null;
-function loadGoogleScript(): Promise<void> {
+export function loadGoogleScript(): Promise<void> {
   if (window.google?.accounts) return Promise.resolve();
   scriptPromise ??= new Promise<void>((resolve, reject) => {
     const el = document.createElement('script');
@@ -78,8 +82,7 @@ export function GoogleAuth() {
           shape: 'pill',
           text: 'continue_with',
           logo_alignment: 'left',
-          width: Math.min(360, Math.max(240, (buttonRef.current.parentElement?.clientWidth ?? 320))),
-          locale: lang === 'uz-Cyrl' ? 'uz' : lang,
+          width: Math.min(400, Math.max(200, buttonRef.current.parentElement?.clientWidth ?? 320)),
         });
       })
       .catch(() => setError(new Error(t('Google xizmatiga ulanib bo‘lmadi. Internetni tekshiring.'))));
@@ -99,7 +102,7 @@ export function GoogleAuth() {
         </div>
         {!!error && <Alert tone="info">{getErrorMessage(error)}</Alert>}
         <button type="button" className="gm-google__fallback" onClick={() => setError(new Error(t('Google orqali kirish hali sozlanmagan. Administrator Google Client ID ni kiritishi kerak.')))}>
-          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7a14.500 14.500 0 0 1 0-9.4l-7.9-6.1a24 24 0 0 0 0 21.600l7.9-6.100z"/><path fill="#34A853" d="M24 48c6.500 0 11.900-2.100 15.900-5.800l-7.500-5.800c-2.100 1.400-4.800 2.300-8.400 2.300-6.300 0-11.600-4-13.500-9.800l-7.900 6.100C6.500 42.600 14.600 48 24 48z"/></svg>
+          {GOOGLE_LOGO}
           {t('Google orqali davom etish')}
         </button>
       </div>
@@ -137,13 +140,12 @@ export function GoogleAuth() {
     setBusy(true);
     try {
       const phone = toFullPhone(toLocalDigits(phoneLocal));
-      const result = await authService.googleRegister(signup.token, phone);
-      googlePending.set(signup.credential);
-      const store = useAuthStore.getState();
-      store.setPendingPhone(phone);
-      store.setDevCode(result.developmentCode ?? null);
-      store.setNewCredentials(null);
-      navigate('/otp', { state: { flow: 'register', google: true } });
+      await authService.googleRegister(signup.token, phone);
+      // Google orqali kirishda SMS-kod so‘ralmaydi: sessiya shu javobda ochilgan.
+      useAuthStore.getState().setSession(true);
+      setSignup(null);
+      const [firstItem] = getNavItems(useAuthStore.getState().preferredRole, { superAdmin: true });
+      navigate(firstItem?.to ?? '/', { replace: true });
     } catch (e) {
       setError(e);
     } finally {
@@ -151,11 +153,24 @@ export function GoogleAuth() {
     }
   }
 
-  if (signup) {
-    return (
+  const phoneModal = (
+    <Modal
+      open={!!signup}
+      onClose={() => setSignup(null)}
+      title={t('Telefon raqamingizni kiriting')}
+      footer={
+        <>
+          <Button type="button" variant="ghost" onClick={() => setSignup(null)}>
+            {t('Bekor qilish')}
+          </Button>
+          <Button type="button" loading={busy} onClick={() => void submitPhone()}>
+            {t('Davom etish')}
+          </Button>
+        </>
+      }
+    >
       <div className="gm-google gm-google--phone">
-        <h2 className="gm-google__title">{t('Telefon raqamingizni kiriting')}</h2>
-        <p className="gm-google__hint">{t('Google hisobingiz tasdiqlandi. Ro‘yxatdan o‘tishni yakunlash uchun telefon raqamingizga SMS-kod yuboramiz.')}</p>
+        <p className="gm-google__hint">{t('Google hisobingiz tasdiqlandi. Ro‘yxatdan o‘tishni yakunlash uchun telefon raqamingizni kiriting.')}</p>
         {!!error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
         <Input
           label={t('Telefon raqami')}
@@ -183,15 +198,9 @@ export function GoogleAuth() {
           onChange={(event) => setAccepted(event.target.checked)}
           error={termsError ?? undefined}
         />
-        <Button type="button" fullWidth loading={busy} onClick={() => void submitPhone()}>
-          {t('Kodni yuborish')}
-        </Button>
-        <Button type="button" variant="ghost" fullWidth onClick={() => setSignup(null)}>
-          {t('Bekor qilish')}
-        </Button>
       </div>
-    );
-  }
+    </Modal>
+  );
 
   return (
     <div className="gm-google">
@@ -199,7 +208,14 @@ export function GoogleAuth() {
         <span>{t('yoki')}</span>
       </div>
       {!!error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
-      <div className="gm-google__button" ref={buttonRef} aria-busy={busy} />
+      {phoneModal}
+      <div className="gm-google__wrap">
+        <span className="gm-google__fallback" aria-hidden="true">
+          {GOOGLE_LOGO}
+          {t('Google orqali davom etish')}
+        </span>
+        <div className="gm-google__button" ref={buttonRef} aria-busy={busy} aria-label={t('Google orqali davom etish')} />
+      </div>
     </div>
   );
 }

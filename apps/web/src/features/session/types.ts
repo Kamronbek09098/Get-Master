@@ -13,6 +13,11 @@ export interface Me {
   phoneVerifiedAt?: string | null;
   /** Kirishda OTP so‘ralishi (ikki bosqichli autentifikatsiya). */
   twoFactorEnabled?: boolean;
+  /** Google akkaunt ulanganmi (ulangan bo‘lsa Google orqali ham kirish mumkin). */
+  googleLinked?: boolean;
+  /** Akkauntda parol bormi (Google orqali ochilgan akkauntda dastlab yo‘q). */
+  hasPassword?: boolean;
+  googleEmail?: string | null;
   /** Superadmin: adminlarni yaratish va boshqarish huquqi. */
   isSuperAdmin?: boolean;
   /** Oddiy adminning ruxsat berilgan bo‘limlari. */

@@ -59,6 +59,9 @@ export const adminService = {
   setUserPassword(id: string, password: string, reason?: string) {
     return apiPost<{ updated: boolean }>(`/admin/users/${id}/password`, { password, reason: reason || undefined });
   },
+  setUserTwoFactor(id: string, enabled: boolean) {
+    return apiPatch<{ twoFactorEnabled: boolean }>(`/admin/users/${id}/two-factor`, { enabled });
+  },
   setRegistrationBlock(id: string, blocked: boolean, reason?: string) {
     return apiPost<{ registrationBlocked: boolean }>(`/admin/users/${id}/${blocked ? 'registration-block' : 'registration-unblock'}`, { reason });
   },

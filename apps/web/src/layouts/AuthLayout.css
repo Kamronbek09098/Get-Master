@@ -880,3 +880,22 @@
 .gm-google__fallback:hover {
   background: #f8f9fa;
 }
+/* Haqiqiy Google tugmasi ko‘rinmas holda o‘zimizning (tanlangan tilda yozilgan) tugma ustiga qo‘yiladi. */
+.gm-google__wrap {
+  position: relative;
+  display: grid;
+}
+.gm-google__wrap .gm-google__fallback {
+  pointer-events: none;
+}
+.gm-google__wrap .gm-google__button {
+  position: absolute;
+  inset: 0;
+  opacity: 0.01;
+  overflow: hidden;
+  border-radius: 999px;
+}
+.gm-google__wrap .gm-google__button iframe {
+  width: 100% !important;
+  height: 100% !important;
+}

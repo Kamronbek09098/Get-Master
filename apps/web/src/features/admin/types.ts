@@ -194,6 +194,8 @@ export interface AdminUserDetail {
   deletedAt: string | null;
   /** O‘chirilgan akkaunt raqamidan qayta ro‘yxatdan o‘tish admin tomonidan taqiqlanganmi. */
   registrationBlocked?: boolean;
+  /** Kirishda OTP so‘ralishi (superadmin boshqaradi). */
+  twoFactorEnabled?: boolean;
   lastLoginAt: string | null;
   phoneVerifiedAt: string | null;
   roles: Array<'CUSTOMER' | 'MASTER' | 'ADMIN'>;

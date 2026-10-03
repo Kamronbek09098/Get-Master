@@ -38,10 +38,6 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
   const back = `/mijozlar/buyurtmalar/${order.id}`;
   const amount = formatMoney(order.finalAmount, order.currency);
 
-  if (order.status === 'CANCELLED' || order.status === 'EXPIRED') {
-    return <Alert tone="warning">{t('Bu buyurtma bekor qilingan, shuning uchun to‘lov qilinmaydi.')}</Alert>;
-  }
-
   const result = createPayment.data?.payment ?? (current && SETTLED.includes(current.status) ? { ...current, succeededAt: null } : null);
   const checkoutUrl = createPayment.data?.checkoutUrl ?? null;
   const isTestCheckout = !!checkoutUrl && checkoutUrl.startsWith('https://payment.example/');
@@ -50,6 +46,10 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
   useEffect(() => {
     if (isRealCheckout && checkoutUrl) window.location.href = checkoutUrl;
   }, [isRealCheckout, checkoutUrl]);
+
+  if (order.status === 'CANCELLED' || order.status === 'EXPIRED') {
+    return <Alert tone="warning">{t('Bu buyurtma bekor qilingan, shuning uchun to‘lov qilinmaydi.')}</Alert>;
+  }
 
   if (result && SETTLED.includes(result.status)) {
     return (

@@ -33,11 +33,22 @@ export class AuthController {
     return this.authService.googleSignIn(dto, req, res);
   }
 
+  @RateLimit({ policy: 'login', scope: 'ip', escalate: true })
+  @Post('google/link')
+  linkGoogle(@CurrentUser('sub') userId: string, @Body() dto: GoogleSignInDto, @Req() req: Request) {
+    return this.authService.linkGoogle(userId, dto, req);
+  }
+
+  @Post('google/unlink')
+  unlinkGoogle(@CurrentUser('sub') userId: string, @Req() req: Request) {
+    return this.authService.unlinkGoogle(userId, req);
+  }
+
   @Public()
   @RateLimit({ policy: 'register', scope: 'ip', escalate: true })
   @Post('google/register')
-  googleRegister(@Body() dto: GoogleRegisterDto, @Req() req: Request) {
-    return this.authService.googleRegister(dto, req);
+  googleRegister(@Body() dto: GoogleRegisterDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    return this.authService.googleRegister(dto, req, res);
   }
 
   @Public()

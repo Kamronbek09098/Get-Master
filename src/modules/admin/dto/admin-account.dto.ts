@@ -41,6 +41,11 @@ export class SetAdminPermissionsDto {
   permissions!: string[];
 }
 
+export class SetTwoFactorValueDto {
+  @IsBoolean()
+  enabled!: boolean;
+}
+
 export class SetSuperAdminDto {
   @IsBoolean()
   value!: boolean;

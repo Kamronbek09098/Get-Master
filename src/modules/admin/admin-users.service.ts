@@ -18,6 +18,7 @@ const USER_SELECT = {
   firstName: true,
   lastName: true,
   status: true,
+  twoFactorEnabled: true,
   createdAt: true,
   deletedAt: true,
   userRoles: { select: { role: true } },
@@ -141,6 +142,7 @@ export class AdminUsersService {
         status: true,
         createdAt: true,
         deletedAt: true,
+        twoFactorEnabled: true,
         lastLoginAt: true,
         phoneVerifiedAt: true,
         userRoles: { select: { role: true } },
@@ -239,6 +241,7 @@ export class AdminUsersService {
           phone: tombstonePhone(target.accountNumber, originalPhone),
           email: null,
           passwordHash: null,
+          googleId: null,
         },
       });
       if (target.masterProfile) {
@@ -349,12 +352,37 @@ export class AdminUsersService {
   }
 
   /** Barcha adminlar (faqat superadmin ko‘radi). */
+  /** Superadmin istalgan foydalanuvchi/admin uchun kirishdagi OTP so‘ralishini yoqadi yoki o‘chiradi. */
+  async setUserTwoFactor(actorId: string, userId: string, enabled: boolean, req: Request) {
+    await this.assertSuperAdmin(actorId);
+    const target = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, twoFactorEnabled: true, deletedAt: true, status: true } });
+    if (!target || target.deletedAt || target.status === UserStatus.DELETED) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    if (target.twoFactorEnabled !== enabled) {
+      await this.db.$transaction([
+        this.db.user.update({ where: { id: userId }, data: { twoFactorEnabled: enabled } }),
+        this.db.auditLog.create({
+          data: {
+            actorId,
+            action: enabled ? 'ADMIN_TWO_FACTOR_ENABLED' : 'ADMIN_TWO_FACTOR_DISABLED',
+            targetType: 'User',
+            targetId: userId,
+            before: { twoFactorEnabled: target.twoFactorEnabled },
+            after: { twoFactorEnabled: enabled },
+            ipAddress: req.ip?.slice(0, 64) ?? null,
+            requestId: (req as { id?: string }).id ?? null,
+          },
+        }),
+      ]);
+    }
+    return { twoFactorEnabled: enabled };
+  }
+
   async listAdmins(actorId: string) {
     await this.assertSuperAdmin(actorId);
     const rows = await this.db.user.findMany({
       where: { userRoles: { some: { role: Role.ADMIN } }, deletedAt: null },
       orderBy: [{ isSuperAdmin: 'desc' }, { createdAt: 'asc' }],
-      select: { id: true, accountNumber: true, phone: true, firstName: true, lastName: true, status: true, isSuperAdmin: true, adminPermissions: true, createdAt: true, lastLoginAt: true },
+      select: { id: true, accountNumber: true, phone: true, firstName: true, lastName: true, status: true, isSuperAdmin: true, twoFactorEnabled: true, adminPermissions: true, createdAt: true, lastLoginAt: true },
     });
     return { items: rows.map((row) => ({ ...row, isSelf: row.id === actorId })) };
   }

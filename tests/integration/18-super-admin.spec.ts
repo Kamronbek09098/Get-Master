@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { hashSecret } from '../../src/common/security/hash';
 import { bootHarness, createAdmin, createSuperAdmin, createUser, tokenFor, type Harness, type TestUser } from '../helpers/harness';
 
 let h: Harness;
@@ -96,5 +97,30 @@ describe('superadmin: creating and managing admins', () => {
     // Superadmin hamma joyga kira oladi.
     expect((await h.get('/admin/orders', sup.token)).status).toBe(200);
     expect((await h.get('/audit-logs', sup.token)).status).toBe(200);
+  });
+});
+
+describe('superadmin: OTP at sign-in for any account', () => {
+  it('a superadmin can switch OTP on/off for users and admins; others cannot', async () => {
+    const customer = await createUser(h);
+    const admin = await createAdmin(h);
+    for (const target of [customer, admin]) {
+      const off = await h.patch(`/admin/users/${target.id}/two-factor`, sup.token, { enabled: false });
+      expect(off.status).toBe(200);
+      expect((await h.db.user.findUniqueOrThrow({ where: { id: target.id } })).twoFactorEnabled).toBe(false);
+      expect((await h.patch(`/admin/users/${target.id}/two-factor`, sup.token, { enabled: true })).status).toBe(200);
+      expect((await h.db.user.findUniqueOrThrow({ where: { id: target.id } })).twoFactorEnabled).toBe(true);
+    }
+    expect((await h.patch(`/admin/users/${customer.id}/two-factor`, plain.token, { enabled: false })).status).toBe(403);
+    expect((await h.patch(`/admin/users/${customer.id}/two-factor`, customer.token, { enabled: false })).status).toBe(403);
+    const audit = await h.db.auditLog.count({ where: { actorId: sup.id, action: 'ADMIN_TWO_FACTOR_DISABLED' } });
+    expect(audit).toBeGreaterThanOrEqual(2);
+  });
+
+  it('an admin with OTP switched off signs in with phone+password only (no code)', async () => {
+    const admin = await createAdmin(h);
+    await h.db.user.update({ where: { id: admin.id }, data: { passwordHash: await hashSecret('Strong-Pass-123', 4), twoFactorEnabled: false } });
+    const res = await h.post('/auth/login', undefined, { phone: admin.phone, password: 'Strong-Pass-123' });
+    expect(res.data.verificationRequired).toBe(false);
   });
 });
