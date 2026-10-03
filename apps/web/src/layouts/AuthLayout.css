@@ -963,3 +963,8 @@
   }
   .gm-auth-hero__mark { animation: none; }
 }
+
+/* WebGL fon brend panelida: kontent uning ustida turadi. */
+.gm-auth-layout__brand { position: relative; isolation: isolate; }
+.gm-auth-layout__brand > .gm-shader-bg { z-index: -1; opacity: 0.9; }
+.gm-auth-layout__brand > *:not(.gm-shader-bg) { position: relative; z-index: 1; }

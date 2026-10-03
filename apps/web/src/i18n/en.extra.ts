@@ -1794,4 +1794,8 @@ export const enExtra: Record<string, string> = {
   "Akkauntda parol allaqachon o‘rnatilgan": "A password is already set on this account",
   "Google akkauntni uzishdan oldin akkauntingizga parol o‘rnatishingiz kerak: parolsiz Google uzilsa, akkauntingizga qayta kirib bo‘lmay qoladi": "Set a password before unlinking Google: without one you will not be able to sign in after unlinking",
   "Parol o‘rnatildi": "Password set",
+  "(01) Biz haqimizda": "(01) About us",
+  "(01) Ustalar uchun": "(01) For masters",
+  "Har kuni biror narsa buziladi. Biz bu muammoni hal qiladigan tasdiqlangan ustani — narxi aniq, ishi kafolatli — daqiqalar ichida topib beramiz.": "Something breaks every day. Within minutes we find a verified master who solves it — with a clear price and a guarantee on the work.",
+  "Mijoz izlash — ish emas. Profilingizni yarating, narxni o‘zingiz belgilang, yaqin atrofdagi so‘rovlar o‘zi sizni topadi va daromad shaffof bo‘ladi.": "Finding clients is not your job. Create a profile, set your own price — nearby requests find you and your income stays transparent.",
 };

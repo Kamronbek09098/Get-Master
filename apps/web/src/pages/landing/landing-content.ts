@@ -38,6 +38,8 @@ export interface LandingContent {
   primaryCta: string;
   secondaryCta: string;
   stats: Array<{ value: string; label: string }>;
+  statementLabel: string;
+  statement: string;
   stepsTitle: string;
   steps: Step[];
   showCategories: boolean;
@@ -78,6 +80,8 @@ export const CUSTOMER_CONTENT: LandingContent = {
     { value: 'Kafolat', label: t('Har bir ishga') },
     { value: 'Xavfsiz', label: t('Onlayn to‘lov') },
   ],
+  statementLabel: t('(01) Biz haqimizda'),
+  statement: t('Har kuni biror narsa buziladi. Biz bu muammoni hal qiladigan tasdiqlangan ustani — narxi aniq, ishi kafolatli — daqiqalar ichida topib beramiz.'),
   stepsTitle: t('To‘rt qadamda hal bo‘ladi'),
   steps: [
     { icon: Type, title: t('Muammoni tasvirlang'), text: t('Nima buzilganini yozing, rasmga oling yoki ovoz yozing. AI kategoriyani o‘zi aniqlaydi.') },
@@ -109,6 +113,8 @@ export const MASTER_CONTENT: LandingContent = {
     { value: 'Shaffof', label: t('Daromad va to‘lovlar') },
     { value: 'Erkin', label: t('Ish jadvali') },
   ],
+  statementLabel: t('(01) Ustalar uchun'),
+  statement: t('Mijoz izlash — ish emas. Profilingizni yarating, narxni o‘zingiz belgilang, yaqin atrofdagi so‘rovlar o‘zi sizni topadi va daromad shaffof bo‘ladi.'),
   stepsTitle: t('Ishni boshlash — 4 qadam'),
   steps: [
     { icon: UserPlus, title: t('Ro‘yxatdan o‘ting'), text: t('Telefon raqami bilan akkaunt oching va usta profilingizni to‘ldiring.') },

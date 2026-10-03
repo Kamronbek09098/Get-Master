@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
-import { Check, Copy, KeyRound, MessageCircle, Ban, CheckCircle2, MapPin, Building2, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench, ChevronRight } from 'lucide-react';
+import { Check, Copy, KeyRound, MessageCircle, Ban, CheckCircle2, MapPin, Snowflake, Trash2, ArrowLeft, CalendarClock, Mail, MessageSquare, Package, Phone, ShieldCheck, Smartphone, Star, Wrench, ChevronRight } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -265,9 +265,6 @@ export function AdminUserProfilePage() {
                   <>
                     <Field icon={<Star size={16} />} label={t('Reyting va sharhlar')}>{t('{toFixed} · {ratingCount} ta sharh', { toFixed: Number(data.masterProfile.ratingAvg).toFixed(1), ratingCount: data.masterExtra.ratingCount })}</Field>
                     <Field icon={<ShieldCheck size={16} />} label={t('Ishonchlilik')}>{t('Yakunlash {round}% · Javob berish {round2}%', { round: Math.round(Number(data.masterExtra.completionRate)), round2: Math.round(Number(data.masterExtra.responseRate)) })}</Field>
-                    <Field icon={<Building2 size={16} />} label={t('Ish joyi')}>
-                      {data.masterExtra.workPlace || '—'}
-                    </Field>
                     <Field icon={<MapPin size={16} />} label={t('Ish hududi')}>
                       {Array.isArray(data.masterExtra.serviceAreas) && data.masterExtra.serviceAreas.length > 0 ? (data.masterExtra.serviceAreas as string[]).join(', ') : '—'}
                       {data.masterExtra.workRadiusKm ? <small className="gm-uprofile__ua">{t('Ish radiusi: {number} km', { number: Number(data.masterExtra.workRadiusKm) })}</small> : <small className="gm-uprofile__ua">{t('Radius belgilanmagan')}</small>}

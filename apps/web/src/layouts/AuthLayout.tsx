@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { BadgeCheck, Camera, ShieldCheck, Sparkles, Star, Wallet, ClipboardCheck, BarChart3, Lock, ScrollText, Wrench } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { ShaderBackground } from '@/pages/landing/fx/ShaderBackground';
 import { Logo } from '@/components/common/Logo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { env } from '@/lib/env';
@@ -75,6 +76,7 @@ export function AuthLayout() {
   return (
     <div className={isLogin ? 'gm-auth-layout gm-auth-layout--login' : 'gm-auth-layout'}>
       <aside className="gm-auth-layout__brand" aria-hidden={false}>
+        <ShaderBackground variant="brand" />
         <Link to="/" className="gm-auth-layout__logo" aria-label={t('GetMaster — bosh sahifa')}>
           <Logo />
         </Link>

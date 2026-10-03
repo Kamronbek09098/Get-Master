@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeCheck, MapPin, Star } from 'lucide-react';
 import { Logo } from '@/components/common/Logo';
@@ -8,7 +8,25 @@ import { CATEGORIES, CUSTOMER_CONTENT, INPUT_METHODS, MASTER_CONTENT } from './l
 import type { LandingContent } from './landing-content';
 import '@/components/ui/Button.css';
 import '@/components/ui/Badge.css';
+import { Cursor } from './fx/Cursor';
+import { Marquee } from './fx/Marquee';
+import { StepsGrid } from './fx/StepsGrid';
+import { Statement } from './fx/Statement';
+import { ShaderBackground } from './fx/ShaderBackground';
+import { magneticHandlers, tiltHandlers } from './fx/interactions';
+import { useSmoothScroll } from './fx/useSmoothScroll';
 import './Landing.css';
+
+const Hero3D = lazy(() => import('./fx/Hero3D'));
+
+function webglAvailable(): boolean {
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(canvas.getContext('webgl2') || canvas.getContext('webgl'));
+  } catch {
+    return false;
+  }
+}
 import { t } from '@/i18n';
 
 function HeroPreview({ master }: { master: boolean }) {
@@ -57,7 +75,7 @@ function Words({ text, offset = 0 }: { text: string; offset?: number }) {
     <>
       {text.split(' ').map((word, index) => (
         <span key={`${word}-${index}`} className="gm-lw" style={{ ['--i' as string]: index + offset }}>
-          {word}{' '}
+          {word}
         </span>
       ))}
     </>
@@ -89,9 +107,23 @@ function useScrollReveal() {
 
 function Landing({ content, master }: { content: LandingContent; master: boolean }) {
   useScrollReveal();
+  useSmoothScroll();
+  const [webgl, setWebgl] = useState(false);
+  const [atTop, setAtTop] = useState(true);
+  useEffect(() => {
+    const onScroll = () => setAtTop(window.scrollY < 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+  useEffect(() => {
+    setWebgl(webglAvailable() && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }, []);
   return (
     <div className="gm-landing">
-      <header className="gm-landing__nav">
+      <div id="gm-scroll-progress" className="gm-scroll-progress" aria-hidden="true" />
+      <Cursor />
+      <header className={atTop ? 'gm-landing__nav is-top' : 'gm-landing__nav'}>
         <div className="gm-landing__nav-inner">
           <Link to="/" aria-label="GetMaster">
             <Logo />
@@ -110,6 +142,12 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
       </header>
 
       <section className="gm-landing__hero">
+        {webgl && <ShaderBackground variant="brand" />}
+        {webgl && (
+          <Suspense fallback={null}>
+            <Hero3D />
+          </Suspense>
+        )}
         <div className="gm-landing__hero-inner">
           <div className="gm-landing__hero-copy">
             <span className="gm-landing__eyebrow">{content.eyebrow}</span>
@@ -123,10 +161,10 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
             </h1>
             <p>{content.lead}</p>
             <div className="gm-landing__cta-row">
-              <Link to="/register" className="gm-button gm-button--primary gm-button--lg">
+              <Link to="/register" className="gm-button gm-button--primary gm-button--md gm-magnetic" {...magneticHandlers}>
                 {content.primaryCta} <ArrowRight size={18} />
               </Link>
-              <a href="#qanday" className="gm-button gm-button--secondary gm-button--lg">
+              <a href="#qanday" className="gm-button gm-button--secondary gm-button--md gm-magnetic" {...magneticHandlers}>
                 {content.secondaryCta}
               </a>
             </div>
@@ -153,28 +191,18 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
         ))}
       </section>
 
-      <section className="gm-landing__section" id="qanday">
-        <h2 data-reveal>{content.stepsTitle}</h2>
-        <ol className="gm-landing__steps">
-          {content.steps.map((step, index) => (
-            <li key={step.title} className="gm-landing__step" data-reveal style={{ ['--i' as string]: index }}>
-              <span className="gm-landing__step-num">{String(index + 1).padStart(2, '0')}</span>
-              <span className="gm-landing__step-icon">
-                <step.icon size={24} strokeWidth={2} />
-              </span>
-              <h3>{step.title}</h3>
-              <p>{step.text}</p>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <Marquee items={CATEGORIES} />
+
+      <Statement label={content.statementLabel} text={content.statement} />
+
+      <StepsGrid title={content.stepsTitle} steps={content.steps} />
 
       {content.showCategories && (
         <section className="gm-landing__section" id="xizmatlar">
           <h2 data-reveal>{t('Mashhur xizmatlar')}</h2>
           <div className="gm-landing__categories">
             {CATEGORIES.map((category, index) => (
-              <Link key={category.name} to="/register" className="gm-landing__category" data-reveal style={{ ['--i' as string]: index % 6 }}>
+              <Link key={category.name} to="/register" className="gm-landing__category gm-tilt" {...tiltHandlers} data-reveal style={{ ['--i' as string]: index % 6 }}>
                 <span>
                   <category.icon size={26} strokeWidth={1.9} />
                 </span>
@@ -189,7 +217,7 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
         <h2 data-reveal>{content.trustTitle}</h2>
         <div className="gm-landing__trust">
           {content.trust.map((item, index) => (
-            <div key={item.title} className="gm-landing__trust-card" data-reveal style={{ ['--i' as string]: index }}>
+            <div key={item.title} className="gm-landing__trust-card gm-tilt" {...tiltHandlers} data-reveal style={{ ['--i' as string]: index }}>
               <span className="gm-landing__step-icon">
                 <item.icon size={24} strokeWidth={2} />
               </span>
@@ -205,7 +233,7 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
           <h2>{content.ctaTitle}</h2>
           <p>{content.ctaText}</p>
         </div>
-        <Link to="/register" className="gm-button gm-button--accent gm-button--lg">
+        <Link to="/register" className="gm-button gm-button--accent gm-button--md">
           {content.primaryCta} <ArrowRight size={18} />
         </Link>
       </section>

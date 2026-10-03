@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Building2, Expand, MapPin, Save } from 'lucide-react';
+import { Expand, MapPin, Save } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -19,7 +19,7 @@ const RADIUS_PRESETS = [3, 5, 10, 20, 30, 50];
 const num = (value: string | number | null | undefined): number | null => (value === null || value === undefined || value === '' ? null : Number(value));
 
 /**
- * «Ish hududi»: «Ish joyingiz» — oddiy matn (mahalla/tuman nomlari); «Ish hududlari» — manzilni yozib yoki xaritadan tanlash,
+ * «Ish hududi»: «Ish hududlari» — manzilni yozib yoki xaritadan tanlash,
  * radius va xaritada ko‘rish bitta kartada. Alohida saqlanadi.
  */
 export function WorkAreaEditor({ profile }: { profile: MasterProfile }) {
@@ -30,14 +30,12 @@ export function WorkAreaEditor({ profile }: { profile: MasterProfile }) {
       longitude: num(profile.longitude),
       // Markaz (manzil) tanlanmagan bo‘lsa, radius ham bo‘sh turadi — o‘zboshimchalik bilan qiymat qo‘yilmaydi.
       radius: profile.workRadiusKm && num(profile.latitude) !== null && num(profile.longitude) !== null ? String(Number(profile.workRadiusKm)) : '',
-      workPlace: profile.workPlace ?? '',
     }),
-    [profile.latitude, profile.longitude, profile.workRadiusKm, profile.workPlace],
+    [profile.latitude, profile.longitude, profile.workRadiusKm],
   );
 
   const [base, setBase] = useState<PickedAddress>({ addressLine: '', city: '', district: '', latitude: initial.latitude, longitude: initial.longitude });
   const [radius, setRadius] = useState(initial.radius);
-  const [workPlace, setWorkPlace] = useState(initial.workPlace);
   // Yangi manzil tanlanganda uning tuman/shahar nomlari «ish hududi nomlari» sifatida saqlanadi.
   const [pickedAreas, setPickedAreas] = useState<string[] | null>(null);
   const [open, setOpen] = useState(false);
@@ -62,7 +60,7 @@ export function WorkAreaEditor({ profile }: { profile: MasterProfile }) {
   const radiusInvalid = radius !== '' && (!Number.isFinite(radiusValue) || (radiusValue as number) < 0.5 || (radiusValue as number) > 500);
   const centerMissing = radius !== '' && (base.latitude == null || base.longitude == null);
   const dirty =
-    base.latitude !== initial.latitude || base.longitude !== initial.longitude || radius !== initial.radius || workPlace.trim() !== initial.workPlace.trim();
+    base.latitude !== initial.latitude || base.longitude !== initial.longitude || radius !== initial.radius;
   const canSave = dirty && !radiusInvalid && !centerMissing && !update.isPending;
 
   function pickBase(next: PickedAddress) {
@@ -77,7 +75,6 @@ export function WorkAreaEditor({ profile }: { profile: MasterProfile }) {
       latitude: base.latitude ?? undefined,
       longitude: base.longitude ?? undefined,
       workRadiusKm: radiusValue ?? undefined,
-      workPlace: workPlace.trim(),
       ...(pickedAreas ? { serviceAreas: pickedAreas } : {}),
     });
   }
@@ -86,21 +83,6 @@ export function WorkAreaEditor({ profile }: { profile: MasterProfile }) {
     <form className="gm-form gm-workedit" onSubmit={handleSubmit}>
       {update.isError && <Alert tone="danger">{getErrorMessage(update.error)}</Alert>}
       {update.isSuccess && !dirty && <Alert tone="success">{t('Ish hududi saqlandi')}</Alert>}
-
-      <section className="gm-workedit__block">
-        <span className="gm-workedit__icon" aria-hidden="true">
-          <Building2 size={20} />
-        </span>
-        <h3>{t('Ish joyingiz')}</h3>
-        <p className="gm-workarea__note">{t('Ish xona, kompaniya yoki muassasa nomi. Mijozlar profilingizda shuni ko‘radi.')}</p>
-        <Input
-          label={t('Ish joyi nomi')}
-          placeholder={t('Masalan: «Ofis №5» yoki «ABC Servis» MChJ')}
-          maxLength={150}
-          value={workPlace}
-          onChange={(event) => setWorkPlace(event.target.value)}
-        />
-      </section>
 
       <section className="gm-workedit__block gm-workedit__block--main">
         <span className="gm-workedit__icon" aria-hidden="true">

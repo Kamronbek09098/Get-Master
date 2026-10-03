@@ -27,7 +27,6 @@ export function MasterCard({ master }: { master: PublicMaster }) {
             )}
           </h3>
           <p className="gm-master__profession">{master.profession ?? t('Kasb ko‘rsatilmagan')}</p>
-          {master.workPlace && <p className="gm-master__profession">{master.workPlace}</p>}
         </div>
         {master.user.accountNumber !== undefined && <span className="gm-master__num">ID {master.user.accountNumber}</span>}
       </div>

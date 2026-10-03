@@ -1794,4 +1794,8 @@ export const ruExtra: Record<string, string> = {
   "Akkauntda parol allaqachon o‘rnatilgan": "В аккаунте уже установлен пароль",
   "Google akkauntni uzishdan oldin akkauntingizga parol o‘rnatishingiz kerak: parolsiz Google uzilsa, akkauntingizga qayta kirib bo‘lmay qoladi": "Перед отключением Google нужно установить пароль: без пароля после отключения Google вы не сможете войти в аккаунт",
   "Parol o‘rnatildi": "Пароль установлен",
+  "(01) Biz haqimizda": "(01) О нас",
+  "(01) Ustalar uchun": "(01) Для мастеров",
+  "Har kuni biror narsa buziladi. Biz bu muammoni hal qiladigan tasdiqlangan ustani — narxi aniq, ishi kafolatli — daqiqalar ichida topib beramiz.": "Каждый день что-то ломается. Мы за считанные минуты найдём проверенного мастера, который решит проблему — с чёткой ценой и гарантией на работу.",
+  "Mijoz izlash — ish emas. Profilingizni yarating, narxni o‘zingiz belgilang, yaqin atrofdagi so‘rovlar o‘zi sizni topadi va daromad shaffof bo‘ladi.": "Искать клиентов — не работа. Создайте профиль, назначьте цену сами — ближайшие заявки найдут вас, а доход будет прозрачным.",
 };
