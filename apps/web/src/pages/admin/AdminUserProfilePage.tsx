@@ -16,7 +16,7 @@ import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { TrustBadge } from '@/features/trust/components/TrustBadge';
 import { Switch } from '@/components/ui/Switch';
 import { useAdminUserByNumber, useSetUserTwoFactor } from '@/features/admin/hooks/useAdmin';
-import { accountPath } from '@/features/admin/components/AccountLink';
+import { accountPath } from '@/features/admin/account-path';
 import { actionInfo } from '@/features/admin/audit-labels';
 import { useMe } from '@/features/session/hooks/useMe';
 import { useOpenSupportChat } from '@/features/communication/hooks/useCommunication';

@@ -145,6 +145,8 @@ describe('conversations are scoped to the panel role that holds them', () => {
     const created = await open(buyer.token, target.masterId);
     const id = created.data.id as string;
     expect(created.data.participants.find((p: { userId: string }) => p.userId === buyer.id).roles).toEqual(['CUSTOMER']);
+    // Hali xabar yozilmagan to‘g‘ridan-to‘g‘ri suhbat ro‘yxatda ko‘rinmaydi: avval mijoz panelidan birinchi xabar yuboriladi.
+    expect((await h.api('POST', `/conversations/${id}/messages`, { ...asPanel(buyer.token, 'CUSTOMER'), body: { text: 'birinchi' } })).status).toBe(201);
 
     const list = (token: string | undefined, panel: string) => h.api('GET', '/conversations?limit=100', asPanel(token, panel));
     expect(ids(await list(buyer.token, 'CUSTOMER'))).toContain(id);
@@ -156,10 +158,18 @@ describe('conversations are scoped to the panel role that holds them', () => {
     expect((await h.api('POST', `/conversations/${id}/messages`, { ...asPanel(buyer.token, 'MASTER'), body: { text: 'salom' } })).status).toBe(403);
     expect((await h.api('POST', `/conversations/${id}/messages`, { ...asPanel(buyer.token, 'CUSTOMER'), body: { text: 'salom' } })).status).toBe(201);
   });
+
+  it('hides a DIRECT conversation from both lists until the first message is written', async () => {
+    const buyer = await createUser(h, ['CUSTOMER']);
+    const target = await createMaster(h, service.id);
+    const id = (await open(buyer.token, target.masterId)).data.id as string;
+    expect(ids(await h.api('GET', '/conversations?limit=100', asPanel(buyer.token, 'CUSTOMER')))).not.toContain(id);
+    expect(ids(await h.api('GET', '/conversations?limit=100', asPanel(target.token, 'MASTER')))).not.toContain(id);
+  });
 });
 
-describe('admin sees every conversation, including deleted and edited messages', () => {
-  it('returns original texts, deletion marks and the edit history', async () => {
+describe('admin sees every conversation and the edit history of messages', () => {
+  it('returns current texts and the edit history; permanently deleted messages are gone', async () => {
     const admin = await createAdmin(h);
     const buyer = await createUser(h, ['CUSTOMER']);
     const target = await createMaster(h, service.id);
@@ -175,23 +185,24 @@ describe('admin sees every conversation, including deleted and edited messages',
     expect((await h.get(`/admin/conversations/${conversation}/messages`, buyer.token)).status).toBe(403);
     const list = await h.get(`/admin/conversations?limit=100`, admin.token);
     const row = list.data.items.find((c: { id: string }) => c.id === conversation);
-    expect(row).toMatchObject({ messageCount: 2, deletedCount: 1, editedCount: 1 });
+    // «Hamma uchun o‘chirish» xabarni butunlay o‘chiradi: admin ham uning matnini ko‘rmaydi; tahrir tarixi esa saqlanadi.
+    expect(row).toMatchObject({ messageCount: 1, deletedCount: 0, editedCount: 1 });
 
     const messages = (await h.get(`/admin/conversations/${conversation}/messages`, admin.token)).data.items as any[];
-    const deleted = messages.find((m) => m.id === removed.id);
-    expect(deleted).toMatchObject({ text: 'maxfiy matn' });
-    expect(deleted.deletedAt).toBeTruthy();
+    expect(messages.find((m) => m.id === removed.id)).toBeUndefined();
+    expect(JSON.stringify(messages)).not.toContain('maxfiy matn');
+    expect(await h.db.message.count({ where: { id: removed.id } })).toBe(0);
     const edited = messages.find((m) => m.id === kept.id);
     expect(edited.text).toBe('yangi matn');
     expect(edited.edits.map((e: { previousText: string }) => e.previousText)).toEqual(['birinchi']);
 
     const audit = await h.get(`/audit-logs?actorId=${buyer.id}&limit=50`, admin.token);
-    expect(audit.data.items.map((a: { action: string }) => a.action)).toEqual(expect.arrayContaining(['CHAT_MESSAGE_EDITED', 'CHAT_MESSAGE_DELETED']));
+    expect(audit.data.items.map((a: { action: string }) => a.action)).toEqual(expect.arrayContaining(['CHAT_MESSAGE_EDITED']));
   });
 });
 
 describe('Telegram-style features: reply, reactions and attachments', () => {
-  it('replies to a message of the same chat only, and masks a deleted quote', async () => {
+  it('replies to a message of the same chat only, and drops the quote once the quoted message is deleted', async () => {
     const buyer = await createUser(h, ['CUSTOMER']);
     const target = await createMaster(h, service.id);
     const other = await createMaster(h, service.id);
@@ -209,7 +220,8 @@ describe('Telegram-style features: reply, reactions and attachments', () => {
 
     expect((await h.api('DELETE', `/conversations/${chat}/messages/${first.id}`, as)).status).toBe(200);
     const list = (await h.api('GET', `/conversations/${chat}/messages`, as)).data.items as any[];
-    expect(list.find((m) => m.id === reply.data.id).replyTo.text).toBeNull();
+    // Iqtibos keltirilgan xabar o‘chirilgach, javobdagi iqtibos ham yo‘qoladi (matn oshkor bo‘lmaydi).
+    expect(list.find((m) => m.id === reply.data.id).replyTo).toBeNull();
   });
 
   it('keeps one reaction per person and panel, replaces it and removes it', async () => {

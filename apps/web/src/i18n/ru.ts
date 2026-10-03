@@ -32,8 +32,8 @@ export const ru: Record<string, string> = {
   "Sozlamalar va sessiyalar": "Настройки и сеансы",
   "Chiqish": "Выйти",
   // Валидация
-  "Telefon raqami 9 ta raqamdan iborat bo'lishi kerak (masalan, 90 123 45 67)": "Номер должен состоять из 9 цифр (например, 90 123 45 67)",
-  "Operator kodi noto'g'ri (masalan: 90, 91, 93, 94, 95, 97, 98, 99, 33, 77, 88)": "Неверный код оператора (например: 90, 91, 93, 94, 95, 97, 98, 99, 33, 77, 88)",
+  "9 ta raqam kiriting (90 123 45 67)": "Введите 9 цифр (90 123 45 67)",
+  "Operator kodi noto'g'ri": "Неверный код оператора",
   "Kamida 8 ta belgi": "Не менее 8 символов",
   "Juda uzun": "Слишком длинный",
   "Parolni qayta kiriting": "Повторите пароль",

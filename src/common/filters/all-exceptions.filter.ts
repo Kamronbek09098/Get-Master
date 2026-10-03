@@ -68,6 +68,19 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   constructor(private readonly notifier?: ErrorNotifier) {}
 
+  private isBodyParserError(exception: unknown): exception is { status: number; type: string } {
+    const error = exception as { status?: unknown; type?: unknown } | null;
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      typeof error.type === 'string' &&
+      /^(entity\.|encoding\.|request\.|charset\.|stream\.)/.test(error.type) &&
+      typeof error.status === 'number' &&
+      error.status >= 400 &&
+      error.status < 500
+    );
+  }
+
   catch(exception: unknown, host: ArgumentsHost) {
     const http = host.switchToHttp();
     const req = http.getRequest();
@@ -76,10 +89,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     let result: ErrorResult;
     if (exception instanceof HttpException) {
       result = this.fromHttpException(exception);
+      // JSON parser xabarlari (pozitsiya, kutilgan belgi) ichki tafsilot hisoblanadi — umumiy xabar bilan almashtiriladi.
+      if (/JSON|Unexpected (token|end)|position \d+/.test(result.message)) result = { ...result, message: ERRORS.BAD_REQUEST, details: undefined };
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       result = this.fromPrismaError(exception);
     } else if (exception instanceof Prisma.PrismaClientValidationError) {
       result = { status: 400, code: 'VALIDATION_ERROR', message: ERRORS.PRISMA_INVALID_VALUE };
+    } else if (this.isBodyParserError(exception)) {
+      // Body-parser xatolari (juda katta tana, buzuq JSON, noto‘g‘ri kodlash): 5xx emas, 4xx; ichki tafsilot oshkor qilinmaydi.
+      const status = exception.status;
+      result = { status, code: DEFAULT_CODES[status] ?? 'VALIDATION_ERROR', message: DEFAULT_MESSAGES[status] ?? ERRORS.BAD_REQUEST };
     } else {
       result = { status: 500, code: 'INTERNAL_ERROR', message: ERRORS.INTERNAL_SERVER_ERROR };
     }

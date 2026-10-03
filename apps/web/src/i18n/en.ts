@@ -32,8 +32,8 @@ export const en: Record<string, string> = {
   "Sozlamalar va sessiyalar": "Settings and sessions",
   "Chiqish": "Sign out",
   // Validation
-  "Telefon raqami 9 ta raqamdan iborat bo'lishi kerak (masalan, 90 123 45 67)": "The phone number must have 9 digits (e.g. 90 123 45 67)",
-  "Operator kodi noto'g'ri (masalan: 90, 91, 93, 94, 95, 97, 98, 99, 33, 77, 88)": "Invalid operator code (e.g. 90, 91, 93, 94, 95, 97, 98, 99, 33, 77, 88)",
+  "9 ta raqam kiriting (90 123 45 67)": "Enter 9 digits (90 123 45 67)",
+  "Operator kodi noto'g'ri": "Invalid operator code",
   "Kamida 8 ta belgi": "At least 8 characters",
   "Juda uzun": "Too long",
   "Parolni qayta kiriting": "Re-enter the password",

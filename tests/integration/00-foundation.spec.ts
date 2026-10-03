@@ -56,7 +56,14 @@ describe('K01 — health, request-id, error envelope', () => {
 
   it('exposes Prometheus metrics as plain text (not the JSON envelope)', async () => {
     await h.api('GET', '/health');
-    const res = await h.api('GET', '/metrics');
+    // Token yo‘q yoki noto‘g‘ri bo‘lsa — yopiq; to‘g‘ri token bilan ochiladi.
+    const { ConfigService } = await import('@nestjs/config');
+    const config = h.app.get(ConfigService);
+    if (!config.get('METRICS_TOKEN')) process.env.METRICS_TOKEN = 'test-metrics-token-0123456789abcdef';
+    const token = config.get<string>('METRICS_TOKEN');
+    expect((await h.api('GET', '/metrics')).status).toBe(401);
+    expect((await h.api('GET', '/metrics', { headers: { authorization: 'Bearer wrong' } })).status).toBe(401);
+    const res = await h.api('GET', '/metrics', { headers: { authorization: `Bearer ${token}` } });
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toMatch(/text\/plain/);
     expect(typeof res.body).toBe('string');

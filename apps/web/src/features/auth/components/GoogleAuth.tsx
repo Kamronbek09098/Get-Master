@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/Input';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
+import { GoogleLogo } from './GoogleLogo';
+import { loadGoogleScript } from '../google-script';
 import { Alert } from '@/components/ui/Alert';
 import { Modal } from '@/components/ui/Modal';
 import { env } from '@/lib/env';
@@ -13,42 +15,6 @@ import { useAuthStore } from '@/store/auth.store';
 import { authService } from '../services/auth.service';
 import { formatLocalPhone, localPhoneSchema, toFullPhone, toLocalDigits } from '../validation';
 import { t } from '@/i18n';
-
-interface GoogleIdentity {
-  accounts: {
-    id: {
-      initialize: (config: { client_id: string; callback: (response: { credential: string }) => void; ux_mode?: string }) => void;
-      renderButton: (element: HTMLElement, options: Record<string, unknown>) => void;
-    };
-  };
-}
-declare global {
-  interface Window {
-    google?: GoogleIdentity;
-  }
-}
-
-export const GOOGLE_LOGO = (
-  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7a14.500 14.500 0 0 1 0-9.4l-7.9-6.1a24 24 0 0 0 0 21.600l7.9-6.100z"/><path fill="#34A853" d="M24 48c6.500 0 11.900-2.100 15.900-5.800l-7.500-5.800c-2.100 1.400-4.800 2.300-8.400 2.300-6.300 0-11.600-4-13.500-9.800l-7.900 6.100C6.500 42.600 14.600 48 24 48z"/></svg>
-);
-
-const SCRIPT_SRC = 'https://accounts.google.com/gsi/client';
-let scriptPromise: Promise<void> | null = null;
-export function loadGoogleScript(): Promise<void> {
-  if (window.google?.accounts) return Promise.resolve();
-  scriptPromise ??= new Promise<void>((resolve, reject) => {
-    const el = document.createElement('script');
-    el.src = SCRIPT_SRC;
-    el.async = true;
-    el.onload = () => resolve();
-    el.onerror = () => {
-      scriptPromise = null;
-      reject(new Error('google-script'));
-    };
-    document.head.appendChild(el);
-  });
-  return scriptPromise;
-}
 
 /** «Google orqali kirish / ro‘yxatdan o‘tish» tugmasi. GOOGLE client ID sozlanmagan yoki administrator paneli bo‘lsa ko‘rinmaydi. */
 export function GoogleAuth() {
@@ -102,7 +68,7 @@ export function GoogleAuth() {
         </div>
         {!!error && <Alert tone="info">{getErrorMessage(error)}</Alert>}
         <button type="button" className="gm-google__fallback" onClick={() => setError(new Error(t('Google orqali kirish hali sozlanmagan. Administrator Google Client ID ni kiritishi kerak.')))}>
-          {GOOGLE_LOGO}
+          <GoogleLogo />
           {t('Google orqali davom etish')}
         </button>
       </div>
@@ -211,7 +177,7 @@ export function GoogleAuth() {
       {phoneModal}
       <div className="gm-google__wrap">
         <span className="gm-google__fallback" aria-hidden="true">
-          {GOOGLE_LOGO}
+          <GoogleLogo />
           {t('Google orqali davom etish')}
         </span>
         <div className="gm-google__button" ref={buttonRef} aria-busy={busy} aria-label={t('Google orqali davom etish')} />

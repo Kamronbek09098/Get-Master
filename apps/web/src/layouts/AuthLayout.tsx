@@ -82,7 +82,13 @@ export function AuthLayout() {
           <span className="gm-auth-layout__eyebrow">
             <Sparkles size={15} /> {currentPanelLabel ?? 'GetMaster'}
           </span>
-          <h2>{pitch.title}</h2>
+          <h2 className="gm-auth-layout__headline" aria-label={pitch.title}>
+            {pitch.title.split(' ').map((word, index) => (
+              <span key={`${word}-${index}`} className="gm-auth-layout__word" style={{ ['--i' as string]: index }} aria-hidden="true">
+                {word}
+              </span>
+            ))}
+          </h2>
           <p>{pitch.text}</p>
           <ul>
             {pitch.points.map((point) => (

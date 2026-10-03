@@ -3,8 +3,7 @@ import { RootShell } from './RootShell';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { MainLayout } from '@/layouts/MainLayout';
 import { ProtectedRoute, RedirectIfAuthed } from './ProtectedRoute';
-import { PageLoader } from '@/components/common/PageLoader';
-import { useCurrentRole } from '@/features/session/hooks/useCurrentRole';
+import { OrdersRedirect } from './OrdersRedirect';
 import { RoleSelectPage } from '@/pages/RoleSelectPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
@@ -63,14 +62,6 @@ const master = (el: ReactNode) => only(['MASTER'], el);
 const admin = (el: ReactNode) => only(['ADMIN'], el);
 const shared = (el: ReactNode) => only(['CUSTOMER', 'MASTER'], el);
 
-/** Eski «Bronlar» havolalari (/bronlar) endi yagona «Buyurtmalar» bo‘limiga yo‘naltiriladi. */
-function OrdersRedirect() {
-  const { role, isLoading } = useCurrentRole();
-  if (isLoading) return <PageLoader label="Yuklanmoqda…" />;
-  if (role === 'MASTER') return <Navigate to="/ustalar/buyurtmalar" replace />;
-  if (role === 'ADMIN') return <Navigate to="/admin/buyurtmalar" replace />;
-  return <Navigate to="/mijozlar/buyurtmalar" replace />;
-}
 
 export const router = createBrowserRouter([
   {

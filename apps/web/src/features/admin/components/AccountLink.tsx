@@ -1,12 +1,8 @@
 import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { useMe } from '@/features/session/hooks/useMe';
+import { accountPath } from '../account-path';
 import { t } from '@/i18n';
-
-/** Profil manzili raqamli ID bilan: o‘zingizniki — shaxsiy bo‘lim, boshqaniki — foydalanuvchi profili. */
-export function accountPath(accountNumber: number, myNumber: number | undefined) {
-  return accountNumber === myNumber ? '/sozlamalar' : `/admin/foydalanuvchilar/${accountNumber}`;
-}
 
 export function AccountLink({ accountNumber, className, children }: { accountNumber: number; className?: string; children: ReactNode }) {
   const me = useMe();

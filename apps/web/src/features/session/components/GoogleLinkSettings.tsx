@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { NewCredentialsCard } from '@/features/auth/components/NewCredentialsCard';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { GOOGLE_LOGO, loadGoogleScript } from '@/features/auth/components/GoogleAuth';
+import { GoogleLogo } from '@/features/auth/components/GoogleLogo';
+import { loadGoogleScript } from '@/features/auth/google-script';
 import { env } from '@/lib/env';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useAppStore } from '@/store/app.store';
@@ -120,7 +121,7 @@ export function GoogleLinkSettings() {
       </Modal>
       <div className="gm-twofa__head">
         <span className={linked ? 'gm-twofa__icon gm-twofa__icon--on' : 'gm-twofa__icon'} aria-hidden="true">
-          {GOOGLE_LOGO}
+          <GoogleLogo />
         </span>
         <div className="gm-twofa__title">
           <h2 id="gm-google-title">{t('Google akkaunt')}</h2>
@@ -161,7 +162,7 @@ export function GoogleLinkSettings() {
       ) : env.googleClientId ? (
         <div className="gm-google__wrap">
           <span className="gm-google__fallback" aria-hidden="true">
-            {GOOGLE_LOGO}
+            <GoogleLogo />
             {t('Google akkauntni ulash')}
           </span>
           <div className="gm-google__button" ref={buttonRef} aria-busy={busy} aria-label={t('Google akkauntni ulash')} />

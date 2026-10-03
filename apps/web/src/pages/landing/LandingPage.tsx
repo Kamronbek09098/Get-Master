@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeCheck, MapPin, Star } from 'lucide-react';
 import { Logo } from '@/components/common/Logo';
@@ -50,7 +51,44 @@ function HeroPreview({ master }: { master: boolean }) {
   );
 }
 
+/** Sarlavhani so‘zlarga bo‘lib, har birini ketma-ket paydo qiladi (CSS animatsiya). */
+function Words({ text, offset = 0 }: { text: string; offset?: number }) {
+  return (
+    <>
+      {text.split(' ').map((word, index) => (
+        <span key={`${word}-${index}`} className="gm-lw" style={{ ['--i' as string]: index + offset }}>
+          {word}{' '}
+        </span>
+      ))}
+    </>
+  );
+}
+
+/** Ko‘rinish maydoniga kirgan `data-reveal` elementlarni ketma-ket ochadi (prefers-reduced-motion hurmat qilinadi). */
+function useScrollReveal() {
+  useEffect(() => {
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-reveal]'));
+    if (typeof IntersectionObserver === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      nodes.forEach((node) => node.classList.add('is-in'));
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-in');
+          observer.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' },
+    );
+    nodes.forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, []);
+}
+
 function Landing({ content, master }: { content: LandingContent; master: boolean }) {
+  useScrollReveal();
   return (
     <div className="gm-landing">
       <header className="gm-landing__nav">
@@ -75,8 +113,13 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
         <div className="gm-landing__hero-inner">
           <div className="gm-landing__hero-copy">
             <span className="gm-landing__eyebrow">{content.eyebrow}</span>
-            <h1>
-              {content.title} <span>{content.highlight}</span>
+            <h1 aria-label={`${content.title} ${content.highlight}`}>
+              <span aria-hidden="true">
+                <Words text={content.title} />
+                <span className="gm-landing__hl">
+                  <Words text={content.highlight} offset={content.title.split(' ').length} />
+                </span>
+              </span>
             </h1>
             <p>{content.lead}</p>
             <div className="gm-landing__cta-row">
@@ -103,7 +146,7 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
 
       <section className="gm-landing__stats" aria-label={t('Qisqacha')}>
         {content.stats.map((stat) => (
-          <div key={stat.label} className="gm-landing__stat">
+          <div key={stat.label} className="gm-landing__stat" data-reveal style={{ ['--i' as string]: content.stats.indexOf(stat) }}>
             <strong>{stat.value}</strong>
             <span>{stat.label}</span>
           </div>
@@ -111,10 +154,10 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
       </section>
 
       <section className="gm-landing__section" id="qanday">
-        <h2>{content.stepsTitle}</h2>
+        <h2 data-reveal>{content.stepsTitle}</h2>
         <ol className="gm-landing__steps">
           {content.steps.map((step, index) => (
-            <li key={step.title} className="gm-landing__step">
+            <li key={step.title} className="gm-landing__step" data-reveal style={{ ['--i' as string]: index }}>
               <span className="gm-landing__step-num">{String(index + 1).padStart(2, '0')}</span>
               <span className="gm-landing__step-icon">
                 <step.icon size={24} strokeWidth={2} />
@@ -128,10 +171,10 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
 
       {content.showCategories && (
         <section className="gm-landing__section" id="xizmatlar">
-          <h2>{t('Mashhur xizmatlar')}</h2>
+          <h2 data-reveal>{t('Mashhur xizmatlar')}</h2>
           <div className="gm-landing__categories">
-            {CATEGORIES.map((category) => (
-              <Link key={category.name} to="/register" className="gm-landing__category">
+            {CATEGORIES.map((category, index) => (
+              <Link key={category.name} to="/register" className="gm-landing__category" data-reveal style={{ ['--i' as string]: index % 6 }}>
                 <span>
                   <category.icon size={26} strokeWidth={1.9} />
                 </span>
@@ -143,10 +186,10 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
       )}
 
       <section className="gm-landing__section" id="ishonch">
-        <h2>{content.trustTitle}</h2>
+        <h2 data-reveal>{content.trustTitle}</h2>
         <div className="gm-landing__trust">
-          {content.trust.map((item) => (
-            <div key={item.title} className="gm-landing__trust-card">
+          {content.trust.map((item, index) => (
+            <div key={item.title} className="gm-landing__trust-card" data-reveal style={{ ['--i' as string]: index }}>
               <span className="gm-landing__step-icon">
                 <item.icon size={24} strokeWidth={2} />
               </span>
@@ -157,7 +200,7 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
         </div>
       </section>
 
-      <section className="gm-landing__cta">
+      <section className="gm-landing__cta" data-reveal>
         <div>
           <h2>{content.ctaTitle}</h2>
           <p>{content.ctaText}</p>

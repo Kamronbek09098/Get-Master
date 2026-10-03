@@ -22,6 +22,8 @@ export function configureApp(app: INestApplication): void {
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
     res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
+    // API faqat JSON beradi: hech qanday faol kontent, ramkaga joylash yoki forma yuborish kerak emas.
+    res.setHeader('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'");
     res.setHeader('X-DNS-Prefetch-Control', 'off');
     // Shaxsiy ma'lumotli javoblar brauzer/proksi keshida qolmasin (fayl uzatish yo'li o'z Cache-Control'ini qo'yadi).
     res.setHeader('Cache-Control', 'no-store');

@@ -26,8 +26,8 @@ export const localPhoneSchema = z
   .pipe(
     z
       .string()
-      .regex(LOCAL_PHONE_REGEX, t('Telefon raqami 9 ta raqamdan iborat bo‘lishi kerak (masalan, 90 123 45 67)'))
-      .refine((value) => UZ_PREFIXES.has(value.slice(0, 2)), t('Operator kodi noto‘g‘ri (masalan: 90, 91, 93, 94, 95, 97, 98, 99, 33, 77, 88)')),
+      .regex(LOCAL_PHONE_REGEX, t('9 ta raqam kiriting (90 123 45 67)'))
+      .refine((value) => UZ_PREFIXES.has(value.slice(0, 2)), t('Operator kodi noto‘g‘ri')),
   );
 
 export const registerSchema = z

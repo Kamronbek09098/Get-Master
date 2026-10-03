@@ -87,6 +87,9 @@ export class MediaController {
     res.status(range && object.contentRange ? 206 : 200);
     res.setHeader('Content-Type', file.contentType);
     res.setHeader('Accept-Ranges', 'bytes');
+    // Foydalanuvchi yuklagan fayl: brauzerda skript bajarilmasin (sandbox) va tur o‘zgartirilmasin.
+    res.setHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'private, max-age=600');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');

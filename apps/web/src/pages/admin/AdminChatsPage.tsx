@@ -191,7 +191,7 @@ function Viewer({ id, onBack }: { id: string; onBack: () => void }) {
   const prevHeight = useRef<number | null>(null);
   const scrolledDown = useRef(false);
   const ordered = useMemo(() => [...(messages.data?.pages.flatMap((page) => page.items) ?? [])].reverse(), [messages.data]);
-  const participants = conversation.data?.participants ?? [];
+  const participants = useMemo(() => conversation.data?.participants ?? [], [conversation.data]);
   const people = useMemo(() => new Map(participants.map((p) => [p.user.id, p.user] as const)), [participants]);
   const sideOf = (senderId: string) => (participants.findIndex((p) => p.user.id === senderId) > 0 ? 'right' : 'left');
 

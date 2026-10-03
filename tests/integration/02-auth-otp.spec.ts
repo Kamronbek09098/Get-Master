@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TelegramAlertService } from '../../src/infrastructure/telegram/telegram-alert.service';
@@ -231,7 +232,10 @@ describe('K02 — registration & login', () => {
     const setCookie = res.headers.getSetCookie().join('\n');
     expect(setCookie).toMatch(/accessToken=.*HttpOnly/i);
     expect(setCookie).toMatch(/refreshToken=.*HttpOnly/i);
-    expect(setCookie).toMatch(/SameSite=Lax/i);
+    // SameSite sozlamadan olinadi (brauzer uchun Lax, APK/tunnel uchun None + Secure).
+    const sameSite = h.app.get(ConfigService).get<string>('auth.cookieSameSite', 'lax');
+    expect(setCookie).toMatch(new RegExp(`SameSite=${sameSite}`, 'i'));
+    if (sameSite === 'none') expect(setCookie).toMatch(/Secure/i);
     expect(JSON.stringify(res.body)).not.toMatch(/eyJ/);
     const c = cookiesOf(res.headers);
     const me = await h.api('GET', '/customers/me', { cookie: `accessToken=${c.accessToken}` });
@@ -270,6 +274,38 @@ describe('K02 — registration & login', () => {
     expect(refreshed.status).toBe(201);
     const latest = await h.db.refreshToken.findFirstOrThrow({ where: { userId: user.id, status: 'ACTIVE' }, orderBy: { createdAt: 'desc' } });
     expect((latest.expiresAt.getTime() - Date.now()) / 60_000).toBeGreaterThan(29);
+  });
+
+  describe('stolen / stale credentials', () => {
+    it('a used refresh token cannot be replayed (rotation), and the legitimate new one still works', async () => {
+      const ip = '10.1.9.2';
+      const phone = await registerAndActivate(ip);
+      const c = cookiesOf((await login(phone, ip)).headers);
+      const old = `refreshToken=${c.refreshToken}; deviceId=${c.deviceId}`;
+      const first = await h.api('POST', '/auth/refresh', { ip, cookie: old });
+      expect(first.status).toBe(201);
+      const replay = await h.api('POST', '/auth/refresh', { ip, cookie: old });
+      expect([401, 403]).toContain(replay.status);
+    });
+
+    it('a blocked or deleted account loses access immediately, even with a valid token', async () => {
+      const ip = '10.1.9.3';
+      const phone = await registerAndActivate(ip);
+      const c = cookiesOf((await login(phone, ip)).headers);
+      const cookie = `accessToken=${c.accessToken}`;
+      expect((await h.api('GET', '/customers/me', { ip, cookie })).status).toBe(200);
+      await h.db.user.update({ where: { phone }, data: { status: 'BLOCKED' } });
+      expect((await h.api('GET', '/customers/me', { ip, cookie })).status).toBe(401);
+    });
+
+    it('logout kills the access token of that device at once', async () => {
+      const ip = '10.1.9.4';
+      const phone = await registerAndActivate(ip);
+      const c = cookiesOf((await login(phone, ip)).headers);
+      const cookie = `accessToken=${c.accessToken}; refreshToken=${c.refreshToken}; deviceId=${c.deviceId}`;
+      expect((await h.api('POST', '/auth/logout', { ip, cookie, body: { allDevices: false } })).status).toBeLessThan(300);
+      expect((await h.api('GET', '/customers/me', { ip, cookie })).status).toBe(401);
+    });
   });
 
   describe('sessions are isolated per panel (customer / master / admin share one browser)', () => {

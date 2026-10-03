@@ -54,8 +54,10 @@ describe('S01 — master profile', () => {
   });
 
   it('a master edits only their own profile; verification/rating are read-only', async () => {
-    const m = await createMaster(h, service.id);
+    // Ish radiusi faqat markaz (koordinata) belgilangan ustada o‘zgaradi — markazsiz 400 qaytadi (MASTER_RADIUS_NEEDS_CENTER).
+    const m = await createMaster(h, service.id, { latitude: 41.311, longitude: 69.279 });
     const other = await createMaster(h, service.id);
+    expect((await h.patch('/masters/me', other.token, { workRadiusKm: 25 })).status).toBe(400);
     const updated = await h.patch('/masters/me', m.token, { bio: 'New bio', workRadiusKm: 25 });
     expect(updated.data.bio).toBe('New bio');
     expect((await h.patch('/masters/me', m.token, { verification: 'VERIFIED', completedOrders: 999 })).status).toBe(400);

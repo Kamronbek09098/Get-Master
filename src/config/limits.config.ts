@@ -2,6 +2,8 @@ import { registerAs } from '@nestjs/config';
 import { boolEnv, intEnv, intListEnv } from './env.util';
 
 export default registerAs('limits', () => ({
+  /** Barcha so‘rovlar uchun umumiy IP chegarasi (alohida @RateLimit qo‘yilmagan yo‘llar): skraping/DoS'dan himoya. */
+  global: { limit: intEnv('RATE_LIMIT_GLOBAL_MAX', 1200), windowSeconds: intEnv('RATE_LIMIT_GLOBAL_WINDOW_SECONDS', 60) },
   rate: {
     register: { limit: intEnv('RATE_LIMIT_REGISTER_MAX', 3), windowSeconds: intEnv('RATE_LIMIT_REGISTER_WINDOW_SECONDS', 3600) },
     login: { limit: intEnv('RATE_LIMIT_LOGIN_MAX', 30), windowSeconds: intEnv('RATE_LIMIT_LOGIN_WINDOW_SECONDS', 900) },

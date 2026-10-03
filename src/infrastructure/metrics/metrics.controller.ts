@@ -25,10 +25,8 @@ export class MetricsController {
 
   private assertAuthorized(authorization?: string): void {
     const token = this.config.get<string>('METRICS_TOKEN');
-    if (!token) {
-      if (this.config.get<string>('NODE_ENV') === 'production') throw new UnauthorizedException();
-      return;
-    }
+    // Token sozlanmagan bo‘lsa /metrics hech qaysi muhitda ochilmaydi (tunnel/proksi ortida «localhost» ishonchli emas).
+    if (!token) throw new UnauthorizedException();
     const given = Buffer.from(authorization?.replace(/^Bearer\s+/i, '') ?? '');
     const expected = Buffer.from(token);
     if (given.length !== expected.length || !timingSafeEqual(given, expected)) throw new UnauthorizedException();

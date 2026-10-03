@@ -184,7 +184,7 @@ describe('S08 — chat', () => {
     expect((await h.get('/conversations', master.token)).data.items.find((x: any) => x.id === conversationId).unreadCount).toBe(0);
   });
 
-  it('edit/delete: author only, text only, 15-minute window; deleted content is hidden but the row stays', async () => {
+  it('edit/delete: author only, text only, 48-hour edit window; delete removes the message for everyone (Telegram-style), edits keep their history', async () => {
     const C = `/conversations/${conversationId}`;
     const m1 = (await h.post(`${C}/messages`, c.token, { text: 'first' })).data;
     expect((await h.patch(`${C}/messages/${m1.id}`, master.token, { text: 'forged' })).status).toBe(403);
@@ -197,12 +197,11 @@ describe('S08 — chat', () => {
     expect(editRows).toHaveLength(1);
     expect(await h.db.auditLog.count({ where: { action: 'CHAT_MESSAGE_EDITED', targetId: m1.id } })).toBe(1);
     expect((await h.del(`${C}/messages/${m1.id}`, c.token)).status).toBe(200);
-    expect(await h.db.auditLog.count({ where: { action: 'CHAT_MESSAGE_DELETED', targetId: m1.id } })).toBe(1);
-    expect((await h.db.message.findUniqueOrThrow({ where: { id: m1.id } })).text).toBe('edited');
+    // «Hamma uchun o‘chirish»: xabar butunlay o‘chadi, qayta o‘chirib bo‘lmaydi va suhbat tarixida ko‘rinmaydi.
+    expect(await h.db.message.count({ where: { id: m1.id } })).toBe(0);
     expect((await h.del(`${C}/messages/${m1.id}`, c.token)).status).toBe(404);
     const history = (await h.get(`${C}/messages?limit=50`, master.token)).data.items.find((x: any) => x.id === m1.id);
-    expect(history).toMatchObject({ deleted: true, text: null });
-    expect(await h.db.message.count({ where: { id: m1.id } })).toBe(1);
+    expect(history).toBeUndefined();
     expect((await h.patch(`${C}/messages/${MISSING_UUID}`, c.token, { text: 'x' })).status).toBe(404);
   });
 

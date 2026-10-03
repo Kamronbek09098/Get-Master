@@ -21,10 +21,17 @@ export class RateLimitGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (!declared) return true;
-
     const req = context.switchToHttp().getRequest();
     const ip = (req.ip ?? req.headers?.['x-forwarded-for'] ?? 'unknown').toString().split(',')[0].trim();
+    if (!declared) {
+      // Maxsus chegarasiz yo‘llar uchun umumiy IP chegarasi; to‘lov provayderi webhooklari va sog‘liq tekshiruvi cheklanmaydi.
+      if (/\/(webhooks|health|metrics|click|payme)(\/|\?|$)/.test(req.originalUrl ?? '')) return true;
+      const global = this.config.get<{ limit: number; windowSeconds: number }>('limits.global');
+      if (!global || global.limit <= 0) return true;
+      const { allowed } = await this.redis.consume(`ratelimit:global:ip:${ip}`, global.limit, global.windowSeconds);
+      if (!allowed) throw new TooManyRequestsException(ERRORS.RATE_LIMIT_EXCEEDED);
+      return true;
+    }
     const route = `${req.method}:${req.route?.path ?? req.originalUrl}:${panelOf(req) ?? 'any'}`;
 
     if (declared.escalate || declared.escalateOnly) {
