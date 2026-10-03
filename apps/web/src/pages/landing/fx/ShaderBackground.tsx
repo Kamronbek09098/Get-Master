@@ -92,7 +92,10 @@ export function ShaderBackground({ variant = 'page' }: { variant?: 'page' | 'bra
       const root = document.documentElement;
       const styles = getComputedStyle(root);
       dark = variant === 'brand' || root.getAttribute('data-theme') === 'dark';
-      const primary = parse(styles.getPropertyValue('--gm-color-primary').trim(), [0.1, 0.3, 1]);
+      // Brend panelida rang temaga bog‘liq bo‘lmasin (qorong‘i temada --gm-color-primary yorqin bo‘lib ketadi): panel bo‘yicha qat’iy rang.
+      const panelColor: Record<string, string> = { MASTER: '#087f61', ADMIN: '#5146d8' };
+      const brandColor = panelColor[root.getAttribute('data-panel') ?? ''] ?? '#1456ff';
+      const primary = variant === 'brand' ? parse(brandColor, [0.08, 0.34, 1]) : parse(styles.getPropertyValue('--gm-color-primary').trim(), [0.1, 0.3, 1]);
       const accent = parse(styles.getPropertyValue('--gm-color-accent').trim(), [1, 0.69, 0.12]);
       if (dark) {
         gl.uniform3f(uBase, primary[0] * 0.06 + 0.01, primary[1] * 0.06 + 0.02, primary[2] * 0.12 + 0.04);

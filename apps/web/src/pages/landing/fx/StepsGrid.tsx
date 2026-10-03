@@ -23,7 +23,6 @@ export function StepsGrid({ title, steps }: { title: string; steps: Step[] }) {
             </span>
             <h3>{step.title}</h3>
             <p>{step.text}</p>
-            {index < steps.length - 1 && <i className="gm-steps4__arrow" aria-hidden="true" />}
           </li>
         ))}
       </ol>

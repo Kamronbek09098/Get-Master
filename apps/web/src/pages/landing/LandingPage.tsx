@@ -1,10 +1,10 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BadgeCheck, MapPin, Star } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Logo } from '@/components/common/Logo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { env } from '@/lib/env';
-import { CATEGORIES, CUSTOMER_CONTENT, INPUT_METHODS, MASTER_CONTENT } from './landing-content';
+import { CATEGORIES, CUSTOMER_CONTENT, MASTER_CONTENT } from './landing-content';
 import type { LandingContent } from './landing-content';
 import '@/components/ui/Button.css';
 import '@/components/ui/Badge.css';
@@ -12,75 +12,30 @@ import { Cursor } from './fx/Cursor';
 import { Marquee } from './fx/Marquee';
 import { StepsGrid } from './fx/StepsGrid';
 import { Statement } from './fx/Statement';
-import { ShaderBackground } from './fx/ShaderBackground';
-import { magneticHandlers, tiltHandlers } from './fx/interactions';
+import { tiltHandlers } from './fx/interactions';
+import { useAvailableStories } from './story/useAvailableStories';
 import { useSmoothScroll } from './fx/useSmoothScroll';
 import './Landing.css';
 
-const Hero3D = lazy(() => import('./fx/Hero3D'));
+// Three.js va GSAP faqat landing ochilganda alohida bo‘lak sifatida yuklanadi.
+const ScrollFilm = lazy(() => import('./film/ScrollFilm').then((module) => ({ default: module.ScrollFilm })));
+const RealStory = lazy(() => import('./story/RealStory').then((module) => ({ default: module.RealStory })));
 
-function webglAvailable(): boolean {
-  try {
-    const canvas = document.createElement('canvas');
-    return !!(canvas.getContext('webgl2') || canvas.getContext('webgl'));
-  } catch {
-    return false;
-  }
+/**
+ * Kinematografik bosh qism. Asosiy hikoya — HAQIQIY dunyoda (skroll boshqaradigan haqiqiy video).
+ * Hech bir hikoya videosi hali qo‘yilmagan bo‘lsa, vaqtincha 3D «film» zaxira sifatida ko‘rsatiladi.
+ */
+function CinematicHero({ content, master }: { content: LandingContent; master: boolean }) {
+  const { status, stories } = useAvailableStories();
+  if (status === 'pending') return <div className="gm-film-placeholder" aria-hidden="true" />;
+  return (
+    <Suspense fallback={<div className="gm-film-placeholder" aria-hidden="true" />}>
+      {stories.length > 0 ? <RealStory content={content} stories={stories} /> : <ScrollFilm content={content} master={master} />}
+    </Suspense>
+  );
 }
+
 import { t } from '@/i18n';
-
-function HeroPreview({ master }: { master: boolean }) {
-  return (
-    <div className="gm-hero-preview" aria-hidden="true">
-      <div className="gm-hero-preview__card gm-hero-preview__card--main">
-        <div className="gm-hero-preview__row">
-          <span className="gm-badge gm-badge--primary">{master ? t('Yangi so‘rov') : t('So‘rovingiz')}</span>
-          <span className="gm-hero-preview__time">{t('2 daqiqa oldin')}</span>
-        </div>
-        <h3>{t('Oshxonadagi kran oqyapti')}</h3>
-        <p className="gm-hero-preview__meta">
-          <MapPin size={14} />{' '}{t('Chilonzor, Toshkent · 1.2 km')}</p>
-        <div className="gm-hero-preview__chips">
-          <span>{t('Santexnika')}</span>
-          <span>{t('Bugun')}</span>
-          <span>{t('3 ta foto')}</span>
-        </div>
-      </div>
-
-      {[
-        { name: 'Aziz R.', price: '150 000', rating: '4.9', jobs: 128 },
-        { name: 'Jasur T.', price: '170 000', rating: '4.8', jobs: 96 },
-      ].map((offer, index) => (
-        <div key={offer.name} className={`gm-hero-preview__card gm-hero-preview__offer gm-hero-preview__offer--${index + 1}`}>
-          <span className="gm-avatar">{offer.name[0]}</span>
-          <div className="gm-hero-preview__offer-body">
-            <strong>
-              {offer.name} <BadgeCheck size={15} className="gm-hero-preview__verified" />
-            </strong>
-            <span>
-              <Star size={13} fill="currentColor" />{' '}{t('{rating} · {jobs} ta ish', { rating: offer.rating, jobs: offer.jobs })}</span>
-          </div>
-          <div className="gm-hero-preview__price">
-            {offer.price} <small>{t('so‘m')}</small>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Sarlavhani so‘zlarga bo‘lib, har birini ketma-ket paydo qiladi (CSS animatsiya). */
-function Words({ text, offset = 0 }: { text: string; offset?: number }) {
-  return (
-    <>
-      {text.split(' ').map((word, index) => (
-        <span key={`${word}-${index}`} className="gm-lw" style={{ ['--i' as string]: index + offset }}>
-          {word}
-        </span>
-      ))}
-    </>
-  );
-}
 
 /** Ko‘rinish maydoniga kirgan `data-reveal` elementlarni ketma-ket ochadi (prefers-reduced-motion hurmat qilinadi). */
 function useScrollReveal() {
@@ -108,16 +63,15 @@ function useScrollReveal() {
 function Landing({ content, master }: { content: LandingContent; master: boolean }) {
   useScrollReveal();
   useSmoothScroll();
-  const [webgl, setWebgl] = useState(false);
   const [atTop, setAtTop] = useState(true);
   useEffect(() => {
-    const onScroll = () => setAtTop(window.scrollY < 40);
+    const onScroll = () => {
+      const film = document.querySelector('.gm-film, .gm-rs');
+      setAtTop(film ? film.getBoundingClientRect().bottom > 90 : window.scrollY < 40);
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-  useEffect(() => {
-    setWebgl(webglAvailable() && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }, []);
   return (
     <div className="gm-landing">
@@ -141,46 +95,7 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
         </div>
       </header>
 
-      <section className="gm-landing__hero">
-        {webgl && <ShaderBackground variant="brand" />}
-        {webgl && (
-          <Suspense fallback={null}>
-            <Hero3D />
-          </Suspense>
-        )}
-        <div className="gm-landing__hero-inner">
-          <div className="gm-landing__hero-copy">
-            <span className="gm-landing__eyebrow">{content.eyebrow}</span>
-            <h1 aria-label={`${content.title} ${content.highlight}`}>
-              <span aria-hidden="true">
-                <Words text={content.title} />
-                <span className="gm-landing__hl">
-                  <Words text={content.highlight} offset={content.title.split(' ').length} />
-                </span>
-              </span>
-            </h1>
-            <p>{content.lead}</p>
-            <div className="gm-landing__cta-row">
-              <Link to="/register" className="gm-button gm-button--primary gm-button--md gm-magnetic" {...magneticHandlers}>
-                {content.primaryCta} <ArrowRight size={18} />
-              </Link>
-              <a href="#qanday" className="gm-button gm-button--secondary gm-button--md gm-magnetic" {...magneticHandlers}>
-                {content.secondaryCta}
-              </a>
-            </div>
-            {!master && (
-              <ul className="gm-landing__inputs" aria-label={t('Muammoni tasvirlash usullari')}>
-                {INPUT_METHODS.map((method) => (
-                  <li key={method.label}>
-                    <method.icon size={16} /> {method.label}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          <HeroPreview master={master} />
-        </div>
-      </section>
+      <CinematicHero content={content} master={master} />
 
       <section className="gm-landing__stats" aria-label={t('Qisqacha')}>
         {content.stats.map((stat) => (

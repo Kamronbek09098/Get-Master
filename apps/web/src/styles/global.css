@@ -895,75 +895,9 @@ html {
   text-decoration: none;
 }
 
-/* Brauzerning o‘z orqaga/oldinga surishi bilan to‘qnashmasligi uchun (surishni ilova o‘zi boshqaradi). */
+/* Brauzerning o‘z orqaga/oldinga surishi (trekped imo‘si) ishga tushmasin. */
 html,
 body {
   overscroll-behavior-x: none;
 }
 
-/* Orqaga/oldinga surish ko‘rsatkichi: chetdan chiqib keladigan doira (Chrome kabi) */
-.gm-swipe-nav {
-  --p: 0;
-  position: fixed;
-  top: 50%;
-  z-index: 3000;
-  display: grid;
-  place-items: center;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--gm-color-primary) 22%, transparent);
-  color: #fff;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.22s var(--gm-ease, ease), background-color 0.15s;
-}
-
-.gm-swipe-nav[data-side='back'] {
-  left: 0;
-  transform: translate(calc(-100% + var(--p) * 130%), -50%) scale(calc(0.6 + var(--p) * 0.4));
-}
-
-.gm-swipe-nav[data-side='forward'] {
-  right: 0;
-  transform: translate(calc(100% - var(--p) * 130%), -50%) scale(calc(0.6 + var(--p) * 0.4));
-}
-
-.gm-swipe-nav[data-side='forward'] svg {
-  transform: scaleX(-1);
-}
-
-.gm-swipe-nav.is-visible {
-  opacity: 1;
-}
-
-.gm-swipe-nav__core {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: var(--gm-color-primary);
-  box-shadow: 0 6px 16px -4px color-mix(in srgb, var(--gm-color-primary) 70%, transparent);
-  transition: transform 0.18s var(--gm-ease, ease);
-}
-
-.gm-swipe-nav.is-ready {
-  background: color-mix(in srgb, var(--gm-color-primary) 34%, transparent);
-}
-
-.gm-swipe-nav.is-ready .gm-swipe-nav__core {
-  transform: scale(1.12);
-}
-
-.gm-swipe-nav.is-commit {
-  opacity: 0;
-  transition: opacity 0.25s ease 0.05s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gm-swipe-nav,
-  .gm-swipe-nav__core {
-    transition: none;
-  }
-}

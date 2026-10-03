@@ -4,6 +4,7 @@ import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useMatching } from '../hooks/useMatching';
+import { MatchingViz } from './MatchingViz';
 import { t } from '@/i18n';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -20,24 +21,20 @@ export function MatchingResults({ requestId, serviceSelected = true }: { request
   if (matching.isError) return <Alert tone="danger">{getErrorMessage(matching.error)}</Alert>;
   if (!matching.data?.run) {
     return serviceSelected ? (
-      <EmptyState
-        title={t('Ustalar izlanmoqda')}
-        description={t('Qidiruv bir necha soniyada boshlanadi. Bu sahifa o‘zi yangilanadi.')}
-      />
+      <MatchingViz />
     ) : (
       <EmptyState title={t('Xizmat turi tanlanmagan')} description={t('Yuqoridagi «Xizmat turini tanlang» bo‘limidan tanlang — shunda ustalar qidiriladi.')} />
     );
   }
 
   const results = matching.data.results;
+  const running = matching.data.run.status === 'PENDING' || matching.data.run.status === 'RUNNING';
   return (
     <div className="gm-list">
-      <p className="gm-rqd__run">{STATUS_LABEL[matching.data.run.status] ?? matching.data.run.status}</p>
-      {results.length === 0 && (
-        <EmptyState
-          title={t('Hozircha mos usta topilmadi')}
-          description={t('Ustalar o‘zlari ham so‘rovingizga taklif yuborishi mumkin. Yangi takliflar «Takliflar» bo‘limida ko‘rinadi.')}
-        />
+      {running || matching.data.run.status === 'COMPLETED' ? (
+        <MatchingViz done={!running} found={results.length} />
+      ) : (
+        <p className="gm-rqd__run">{STATUS_LABEL[matching.data.run.status] ?? matching.data.run.status}</p>
       )}
       {results.map((result, index) => (
         <Link key={result.id} to={`/ustalar-katalogi/${result.master?.user.accountNumber ?? result.masterId}`} className="gm-card">

@@ -11,6 +11,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { cx, formatDateTime } from '@/lib/utils';
 import { OrderStatus } from '@/features/order/components/OrderStatus';
 import { OrderProgress } from '@/features/order/components/OrderProgress';
+import { OrderStory } from '@/features/order/components/OrderStory';
 import { OrderParty } from '@/features/order/components/OrderParty';
 import { OrderTimeline } from '@/features/order/components/OrderTimeline';
 import { ScheduleCard } from '@/features/order/components/ScheduleCard';
@@ -215,6 +216,8 @@ export function OrderDetailsPage() {
 
       <OrderProgress status={status} />
       {actionError && <Alert tone="danger">{getErrorMessage(actionError.error)}</Alert>}
+
+      <OrderStory data={data} proofs={proofs.data} loading={proofs.isLoading} />
 
       <div className="gm-olayout">
         <div className="gm-ocol">

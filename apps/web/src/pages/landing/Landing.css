@@ -1419,17 +1419,8 @@ html.gm-has-cursor .gm-landing button { cursor: none; }
   transition: color 0.15s linear;
 }
 
-/* Gorizontal ushlab turiladigan qadamlar. */
-@media (min-width: 901px) {
-  .gm-pin-desktop { display: block; }
-  
-}
-
 @media (prefers-reduced-motion: reduce) {
   .gm-statement__word { --on: 1 !important; }
-  .gm-pin { height: auto; }
-  .gm-pin__sticky { position: static; height: auto; padding: 0 var(--gm-space-5); }
-  .gm-pin__track { flex-wrap: wrap; transform: none !important; }
 }
 
 /* Hero: 3D asbob asosiy ko‘rinish; so‘rov kartochkasi yashiriladi, takliflar pastda shisha chiplar bo‘lib qoladi. */
@@ -1606,17 +1597,65 @@ html.gm-has-cursor .gm-landing button { cursor: none; }
   color: transparent;
   -webkit-text-stroke: 1.2px color-mix(in srgb, var(--gm-color-text) 22%, transparent);
 }
-.gm-steps4__icon { display: grid; place-items: center; width: 48px; height: 48px; margin-top: auto; border-radius: 15px; background: color-mix(in srgb, var(--gm-color-primary) 14%, transparent); color: var(--gm-color-primary); }
+.gm-steps4__icon { display: grid; place-items: center; width: 48px; height: 48px; margin-top: 44px; border-radius: 15px; background: color-mix(in srgb, var(--gm-color-primary) 14%, transparent); color: var(--gm-color-primary); }
 .gm-steps4__card h3 { margin: 6px 0 0; font-size: clamp(17px, 1.5vw, 21px); letter-spacing: -0.02em; }
 .gm-steps4__card p { margin: 0; color: var(--gm-color-text-muted); font-size: 14.5px; line-height: 1.5; }
-.gm-steps4__arrow { position: absolute; right: -14px; top: 50%; width: 28px; height: 2px; background: linear-gradient(90deg, var(--gm-color-primary), var(--gm-color-accent)); z-index: 2; }
-.gm-steps4__arrow::after { content: ''; position: absolute; right: 0; top: -4px; width: 8px; height: 8px; border-top: 2px solid var(--gm-color-accent); border-right: 2px solid var(--gm-color-accent); transform: rotate(45deg); }
 @media (max-width: 1100px) {
   .gm-steps4__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .gm-steps4__arrow { display: none; }
 }
 @media (max-width: 600px) {
   .gm-steps4__grid { grid-template-columns: 1fr; }
   .gm-steps4__card { min-height: 0; }
   .gm-steps4__icon { margin-top: 0; }
 }
+
+/* ===== Design System v2 dan olingan elementlar: "ishonch" belgisi va "moslik topildi" yorlig‘i ===== */
+.gm-proof { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+.gm-proof__avatars { display: flex; }
+.gm-proof__avatars i {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-left: -8px;
+  border: 2px solid rgba(6, 13, 43, 0.9);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 800;
+}
+.gm-proof__avatars i:first-child { margin-left: 0; }
+.gm-proof__avatars i:nth-child(2) { background: rgba(255, 176, 32, 0.28); color: #ffd27a; }
+.gm-proof__avatars i:nth-child(3) { background: #fff; color: #0a1a3c; }
+.gm-proof__text { display: flex; flex-direction: column; gap: 2px; }
+.gm-proof__text strong { font-size: 12.5px; color: #fff; }
+.gm-proof__text small { font-size: 11.5px; color: rgba(231, 238, 255, 0.7); }
+.gm-hero-preview__match {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-end;
+  margin: 0 8px -4px 0;
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: var(--gm-color-accent);
+  color: var(--gm-color-accent-contrast);
+  font-family: var(--gm-mono, ui-monospace, monospace);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 0 8px 22px -8px color-mix(in srgb, var(--gm-color-accent) 70%, transparent);
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  animation: gm-up 0.6s ease 1.5s forwards;
+}
+@media (prefers-reduced-motion: reduce) { .gm-hero-preview__match { opacity: 1; animation: none; } }
+
+/* Film tugagach: statistik kartochkalar ustma-ust tushmaydi, oddiy oqimda turadi. */
+.gm-landing__stats { transform: none; margin-top: clamp(28px, 4vw, 48px); }
+
+.gm-film-placeholder { height: 100vh; height: 100svh; background: #060d2b; }
