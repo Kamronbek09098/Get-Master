@@ -75,3 +75,7 @@
 .gm-rs__list strong { display: block; margin: 8px 0 6px; font-size: 18px; }
 .gm-rs__list p { margin: 0; font-size: 14px; color: rgba(255, 255, 255, 0.82); }
 @media (prefers-reduced-motion: reduce) { .gm-rs__hint i { animation: none; } }
+
+/* Video hali yo‘q: 3D/abstrakt emas, sokin bosh qism */
+.gm-rs-calm { position: relative; min-height: 100svh; overflow: hidden; background: #0a1230; color: #fff; }
+.gm-rs-calm .gm-rs__hero { opacity: 1; transform: none; }

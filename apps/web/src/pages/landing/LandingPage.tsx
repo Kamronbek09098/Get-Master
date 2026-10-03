@@ -16,21 +16,47 @@ import { tiltHandlers } from './fx/interactions';
 import { useAvailableStories } from './story/useAvailableStories';
 import { useSmoothScroll } from './fx/useSmoothScroll';
 import './Landing.css';
+import './story/story.css';
 
 // Three.js va GSAP faqat landing ochilganda alohida bo‘lak sifatida yuklanadi.
-const ScrollFilm = lazy(() => import('./film/ScrollFilm').then((module) => ({ default: module.ScrollFilm })));
+const ShaderBackground = lazy(() => import('./fx/ShaderBackground').then((module) => ({ default: module.ShaderBackground })));
 const RealStory = lazy(() => import('./story/RealStory').then((module) => ({ default: module.RealStory })));
 
 /**
  * Kinematografik bosh qism. Asosiy hikoya — HAQIQIY dunyoda (skroll boshqaradigan haqiqiy video).
- * Hech bir hikoya videosi hali qo‘yilmagan bo‘lsa, vaqtincha 3D «film» zaxira sifatida ko‘rsatiladi.
+ * Video hali qo‘yilmagan bo‘lsa, 3D/abstrakt narsa ko‘rsatilmaydi — oddiy sokin bosh qism turadi.
  */
-function CinematicHero({ content, master }: { content: LandingContent; master: boolean }) {
+function CalmHero({ content }: { content: LandingContent }) {
+  return (
+    <section className="gm-rs-calm">
+      <Suspense fallback={null}>
+        <ShaderBackground variant="brand" />
+      </Suspense>
+      <div className="gm-rs__hero">
+        <p className="gm-rs__label">{content.eyebrow}</p>
+        <h1>
+          <span>{content.title}</span> <em>{content.highlight}</em>
+        </h1>
+        <p className="gm-rs__text">{content.lead}</p>
+        <div className="gm-rs__cta">
+          <Link to="/register" className="gm-button gm-button--primary gm-button--md">
+            {content.primaryCta} <ArrowRight size={16} />
+          </Link>
+          <a href="#qanday" className="gm-button gm-button--secondary gm-button--md">
+            {content.secondaryCta}
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function CinematicHero({ content }: { content: LandingContent }) {
   const { status, stories } = useAvailableStories();
   if (status === 'pending') return <div className="gm-film-placeholder" aria-hidden="true" />;
   return (
     <Suspense fallback={<div className="gm-film-placeholder" aria-hidden="true" />}>
-      {stories.length > 0 ? <RealStory content={content} stories={stories} /> : <ScrollFilm content={content} master={master} />}
+      {stories.length > 0 ? <RealStory content={content} stories={stories} /> : <CalmHero content={content} />}
     </Suspense>
   );
 }
@@ -60,7 +86,7 @@ function useScrollReveal() {
   }, []);
 }
 
-function Landing({ content, master }: { content: LandingContent; master: boolean }) {
+function Landing({ content }: { content: LandingContent }) {
   useScrollReveal();
   useSmoothScroll();
   const [atTop, setAtTop] = useState(true);
@@ -95,7 +121,7 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
         </div>
       </header>
 
-      <CinematicHero content={content} master={master} />
+      <CinematicHero content={content} />
 
       <section className="gm-landing__stats" aria-label={t('Qisqacha')}>
         {content.stats.map((stat) => (
@@ -163,5 +189,5 @@ function Landing({ content, master }: { content: LandingContent; master: boolean
 
 export function LandingPage() {
   const master = env.appRole === 'MASTER';
-  return <Landing content={master ? MASTER_CONTENT : CUSTOMER_CONTENT} master={master} />;
+  return <Landing content={master ? MASTER_CONTENT : CUSTOMER_CONTENT} />;
 }
