@@ -8,7 +8,6 @@ import { CATEGORIES, CUSTOMER_CONTENT, MASTER_CONTENT } from './landing-content'
 import type { LandingContent } from './landing-content';
 import '@/components/ui/Button.css';
 import '@/components/ui/Badge.css';
-import { Cursor } from './fx/Cursor';
 import { Marquee } from './fx/Marquee';
 import { StepsGrid } from './fx/StepsGrid';
 import { Statement } from './fx/Statement';
@@ -102,7 +101,6 @@ function Landing({ content }: { content: LandingContent }) {
   return (
     <div className="gm-landing">
       <div id="gm-scroll-progress" className="gm-scroll-progress" aria-hidden="true" />
-      <Cursor />
       <header className={atTop ? 'gm-landing__nav is-top' : 'gm-landing__nav'}>
         <div className="gm-landing__nav-inner">
           <Link to="/" aria-label="GetMaster">
@@ -143,7 +141,7 @@ function Landing({ content }: { content: LandingContent }) {
           <h2 data-reveal>{t('Mashhur xizmatlar')}</h2>
           <div className="gm-landing__categories">
             {CATEGORIES.map((category, index) => (
-              <Link key={category.name} to="/register" className="gm-landing__category gm-tilt" {...tiltHandlers} data-reveal style={{ ['--i' as string]: index % 6 }}>
+              <Link key={category.name} to="/register" className="gm-landing__category gm-tilt" data-cursor="explore" {...tiltHandlers} data-reveal style={{ ['--i' as string]: index % 6 }}>
                 <span>
                   <category.icon size={26} strokeWidth={1.9} />
                 </span>

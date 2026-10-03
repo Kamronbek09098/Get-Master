@@ -1858,4 +1858,10 @@ export const ruExtra: Record<string, string> = {
   "Elektrik": "Электрик",
   "Maishiy texnika": "Бытовая техника",
   "Mebel va duradgorlik": "Мебель и столярные работы",
+  "Ko‘rish": "Смотреть",
+  "Ochish": "Открыть",
+  "Ko‘rib chiqish": "Изучить",
+  "Surish": "Тяни",
+  "Oldin / Keyin": "До / После",
+  "Profilni ko‘rish": "Профиль",
 };

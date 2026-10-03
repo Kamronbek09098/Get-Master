@@ -1858,4 +1858,10 @@ export const enExtra: Record<string, string> = {
   "Elektrik": "Electrician",
   "Maishiy texnika": "Appliances",
   "Mebel va duradgorlik": "Furniture & carpentry",
+  "Ko‘rish": "View",
+  "Ochish": "Open",
+  "Ko‘rib chiqish": "Explore",
+  "Surish": "Drag",
+  "Oldin / Keyin": "Before / After",
+  "Profilni ko‘rish": "View profile",
 };

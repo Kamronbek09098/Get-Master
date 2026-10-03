@@ -32,6 +32,7 @@ function BeforeAfter({ before, after }: { before: string; after: string }) {
     <div
       ref={ref}
       className="gm-ba"
+      data-cursor="before-after"
       style={{ ['--pos' as string]: `${value}%` }}
       onPointerDown={(event) => {
         dragging.current = true;
