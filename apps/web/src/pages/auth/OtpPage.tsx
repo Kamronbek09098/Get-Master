@@ -86,7 +86,7 @@ export function OtpPage() {
             if (credential) {
               // Google orqali ro‘yxatdan o‘tgan: parol yo‘q, shuning uchun darhol Google bilan kiriladi.
               void authService
-                .googleSignIn(credential)
+                .googleSignIn({ credential })
                 .then(() => {
                   useAuthStore.getState().setSession(true);
                   setPendingPhone(null);

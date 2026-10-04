@@ -6,6 +6,7 @@ import { Footer } from './Footer';
 import { useCurrentRole } from '@/features/session/hooks/useCurrentRole';
 import { useAutoReadNotifications } from '@/features/notification/hooks/useAutoReadNotifications';
 import { VerificationBanner } from '@/features/trust/components/VerificationBanner';
+import { PhoneRequiredBanner } from '@/features/session/components/PhoneRequiredBanner';
 import { NameRequiredDialog } from '@/features/session/components/NameRequiredDialog';
 import { t } from '@/i18n';
 import './AppLayout.css';
@@ -23,6 +24,7 @@ export function AppLayout() {
         <Sidebar />
         <main id="gm-main-content" className="gm-app-layout__content">
           {role === 'MASTER' && !needsMasterOnboarding && <VerificationBanner />}
+          {role === 'CUSTOMER' && <PhoneRequiredBanner />}
           <Outlet />
         </main>
       </div>

@@ -36,7 +36,7 @@
   --chat-canvas: color-mix(in srgb, var(--gm-color-primary) 4%, var(--gm-color-bg));
   display: grid;
   grid-template-columns: 360px minmax(0, 1fr);
-  height: calc(100dvh - var(--gm-header-height) - 88px);
+  height: calc(var(--gm-dvh, 100dvh) - var(--gm-header-height) - 88px);
   min-height: 480px;
   border: 1px solid var(--gm-color-border);
   border-radius: 22px;
@@ -908,7 +908,7 @@ body:has(.gm-messenger) .gm-footer {
   box-shadow: var(--gm-shadow-lg);
 }
 .gm-app-layout__content:has(.gm-verification-banner) .gm-messenger {
-  height: calc(100dvh - var(--gm-header-height) - 88px - 104px);
+  height: calc(var(--gm-dvh, 100dvh) - var(--gm-header-height) - 88px - 104px);
   min-height: 420px;
 }
 .gm-messenger__list {

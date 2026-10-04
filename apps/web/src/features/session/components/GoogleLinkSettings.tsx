@@ -58,8 +58,10 @@ export function GoogleLinkSettings() {
     try {
       await sessionService.setPassword(password);
       // Login va yangi parol bir marta ko‘rsatiladi (ro‘yxatdan o‘tishdagi kabi); parol serverda faqat xesh ko‘rinishida saqlanadi.
-      useAuthStore.getState().setNewCredentials({ phone: me.data?.phone ?? '', password });
-      setCredentialsOpen(true);
+      if (me.data?.phone) {
+        useAuthStore.getState().setNewCredentials({ phone: me.data.phone, password });
+        setCredentialsOpen(true);
+      }
       setPassword('');
       setConfirm('');
       await queryClient.invalidateQueries({ queryKey: ['users', 'me'] });
@@ -155,9 +157,10 @@ export function GoogleLinkSettings() {
       )}
       {linked ? (
         <div className="gm-twofa__switch">
-          <Button variant="secondary" loading={busy} disabled={!hasPassword} onClick={() => void unlink()}>
+          <Button variant="secondary" loading={busy} disabled={!hasPassword || !me.data?.phone} onClick={() => void unlink()}>
             {t('Google akkauntni uzish')}
           </Button>
+          {!me.data?.phone && <p className="gm-google__hint">{t('Google akkauntni uzish uchun avval telefon raqamingizni kiriting va tasdiqlang.')}</p>}
         </div>
       ) : env.googleClientId ? (
         <div className="gm-google__wrap">

@@ -350,11 +350,57 @@ export class AuthService {
   }
 
   /**
+   * Google OAuth access tokenni tekshiradi (auditoriya = bizning client ID) va profil + telefonni oladi.
+   * Telefon faqat Google uni TASDIQLANGAN deb belgilagan va O‘zbekiston raqami bo‘lsa olinadi.
+   */
+  private async verifyGoogleAccessToken(accessToken: string) {
+    const clientId = this.config.get<string>('auth.googleClientId', '');
+    if (!clientId) throw new BadRequestException(ERRORS.GOOGLE_NOT_CONFIGURED);
+    const auth = { Authorization: `Bearer ${accessToken}` };
+    let profileInfo: { sub?: string; email?: string; email_verified?: boolean | string; given_name?: string; family_name?: string; name?: string; picture?: string };
+    try {
+      const tokenResponse = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(accessToken)}`, { signal: AbortSignal.timeout(8000) });
+      if (!tokenResponse.ok) throw new Error('tokeninfo');
+      const tokenInfo = (await tokenResponse.json()) as { aud?: string; azp?: string };
+      if ((tokenInfo.aud ?? tokenInfo.azp) !== clientId) throw new Error('aud');
+      const infoResponse = await fetch('https://openidconnect.googleapis.com/v1/userinfo', { headers: auth, signal: AbortSignal.timeout(8000) });
+      if (!infoResponse.ok) throw new Error('userinfo');
+      profileInfo = (await infoResponse.json()) as typeof profileInfo;
+    } catch {
+      throw new UnauthorizedException(ERRORS.GOOGLE_TOKEN_INVALID);
+    }
+    const verified = profileInfo.email_verified === true || profileInfo.email_verified === 'true';
+    if (!profileInfo.sub || !verified) throw new UnauthorizedException(ERRORS.GOOGLE_TOKEN_INVALID);
+    let phone: string | null = null;
+    try {
+      const people = await fetch('https://people.googleapis.com/v1/people/me?personFields=phoneNumbers', { headers: auth, signal: AbortSignal.timeout(8000) });
+      if (people.ok) {
+        const data = (await people.json()) as { phoneNumbers?: { canonicalForm?: string; value?: string; metadata?: { verified?: boolean } }[] };
+        const hit = (data.phoneNumbers ?? []).find((item) => item.metadata?.verified === true && /^\+998\d{9}$/.test((item.canonicalForm ?? item.value ?? '').replace(/[^\d+]/g, '')));
+        phone = hit ? (hit.canonicalForm ?? hit.value ?? '').replace(/[^\d+]/g, '') : null;
+      }
+    } catch {
+      phone = null;
+    }
+    const fallbackName = (profileInfo.name ?? '').trim().split(/\s+/);
+    return {
+      sub: profileInfo.sub,
+      email: profileInfo.email ?? null,
+      picture: profileInfo.picture && /^https:\/\//.test(profileInfo.picture) ? profileInfo.picture.slice(0, 500) : null,
+      firstName: (profileInfo.given_name ?? fallbackName[0] ?? '').trim() || null,
+      lastName: (profileInfo.family_name ?? fallbackName.slice(1).join(' ')).trim() || null,
+      phone,
+    };
+  }
+
+  /**
    * Google orqali kirish. Hisob bog‘langan bo‘lsa — sessiya ochiladi (Google o‘zi shaxsni tasdiqlaydi).
    * Aks holda telefon raqami va shartlarni qabul qilish kerak: `needsPhone` va qisqa muddatli `signupToken` qaytadi.
    */
   async googleSignIn(dto: GoogleSignInDto, req: Request, res: Response) {
-    const profile = await this.verifyGoogleCredential(dto.credential);
+    const profile = dto.accessToken
+      ? await this.verifyGoogleAccessToken(dto.accessToken)
+      : { ...(await this.verifyGoogleCredential(dto.credential ?? '')), phone: null as string | null };
     const user = await this.db.user.findUnique({
       where: { googleId: profile.sub },
       select: { id: true, phone: true, status: true, deletedAt: true, accountNumber: true, firstName: true, lastName: true, userRoles: { select: { role: true } } },
@@ -374,15 +420,25 @@ export class AuthService {
     }
     const signupToken = newOpaqueToken(32);
     await this.redis.set(`google:signup:${signupToken}`, JSON.stringify(profile), 900);
-    return { needsPhone: true as const, signupToken, firstName: profile.firstName, lastName: profile.lastName };
+    // Google'dan hamma ma'lumot olinadi: ism, email, rasm va (tasdiqlangan bo‘lsa) telefon. Hech narsa qayta so‘ralmaydi.
+    // Telefon bo‘lmasa yoki band bo‘lsa — hisob telefonsiz ochiladi (kirish mumkin, buyurtma berish uchun telefon tasdiqlanadi).
+    const policyIds = (await this.getRequiredPolicies()).map((policy) => policy.id);
+    if (profile.phone) {
+      try {
+        return { needsPhone: false as const, ...(await this.googleRegister({ signupToken, phone: profile.phone, acceptedPolicyIds: policyIds }, req, res, { phoneVerified: true })) };
+      } catch (error) {
+        if (!(error instanceof ConflictException)) throw error;
+      }
+    }
+    return { needsPhone: false as const, ...(await this.googleRegister({ signupToken, acceptedPolicyIds: policyIds }, req, res)) };
   }
 
   /** Google orqali yangi hisob: telefon raqam OTP bilan tasdiqlanadi (platforma identifikatori — telefon). */
-  async googleRegister(dto: GoogleRegisterDto, req: Request, res: Response) {
+  async googleRegister(dto: GoogleRegisterDto, req: Request, res: Response, opts: { phoneVerified?: boolean } = {}) {
     const raw = await this.redis.get(`google:signup:${dto.signupToken}`);
     if (!raw) throw new BadRequestException(ERRORS.GOOGLE_SIGNUP_EXPIRED);
     const profile = JSON.parse(raw) as { sub: string; email: string | null; picture: string | null; firstName: string | null; lastName: string | null };
-    const phone = this.normalizePhone(dto.phone);
+    const phone = dto.phone ? this.normalizePhone(dto.phone) : null;
     const policyIds = [...new Set(dto.acceptedPolicyIds)];
     if (policyIds.length !== dto.acceptedPolicyIds.length) throw new BadRequestException(ERRORS.DUPLICATE_POLICY_ACCEPTANCE);
     const requiredPolicies = await this.getRequiredPolicies();
@@ -394,18 +450,20 @@ export class AuthService {
 
     // Google orqali kirishda OTP so‘ralmaydi, shuning uchun band/bloklangan raqam ochiq xabar bilan rad etiladi.
     const decoy = async (_targetUserId: string | null): Promise<never> => {
-      this.warnAuth('Google orqali ro‘yxatdan o‘tishda band raqam', 'Raqam band yoki bloklangan', phone, req, undefined, `google-dup:${phone}:${this.clientIp(req) ?? ''}`);
+      this.warnAuth('Google orqali ro‘yxatdan o‘tishda band raqam', 'Raqam band yoki bloklangan', phone ?? '', req, undefined, `google-dup:${phone}:${this.clientIp(req) ?? ''}`);
       throw new ConflictException(ERRORS.PHONE_ALREADY_REGISTERED);
     };
 
-    const blocked = await this.db.blockedPhone.findUnique({ where: { phone }, select: { id: true } });
-    if (blocked) return decoy(blocked.id);
-    let existing = await this.db.user.findUnique({ where: { phone }, select: { id: true, deletedAt: true, status: true, accountNumber: true } });
-    if (existing && (existing.deletedAt !== null || existing.status === UserStatus.DELETED)) {
-      await this.db.user.update({ where: { id: existing.id }, data: { phone: `del${existing.accountNumber}_${phone}`.slice(0, 32), email: null, passwordHash: null, googleId: null } });
-      existing = null;
+    if (phone) {
+      const blocked = await this.db.blockedPhone.findUnique({ where: { phone }, select: { id: true } });
+      if (blocked) return decoy(blocked.id);
+      let existing = await this.db.user.findUnique({ where: { phone }, select: { id: true, deletedAt: true, status: true, accountNumber: true } });
+      if (existing && (existing.deletedAt !== null || existing.status === UserStatus.DELETED)) {
+        await this.db.user.update({ where: { id: existing.id }, data: { phone: `del${existing.accountNumber}_${phone}`.slice(0, 32), email: null, passwordHash: null, googleId: null } });
+        existing = null;
+      }
+      if (existing) return decoy(existing.id);
     }
-    if (existing) return decoy(existing.id);
     // Google hisobi boshqa (o‘chirilmagan) akkauntga bog‘langan bo‘lsa — yangi hisob ochilmaydi.
     const linked = await this.db.user.findUnique({ where: { googleId: profile.sub }, select: { id: true, deletedAt: true, status: true, accountNumber: true } });
     let pendingId: string | null = null;
@@ -416,7 +474,7 @@ export class AuthService {
     }
     if (pendingId) {
       // Eski (kod bilan boshlangan) yarim ro‘yxatdan o‘tish: endi OTP talab qilinmaydi, hisob faollashtiriladi.
-      const activated = await this.db.user.update({ where: { id: pendingId }, data: { phone, status: UserStatus.ACTIVE }, select: { id: true, phone: true, status: true, accountNumber: true, firstName: true, lastName: true, userRoles: { select: { role: true } } } });
+      const activated = await this.db.user.update({ where: { id: pendingId }, data: { ...(phone ? { phone, ...(opts.phoneVerified ? { phoneVerifiedAt: new Date() } : {}) } : {}), status: UserStatus.ACTIVE }, select: { id: true, phone: true, status: true, accountNumber: true, firstName: true, lastName: true, userRoles: { select: { role: true } } } });
       await this.redis.del(`google:signup:${dto.signupToken}`);
       const session = await this.createSession(activated.id, activated.userRoles.map((item) => item.role), activated.status, req, res);
       this.notifySession('login', activated, req);
@@ -429,6 +487,7 @@ export class AuthService {
       const account = await tx.user.create({
         data: {
           phone,
+          phoneVerifiedAt: phone && opts.phoneVerified ? new Date() : null,
           googleId: profile.sub,
           googleEmail: profile.email,
           email: profile.email && !emailTaken ? profile.email.toLowerCase() : null,
@@ -454,7 +513,7 @@ export class AuthService {
 
   /** Telefon orqali ochilgan akkauntga Google hisobini ulash (keyin Google bilan shu akkauntga kirish mumkin; barcha ma'lumotlar saqlanadi). */
   async linkGoogle(userId: string, dto: GoogleSignInDto, req: Request) {
-    const profile = await this.verifyGoogleCredential(dto.credential);
+    const profile = await this.verifyGoogleCredential(dto.credential ?? '');
     const me = await this.db.user.findUnique({
       where: { id: userId },
       select: { id: true, email: true, avatarUrl: true, googleId: true, userRoles: { select: { role: true } } },
@@ -486,9 +545,10 @@ export class AuthService {
 
   /** Google bog‘lanishini uzish. Parolsiz akkauntda taqiqlanadi (aks holda akkauntga kirib bo‘lmay qoladi). */
   async unlinkGoogle(userId: string, req: Request) {
-    const me = await this.db.user.findUnique({ where: { id: userId }, select: { googleId: true, passwordHash: true } });
+    const me = await this.db.user.findUnique({ where: { id: userId }, select: { googleId: true, passwordHash: true, phone: true } });
     if (!me?.googleId) throw new BadRequestException(ERRORS.GOOGLE_NOT_LINKED);
     if (!me.passwordHash) throw new BadRequestException(ERRORS.GOOGLE_UNLINK_NEEDS_PASSWORD);
+    if (!me.phone) throw new BadRequestException(ERRORS.GOOGLE_UNLINK_NEEDS_PHONE);
     await this.db.$transaction([
       this.db.user.update({ where: { id: userId }, data: { googleId: null, googleEmail: null } }),
       this.db.auditLog.create({
@@ -652,7 +712,7 @@ export class AuthService {
   /** Kirish/chiqish haqida yopiq guruhga xabar (fonda; xato javobga ta’sir qilmaydi). */
   private notifySession(
     event: 'login' | 'logout' | 'logout-all',
-    user: { accountNumber: number; phone: string; firstName: string | null; lastName: string | null; userRoles: Array<{ role: Role }> },
+    user: { accountNumber: number; phone: string | null; firstName: string | null; lastName: string | null; userRoles: Array<{ role: Role }> },
     req: Request,
   ) {
     const labels: Record<string, string> = { CUSTOMER: 'Mijoz', MASTER: 'Usta', ADMIN: 'Admin' };
@@ -663,7 +723,7 @@ export class AuthService {
       name: [user.firstName, user.lastName].filter(Boolean).join(' '),
       accountNumber: user.accountNumber,
       roles: panel ? labels[panel] ?? panel : user.userRoles.map((item) => labels[item.role] ?? item.role).join(', '),
-      login: user.phone,
+      login: user.phone ?? 'Google',
       ip: this.clientIp(req) ?? null,
       panel,
       userAgent: (Array.isArray(agent) ? agent[0] : agent) ?? null,

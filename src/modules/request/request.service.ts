@@ -12,6 +12,7 @@ import { CancelRequestDto } from './dto/cancel-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { RequestQueryDto } from './dto/request-query.dto';
 import { ERRORS } from '../../common/constants/error-messages';
+import { assertPhoneVerified } from '../../common/utils/phone-gate';
 
 const REQUEST_DEFAULT_TTL_HOURS = 24;
 const DUPLICATE_WINDOW_MS = 60_000;
@@ -30,6 +31,7 @@ export class RequestService {
   ) {}
 
   async create(customerId: string, dto: CreateRequestDto) {
+    await assertPhoneVerified(this.db, customerId);
     // Manzil majburiy: saqlangan manzil yoki aniq koordinatalar.
     if (!dto.addressId && (dto.latitude == null || dto.longitude == null)) throw new BadRequestException(ERRORS.REQUEST_ADDRESS_REQUIRED);
     const selection = await this.validateReferences(customerId, dto);

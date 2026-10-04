@@ -341,7 +341,7 @@ enum VerificationDocumentType {
 model User {
   id                       String                    @id @default(uuid()) @db.Uuid
   accountNumber            Int                       @unique @default(autoincrement()) @map("account_number")
-  phone                    String                    @unique @db.VarChar(32)
+  phone                    String?                   @unique @db.VarChar(32)
   email                    String?                   @unique @db.VarChar(255)
   /// Google hisobi (sub): Google orqali ro‘yxatdan o‘tgan foydalanuvchi uchun.
   googleId                 String?                   @unique @map("google_id") @db.VarChar(64)

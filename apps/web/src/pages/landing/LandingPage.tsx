@@ -141,7 +141,7 @@ function Landing({ content }: { content: LandingContent }) {
           <h2 data-reveal>{t('Mashhur xizmatlar')}</h2>
           <div className="gm-landing__categories">
             {CATEGORIES.map((category, index) => (
-              <Link key={category.name} to="/register" className="gm-landing__category gm-tilt" data-cursor="explore" {...tiltHandlers} data-reveal style={{ ['--i' as string]: index % 6 }}>
+              <Link key={category.name} to="/register" className="gm-landing__category gm-tilt" {...tiltHandlers} data-reveal style={{ ['--i' as string]: index % 6 }}>
                 <span>
                   <category.icon size={26} strokeWidth={1.9} />
                 </span>

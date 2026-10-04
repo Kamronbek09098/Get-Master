@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/Input';
-import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
 import { GoogleLogo } from './GoogleLogo';
-import { loadGoogleScript } from '../google-script';
+import { loadGoogleScript, requestGoogleAccessToken } from '../google-script';
 import { Alert } from '@/components/ui/Alert';
 import { Modal } from '@/components/ui/Modal';
 import { env } from '@/lib/env';
@@ -19,44 +18,19 @@ import { t } from '@/i18n';
 /** «Google orqali kirish / ro‘yxatdan o‘tish» tugmasi. GOOGLE client ID sozlanmagan yoki administrator paneli bo‘lsa ko‘rinmaydi. */
 export function GoogleAuth() {
   const navigate = useNavigate();
-  const buttonRef = useRef<HTMLDivElement>(null);
   const isAdmin = useAuthStore((s) => s.preferredRole) === 'ADMIN' || env.appRole === 'ADMIN';
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
-  const [signup, setSignup] = useState<{ token: string; credential: string } | null>(null);
+  const [signup, setSignup] = useState<{ token: string } | null>(null);
   const [phoneLocal, setPhoneLocal] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
-  const [termsError, setTermsError] = useState<string | null>(null);
-  const [accepted, setAccepted] = useState(false);
   const configured = !!env.googleClientId;
   const enabled = configured && !isAdmin;
 
+  // Google skripti oldindan yuklanadi, shunda tugma bosilganda ruxsat oynasi darhol ochiladi.
   useEffect(() => {
-    if (!enabled || signup) return;
-    let cancelled = false;
-    void loadGoogleScript()
-      .then(() => {
-        if (cancelled || !buttonRef.current || !window.google) return;
-        window.google.accounts.id.initialize({
-          client_id: env.googleClientId,
-          callback: (response) => void onCredential(response.credential),
-        });
-        window.google.accounts.id.renderButton(buttonRef.current, {
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          shape: 'pill',
-          text: 'continue_with',
-          logo_alignment: 'left',
-          width: Math.min(400, Math.max(200, buttonRef.current.parentElement?.clientWidth ?? 320)),
-        });
-      })
-      .catch(() => setError(new Error(t('Google xizmatiga ulanib bo‘lmadi. Internetni tekshiring.'))));
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, signup]);
+    if (enabled) void loadGoogleScript().catch(() => undefined);
+  }, [enabled]);
 
   if (isAdmin) return null;
   if (!configured) {
@@ -75,20 +49,24 @@ export function GoogleAuth() {
     );
   }
 
-  async function onCredential(credential: string) {
+  async function continueWithGoogle() {
     setError(null);
     setBusy(true);
     try {
-      const result = await authService.googleSignIn(credential);
+      await loadGoogleScript();
+      const accessToken = await requestGoogleAccessToken(env.googleClientId, env.googlePhone);
+      const result = await authService.googleSignIn({ accessToken });
       if (result.needsPhone) {
-        setSignup({ token: result.signupToken, credential });
+        // Google telefonni bermagan: faqat shu bitta narsa so‘raladi.
+        setSignup({ token: result.signupToken });
         return;
       }
       useAuthStore.getState().setSession(true);
       const [firstItem] = getNavItems(useAuthStore.getState().preferredRole, { superAdmin: true });
       navigate(firstItem?.to ?? '/', { replace: true });
     } catch (e) {
-      setError(e);
+      // Foydalanuvchi ruxsat oynasini yopsa — xato ko‘rsatilmaydi.
+      if (!(e instanceof Error && e.message === 'google-oauth')) setError(e);
     } finally {
       setBusy(false);
     }
@@ -98,10 +76,8 @@ export function GoogleAuth() {
     if (!signup) return;
     const parsed = localPhoneSchema.safeParse(phoneLocal);
     const nextPhoneError = parsed.success ? null : (parsed.error.issues[0]?.message ?? t('Telefon raqami noto‘g‘ri'));
-    const nextTermsError = accepted ? null : t('Davom etish uchun shartlarni qabul qiling');
     setPhoneError(nextPhoneError);
-    setTermsError(nextTermsError);
-    if (nextPhoneError || nextTermsError) return;
+    if (nextPhoneError) return;
     setError(null);
     setBusy(true);
     try {
@@ -136,7 +112,7 @@ export function GoogleAuth() {
       }
     >
       <div className="gm-google gm-google--phone">
-        <p className="gm-google__hint">{t('Google hisobingiz tasdiqlandi. Ro‘yxatdan o‘tishni yakunlash uchun telefon raqamingizni kiriting.')}</p>
+        <p className="gm-google__hint">{t('Google hisobingizda tasdiqlangan telefon raqami yo‘q. Faqat shu bitta ma‘lumot kerak: telefon raqamingizni kiriting.')}</p>
         {!!error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
         <Input
           label={t('Telefon raqami')}
@@ -151,19 +127,13 @@ export function GoogleAuth() {
           onChange={(event) => setPhoneLocal(event.target.value)}
           error={phoneError ?? undefined}
         />
-        <Checkbox
-          label={
-            <>
-              <Link to="/shartlar" target="_blank" rel="noopener" onClick={(event) => event.stopPropagation()}>
-                {t('Foydalanish shartlari')}
-              </Link>{' '}
-              {t('ni o‘qib chiqdim va qabul qilaman')}
-            </>
-          }
-          checked={accepted}
-          onChange={(event) => setAccepted(event.target.checked)}
-          error={termsError ?? undefined}
-        />
+        <p className="gm-google__hint">
+          {t('Davom etish orqali')}{' '}
+          <Link to="/shartlar" target="_blank" rel="noopener">
+            {t('Foydalanish shartlari')}
+          </Link>{' '}
+          {t('ni qabul qilasiz.')}
+        </p>
       </div>
     </Modal>
   );
@@ -175,13 +145,17 @@ export function GoogleAuth() {
       </div>
       {!!error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
       {phoneModal}
-      <div className="gm-google__wrap">
-        <span className="gm-google__fallback" aria-hidden="true">
-          <GoogleLogo />
-          {t('Google orqali davom etish')}
-        </span>
-        <div className="gm-google__button" ref={buttonRef} aria-busy={busy} aria-label={t('Google orqali davom etish')} />
-      </div>
+      <button type="button" className="gm-google__fallback" onClick={() => void continueWithGoogle()} disabled={busy}>
+        <GoogleLogo />
+        {t('Google orqali davom etish')}
+      </button>
+      <p className="gm-google__hint">
+        {t('Davom etish orqali')}{' '}
+        <Link to="/shartlar" target="_blank" rel="noopener">
+          {t('Foydalanish shartlari')}
+        </Link>{' '}
+        {t('ni qabul qilasiz.')}
+      </p>
     </div>
   );
 }

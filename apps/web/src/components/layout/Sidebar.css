@@ -4,7 +4,7 @@
   align-self: flex-start;
   width: var(--gm-sidebar-width);
   flex-shrink: 0;
-  height: calc(100vh - var(--gm-header-height) - var(--gm-safe-top));
+  height: calc(var(--gm-vh, 100vh) - var(--gm-header-height) - var(--gm-safe-top));
   overflow-y: auto;
   padding: var(--gm-space-5) var(--gm-space-4) var(--gm-space-6);
   border-right: 1px solid var(--gm-color-border);

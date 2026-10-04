@@ -320,7 +320,7 @@ export class OtpService {
     return true;
   }
 
-  private normalizePhone(value: string) {
+  normalizePhone(value: string) {
     const digits = value.replace(/\D/g, '');
     if (!/^998\d{9}$/.test(digits)) {
       throw new BadRequestException(ERRORS.INVALID_PHONE);

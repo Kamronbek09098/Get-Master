@@ -4,6 +4,7 @@ import { OutboxService } from '../../infrastructure/outbox/outbox.service';
 import { AvailabilityService } from '../master/availability.service';
 import { ERRORS } from '../../common/constants/error-messages';
 import { CreateDirectOrderDto } from './dto/create-direct-order.dto';
+import { assertPhoneVerified } from '../../common/utils/phone-gate';
 
 const DEFAULT_JOB_MINUTES = 60;
 const OFFER_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -22,6 +23,7 @@ export class DirectOrderService {
   ) {}
 
   async create(customerId: string, dto: CreateDirectOrderDto) {
+    await assertPhoneVerified(this.db, customerId);
     const participants = await this.db.conversationParticipant.findMany({ where: { conversationId: dto.conversationId }, select: { userId: true } });
     if (!participants.some((p) => p.userId === customerId)) throw new ForbiddenException(ERRORS.NOT_CONVERSATION_PARTICIPANT);
     const counterpartId = participants.find((p) => p.userId !== customerId)?.userId;

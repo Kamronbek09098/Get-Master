@@ -14,7 +14,7 @@
   flex-direction: column;
   gap: var(--gm-space-3);
   min-width: 0;
-  max-height: calc(100vh - 210px);
+  max-height: calc(var(--gm-vh, 100vh) - 210px);
   overflow-y: auto;
   padding: var(--gm-space-3);
   border: 1px solid var(--gm-color-border);
@@ -191,7 +191,7 @@
 
 /* ---- Qulay ko‘rinish: qat’iy balandlik, ichki scroll, ikki tomonlama xabarlar ---- */
 .gm-achat__layout {
-  --gm-achat-h: calc(100vh - 200px);
+  --gm-achat-h: calc(var(--gm-vh, 100vh) - 200px);
   grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
   height: var(--gm-achat-h);
   min-height: 460px;

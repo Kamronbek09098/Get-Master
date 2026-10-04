@@ -17,6 +17,12 @@ export const sessionService = {
   unlinkGoogle() {
     return apiPost<{ linked: false }>('/auth/google/unlink');
   },
+  requestPhone(phone: string) {
+    return apiPost<{ developmentCode?: string }>('/users/me/phone/request', { phone });
+  },
+  verifyPhone(phone: string, code: string) {
+    return apiPost<Me>('/users/me/phone/verify', { phone, code });
+  },
   me() {
     return apiGet<Me>('/users/me');
   },

@@ -1,4 +1,9 @@
-import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req } from '@nestjs/common';
+import type { Request } from 'express';
+import { clientIpOf } from '../../common/utils/client-ip';
+import { panelOf } from '../../common/utils/panel';
+import { RateLimit } from '../../common/decorators/rate-limit.decorator';
+import { RequestPhoneDto, VerifyPhoneDto } from './dto/phone.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SetPasswordDto } from './dto/set-password.dto';
 import { SetTwoFactorDto } from './dto/two-factor.dto';
@@ -28,5 +33,17 @@ export class UsersController {
   @Patch('me/name')
   updateName(@CurrentUser('sub') userId: string, @Body() dto: UpdateNameDto) {
     return this.usersService.updateName(userId, dto);
+  }
+
+  @RateLimit({ policy: 'otpRequest', scope: 'ip+phone', escalate: true })
+  @Post('me/phone/request')
+  requestPhone(@CurrentUser('sub') userId: string, @Body() dto: RequestPhoneDto, @Req() req: Request) {
+    return this.usersService.requestPhoneCode(userId, dto.phone, { ip: clientIpOf(req), panel: panelOf(req) });
+  }
+
+  @RateLimit({ policy: 'otpVerify', scope: 'ip+phone', escalate: true })
+  @Post('me/phone/verify')
+  verifyPhone(@CurrentUser('sub') userId: string, @Body() dto: VerifyPhoneDto) {
+    return this.usersService.verifyPhone(userId, dto.phone, dto.code);
   }
 }

@@ -37,7 +37,7 @@ const TOMBSTONE = /^del\d+_/;
 const tombstonePhone = (accountNumber: number, phone: string) => `del${accountNumber}_${phone}`.slice(0, 32);
 
 function present({ userRoles, ...user }: UserRow) {
-  return { ...user, phone: user.phone.replace(TOMBSTONE, ''), roles: userRoles.map((item) => item.role) };
+  return { ...user, phone: user.phone ? user.phone.replace(TOMBSTONE, '') : null, roles: userRoles.map((item) => item.role) };
 }
 
 @Injectable()
@@ -167,9 +167,9 @@ export class AdminUsersService {
       user.masterProfile ? this.db.order.count({ where: { masterId: user.masterProfile.id } }) : Promise.resolve(0),
     ]);
     const { userRoles, _count, ...rest } = user;
-    const realPhone = rest.phone.replace(TOMBSTONE, '');
+    const realPhone = rest.phone ? rest.phone.replace(TOMBSTONE, '') : null;
     const registrationBlocked =
-      rest.status === UserStatus.DELETED ? !!(await this.db.blockedPhone.findUnique({ where: { phone: realPhone }, select: { id: true } })) : false;
+      rest.status === UserStatus.DELETED && realPhone ? !!(await this.db.blockedPhone.findUnique({ where: { phone: realPhone }, select: { id: true } })) : false;
     return {
       ...rest,
       phone: realPhone,
@@ -238,7 +238,7 @@ export class AdminUsersService {
         data: {
           status: UserStatus.DELETED,
           deletedAt: new Date(),
-          phone: tombstonePhone(target.accountNumber, originalPhone),
+          phone: originalPhone ? tombstonePhone(target.accountNumber, originalPhone) : null,
           email: null,
           passwordHash: null,
           googleId: null,
@@ -253,7 +253,7 @@ export class AdminUsersService {
         where: { customerId: userId, status: { in: [RequestStatus.DRAFT, RequestStatus.SUBMITTED, RequestStatus.MATCHING, RequestStatus.OFFERS_RECEIVED] } },
         data: { status: RequestStatus.CANCELLED },
       });
-      await tx.otpCode.deleteMany({ where: { OR: [{ userId }, { phone: originalPhone }] } });
+      await tx.otpCode.deleteMany({ where: { OR: [{ userId }, ...(originalPhone ? [{ phone: originalPhone }] : [])] } });
       await this.revokeAllSessions(tx, userId);
       await tx.auditLog.create({
         data: {
@@ -280,6 +280,7 @@ export class AdminUsersService {
     const target = await this.db.user.findUnique({ where: { id: userId }, select: USER_SELECT });
     if (!target) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
     if (target.status !== UserStatus.DELETED && !target.deletedAt) throw new ConflictException(ERRORS.USER_STATUS_TRANSITION_INVALID(target.status, 'DELETED'));
+    if (!target.phone) throw new ConflictException(ERRORS.USER_STATUS_TRANSITION_INVALID(target.status, 'DELETED'));
     const phone = target.phone.replace(TOMBSTONE, '');
     const reason = dto.reason?.trim() || null;
 
@@ -342,7 +343,7 @@ export class AdminUsersService {
       userName: [target.firstName, target.lastName].filter(Boolean).join(' '),
       userAccount: target.accountNumber,
       userRole: target.userRoles.map((item) => labels[item.role] ?? item.role).join(', '),
-      login: target.phone,
+      login: target.phone ?? 'Google',
       password: dto.password,
       reason: dto.reason?.trim() || null,
       ip: req.ip?.slice(0, 64) ?? null,

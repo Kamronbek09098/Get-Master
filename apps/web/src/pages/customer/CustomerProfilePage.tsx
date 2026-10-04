@@ -94,7 +94,7 @@ export function CustomerProfilePage() {
             <InfoRows
               rows={[
                 { label: t('Akkaunt ID'), value: `#${data.accountNumber}` },
-                { label: t('Telefon'), value: data.phone },
+                { label: t('Telefon'), value: data.phone ?? <span className="gm-pmuted">{t('Kiritilmagan')}</span> },
                 { label: t('Email'), value: data.email ?? <span className="gm-pmuted">{t('Kiritilmagan')}</span> },
                 { label: t('Telefon tasdiqlangan'), value: <Badge tone={data.phoneVerified ? 'success' : 'warning'}>{data.phoneVerified ? 'Ha' : t('Yo‘q')}</Badge> },
                 { label: t('Holat'), value: <Badge tone={data.status === 'ACTIVE' ? 'success' : 'neutral'}>{statusLabel(data.status)}</Badge> },

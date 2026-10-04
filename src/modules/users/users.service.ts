@@ -1,3 +1,5 @@
+import { OtpPurpose } from '@prisma/client';
+import { OtpService } from '../otp/otp.service';
 import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { hashSecret, verifySecret } from '../../common/security/hash';
 import { SetTwoFactorDto } from './dto/two-factor.dto';
@@ -7,7 +9,10 @@ import { ERRORS } from '../../common/constants/error-messages';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly otp: OtpService,
+  ) {}
 
   async findMe(userId: string) {
     const user = await this.db.user.findUnique({
@@ -46,6 +51,27 @@ export class UsersService {
       roles: user.userRoles.map((item) => item.role),
       userRoles: undefined,
     };
+  }
+
+  /** Telefon raqamini (Google orqali ochilgan va telefonsiz akkaunt uchun) tasdiqlash kodini yuborish. */
+  async requestPhoneCode(userId: string, phoneInput: string, context: { ip?: string; panel?: string | null }) {
+    const phone = this.otp.normalizePhone(phoneInput);
+    const taken = await this.db.user.findUnique({ where: { phone }, select: { id: true } });
+    if (taken && taken.id !== userId) throw new ConflictException(ERRORS.PHONE_ALREADY_REGISTERED);
+    return this.otp.issue(phone, OtpPurpose.CHANGE_PHONE, userId, context);
+  }
+
+  /** Kod to‘g‘ri bo‘lsa raqam akkauntga yoziladi va tasdiqlangan hisoblanadi. */
+  async verifyPhone(userId: string, phoneInput: string, code: string) {
+    const phone = this.otp.normalizePhone(phoneInput);
+    await this.otp.verify(phone, OtpPurpose.CHANGE_PHONE, code);
+    try {
+      await this.db.user.update({ where: { id: userId }, data: { phone, phoneVerifiedAt: new Date() } });
+    } catch {
+      throw new ConflictException(ERRORS.PHONE_ALREADY_REGISTERED);
+    }
+    await this.db.auditLog.create({ data: { actorId: userId, action: 'USER_PHONE_VERIFIED', targetType: 'User', targetId: userId } });
+    return this.findMe(userId);
   }
 
   /** Faqat parol hali yo‘q akkauntga: birinchi parol o‘rnatiladi (mavjud parolni almashtirish boshqa yo‘l bilan). */

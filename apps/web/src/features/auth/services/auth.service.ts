@@ -22,8 +22,8 @@ export const authService = {
   resendRegistration(phone: string) {
     return apiPost<{ verificationRequired: true; developmentCode?: string }>('/auth/resend-registration', { phone });
   },
-  googleSignIn(credential: string) {
-    return apiPost<GoogleSignInResult>('/auth/google', { credential });
+  googleSignIn(token: { credential: string } | { accessToken: string }) {
+    return apiPost<GoogleSignInResult>('/auth/google', token);
   },
   googleRegister(signupToken: string, phone: string) {
     return apiPost<{ verificationRequired: false }>('/auth/google/register', { signupToken, phone, acceptedPolicyIds: REQUIRED_POLICY_IDS });

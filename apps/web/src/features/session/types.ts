@@ -3,7 +3,7 @@ import type { Role, UserStatus } from '@/types/common';
 export interface Me {
   id: string;
   accountNumber: number;
-  phone: string;
+  phone: string | null;
   email: string | null;
   firstName: string | null;
   lastName: string | null;

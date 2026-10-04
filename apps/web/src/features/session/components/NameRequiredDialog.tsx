@@ -16,14 +16,17 @@ const noop = () => undefined;
 export function NameRequiredDialog() {
   const me = useMe();
   const queryClient = useQueryClient();
+  const user = me.data;
+  const hasFirst = !!user?.firstName?.trim();
+  const hasLast = !!user?.lastName?.trim();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const save = useMutation({
-    mutationFn: () => sessionService.updateName({ firstName: firstName.trim(), lastName: lastName.trim() }),
+    mutationFn: () => sessionService.updateName({ firstName: (hasFirst ? user?.firstName ?? '' : firstName).trim(), lastName: (hasLast ? user?.lastName ?? '' : lastName).trim() }),
     onSuccess: (updated) => queryClient.setQueryData(['users', 'me'], updated),
   });
 
-  const user = me.data;
+  // Google'dan olingan ism/familiya qayta so‘ralmaydi: faqat yetishmayotgani kiritiladi.
   const needsName = !!user && !user.roles.includes('ADMIN') && (!user.firstName?.trim() || !user.lastName?.trim());
   if (!needsName) return null;
 
@@ -39,7 +42,7 @@ export function NameRequiredDialog() {
       onClose={noop}
       title={t('Ism va familiyangizni kiriting')}
       footer={
-        <Button type="submit" form="gm-name-form" loading={save.isPending} disabled={!firstName.trim() || !lastName.trim()}>
+        <Button type="submit" form="gm-name-form" loading={save.isPending} disabled={(!hasFirst && !firstName.trim()) || (!hasLast && !lastName.trim())}>
           {t('Saqlash')}
         </Button>
       }
@@ -49,8 +52,8 @@ export function NameRequiredDialog() {
           {t('Boshqa foydalanuvchilar sizni ism va familiyangiz bilan ko‘radi. Davom etish uchun ularni kiriting.')}
         </p>
         {save.isError && <Alert tone="danger">{getErrorMessage(save.error)}</Alert>}
-        <Input label={t('Ism')} required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} />
-        <Input label={t('Familiya')} required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} />
+        {!hasFirst && <Input label={t('Ism')} required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} />}
+        {!hasLast && <Input label={t('Familiya')} required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} autoFocus={hasFirst} />}
       </form>
     </Modal>
   );

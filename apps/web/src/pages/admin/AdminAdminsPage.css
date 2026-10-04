@@ -403,7 +403,7 @@
 }
 /* Uzun forma: sarlavha va pastki tugmalar joyida, tarkib aylanadi */
 .gm-modal--large .gm-modal__body {
-  max-height: calc(100vh - 190px);
+  max-height: calc(var(--gm-vh, 100vh) - 190px);
   overflow-y: auto;
 }
 .gm-perm__item input[type='checkbox'],

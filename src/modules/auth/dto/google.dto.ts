@@ -1,10 +1,19 @@
-import { ArrayNotEmpty, ArrayUnique, IsArray, IsNotEmpty, IsPhoneNumber, IsString, IsUUID, MaxLength } from 'class-validator';
+import { ArrayNotEmpty, ArrayUnique, IsArray, IsNotEmpty, IsPhoneNumber, IsString, IsUUID, MaxLength, ValidateIf, IsOptional } from 'class-validator';
 
 export class GoogleSignInDto {
+  /** Google ID token (hisobni ulash va eski oqim uchun). */
+  @ValidateIf((o: GoogleSignInDto) => !o.accessToken)
   @IsString()
   @IsNotEmpty()
   @MaxLength(4096)
-  credential!: string;
+  credential?: string;
+
+  /** Google OAuth access token (profil + telefon bir martalik ruxsat bilan). */
+  @ValidateIf((o: GoogleSignInDto) => !o.credential)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(4096)
+  accessToken?: string;
 }
 
 export class GoogleRegisterDto {
@@ -13,9 +22,9 @@ export class GoogleRegisterDto {
   @MaxLength(128)
   signupToken!: string;
 
+  @IsOptional()
   @IsPhoneNumber('UZ')
-  @IsNotEmpty()
-  phone!: string;
+  phone?: string;
 
   @IsArray()
   @ArrayNotEmpty()
