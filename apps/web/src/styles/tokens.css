@@ -2,20 +2,20 @@
   --gm-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --gm-font-display: 'Manrope', 'Inter', ui-sans-serif, system-ui, sans-serif;
 
-  --gm-color-bg: #f3f5fb;
+  --gm-color-bg: #eef2f9;
   --gm-color-surface: #ffffff;
-  --gm-color-surface-muted: #edf0f8;
-  --gm-color-border: #e4e8f2;
-  --gm-color-border-strong: #cfd6e6;
-  --gm-color-text: #0d1530;
-  --gm-color-text-muted: #636d88;
+  --gm-color-surface-muted: #e7ecf6;
+  --gm-color-border: #dbe2ef;
+  --gm-color-border-strong: #c3cde0;
+  --gm-color-text: #0c1730;
+  --gm-color-text-muted: #58647e;
   --gm-color-ink: #07111d;
 
-  --gm-color-primary: #2d5bff;
-  --gm-color-primary-hover: #1f46e0;
-  --gm-color-primary-soft: #e8eeff;
+  --gm-color-primary: #2563eb;
+  --gm-color-primary-hover: #1d4fd1;
+  --gm-color-primary-soft: #e0ebff;
   --gm-color-primary-contrast: #ffffff;
-  --gm-focus-ring: #2d5bff;
+  --gm-focus-ring: #2563eb;
   --gm-color-accent: #f0b84b;
   --gm-color-accent-contrast: #271b06;
 
@@ -67,27 +67,27 @@
 
   --gm-header-height: 64px;
   --gm-sidebar-width: 264px;
-  --gm-grad-primary: linear-gradient(135deg, #3d6bff 0%, #6a4cff 100%);
-  --gm-grad-soft: linear-gradient(135deg, #eaf0ff 0%, #f1ebff 100%);
+  --gm-grad-primary: var(--gm-color-primary);
+  --gm-grad-soft: var(--gm-color-primary-soft);
   --gm-ease: cubic-bezier(.2,.75,.2,1);
 }
 
-:root[data-panel='MASTER'] { --gm-color-primary:#0c9a73; --gm-color-primary-hover:#087f5d; --gm-color-primary-soft:#e0f6ee; --gm-color-info-bg:#e0f6ee; --gm-focus-ring:#0c9a73; --gm-grad-primary:linear-gradient(135deg,#10b585 0%,#0ea5a5 100%); --gm-grad-soft:linear-gradient(135deg,#e0f6ee 0%,#e0f4f6 100%); }
-:root[data-panel='ADMIN'] { --gm-color-primary:#6a4cff; --gm-color-primary-hover:#5638e6; --gm-color-primary-soft:#eeeaff; --gm-color-info-bg:#eeeaff; --gm-focus-ring:#6a4cff; --gm-grad-primary:linear-gradient(135deg,#7a5cff 0%,#b04cf5 100%); --gm-grad-soft:linear-gradient(135deg,#eeeaff 0%,#f7e9ff 100%); }
+:root[data-panel='MASTER'] { --gm-color-primary:#059669; --gm-color-primary-hover:#047857; --gm-color-primary-soft:#d9f4e8; --gm-color-info-bg:#d9f4e8; --gm-focus-ring:#059669; }
+:root[data-panel='ADMIN'] { --gm-color-primary:#1e3a8a; --gm-color-primary-hover:#172e6e; --gm-color-primary-soft:#dde6fa; --gm-color-info-bg:#dde6fa; --gm-focus-ring:#1e3a8a; }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --gm-color-bg:#070b1e;
-  --gm-color-surface:#0e1531;
-  --gm-color-surface-muted:#151e42;
-  --gm-color-border:#222c55;
-  --gm-color-border-strong:#33407a;
-  --gm-color-text:#eef1ff;
-  --gm-color-text-muted:#8f9bc4;
+  --gm-color-bg:#08101f;
+  --gm-color-surface:#0f1a30;
+  --gm-color-surface-muted:#16233f;
+  --gm-color-border:#233252;
+  --gm-color-border-strong:#32456b;
+  --gm-color-text:#eef2f7;
+  --gm-color-text-muted:#93a1b8;
   --gm-color-ink:#05080c;
-  --gm-color-primary:#7b9bff;
+  --gm-color-primary:#6f9cff;
   --gm-color-primary-hover:#8aaaFF;
-  --gm-color-primary-soft:#18265a;
+  --gm-color-primary-soft:#15285a;
   --gm-color-primary-contrast:#071124;
   --gm-focus-ring:#8aaaFF;
   --gm-color-accent:#f2c66b;
@@ -98,14 +98,14 @@
   --gm-color-warning:#f2b46b;
   --gm-color-warning-bg:#2c2114;
   --gm-color-info-bg:#172544;
-  --gm-grad-primary: linear-gradient(135deg, #7b9bff 0%, #9b7bff 100%);
-  --gm-grad-soft: linear-gradient(135deg, #18265a 0%, #261d5c 100%);
+  --gm-grad-primary: var(--gm-color-primary);
+  --gm-grad-soft: var(--gm-color-primary-soft);
   --gm-shadow-sm:0 1px 2px rgba(0,0,0,.35);
   --gm-shadow-md:0 12px 32px rgba(0,0,0,.42);
   --gm-shadow-lg:0 26px 72px rgba(0,0,0,.58);
 }
-:root[data-theme='dark'][data-panel='MASTER'] { --gm-color-primary:#3ddba8; --gm-color-primary-hover:#6ae7bf; --gm-color-primary-soft:#0d2d2c; --gm-color-primary-contrast:#04231a; --gm-focus-ring:#6ae7bf; --gm-grad-primary:linear-gradient(135deg,#3ddba8 0%,#22c5d6 100%); --gm-grad-soft:linear-gradient(135deg,#0d2d2c 0%,#0e2a3a 100%); }
-:root[data-theme='dark'][data-panel='ADMIN'] { --gm-color-primary:#b39dff; --gm-color-primary-hover:#c9baff; --gm-color-primary-soft:#251c5c; --gm-color-primary-contrast:#120d33; --gm-focus-ring:#c9baff; --gm-grad-primary:linear-gradient(135deg,#a67cff 0%,#d65cf5 100%); --gm-grad-soft:linear-gradient(135deg,#251c5c 0%,#3a1c5c 100%); }
+:root[data-theme='dark'][data-panel='MASTER'] { --gm-color-primary:#34d399; --gm-color-primary-hover:#5fe0b2; --gm-color-primary-soft:#0e2d27; --gm-color-primary-contrast:#04231a; --gm-focus-ring:#5fe0b2; }
+:root[data-theme='dark'][data-panel='ADMIN'] { --gm-color-primary:#7d9fe8; --gm-color-primary-hover:#a1bbf2; --gm-color-primary-soft:#172a55; --gm-color-primary-contrast:#0a1328; --gm-focus-ring:#a1bbf2; }
 
 :root[data-ui-size='small'] {
   --gm-btn-h-sm: 28px;

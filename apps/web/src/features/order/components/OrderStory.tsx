@@ -3,7 +3,6 @@ import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
 import { Camera, Star } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useMediaSignedUrl } from '@/features/media/hooks/useMedia';
-import { formatDateTime, formatMoney } from '@/lib/utils';
 import { prefersReducedMotion } from '@/lib/motion/tokens';
 import type { OrderDetailsData, WorkProof } from '../types';
 import './OrderStory.css';
@@ -54,13 +53,11 @@ function BeforeAfter({ before, after }: { before: string; after: string }) {
   );
 }
 
-function Chapter({ index, label, title, children }: { index: number; label: string; title: string; children?: ReactNode }) {
+function Chapter({ label, title, children }: { label: string; title?: string; children?: ReactNode }) {
   return (
     <article className="gm-story__chapter" data-chapter>
-      <p className="gm-story__label">
-        <b>{String(index).padStart(2, '0')}</b> {label}
-      </p>
-      <h3>{title}</h3>
+      <p className="gm-story__label">{label}</p>
+      {title && <h3>{title}</h3>}
       {children}
     </article>
   );
@@ -87,7 +84,7 @@ function Gallery({ items, alt }: { items: WorkProof[]; alt: string }) {
 }
 
 /**
- * Buyurtma hikoyasi: muammo → usta → ish oldidan → jarayon → natija → tasdiq.
+ * Ish tafsilotlari: muammo → ish oldidan → jarayon → natija (holat bosqichlari esa yuqoridagi chiziqda).
  * Skroll qilinganda boblar birin-ketin ochiladi, chapdagi chiziq skroll bilan to‘ladi.
  * Hamma ma’lumot mavjud buyurtma/ish-isbotlaridan olinadi (backend o‘zgarmaydi).
  */
@@ -135,70 +132,60 @@ export function OrderStory({ data, proofs, loading }: { data: OrderDetailsData; 
     };
   }, [list.length, data.status]);
 
-  if (!started && data.status !== 'CANCELLED') return null;
-  if (data.status === 'CANCELLED') return null;
-
-  const name = [data.counterpart.firstName, data.counterpart.lastName].filter(Boolean).join(' ') || (data.viewerRole === 'MASTER' ? t('Mijoz') : t('Usta'));
-  let n = 0;
+  // Muammo tavsifi har doim ko‘rinadi; suratlar bo‘limlari usta yetib kelgach (bekor qilinganda — yo‘q).
+  const showPhotos = started && data.status !== 'CANCELLED';
+  const problem = data.request?.description;
+  if (!showPhotos && !problem) return null;
 
   return (
-    <section ref={rootRef} className="gm-story" aria-label={t('Ish hikoyasi')}>
-      <div className="gm-story__rail" aria-hidden="true">
-        <i />
-      </div>
+    <section ref={rootRef} className="gm-story" aria-label={showPhotos ? t('Muammo va ish suratlari') : t('Muammo tavsifi')}>
       <header className="gm-story__head">
-        <p className="gm-story__kicker">{t('Ish hikoyasi')} · №{data.orderNumber}</p>
-        <h2>{data.service?.name ?? data.request?.title ?? t('Buyurtma')}</h2>
+        <h2>{showPhotos ? t('Muammo va ish suratlari') : t('Muammo tavsifi')}</h2>
       </header>
 
-      <Chapter index={++n} label={t('Muammo')} title={data.request?.title ?? t('Buyurtma')}>
-        {data.request?.description && <p className="gm-story__text">{data.request.description}</p>}
-      </Chapter>
-
-      <Chapter index={++n} label={t('Mutaxassis')} title={name}>
-        <p className="gm-story__text">
-          {data.counterpart.profession ? `${data.counterpart.profession} · ` : ''}
-          {formatMoney(data.finalAmount, data.currency)}
-          {data.scheduledStartAt ? ` · ${formatDateTime(data.scheduledStartAt)}` : ''}
-        </p>
-      </Chapter>
-
-      <Chapter index={++n} label={t('Ishdan oldin')} title={t('Dastlabki holat')}>
-        {loading ? <Skeleton className="gm-story__img" /> : before.length ? <Gallery items={before} alt={t('Ishdan oldingi holat')} /> : <Empty text={t('Usta ishni boshlashdan oldin suratga oladi — bu yerda ko‘rinadi.')} />}
-      </Chapter>
-
-      {(during.length > 0 || data.status === 'IN_PROGRESS') && (
-        <Chapter index={++n} label={t('Jarayon')} title={t('Ish bajarilmoqda')}>
-          {during.length ? <Gallery items={during} alt={t('Ish jarayoni')} /> : <Empty text={t('Jarayon suratlari paydo bo‘lganda shu yerda ko‘rinadi.')} />}
+      {problem && (
+        <Chapter label={t('Muammo')}>
+          <p className="gm-story__problem">{problem}</p>
         </Chapter>
       )}
 
-      <Chapter index={++n} label={t('Natija')} title={t('Ishdan keyin')}>
-        {loading ? (
-          <Skeleton className="gm-story__img" />
-        ) : before[0]?.mediaAssetId && after[0]?.mediaAssetId ? (
-          <>
-            <BeforeAfter before={before[0].mediaAssetId} after={after[0].mediaAssetId} />
-            <p className="gm-story__hint">{t('Chiziqni suring: oldin va keyin.')}</p>
-          </>
-        ) : after.length ? (
-          <Gallery items={after} alt={t('Ishdan keyingi natija')} />
-        ) : (
-          <Empty text={t('Ish tugagach natija surati shu yerda paydo bo‘ladi.')} />
-        )}
-      </Chapter>
+      {showPhotos && (
+        <>
+          <Chapter label={t('Ishdan oldin')} title={t('Dastlabki holat')}>
+            {loading ? <Skeleton className="gm-story__img" /> : before.length ? <Gallery items={before} alt={t('Ishdan oldingi holat')} /> : <Empty text={t('Usta ishni boshlashdan oldin suratga oladi — bu yerda ko‘rinadi.')} />}
+          </Chapter>
 
-      <Chapter index={++n} label={t('Tasdiq')} title={data.status === 'COMPLETED' ? t('Muvaffaqiyatli yakunlandi') : t('Tasdiq kutilmoqda')}>
-        {data.completedAt || data.confirmedAt ? <p className="gm-story__text">{formatDateTime((data.confirmedAt ?? data.completedAt) as string)}</p> : null}
-        {data.review && (
-          <p className="gm-story__stars" aria-label={t('Baho: {rating}', { rating: data.review.rating })}>
-            {Array.from({ length: 5 }, (_, i) => (
-              <Star key={i} size={18} fill={i < data.review!.rating ? 'currentColor' : 'none'} />
-            ))}
-            {data.review.comment && <span>{data.review.comment}</span>}
-          </p>
-        )}
-      </Chapter>
+          {(during.length > 0 || data.status === 'IN_PROGRESS') && (
+            <Chapter label={t('Jarayon')} title={t('Ish bajarilmoqda')}>
+              {during.length ? <Gallery items={during} alt={t('Ish jarayoni')} /> : <Empty text={t('Jarayon suratlari paydo bo‘lganda shu yerda ko‘rinadi.')} />}
+            </Chapter>
+          )}
+
+          <Chapter label={t('Natija')} title={t('Ishdan keyin')}>
+            {loading ? (
+              <Skeleton className="gm-story__img" />
+            ) : before[0]?.mediaAssetId && after[0]?.mediaAssetId ? (
+              <>
+                <BeforeAfter before={before[0].mediaAssetId} after={after[0].mediaAssetId} />
+                <p className="gm-story__hint">{t('Chiziqni suring: oldin va keyin.')}</p>
+              </>
+            ) : after.length ? (
+              <Gallery items={after} alt={t('Ishdan keyingi natija')} />
+            ) : (
+              <Empty text={t('Ish tugagach natija surati shu yerda paydo bo‘ladi.')} />
+            )}
+            {data.review && (
+              <p className="gm-story__stars" aria-label={t('Baho: {rating}', { rating: data.review.rating })}>
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Star key={i} size={18} fill={i < data.review!.rating ? 'currentColor' : 'none'} />
+                ))}
+                {data.review.comment && <span>{data.review.comment}</span>}
+              </p>
+            )}
+          </Chapter>
+
+        </>
+      )}
     </section>
   );
 }

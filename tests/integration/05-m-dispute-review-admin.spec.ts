@@ -169,10 +169,23 @@ describe('M07 — reviews & rating aggregation', () => {
   it('validates rating and body shape', async () => {
     const customer = await createUser(h, ['CUSTOMER']);
     const orderId = await orderIn('COMPLETED', customer, master);
-    for (const bad of [{ rating: 0 }, { rating: 6 }, { rating: 3.5 }, { rating: 4, comment: 'x'.repeat(2001) }, { rating: 4, masterProfileId: master.masterId }, {}]) {
+    for (const bad of [{ rating: 0 }, { rating: 6 }, { rating: 5.5 }, { rating: 3.3 }, { rating: 0.25 }, { rating: '4' }, { rating: 4, comment: 'x'.repeat(2001) }, { rating: 4, masterProfileId: master.masterId }, {}]) {
       expect((await h.post('/reviews', customer.token, { orderId, ...bad })).status).toBe(400);
     }
     expect(await h.db.review.count({ where: { orderId } })).toBe(0);
+  });
+
+  it('accepts half-star ratings (0.5 steps) and stores them exactly', async () => {
+    const { res, orderId } = await review(4.5, 'Deyarli a’lo');
+    expect(res.status).toBe(201);
+    expect(res.data.rating).toBe(4.5);
+    expect((await h.db.review.findUniqueOrThrow({ where: { orderId } })).rating).toBe(4.5);
+    const low = await review(0.5, 'Juda yomon');
+    expect(low.res.status).toBe(201);
+    expect(low.res.data.rating).toBe(0.5);
+    const bare = await review(0.5);
+    expect(bare.res.status).toBe(201);
+    expect(bare.res.data.status).toBe('FLAGGED');
   });
 
   it('a concurrent double-submit yields exactly one review', async () => {

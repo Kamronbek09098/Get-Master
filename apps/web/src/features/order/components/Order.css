@@ -215,56 +215,6 @@
   font-size: 1.1rem;
 }
 
-.gm-otimeline {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gm-space-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.gm-otimeline__item {
-  position: relative;
-  display: flex;
-  gap: var(--gm-space-3);
-  padding-bottom: 2px;
-}
-.gm-otimeline__item:not(:last-child)::before {
-  content: '';
-  position: absolute;
-  top: 14px;
-  bottom: -18px;
-  left: 5px;
-  width: 2px;
-  background: var(--gm-color-border);
-}
-.gm-otimeline__dot {
-  flex: none;
-  width: 12px;
-  height: 12px;
-  margin-top: 4px;
-  border-radius: 50%;
-  background: var(--gm-color-border-strong);
-}
-.gm-otimeline__item--latest .gm-otimeline__dot {
-  background: var(--gm-color-primary);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--gm-color-primary) 18%, transparent);
-}
-.gm-otimeline__item div {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.gm-otimeline__item small {
-  color: var(--gm-color-text-muted);
-  font-size: 0.78rem;
-}
-.gm-otimeline__item p {
-  margin: 4px 0 0;
-  color: var(--gm-color-text-muted);
-  font-size: 0.85rem;
-  overflow-wrap: anywhere;
-}
 
 .gm-olist-tabs {
   align-self: flex-start;
@@ -477,3 +427,13 @@
 .gm-oparty__facts dt {
   font-size: 13px;
 }
+
+/* Bosqichlar chizig‘i: vaqt/kim ko‘rsatiladi, bekor qilish kabi holatlar pastda */
+.gm-oprogress-wrap { display: grid; gap: 10px; }
+.gm-oprogress__step { flex-basis: 96px; }
+.gm-oprogress__time { display: block; margin-top: -2px; font-size: 11px; line-height: 1.35; font-weight: 500; color: var(--gm-color-text-muted); }
+.gm-oprogress__step--current .gm-oprogress__time { color: var(--gm-color-primary); font-weight: 600; }
+.gm-oprogress__extra { display: grid; gap: 6px; margin: 0; padding: 12px 14px; list-style: none; border: 1px solid var(--gm-color-border); border-radius: var(--gm-card-radius-sm); background: var(--gm-color-surface); }
+.gm-oprogress__extra li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 13.5px; }
+.gm-oprogress__extra span { color: var(--gm-color-text-muted); font-size: 12.5px; }
+.gm-oprogress__extra em { flex-basis: 100%; color: var(--gm-color-text-muted); }

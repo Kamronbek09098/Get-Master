@@ -1175,7 +1175,8 @@ model Review {
   orderId         String        @unique @db.Uuid
   authorId        String        @db.Uuid
   masterProfileId String        @db.Uuid
-  rating          Int
+  /// 0.5 qadam bilan: 0.5, 1, 1.5 … 5 (yarim yulduz)
+  rating          Float
   comment         String?
   status          ReviewStatus  @default(PUBLISHED)
   flaggedReason   String?       @map("flagged_reason")

@@ -13,7 +13,6 @@ import { OrderStatus } from '@/features/order/components/OrderStatus';
 import { OrderProgress } from '@/features/order/components/OrderProgress';
 import { OrderStory } from '@/features/order/components/OrderStory';
 import { OrderParty } from '@/features/order/components/OrderParty';
-import { OrderTimeline } from '@/features/order/components/OrderTimeline';
 import { ScheduleCard } from '@/features/order/components/ScheduleCard';
 import { WorkProofPanel } from '@/features/order/components/WorkProofPanel';
 import { OrderPaymentCard } from '@/features/order/components/OrderPaymentCard';
@@ -214,7 +213,7 @@ export function OrderDetailsPage() {
         <OrderStatus status={status} />
       </div>
 
-      <OrderProgress status={status} />
+      <OrderProgress status={status} orderId={id} />
       {actionError && <Alert tone="danger">{getErrorMessage(actionError.error)}</Alert>}
 
       <OrderStory data={data} proofs={proofs.data} loading={proofs.isLoading} />
@@ -226,13 +225,6 @@ export function OrderDetailsPage() {
           <ScheduleCard order={data} />
 
           <OrderPaymentCard order={data} selectedMethod={method} onSelectMethod={setMethod} />
-
-          {data.request?.description && (
-            <section className="gm-ocard">
-              <h2 className="gm-ocard__title">{t('Muammo tavsifi')}</h2>
-              <p>{data.request.description}</p>
-            </section>
-          )}
 
           <section className="gm-ocard">
             <h2 className="gm-ocard__title">{t('Qo‘shimcha ishlar')}</h2>
@@ -261,7 +253,6 @@ export function OrderDetailsPage() {
 
         <div className="gm-ocol">
           <OrderParty order={data} />
-          <OrderTimeline orderId={id} />
         </div>
       </div>
 

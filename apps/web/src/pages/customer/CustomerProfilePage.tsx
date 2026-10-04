@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CalendarDays, ChevronRight, ClipboardList, MapPin, MapPinPlus, Package, Settings2, ShieldCheck, UserRound, Smartphone } from 'lucide-react';
+import { CalendarDays, ChevronRight, ClipboardList, MapPin, MapPinPlus, Package, Settings2, ShieldCheck, UserRound } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -62,8 +62,19 @@ export function CustomerProfilePage() {
       <div className="gm-pgrid">
         <div className="gm-pcol">
           <CustomerActivity orders={orders.data ?? []} />
-          <ProfileCard defaultOpen icon={UserRound} title={t('Shaxsiy ma’lumotlar')} hint={t('Ism va familiyangiz boshqa foydalanuvchilarga ko‘rinadi.')}>
+          <ProfileCard defaultOpen icon={UserRound} title={t('Shaxsiy va akkaunt ma’lumotlari')} hint={t('Ism va familiyangiz boshqa foydalanuvchilarga ko‘rinadi.')}>
             <CustomerForm profile={data} />
+            <div className="gm-pmerge__divider" />
+            <InfoRows
+              rows={[
+                { label: t('Akkaunt ID'), value: `#${data.accountNumber}` },
+                { label: t('Telefon'), value: data.phone ?? <span className="gm-pmuted">{t('Kiritilmagan')}</span> },
+                { label: t('Email'), value: data.email ?? <span className="gm-pmuted">{t('Kiritilmagan')}</span> },
+                { label: t('Telefon tasdiqlangan'), value: <Badge tone={data.phoneVerified ? 'success' : 'warning'}>{data.phoneVerified ? 'Ha' : t('Yo‘q')}</Badge> },
+                { label: t('Holat'), value: <Badge tone={data.status === 'ACTIVE' ? 'success' : 'neutral'}>{statusLabel(data.status)}</Badge> },
+                { label: t('Ro‘yxatdan o‘tgan'), value: formatDate(data.createdAt) },
+              ]}
+            />
           </ProfileCard>
           <ProfileCard icon={MapPin} title={t('Manzillarim')} hint={t('So‘rov yaratganda tez tanlash uchun.')}>
             {addressList.length === 0 ? (
@@ -95,18 +106,6 @@ export function CustomerProfilePage() {
         <div className="gm-pcol">
           <SavedMastersCard />
           <PaymentPreferenceCard />
-          <ProfileCard icon={Smartphone} title={t('Akkaunt ma’lumotlari')}>
-            <InfoRows
-              rows={[
-                { label: t('Akkaunt ID'), value: `#${data.accountNumber}` },
-                { label: t('Telefon'), value: data.phone ?? <span className="gm-pmuted">{t('Kiritilmagan')}</span> },
-                { label: t('Email'), value: data.email ?? <span className="gm-pmuted">{t('Kiritilmagan')}</span> },
-                { label: t('Telefon tasdiqlangan'), value: <Badge tone={data.phoneVerified ? 'success' : 'warning'}>{data.phoneVerified ? 'Ha' : t('Yo‘q')}</Badge> },
-                { label: t('Holat'), value: <Badge tone={data.status === 'ACTIVE' ? 'success' : 'neutral'}>{statusLabel(data.status)}</Badge> },
-                { label: t('Ro‘yxatdan o‘tgan'), value: formatDate(data.createdAt) },
-              ]}
-            />
-          </ProfileCard>
           <ProfileCard icon={ShieldCheck} title={t('Xavfsizlik')} hint={t('Akkauntingizga ulangan qurilmalarni boshqaring.')}>
             <Link to="/sozlamalar" className="gm-plink">
               <span className="gm-plink__icon" aria-hidden="true">

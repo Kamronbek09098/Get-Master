@@ -6,6 +6,7 @@ import { applyUiSize, getUiSize } from '@/lib/ui-size';
 import '@/styles/polish.css';
 import '@/styles/compact.css';
 import '@/styles/cards.css';
+import '@/styles/premium.css';
 
 import { env } from '@/lib/env';
 import { t } from '@/i18n';

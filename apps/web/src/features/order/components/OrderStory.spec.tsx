@@ -28,12 +28,10 @@ const proof = (id: string, stage: WorkProof['stage']): WorkProof =>
   ({ id, orderId: 'o1', uploadedById: 'm', stage, storageKey: id, mediaType: 'IMAGE', mediaAssetId: `asset-${id}`, createdAt: '2026-10-02T09:00:00.000Z' }) as unknown as WorkProof;
 
 describe('OrderStory', () => {
-  it('tells the whole story with a before/after comparison when both photos exist', () => {
+  it('shows the problem, the before/after comparison and the review with a before/after comparison when both photos exist', () => {
     render(<OrderStory data={base} proofs={[proof('b', 'BEFORE'), proof('a', 'AFTER')]} loading={false} />);
-    expect(screen.getByText('Kran oqyapti', { selector: 'h3' })).toBeTruthy();
-    expect(screen.getByText('Aziz R.')).toBeTruthy();
     expect(screen.getByLabelText('Oldin va keyin rasmlarini taqqoslash')).toBeTruthy();
-    expect(screen.getByText('Muvaffaqiyatli yakunlandi')).toBeTruthy();
+    expect(screen.getByText('Oshxonadagi kran tinmay oqyapti')).toBeTruthy();
     expect(screen.getByLabelText('Baho: 5')).toBeTruthy();
   });
 
@@ -43,10 +41,14 @@ describe('OrderStory', () => {
     expect(screen.getByText(/natija surati/)).toBeTruthy();
   });
 
-  it('renders nothing before the master has arrived, and for cancelled orders', () => {
+  it('shows only the problem before the master arrives and for cancelled orders; nothing without a description', () => {
     const { container, rerender } = render(<OrderStory data={{ ...base, status: 'BOOKED' } as OrderDetailsData} proofs={[]} loading={false} />);
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByText('Oshxonadagi kran tinmay oqyapti')).toBeTruthy();
+    expect(screen.queryByText(/suratga oladi/)).toBeNull();
     rerender(<OrderStory data={{ ...base, status: 'CANCELLED' } as OrderDetailsData} proofs={[]} loading={false} />);
+    expect(screen.getByText('Oshxonadagi kran tinmay oqyapti')).toBeTruthy();
+    expect(screen.queryByText(/suratga oladi/)).toBeNull();
+    rerender(<OrderStory data={{ ...base, status: 'BOOKED', request: null } as unknown as OrderDetailsData} proofs={[]} loading={false} />);
     expect(container.firstChild).toBeNull();
   });
 });

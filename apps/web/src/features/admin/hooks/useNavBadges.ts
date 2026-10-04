@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNotifications, useUnreadCount } from '@/features/notification/hooks/useNotifications';
 import { communicationService } from '@/features/communication/services/communication.service';
@@ -66,9 +66,12 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
   const customer = role === 'CUSTOMER';
   const offersSeen = useSeen('offers');
   const onRequests = pathname.startsWith('/mijozlar/buyurtmalar') || pathname.startsWith('/mijozlar/sorovlar');
+  // «Ko‘rilgan vaqt» so‘rov kalitiga kirmaydi: aks holda natija vaqtni yangilaydi → kalit o‘zgaradi → so‘rov qayta ketadi (cheksiz tsikl).
+  const offersSeenRef = useRef(offersSeen);
+  offersSeenRef.current = offersSeen;
   const offers = useQuery({
-    queryKey: ['customer', 'badges', offersSeen],
-    queryFn: () => customerService.badges(offersSeen ?? undefined),
+    queryKey: ['customer', 'badges'],
+    queryFn: () => customerService.badges(offersSeenRef.current ?? undefined),
     enabled: customer,
     refetchInterval: 20_000,
     refetchOnWindowFocus: true,
@@ -96,17 +99,21 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
   ).length;
 
   const unread = useUnreadCount();
+  const adminSeenRef = useRef({ usersSeen, chatsSeen, verificationsSeen, casesSeen, appealsSeen, ordersSeen });
+  adminSeenRef.current = { usersSeen, chatsSeen, verificationsSeen, casesSeen, appealsSeen, ordersSeen };
   const badges = useQuery({
-    queryKey: ['admin', 'badges', usersSeen, chatsSeen, verificationsSeen, casesSeen, appealsSeen, ordersSeen],
-    queryFn: () =>
-      adminService.badges({
-        usersSince: usersSeen ?? undefined,
-        chatsSince: chatsSeen ?? undefined,
-        verificationsSince: verificationsSeen ?? undefined,
-        casesSince: casesSeen ?? undefined,
-        appealsSince: appealsSeen ?? undefined,
-        ordersSince: ordersSeen ?? undefined,
-      }),
+    queryKey: ['admin', 'badges'],
+    queryFn: () => {
+      const v = adminSeenRef.current;
+      return adminService.badges({
+        usersSince: v.usersSeen ?? undefined,
+        chatsSince: v.chatsSeen ?? undefined,
+        verificationsSince: v.verificationsSeen ?? undefined,
+        casesSince: v.casesSeen ?? undefined,
+        appealsSince: v.appealsSeen ?? undefined,
+        ordersSince: v.ordersSeen ?? undefined,
+      });
+    },
     enabled: admin,
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,

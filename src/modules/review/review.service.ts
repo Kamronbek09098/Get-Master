@@ -29,7 +29,7 @@ export class ReviewService {
     if (participants.customerId !== userId) throw new ForbiddenException(ERRORS.ONLY_CUSTOMER_CAN_REVIEW);
     if (participants.status !== OrderStatus.COMPLETED) throw new BadRequestException(ERRORS.ONLY_COMPLETED_CAN_REVIEW);
 
-    const status: ReviewStatus = dto.rating === 1 && !dto.comment?.trim() ? ReviewStatus.FLAGGED : ReviewStatus.PUBLISHED;
+    const status: ReviewStatus = dto.rating <= 1 && !dto.comment?.trim() ? ReviewStatus.FLAGGED : ReviewStatus.PUBLISHED;
 
     try {
       return await this.db.$transaction(async (tx) => {
@@ -41,7 +41,7 @@ export class ReviewService {
             rating: dto.rating,
             comment: dto.comment,
             status,
-            flaggedReason: status === ReviewStatus.FLAGGED ? '1-star review without a comment' : undefined,
+            flaggedReason: status === ReviewStatus.FLAGGED ? '1-star (or lower) review without a comment' : undefined,
           },
           select: { ...PUBLIC_REVIEW_SELECT, status: true, orderId: true },
         });

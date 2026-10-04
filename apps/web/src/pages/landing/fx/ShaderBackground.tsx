@@ -93,7 +93,7 @@ export function ShaderBackground({ variant = 'page' }: { variant?: 'page' | 'bra
       const styles = getComputedStyle(root);
       dark = variant === 'brand' || root.getAttribute('data-theme') === 'dark';
       // Brend panelida rang temaga bog‘liq bo‘lmasin (qorong‘i temada --gm-color-primary yorqin bo‘lib ketadi): panel bo‘yicha qat’iy rang.
-      const panelColor: Record<string, string> = { MASTER: '#087f61', ADMIN: '#5146d8' };
+      const panelColor: Record<string, string> = { MASTER: '#087f61', ADMIN: '#1e3a8a' };
       const brandColor = panelColor[root.getAttribute('data-panel') ?? ''] ?? '#1456ff';
       const primary = variant === 'brand' ? parse(brandColor, [0.08, 0.34, 1]) : parse(styles.getPropertyValue('--gm-color-primary').trim(), [0.1, 0.3, 1]);
       const accent = parse(styles.getPropertyValue('--gm-color-accent').trim(), [1, 0.69, 0.12]);
