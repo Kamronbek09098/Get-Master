@@ -35,6 +35,8 @@ export function CoverageMap({ latitude, longitude, radiusKm, point, zones, heigh
   const holder = useRef<HTMLDivElement | null>(null);
   const map = useRef<L.Map | null>(null);
   const group = useRef<L.FeatureGroup | null>(null);
+  /** Oxirgi joylashuvga moslash: xarita o‘lchami o‘zgargach (modal, karta ochilishi) qayta chaqiriladi. */
+  const refit = useRef<() => void>(() => undefined);
 
   useEffect(() => {
     if (!holder.current) return;
@@ -42,10 +44,19 @@ export function CoverageMap({ latitude, longitude, radiusKm, point, zones, heigh
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(instance);
     group.current = L.featureGroup().addTo(instance);
     map.current = instance;
-    // Modal ichida o‘lcham keyin aniqlanadi.
-    const resize = window.setTimeout(() => instance.invalidateSize(), 120);
+    // Modal yoki yig‘iladigan karta ichida o‘lcham keyin aniqlanadi: o‘lcham o‘zgargach xarita yangilanib, doira qayta sig‘diriladi.
+    let frame = 0;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        instance.invalidateSize();
+        refit.current();
+      });
+    });
+    observer.observe(holder.current);
     return () => {
-      window.clearTimeout(resize);
+      cancelAnimationFrame(frame);
+      observer.disconnect();
       instance.remove();
       map.current = null;
       group.current = null;
@@ -75,12 +86,15 @@ export function CoverageMap({ latitude, longitude, radiusKm, point, zones, heigh
 
     if (point) L.marker([point.lat, point.lon], { icon: pinIcon('gm-coverage__pin gm-coverage__pin--home'), interactive: false }).addTo(layer);
 
-    const bounds = layer.getBounds();
-    if (bounds.isValid()) {
+    const fit = (animate: boolean) => {
+      const bounds = layer.getBounds();
+      if (!bounds.isValid() || instance.getSize().x === 0) return;
       const single = !zones?.length && !point && !(radiusKm && radiusKm > 0);
       if (single) instance.setView(bounds.getCenter(), 15);
-      else instance.fitBounds(bounds, { padding: [24, 24], animate: true, maxZoom: 16 });
-    }
+      else instance.fitBounds(bounds, { padding: [24, 24], animate, maxZoom: 16 });
+    };
+    refit.current = () => fit(false);
+    fit(true);
   }, [latitude, longitude, radiusKm, point, zones]);
 
   const empty = (latitude == null || longitude == null) && !point && !(zones && zones.length > 0);

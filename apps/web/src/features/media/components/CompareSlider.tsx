@@ -31,7 +31,7 @@ export function CompareSlider({ beforeId, afterId, alt }: { beforeId: string; af
       ref={box}
       className="gm-cmp"
       style={{ '--pos': '50%' } as CSSProperties}
-      data-cursor="drag"
+     
       onPointerDown={(event) => {
         dragging.current = true;
         event.currentTarget.setPointerCapture(event.pointerId);

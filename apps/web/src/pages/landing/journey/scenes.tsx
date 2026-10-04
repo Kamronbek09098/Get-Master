@@ -431,7 +431,7 @@ export function Earnings() {
 }
 
 export function ResultCustomer() {
-  return <BeforeAfter caption={t('Chapga-o‘ngga suring: oldin ↔ keyin')} />;
+  return <BeforeAfter caption={t('Oldin: nam bosgan devor ↔ Keyin: yangi bo‘yoq. Suring')} />;
 }
 export function ResultMaster() {
   return <BeforeAfter caption={t('Portfolioga avtomatik qo‘shiladi')} />;

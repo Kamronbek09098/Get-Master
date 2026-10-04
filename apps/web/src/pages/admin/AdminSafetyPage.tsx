@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, sanitizeMoney } from '@/lib/utils';
 import {
   useAllActions,
   useAllAppeals,
@@ -98,7 +98,7 @@ function CompensationForm() {
       {create.isSuccess && <Alert tone="success">{t('Kompensatsiya yaratildi.')}</Alert>}
       <UserNumberField label={t('Oluvchi ID')} onResolve={setRecipientId} />
       <Select label={t('Turi')} options={COMPENSATION_OPTIONS} value={type} onChange={(e) => setType(e.target.value as CompensationType)} />
-      <Input label={t('Summa (ixtiyoriy)')} type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <Input label={t('Summa (ixtiyoriy)')} type="number" min={0} value={amount} onChange={(e) => setAmount(sanitizeMoney(e.target.value))} />
       <Textarea label={t('Sabab')} required rows={3} maxLength={2000} value={reason} onChange={(e) => setReason(e.target.value)} />
       <div>
         <Button type="submit" loading={create.isPending} disabled={!recipientId || !reason.trim()}>{t('Yaratish')}</Button>

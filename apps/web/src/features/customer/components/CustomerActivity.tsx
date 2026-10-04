@@ -35,7 +35,7 @@ export function CustomerActivity({ orders }: { orders: OrderListItem[] }) {
               const index = Math.max(0, stepIndex(order.status));
               return (
                 <li key={order.id}>
-                  <Link to={`/mijozlar/buyurtmalar/${order.id}`} className="gm-act__item" data-cursor="open">
+                  <Link to={`/mijozlar/buyurtmalar/${order.id}`} className="gm-act__item">
                     <span className="gm-act__top">
                       <strong>{order.title}</strong>
                       <ChevronRight size={16} aria-hidden="true" />
@@ -64,7 +64,7 @@ export function CustomerActivity({ orders }: { orders: OrderListItem[] }) {
           <ul className="gm-act">
             {[...masters.values()].map((master) => (
               <li key={master.key}>
-                <Link to={`/ustalar-katalogi/${master.key}`} className="gm-act__item" data-cursor="profile">
+                <Link to={`/ustalar-katalogi/${master.key}`} className="gm-act__item">
                   <span className="gm-act__top">
                     <strong>{master.name}</strong>
                     <ChevronRight size={16} aria-hidden="true" />

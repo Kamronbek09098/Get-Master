@@ -2,20 +2,20 @@
   --gm-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --gm-font-display: 'Manrope', 'Inter', ui-sans-serif, system-ui, sans-serif;
 
-  --gm-color-bg: #f7f8fa;
+  --gm-color-bg: #f3f5fb;
   --gm-color-surface: #ffffff;
-  --gm-color-surface-muted: #eef1f5;
-  --gm-color-border: #dfe4ea;
-  --gm-color-border-strong: #c9d1dc;
-  --gm-color-text: #0b1118;
-  --gm-color-text-muted: #657181;
+  --gm-color-surface-muted: #edf0f8;
+  --gm-color-border: #e4e8f2;
+  --gm-color-border-strong: #cfd6e6;
+  --gm-color-text: #0d1530;
+  --gm-color-text-muted: #636d88;
   --gm-color-ink: #07111d;
 
-  --gm-color-primary: #1456ff;
-  --gm-color-primary-hover: #0d45d5;
-  --gm-color-primary-soft: #e9efff;
+  --gm-color-primary: #2d5bff;
+  --gm-color-primary-hover: #1f46e0;
+  --gm-color-primary-soft: #e8eeff;
   --gm-color-primary-contrast: #ffffff;
-  --gm-focus-ring: #1456ff;
+  --gm-focus-ring: #2d5bff;
   --gm-color-accent: #f0b84b;
   --gm-color-accent-contrast: #271b06;
 
@@ -28,9 +28,9 @@
   --gm-color-info-bg: #e9efff;
 
   --gm-radius-sm: 8px;
-  --gm-radius-md: 12px;
-  --gm-radius-lg: 16px;
-  --gm-radius-xl: 24px;
+  --gm-radius-md: 14px;
+  --gm-radius-lg: 18px;
+  --gm-radius-xl: 26px;
   --gm-radius-2xl: 32px;
 
   --gm-space-1: 4px;
@@ -42,14 +42,14 @@
   --gm-space-8: 48px;
   --gm-space-10: 64px;
 
-  --gm-shadow-sm: 0 1px 2px rgba(11, 17, 24, .05);
-  --gm-shadow-md: 0 10px 30px rgba(11, 17, 24, .09);
-  --gm-shadow-lg: 0 24px 70px rgba(11, 17, 24, .14);
+  --gm-shadow-sm: 0 1px 2px rgba(18, 28, 70, .05), 0 4px 14px -6px rgba(18, 28, 70, .08);
+  --gm-shadow-md: 0 14px 34px -12px rgba(18, 28, 70, .18);
+  --gm-shadow-lg: 0 28px 70px -18px rgba(18, 28, 70, .28);
 
-  --gm-card-radius: 16px;
-  --gm-card-radius-lg: 24px;
-  --gm-card-radius-sm: 12px;
-  --gm-card-pad: 20px;
+  --gm-card-radius: 20px;
+  --gm-card-radius-lg: 26px;
+  --gm-card-radius-sm: 14px;
+  --gm-card-pad: 22px;
   --gm-card-pad-sm: 12px 16px;
   --gm-card-border: 1px solid var(--gm-color-border);
   --gm-card-shadow: var(--gm-shadow-sm);
@@ -58,34 +58,36 @@
   --gm-card-label-size: 12.5px;
 
   --gm-btn-h-sm: 32px;
-  --gm-btn-h-md: 40px;
-  --gm-btn-h-lg: 46px;
+  --gm-btn-h-md: 44px;
+  --gm-btn-h-lg: 50px;
   --gm-btn-fs-sm: 12.5px;
   --gm-btn-fs-md: 14px;
   --gm-btn-fs-lg: 15px;
   --gm-btn-px: 18px;
 
-  --gm-header-height: 68px;
-  --gm-sidebar-width: 272px;
+  --gm-header-height: 64px;
+  --gm-sidebar-width: 264px;
+  --gm-grad-primary: linear-gradient(135deg, #3d6bff 0%, #6a4cff 100%);
+  --gm-grad-soft: linear-gradient(135deg, #eaf0ff 0%, #f1ebff 100%);
   --gm-ease: cubic-bezier(.2,.75,.2,1);
 }
 
-:root[data-panel='MASTER'] { --gm-color-primary:#087f61; --gm-color-primary-hover:#06664e; --gm-color-primary-soft:#e3f6ef; --gm-color-info-bg:#e3f6ef; --gm-focus-ring:#087f61; }
-:root[data-panel='ADMIN'] { --gm-color-primary:#5146d8; --gm-color-primary-hover:#4036b5; --gm-color-primary-soft:#eeecff; --gm-color-info-bg:#eeecff; --gm-focus-ring:#5146d8; }
+:root[data-panel='MASTER'] { --gm-color-primary:#0c9a73; --gm-color-primary-hover:#087f5d; --gm-color-primary-soft:#e0f6ee; --gm-color-info-bg:#e0f6ee; --gm-focus-ring:#0c9a73; --gm-grad-primary:linear-gradient(135deg,#10b585 0%,#0ea5a5 100%); --gm-grad-soft:linear-gradient(135deg,#e0f6ee 0%,#e0f4f6 100%); }
+:root[data-panel='ADMIN'] { --gm-color-primary:#6a4cff; --gm-color-primary-hover:#5638e6; --gm-color-primary-soft:#eeeaff; --gm-color-info-bg:#eeeaff; --gm-focus-ring:#6a4cff; --gm-grad-primary:linear-gradient(135deg,#7a5cff 0%,#b04cf5 100%); --gm-grad-soft:linear-gradient(135deg,#eeeaff 0%,#f7e9ff 100%); }
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --gm-color-bg:#080c12;
-  --gm-color-surface:#10161f;
-  --gm-color-surface-muted:#171f2b;
-  --gm-color-border:#27313e;
-  --gm-color-border-strong:#394656;
-  --gm-color-text:#f2f5f8;
-  --gm-color-text-muted:#9aa6b5;
+  --gm-color-bg:#070b1e;
+  --gm-color-surface:#0e1531;
+  --gm-color-surface-muted:#151e42;
+  --gm-color-border:#222c55;
+  --gm-color-border-strong:#33407a;
+  --gm-color-text:#eef1ff;
+  --gm-color-text-muted:#8f9bc4;
   --gm-color-ink:#05080c;
-  --gm-color-primary:#6f96ff;
+  --gm-color-primary:#7b9bff;
   --gm-color-primary-hover:#8aaaFF;
-  --gm-color-primary-soft:#172544;
+  --gm-color-primary-soft:#18265a;
   --gm-color-primary-contrast:#071124;
   --gm-focus-ring:#8aaaFF;
   --gm-color-accent:#f2c66b;
@@ -96,12 +98,14 @@
   --gm-color-warning:#f2b46b;
   --gm-color-warning-bg:#2c2114;
   --gm-color-info-bg:#172544;
+  --gm-grad-primary: linear-gradient(135deg, #7b9bff 0%, #9b7bff 100%);
+  --gm-grad-soft: linear-gradient(135deg, #18265a 0%, #261d5c 100%);
   --gm-shadow-sm:0 1px 2px rgba(0,0,0,.35);
   --gm-shadow-md:0 12px 32px rgba(0,0,0,.42);
   --gm-shadow-lg:0 26px 72px rgba(0,0,0,.58);
 }
-:root[data-theme='dark'][data-panel='MASTER'] { --gm-color-primary:#49d5a3; --gm-color-primary-hover:#75e4bd; --gm-color-primary-soft:#0f2c22; --gm-color-primary-contrast:#04231a; --gm-focus-ring:#75e4bd; }
-:root[data-theme='dark'][data-panel='ADMIN'] { --gm-color-primary:#a9a4ff; --gm-color-primary-hover:#c3bfff; --gm-color-primary-soft:#201e47; --gm-color-primary-contrast:#100e30; --gm-focus-ring:#c3bfff; }
+:root[data-theme='dark'][data-panel='MASTER'] { --gm-color-primary:#3ddba8; --gm-color-primary-hover:#6ae7bf; --gm-color-primary-soft:#0d2d2c; --gm-color-primary-contrast:#04231a; --gm-focus-ring:#6ae7bf; --gm-grad-primary:linear-gradient(135deg,#3ddba8 0%,#22c5d6 100%); --gm-grad-soft:linear-gradient(135deg,#0d2d2c 0%,#0e2a3a 100%); }
+:root[data-theme='dark'][data-panel='ADMIN'] { --gm-color-primary:#b39dff; --gm-color-primary-hover:#c9baff; --gm-color-primary-soft:#251c5c; --gm-color-primary-contrast:#120d33; --gm-focus-ring:#c9baff; --gm-grad-primary:linear-gradient(135deg,#a67cff 0%,#d65cf5 100%); --gm-grad-soft:linear-gradient(135deg,#251c5c 0%,#3a1c5c 100%); }
 
 :root[data-ui-size='small'] {
   --gm-btn-h-sm: 28px;

@@ -33,6 +33,13 @@ body {
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Butun interfeys 10% kichik: CSS'dagi px build paytida rem ga o‘tkaziladi (vite.config.ts → pxToRem). */
+  font-size: 90%;
+}
+
+/* Piktogrammalar (size={..} px atributi) ham 10% kichik */
+svg.lucide {
+  zoom: 0.9;
 }
 
 /* Ilova to‘liq ekranda (status bar ostigacha) ko‘rinadi; xavfsiz zona padding bilan hal qilinadi. */

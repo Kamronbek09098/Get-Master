@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatMoney } from '@/lib/utils';
+import { formatMoney, sanitizeMoney } from '@/lib/utils';
 import { useAdditionalWork, useAnswerAdditionalWork, useCreateAdditionalWork } from '../hooks/useAdditionalWork';
 import type { AdditionalWorkStatus } from '../types';
 import { t } from '@/i18n';
@@ -114,7 +114,7 @@ export function AdditionalWorkPanel({
             autoComplete="off"
             value={amount}
             onChange={(event) => {
-              setAmount(event.target.value);
+              setAmount(sanitizeMoney(event.target.value));
               if (create.isError) create.reset();
             }}
           />

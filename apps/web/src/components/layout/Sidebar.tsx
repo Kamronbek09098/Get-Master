@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { badgeText, useNavBadges } from '@/features/admin/hooks/useNavBadges';
 import { useAuthStore } from '@/store/auth.store';
 import { useMe } from '@/features/session/hooks/useMe';
+import { useCurrentRole } from '@/features/session/hooks/useCurrentRole';
 import { getNavItems } from './nav-items';
 import type { NavItem } from './nav-items';
 import { t } from '@/i18n';
@@ -16,6 +17,7 @@ function groupItems(items: NavItem[]): Array<[string, NavItem[]]> {
 export function Sidebar() {
   const preferredRole = useAuthStore((state) => state.preferredRole);
   const me = useMe();
+  const { needsMasterOnboarding } = useCurrentRole();
   const groups = groupItems(getNavItems(preferredRole, { superAdmin: !!me.data?.isSuperAdmin, permissions: me.data?.adminPermissions }));
   const { pathname } = useLocation();
   const badges = useNavBadges(preferredRole, pathname);
@@ -31,7 +33,10 @@ export function Sidebar() {
                 <NavLink
                   to={item.to}
                   end={item.to === '/admin'}
-                  className={({ isActive }) => `gm-sidebar__link${isActive ? ' gm-sidebar__link--active' : ''}`}
+                  className={({ isActive }) =>
+                    `gm-sidebar__link${isActive ? ' gm-sidebar__link--active' : ''}${needsMasterOnboarding && item.to !== '/ustalar/profil' ? ' gm-sidebar__link--locked' : ''}`
+                  }
+                  title={needsMasterOnboarding && item.to !== '/ustalar/profil' ? t('Avval usta profilini yarating') : undefined}
                 >
                   <item.icon size={19} strokeWidth={2} aria-hidden="true" />
                   <span>{item.label}</span>

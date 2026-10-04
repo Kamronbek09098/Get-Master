@@ -1,3 +1,4 @@
+import { sanitizeMoney } from '@/lib/utils';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Plus } from 'lucide-react';
@@ -59,7 +60,7 @@ export function ServiceForm() {
         placeholder={t('Masalan: 150000')}
         hint={t('Bo‘sh qoldirsangiz, narx mijoz bilan kelishiladi.')}
         value={price}
-        onChange={(event) => setPrice(event.target.value)}
+        onChange={(event) => setPrice(sanitizeMoney(event.target.value))}
       />
       <Input
         label={t('Izoh')}

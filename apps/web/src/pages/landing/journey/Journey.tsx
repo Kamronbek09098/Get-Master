@@ -135,7 +135,7 @@ export function Journey({ role }: { role: JourneyRole }) {
               const Visual = visuals[scene.id];
               const on = isStatic || index === active;
               return (
-                <article key={scene.id} data-scene className={on ? 'gm-j-scene is-active' : 'gm-j-scene'} aria-hidden={on ? undefined : true}>
+                <article key={scene.id} data-scene data-scene-id={scene.id} className={on ? 'gm-j-scene is-active' : 'gm-j-scene'} aria-hidden={on ? undefined : true}>
                   <div className="gm-j-scene__text">
                     <p className="gm-j-scene__kicker">
                       <span>{String(index + 1).padStart(2, '0')}</span> {scene.kicker}

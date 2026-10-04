@@ -19,7 +19,7 @@ export function PublicPortfolio({ items }: { items: PublicPortfolioItem[] }) {
       <ul className="gm-pub-pf">
         {shown.map((item) => (
           <li key={item.id}>
-            <button type="button" className="gm-pub-pf__tile" data-cursor="view" onClick={() => setOpenId(item.id)} aria-label={item.title ?? t('Portfolio ishi')}>
+            <button type="button" className="gm-pub-pf__tile" onClick={() => setOpenId(item.id)} aria-label={item.title ?? t('Portfolio ishi')}>
               <MediaThumbnail assetId={item.mediaAssetId as string} alt={item.title ?? t('Portfolio ishi')} />
               {item.beforeMediaAssetId && <span className="gm-pub-pf__badge">{t('Oldin / Keyin')}</span>}
               {item.title && <span className="gm-pub-pf__title">{item.title}</span>}

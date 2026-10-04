@@ -137,7 +137,7 @@ export function BeforeAfter({ caption }: { caption: string }) {
 
   const auto = useCallback(
     (sp: number) => {
-      if (!touched.current) setPos(14 + easeOut(clamp(sp / 0.9)) * 52);
+      if (!touched.current) setPos(78 - easeOut(clamp(sp / 0.9)) * 52);
     },
     [setPos],
   );
@@ -155,7 +155,7 @@ export function BeforeAfter({ caption }: { caption: string }) {
       <div
         ref={box}
         className="gm-j-ba"
-        data-cursor="drag"
+       
         style={{ '--pos': '50%' } as CSSProperties}
         onPointerDown={(event) => {
           dragging.current = true;
@@ -167,15 +167,15 @@ export function BeforeAfter({ caption }: { caption: string }) {
         onPointerCancel={() => (dragging.current = false)}
       >
         <div className="gm-j-ba__pane gm-j-ba__pane--after">
-          <PipeArt fixed />
+          <img src="/media/result/after.jpg" alt={t('Keyin: yangi bo‘yalgan devor, quyosh nuri tushib turibdi')} loading="lazy" draggable={false} />
           <span className="gm-j-ba__tag">{t('Keyin')}</span>
         </div>
         <div className="gm-j-ba__pane gm-j-ba__pane--before">
-          <PipeArt fixed={false} />
+          <img src="/media/result/before.jpg" alt={t('Oldin: nam bosgan, bo‘yog‘i ko‘chgan devor')} loading="lazy" draggable={false} />
           <span className="gm-j-ba__tag">{t('Oldin')}</span>
         </div>
         <div className="gm-j-ba__handle" aria-hidden="true">
-          <span>{t('Surish')}</span>
+          <span>‹ ›</span>
         </div>
         <input
           ref={range}
@@ -193,44 +193,5 @@ export function BeforeAfter({ caption }: { caption: string }) {
       </div>
       <p className="gm-j-ba__caption">{caption}</p>
     </div>
-  );
-}
-
-/** Oldin/keyin uchun vektor illyustratsiya: yorilgan quvur → tuzatilgan quvur. */
-function PipeArt({ fixed }: { fixed: boolean }) {
-  return (
-    <svg viewBox="0 0 800 520" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-      <rect width="800" height="520" fill={fixed ? '#102a2a' : '#1d1620'} />
-      <rect y="400" width="800" height="120" fill={fixed ? '#0c2220' : '#150f18'} />
-      <g opacity=".08" stroke="#fff">
-        {Array.from({ length: 9 }, (_, i) => (
-          <line key={i} x1={i * 100} y1="0" x2={i * 100} y2="400" />
-        ))}
-        {Array.from({ length: 5 }, (_, i) => (
-          <line key={i} x1="0" y1={i * 100} x2="800" y2={i * 100} />
-        ))}
-      </g>
-      <rect x="-10" y="215" width="820" height="54" rx="10" fill={fixed ? '#7fb9b0' : '#8a7f86'} />
-      <rect x="-10" y="222" width="820" height="12" rx="6" fill="#fff" opacity=".22" />
-      <rect x="330" y="205" width="80" height="74" rx="8" fill={fixed ? '#d6e4e1' : '#5b5058'} />
-      <rect x="326" y="200" width="88" height="14" rx="5" fill={fixed ? '#f0b84b' : '#4a4047'} />
-      <rect x="326" y="270" width="88" height="14" rx="5" fill={fixed ? '#f0b84b' : '#4a4047'} />
-      {fixed ? (
-        <>
-          <circle cx="400" cy="400" r="46" fill="#49d5a3" opacity=".16" />
-          <circle cx="400" cy="400" r="30" fill="#49d5a3" />
-          <path d="M386 400l10 10 19-21" stroke="#04231a" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </>
-      ) : (
-        <>
-          <path d="M372 269l14 22-10 12 16 20" stroke="#ff6b78" strokeWidth="4" fill="none" strokeLinecap="round" />
-          {[0, 1, 2].map((i) => (
-            <ellipse key={i} cx={384 + i * 12} cy={330 + i * 26} rx="5" ry="8" fill="#6aa8ff" className="gm-j-drip" style={{ animationDelay: `${i * 0.35}s` }} />
-          ))}
-          <ellipse cx="400" cy="450" rx="120" ry="20" fill="#6aa8ff" opacity=".28" />
-          <ellipse cx="400" cy="450" rx="70" ry="10" fill="#6aa8ff" opacity=".3" />
-        </>
-      )}
-    </svg>
   );
 }

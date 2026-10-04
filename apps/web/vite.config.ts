@@ -35,6 +35,21 @@ function buildCsp(html: string, apiBase: string | undefined): string {
   ].join('; ');
 }
 
+/**
+ * Interfeys o‘lchami: src/ ichidagi CSS'dagi barcha `px` build paytida `rem` ga o‘tkaziladi (1rem = 16px),
+ * ildiz shrift esa 90% (global.css) — natijada butun interfeys aniq 10% kichik. vw/vh va @media o‘zgarmaydi,
+ * 1px va undan ingichka chiziqlar ham o‘zgarmaydi. (CSS `zoom` ishlatilmaydi: u vw/vh va xarita koordinatalarini buzadi.)
+ */
+const pxToRem = {
+  postcssPlugin: 'getmaster-px-to-rem',
+  Declaration(decl: { value: string; source?: { input?: { file?: string } } }) {
+    const file = decl.source?.input?.file?.replace(/\\/g, '/') ?? '';
+    if (!file.includes('/src/') || !decl.value.includes('px')) return;
+    const next = decl.value.replace(/(-?\d*\.?\d+)px\b/g, (match, n: string) => (Math.abs(Number(n)) <= 1 ? match : `${+(Number(n) / 16).toFixed(4)}rem`));
+    if (next !== decl.value) decl.value = next;
+  },
+};
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   const role = env.VITE_APP_ROLE;
@@ -81,6 +96,7 @@ export default defineConfig(({ mode }) => {
     },
     // Production'da kod minifikatsiya qilinadi, source map chiqarilmaydi, console/debugger olib tashlanadi.
     esbuild: mode === 'development' ? undefined : { drop: ['console', 'debugger'], legalComments: 'none' },
+    css: { postcss: { plugins: [pxToRem] } },
     build: {
       outDir: 'dist',
       sourcemap: false,

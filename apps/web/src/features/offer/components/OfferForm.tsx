@@ -1,3 +1,4 @@
+import { sanitizeMoney } from '@/lib/utils';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Alert } from '@/components/ui/Alert';
@@ -42,7 +43,7 @@ export function OfferForm({
   return (
     <form className="gm-form" onSubmit={handleSubmit}>
       {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
-      <Input label={t('Narx (so‘m)')} type="number" required min={1} value={price} onChange={(e) => setPrice(e.target.value)} />
+      <Input label={t('Narx (so‘m)')} type="number" required min={1} value={price} onChange={(e) => setPrice(sanitizeMoney(e.target.value))} />
       <Input
         label={t('Taxminiy davomiylik (daqiqa, ixtiyoriy)')}
         type="number"

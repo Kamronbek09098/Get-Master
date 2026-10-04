@@ -7,6 +7,7 @@ import { MobileNavigation } from './MobileNavigation';
 import { Footer } from './Footer';
 import { useCurrentRole } from '@/features/session/hooks/useCurrentRole';
 import { useAutoReadNotifications } from '@/features/notification/hooks/useAutoReadNotifications';
+import { Alert } from '@/components/ui/Alert';
 import { VerificationBanner } from '@/features/trust/components/VerificationBanner';
 import { PhoneRequiredBanner } from '@/features/session/components/PhoneRequiredBanner';
 import { NameRequiredDialog } from '@/features/session/components/NameRequiredDialog';
@@ -26,6 +27,11 @@ export function AppLayout() {
         <Sidebar />
         <main id="gm-main-content" className="gm-app-layout__content">
           {role === 'MASTER' && !needsMasterOnboarding && <VerificationBanner />}
+          {role === 'MASTER' && needsMasterOnboarding && (
+            <Alert tone="info" title={t('Avval usta profilini yarating')}>
+              {t('Faol takliflar, buyurtmalar, portfolio va boshqa bo‘limlar profil yaratilgach ochiladi. Quyidagi shaklda kasbingizni kiriting va «Usta profilini yaratish» tugmasini bosing.')}
+            </Alert>
+          )}
           {role === 'CUSTOMER' && <PhoneRequiredBanner />}
           <Suspense fallback={<PageLoader />}>
             <Outlet />

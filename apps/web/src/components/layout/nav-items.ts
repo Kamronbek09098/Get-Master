@@ -99,7 +99,7 @@ function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permiss
     { to: '/mijozlar/kafolat', label: t('Kafolatlar'), icon: ShieldCheck, group: 'Muloqot' },
     { to: '/mijozlar/shikoyatlar', label: t('Shikoyatlar'), icon: ShieldAlert, group: 'Muloqot' },
     { to: '/mijozlar/nizolar', label: t('Nizolar'), icon: Scale, group: 'Muloqot' },
-    { to: '/mijozlar/profil', label: t('Profil'), icon: UserRound, group: ACCOUNT },
+    { to: '/mijozlar/profil', label: t('Profil'), icon: UserRound, group: ACCOUNT, primary: true },
     { to: '/xavfsizlik', label: t('Choralar va apellyatsiya'), icon: ShieldAlert, group: ACCOUNT },
     { to: '/huquqiy', label: t('Hujjatlar'), icon: FileText, group: ACCOUNT },
     { to: '/bildirishnomalar', label: t('Bildirishnomalar'), icon: Bell, group: ACCOUNT },

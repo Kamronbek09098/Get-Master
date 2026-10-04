@@ -1,3 +1,4 @@
+import { sanitizeMoney } from '@/lib/utils';
 import { useState } from 'react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
@@ -62,7 +63,7 @@ export function DirectOrderDialog({ conversationId, masterName, onClose }: { con
         {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
         <Input label={t('Nima kerak?')} required maxLength={255} placeholder={t('Masalan, kranni almashtirish')} value={title} onChange={(event) => setTitle(event.target.value)} />
         <Textarea label={t('Tavsif')} required rows={3} maxLength={4000} hint={t('Muammo yoki ish haqida batafsil yozing')} value={description} onChange={(event) => setDescription(event.target.value)} />
-        <Input label={t('Kelishilgan narx (so‘m)')} required inputMode="numeric" placeholder={t('Masalan, 150000')} value={price} onChange={(event) => setPrice(event.target.value.replace(/[^\d\s]/g, ''))} />
+        <Input label={t('Kelishilgan narx (so‘m)')} required inputMode="numeric" placeholder={t('Masalan, 150000')} value={price} onChange={(event) => setPrice(sanitizeMoney(event.target.value))} />
         <Input
           label={t('Qachon kelsin? (ixtiyoriy)')}
           type="datetime-local"

@@ -4,6 +4,11 @@ export function cx(...values: Array<string | false | null | undefined>): string 
   return values.filter(Boolean).join(' ');
 }
 
+/** Pul maydoni uchun: faqat raqamlar va birinchi raqam 0 bo‘lmaydi («0», «007» → «», «7»). Xato ko‘rsatilmaydi — 0 shunchaki yozilmaydi. */
+export function sanitizeMoney(value: string): string {
+  return value.replace(/\D/g, '').replace(/^0+/, '');
+}
+
 export function formatMoney(amount: string | number, currency = 'UZS'): string {
   const value = typeof amount === 'string' ? Number(amount) : amount;
   if (!Number.isFinite(value)) return '—';

@@ -112,3 +112,5 @@
     opacity: 0;
   }
 }
+.gm-sidebar__link--locked { opacity: 0.5; }
+.gm-sidebar__link--locked:hover { opacity: 0.75; }
