@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { CalendarDays, ChevronRight, ClipboardList, MapPin, MapPinPlus, Package, Settings2, ShieldCheck, UserRound } from 'lucide-react';
+import { Navigate, useParams } from 'react-router-dom';
+import { CalendarDays, ClipboardList, Heart, LogOut, MapPin, Package, Settings, UserRound, Users, Wallet } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -7,22 +7,33 @@ import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDate } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
-import { useAddresses, useCustomerProfile } from '@/features/customer/hooks/useCustomer';
+import { useAddresses, useCustomerPreferences, useCustomerProfile } from '@/features/customer/hooks/useCustomer';
+import { useFavorites } from '@/features/customer/hooks/useFavorites';
 import { PaymentPreferenceCard, SavedMastersCard } from '@/features/customer/components/CustomerSaved';
 import { CustomerActivity } from '@/features/customer/components/CustomerActivity';
 import { CustomerForm } from '@/features/customer/components/CustomerForm';
+import { useLogout } from '@/features/auth/hooks/useAuth';
+import { providerLabel } from '@/features/payment/labels';
 import { useMyOrders } from '@/features/order/hooks/useOrders';
 import { useMyRequests } from '@/features/request/hooks/useRequests';
 import { ProfileHero } from '@/features/profile/ProfileHero';
-import { InfoRows, ProfileCard } from '@/features/profile/ProfileCard';
+import { InfoRows } from '@/features/profile/ProfileCard';
+import { ProfileMenuList, ProfileSubPage } from '@/features/profile/ProfileMenu';
 import '@/features/profile/Profile.css';
 import { t } from '@/i18n';
 
+const BASE = '/mijozlar/profil';
+
+/** Mijoz profili: asosiy sahifada menyu, har bir qator — alohida ichki bo‘lim (ilova uslubi). */
 export function CustomerProfilePage() {
+  const { section } = useParams();
   const profile = useCustomerProfile();
   const addresses = useAddresses();
   const orders = useMyOrders();
   const requests = useMyRequests();
+  const favorites = useFavorites();
+  const preferences = useCustomerPreferences();
+  const logout = useLogout();
 
   if (profile.isLoading) return <PageLoader label={t('Profil yuklanmoqda…')} />;
   if (profile.isError) return <Alert tone="danger">{getErrorMessage(profile.error)}</Alert>;
@@ -30,13 +41,54 @@ export function CustomerProfilePage() {
 
   const data = profile.data;
   const name = accountName(data);
-  const addressList = addresses.data ?? [];
+  const addressCount = addresses.data?.length ?? 0;
   const requestCount = requests.data?.pages.reduce((sum, page) => sum + page.items.length, 0) ?? 0;
 
+  if (section === 'tahrirlash') {
+    return (
+      <ProfileSubPage title={t('Profilni tahrirlash')} backTo={BASE}>
+        <InfoRows
+          rows={[
+            { label: t('Akkaunt ID'), value: `#${data.accountNumber}` },
+            { label: t('Telefon'), value: data.phone ?? <span className="gm-pmuted">{t('Kiritilmagan')}</span> },
+            { label: t('Email'), value: data.email ?? <span className="gm-pmuted">{t('Kiritilmagan')}</span> },
+            { label: t('Telefon tasdiqlangan'), value: <Badge tone={data.phoneVerified ? 'success' : 'warning'}>{data.phoneVerified ? 'Ha' : t('Yo‘q')}</Badge> },
+            { label: t('Holat'), value: <Badge tone={data.status === 'ACTIVE' ? 'success' : 'neutral'}>{statusLabel(data.status)}</Badge> },
+            { label: t('Ro‘yxatdan o‘tgan'), value: formatDate(data.createdAt) },
+          ]}
+        />
+        <div className="gm-pmerge__divider" />
+        <CustomerForm profile={data} />
+      </ProfileSubPage>
+    );
+  }
+  if (section === 'ustalar') {
+    return (
+      <ProfileSubPage title={t('Birga ishlagan ustalar')} backTo={BASE}>
+        <CustomerActivity orders={orders.data ?? []} />
+      </ProfileSubPage>
+    );
+  }
+  if (section === 'saqlangan') {
+    return (
+      <ProfileSubPage title={t('Saqlangan ustalar')} backTo={BASE}>
+        <SavedMastersCard />
+      </ProfileSubPage>
+    );
+  }
+  if (section === 'tolov') {
+    return (
+      <ProfileSubPage title={t('To‘lov usuli')} backTo={BASE}>
+        <PaymentPreferenceCard />
+      </ProfileSubPage>
+    );
+  }
+  if (section) return <Navigate to={BASE} replace />;
+
   return (
-    <div className="gm-ppage">
+    <div className="gm-pmenu-page">
       <div className="gm-page-header" style={{ marginBottom: 0 }}>
-        <h1>{t('Mening profilim')}</h1>
+        <h1>{t('Profil')}</h1>
       </div>
 
       <ProfileHero
@@ -48,75 +100,26 @@ export function CustomerProfilePage() {
           <>
             <Badge tone="primary">{t('Mijoz')}</Badge>
             <Badge tone={data.phoneVerified ? 'success' : 'warning'}>{data.phoneVerified ? t('Telefon tasdiqlangan') : t('Telefon tasdiqlanmagan')}</Badge>
-            <Badge tone={data.status === 'ACTIVE' ? 'success' : 'neutral'}>{statusLabel(data.status)}</Badge>
           </>
         }
         stats={[
           { icon: ClipboardList, label: t('So‘rovlar'), value: requests.isLoading ? '…' : requestCount },
           { icon: Package, label: t('Buyurtmalar'), value: orders.isLoading ? '…' : (orders.data?.length ?? 0) },
-          { icon: MapPin, label: t('Manzillar'), value: addresses.isLoading ? '…' : addressList.length },
           { icon: CalendarDays, label: t('A’zo bo‘lgan'), value: <span style={{ fontSize: '1rem' }}>{formatDate(data.createdAt)}</span> },
         ]}
       />
 
-      <div className="gm-pgrid">
-        <div className="gm-pcol">
-          <CustomerActivity orders={orders.data ?? []} />
-          <ProfileCard defaultOpen icon={UserRound} title={t('Shaxsiy va akkaunt ma’lumotlari')} hint={t('Ism va familiyangiz boshqa foydalanuvchilarga ko‘rinadi.')}>
-            <CustomerForm profile={data} />
-            <div className="gm-pmerge__divider" />
-            <InfoRows
-              rows={[
-                { label: t('Akkaunt ID'), value: `#${data.accountNumber}` },
-                { label: t('Telefon'), value: data.phone ?? <span className="gm-pmuted">{t('Kiritilmagan')}</span> },
-                { label: t('Email'), value: data.email ?? <span className="gm-pmuted">{t('Kiritilmagan')}</span> },
-                { label: t('Telefon tasdiqlangan'), value: <Badge tone={data.phoneVerified ? 'success' : 'warning'}>{data.phoneVerified ? 'Ha' : t('Yo‘q')}</Badge> },
-                { label: t('Holat'), value: <Badge tone={data.status === 'ACTIVE' ? 'success' : 'neutral'}>{statusLabel(data.status)}</Badge> },
-                { label: t('Ro‘yxatdan o‘tgan'), value: formatDate(data.createdAt) },
-              ]}
-            />
-          </ProfileCard>
-          <ProfileCard icon={MapPin} title={t('Manzillarim')} hint={t('So‘rov yaratganda tez tanlash uchun.')}>
-            {addressList.length === 0 ? (
-              <p className="gm-pempty">{t('Hali manzil qo‘shilmagan.')}</p>
-            ) : (
-              <ul className="gm-addrlist">
-                {addressList.slice(0, 3).map((address) => (
-                  <li key={address.id}>
-                    <span className="gm-addrlist__pin" aria-hidden="true">
-                      <MapPin size={16} />
-                    </span>
-                    <span className="gm-addrlist__text">
-                      <strong>{address.title ?? t('Manzil')}</strong>
-                      <span>{address.addressLine}</span>
-                    </span>
-                  </li>
-                ))}
-                {addressList.length > 3 && <li className="gm-addrlist__more">{t('va yana {p} ta manzil', { p: addressList.length - 3 })}</li>}
-              </ul>
-            )}
-            <Link to="/mijozlar/manzillar" className="gm-plink">
-              <span className="gm-plink__icon" aria-hidden="true">{addressList.length === 0 ? <MapPinPlus size={18} /> : <MapPin size={18} />}</span>
-              <span className="gm-plink__label">{addressList.length === 0 ? t('Manzil qo‘shish') : t('Manzillarni boshqarish')}</span>
-              <ChevronRight size={18} className="gm-plink__arrow" aria-hidden="true" />
-            </Link>
-          </ProfileCard>
-        </div>
-
-        <div className="gm-pcol">
-          <SavedMastersCard />
-          <PaymentPreferenceCard />
-          <ProfileCard icon={ShieldCheck} title={t('Xavfsizlik')} hint={t('Akkauntingizga ulangan qurilmalarni boshqaring.')}>
-            <Link to="/sozlamalar" className="gm-plink">
-              <span className="gm-plink__icon" aria-hidden="true">
-                <Settings2 size={18} />
-              </span>
-              <span className="gm-plink__label">{t('Faol qurilmalar va sozlamalar')}</span>
-              <ChevronRight size={18} className="gm-plink__arrow" aria-hidden="true" />
-            </Link>
-          </ProfileCard>
-        </div>
-      </div>
+      <ProfileMenuList
+        rows={[
+          { key: 'edit', icon: UserRound, label: t('Profilni tahrirlash'), to: `${BASE}/tahrirlash` },
+          { key: 'addr', icon: MapPin, label: t('Manzillarim'), value: addressCount || undefined, to: '/mijozlar/manzillar' },
+          { key: 'masters', icon: Users, label: t('Birga ishlagan ustalar'), to: `${BASE}/ustalar` },
+          { key: 'saved', icon: Heart, label: t('Saqlangan ustalar'), value: favorites.data?.length || undefined, to: `${BASE}/saqlangan` },
+          { key: 'pay', icon: Wallet, label: t('To‘lov usuli'), value: providerLabel(preferences.data?.paymentMethod ?? 'CASH'), to: `${BASE}/tolov` },
+          { key: 'settings', icon: Settings, label: t('Sozlamalar'), to: '/sozlamalar' },
+          { key: 'logout', icon: LogOut, label: t('Tizimdan chiqish'), danger: true, onClick: () => logout.mutate(false) },
+        ]}
+      />
     </div>
   );
 }

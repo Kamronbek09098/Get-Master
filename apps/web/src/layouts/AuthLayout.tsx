@@ -143,13 +143,6 @@ export function AuthLayout() {
                 </li>
               ))}
             </ul>
-            <p className="gm-auth-terms">
-              {t('Davom etish orqali')}{' '}
-              <Link to="/shartlar" target="_blank" rel="noopener">
-                {t('xizmat shartlariga')}
-              </Link>
-              {t(' rozilik bildirasiz. Raqamingiz faqat kirish uchun ishlatiladi.')}
-            </p>
           </>
         )}
       </main>

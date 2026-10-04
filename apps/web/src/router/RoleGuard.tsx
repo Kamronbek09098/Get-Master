@@ -45,7 +45,7 @@ export function RoleGuard({ roles, children }: { roles: Role[]; children: ReactN
   if (isLoading) return <PageLoader label="Yuklanmoqda…" />;
   if (isError && isConnectionProblem(error)) return <ConnectionProblem onRetry={refetch} />;
   if (isError || !role) return <ExpiredSession />;
-  if (needsMasterOnboarding && roles.includes('MASTER') && !roles.includes('CUSTOMER') && pathname !== '/ustalar/profil') {
+  if (needsMasterOnboarding && roles.includes('MASTER') && !roles.includes('CUSTOMER') && !pathname.startsWith('/ustalar/profil')) {
     return <Navigate to="/ustalar/profil" replace />;
   }
   if (!roles.includes(role)) {

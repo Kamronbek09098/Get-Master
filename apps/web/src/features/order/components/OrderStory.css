@@ -25,8 +25,6 @@
 .gm-story__gallery li { border-radius: 14px; overflow: hidden; background: var(--gm-color-surface-muted); }
 .gm-story__img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 14px; background: var(--gm-color-surface-muted); }
 .gm-story__img--missing { display: grid; place-items: center; font-size: 13px; color: var(--gm-color-text-muted); }
-.gm-story__stars { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 10px 0 0; color: var(--gm-color-accent); }
-.gm-story__stars span { flex-basis: 100%; margin-top: 6px; font-size: 14px; color: var(--gm-color-text); }
 
 /* Oldin / keyin */
 .gm-ba { position: relative; margin-top: 12px; max-width: 760px; aspect-ratio: 16 / 10; border-radius: 16px; overflow: hidden; touch-action: pan-y; cursor: ew-resize; user-select: none; background: var(--gm-color-surface-muted); }

@@ -1,0 +1,47 @@
+/* Usta profili (o‘z profili): kartalar ketma-ket, har biri alohida va keng — pastga skroll qilib ko‘riladi.
+   Tartib: akkaunt ma’lumotlari → shaxs → ko‘rsatkichlar → asosiy forma → ish holati va akkaunt → xizmatlar → tasdiqlash → ish hududi. */
+.gm-mprof { container-type: inline-size; }
+.gm-mprof__grid { display: flex; flex-direction: column; gap: 20px; max-width: 880px; width: 100%; margin: 0 auto; }
+.gm-mprof__col { display: contents; }
+
+.gm-mprof__card { padding: 24px; border: var(--gm-card-border); border-radius: var(--gm-card-radius-lg); background: var(--gm-color-surface); box-shadow: var(--gm-shadow-sm); }
+
+/* Shaxs kartasi: telefonda markazda, kengda gorizontal (avatar chapda) */
+.gm-mprof__id { display: grid; justify-items: center; gap: 6px; text-align: center; }
+.gm-mprof__id .gm-chat-avatar { width: 96px; height: 96px; font-size: 32px; margin-bottom: 8px; box-shadow: 0 10px 26px -10px color-mix(in srgb, var(--gm-color-primary) 55%, transparent); }
+.gm-mprof__id h2 { margin: 0; font: 800 22px/1.2 var(--gm-font-display); letter-spacing: -0.02em; overflow-wrap: anywhere; }
+.gm-mprof__role { margin: 0; color: var(--gm-color-text-muted); font-size: 14.5px; }
+.gm-mprof__badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 6px; }
+.gm-mprof__contact { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; width: 100%; margin: 12px 0 0; padding-top: 14px; border-top: 1px solid var(--gm-color-border); font-size: 13.5px; color: var(--gm-color-text-muted); overflow-wrap: anywhere; }
+@container (min-width: 620px) {
+  .gm-mprof__id { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto auto auto; justify-items: start; text-align: left; column-gap: 22px; row-gap: 4px; align-items: center; }
+  .gm-mprof__id .gm-chat-avatar { grid-row: 1 / span 3; margin: 0; width: 104px; height: 104px; }
+  .gm-mprof__badges { justify-content: flex-start; }
+  .gm-mprof__contact { grid-column: 1 / -1; justify-content: flex-start; }
+}
+
+/* Ko‘rsatkichlar: bir qatorda (sig‘masa keyingi qatorga) */
+.gm-mprof__stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0; }
+.gm-mprof__stat { display: grid; justify-items: center; gap: 2px; padding: 18px 12px; border: var(--gm-card-border); border-radius: var(--gm-card-radius); background: var(--gm-color-surface); box-shadow: var(--gm-shadow-sm); text-align: center; }
+.gm-mprof__stat dt { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--gm-color-text-muted); }
+.gm-mprof__stat dd { margin: 0; font: 800 28px/1.15 var(--gm-font-display); letter-spacing: -0.03em; color: var(--gm-color-primary); }
+.gm-mprof__stat small { font-size: 11.5px; color: var(--gm-color-text-muted); }
+
+/* Asosiy forma: ikki ustunli maydonlar */
+.gm-mprof__mainform .gm-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.gm-mprof__mainform .gm-form > .gm-alert,
+.gm-mprof__mainform .gm-form > .gm-field:nth-last-child(2),
+.gm-mprof__mainform .gm-form > .gm-button { grid-column: 1 / -1; }
+@container (max-width: 520px) {
+  .gm-mprof__mainform .gm-form { grid-template-columns: 1fr; }
+}
+
+.gm-mprof__grid > * , .gm-mprof__col > * { min-width: 0; }
+
+/* Menyu sahifasida ko‘rsatkichlar ixcham: telefonda 3 ustun, menyu ko‘rinib turadi */
+.gm-pmenu-page .gm-mprof__stats { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; }
+.gm-pmenu-page .gm-mprof__stat { padding: 12px 8px; }
+.gm-pmenu-page .gm-mprof__stat dd { font-size: 22px; }
+.gm-pmenu-page .gm-mprof__stat dt { font-size: 11.5px; text-align: center; }
+.gm-pmenu-page .gm-mprof__id { padding: 20px; }
+.gm-pmenu-page .gm-mprof__id .gm-chat-avatar { width: 84px; height: 84px; font-size: 28px; }

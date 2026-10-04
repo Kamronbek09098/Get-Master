@@ -4,6 +4,7 @@ import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDate } from '@/lib/utils';
 import { useMasterReviews } from '../hooks/useReviews';
+import { StarsStatic } from './StarRating';
 import { t } from '@/i18n';
 
 export function ReviewList({ masterId }: { masterId: string }) {
@@ -19,9 +20,8 @@ export function ReviewList({ masterId }: { masterId: string }) {
       {items.map((review) => (
         <div key={review.id} className="gm-card">
           <div className="gm-card__header">
-            <h3 className="gm-review-stars" aria-label={`${review.rating} / 5`}>
-              {'★'.repeat(review.rating)}
-              <span className="gm-review-stars__off">{'★'.repeat(5 - review.rating)}</span>
+            <h3 className="gm-review-stars">
+              <StarsStatic value={review.rating} />
             </h3>
             <span className="gm-card__meta">{formatDate(review.createdAt)}</span>
           </div>

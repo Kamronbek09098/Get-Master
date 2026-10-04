@@ -28,11 +28,10 @@ const proof = (id: string, stage: WorkProof['stage']): WorkProof =>
   ({ id, orderId: 'o1', uploadedById: 'm', stage, storageKey: id, mediaType: 'IMAGE', mediaAssetId: `asset-${id}`, createdAt: '2026-10-02T09:00:00.000Z' }) as unknown as WorkProof;
 
 describe('OrderStory', () => {
-  it('shows the problem, the before/after comparison and the review with a before/after comparison when both photos exist', () => {
+  it('shows the problem and the before/after comparison with a before/after comparison when both photos exist', () => {
     render(<OrderStory data={base} proofs={[proof('b', 'BEFORE'), proof('a', 'AFTER')]} loading={false} />);
     expect(screen.getByLabelText('Oldin va keyin rasmlarini taqqoslash')).toBeTruthy();
     expect(screen.getByText('Oshxonadagi kran tinmay oqyapti')).toBeTruthy();
-    expect(screen.getByLabelText('Baho: 5')).toBeTruthy();
   });
 
   it('shows designed empty states instead of blanks when no photos are uploaded yet', () => {

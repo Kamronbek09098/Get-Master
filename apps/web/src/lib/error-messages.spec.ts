@@ -17,6 +17,11 @@ describe('getErrorMessage', () => {
     expect(getErrorMessage(error('NETWORK_ERROR', 'x', 0))).toMatch(/Internet/);
   });
 
+  it('shows validation field names in the user’s language, not as raw code names', () => {
+    const e = new ApiError({ statusCode: 400, code: 'VALIDATION_ERROR', message: 'x', requestId: null, details: ['experienceYears: 70 dan katta bo‘lmasligi kerak', 'serviceAreas.0: juda uzun', 'unknownField: x'] });
+    expect(getErrorMessage(e)).toBe('Tajriba (yil): 70 dan katta bo‘lmasligi kerak\nIsh hududlari: juda uzun\nunknownField: x');
+  });
+
   it('joins validation details and handles non-API errors', () => {
     expect(getErrorMessage(new ApiError({ statusCode: 400, code: 'VALIDATION_ERROR', message: 'x', requestId: null, details: ['a', 'b'] }))).toBe('a\nb');
     expect(getErrorMessage(new Error('boom'))).toBe('boom');

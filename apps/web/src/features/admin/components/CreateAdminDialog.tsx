@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Check, CheckCircle2, Copy, RefreshCw } from "lucide-react";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { splitFullName } from '@/lib/account-name';
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { getErrorMessage } from "@/lib/error-messages";
@@ -58,8 +59,8 @@ function CopyRow({ label, value }: { label: string; value: string }) {
 export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
   const create = useCreateAdmin();
   const [phone, setPhone] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [fullName, setFullName] = useState("");
+  const names = splitFullName(fullName);
   const [password, setPassword] = useState(() => generatePassword());
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [permissions, setPermissions] = useState<string[]>([]);
@@ -74,8 +75,7 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
   const digits = toLocalDigits(phone);
   const valid =
     digits.length === 9 &&
-    firstName.trim().length > 0 &&
-    lastName.trim().length > 0 &&
+    !!names &&
     password.length >= 8 &&
     (isSuperAdmin || permissions.length > 0);
 
@@ -86,8 +86,8 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
       {
         phone: fullPhone,
         password,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
+        firstName: names!.firstName,
+        lastName: names!.lastName,
         isSuperAdmin,
         permissions: isSuperAdmin ? [] : permissions,
       },
@@ -96,7 +96,7 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
           setCreated({
             phone: fullPhone,
             password,
-            name: `${firstName.trim()} ${lastName.trim()}`,
+            name: fullName.trim().replace(/\s+/g, ' '),
             isSuperAdmin,
             permissionCount: isSuperAdmin
               ? ADMIN_PERMISSION_OPTIONS.length
@@ -180,22 +180,13 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
             onChange={(event) => setPhone(event.target.value)}
             autoFocus
           />
-          <div className="gm-newadm__row">
-            <Input
-              label={t('Ism')}
-              placeholder={t('Ism')}
-              value={firstName}
-              maxLength={100}
-              onChange={(event) => setFirstName(event.target.value)}
-            />
-            <Input
-              label={t('Familiya')}
-              placeholder={t('Familiya')}
-              value={lastName}
-              maxLength={100}
-              onChange={(event) => setLastName(event.target.value)}
-            />
-          </div>
+          <Input
+            label={t('To‘liq ism')}
+            placeholder={t('Masalan: Aziz Karimov')}
+            value={fullName}
+            maxLength={200}
+            onChange={(event) => setFullName(event.target.value)}
+          />
         </section>
 
         <section className="gm-newadm__sec" aria-labelledby="gm-newadm-s2">

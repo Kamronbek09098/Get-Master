@@ -6,7 +6,9 @@ export function cx(...values: Array<string | false | null | undefined>): string 
 
 /** Pul maydoni uchun: faqat raqamlar va birinchi raqam 0 bo‘lmaydi («0», «007» → «», «7»). Xato ko‘rsatilmaydi — 0 shunchaki yozilmaydi. */
 export function sanitizeMoney(value: string): string {
-  return value.replace(/\D/g, '').replace(/^0+/, '');
+  const digits = value.replace(/\D/g, '').replace(/^0+/, '');
+  // Server chegarasi: 1 milliarddan oshmaydi.
+  return digits.length > 10 || Number(digits) > 1_000_000_000 ? '1000000000' : digits;
 }
 
 export function formatMoney(amount: string | number, currency = 'UZS'): string {

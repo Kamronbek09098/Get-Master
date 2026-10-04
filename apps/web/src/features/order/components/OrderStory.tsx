@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent, ReactNode } from 'react';
-import { Camera, Star } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useMediaSignedUrl } from '@/features/media/hooks/useMedia';
 import { prefersReducedMotion } from '@/lib/motion/tokens';
@@ -173,14 +173,6 @@ export function OrderStory({ data, proofs, loading }: { data: OrderDetailsData; 
               <Gallery items={after} alt={t('Ishdan keyingi natija')} />
             ) : (
               <Empty text={t('Ish tugagach natija surati shu yerda paydo bo‘ladi.')} />
-            )}
-            {data.review && (
-              <p className="gm-story__stars" aria-label={t('Baho: {rating}', { rating: data.review.rating })}>
-                {Array.from({ length: 5 }, (_, i) => (
-                  <Star key={i} size={18} fill={i < data.review!.rating ? 'currentColor' : 'none'} />
-                ))}
-                {data.review.comment && <span>{data.review.comment}</span>}
-              </p>
             )}
           </Chapter>
 

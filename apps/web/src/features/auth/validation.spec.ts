@@ -45,8 +45,7 @@ describe('registerSchema', () => {
       phoneLocal: '901234567',
       password: 'longenoughpassword',
       confirmPassword: 'longenoughpassword',
-      firstName: 'Ali',
-      lastName: 'Valiyev',
+      fullName: 'Ali Valiyev',
       acceptedTerms: true,
     });
     expect(result.success).toBe(true);
@@ -67,8 +66,7 @@ describe('registerSchema', () => {
       phoneLocal: '901234567',
       password: 'longenoughpassword',
       confirmPassword: 'longenoughpassworD',
-      firstName: 'Ali',
-      lastName: 'Valiyev',
+      fullName: 'Ali Valiyev',
       acceptedTerms: true,
     });
     expect(result.success).toBe(false);
@@ -97,5 +95,11 @@ describe('otpSchema', () => {
 
   it('accepts a valid 6-digit code', () => {
     expect(otpSchema.safeParse({ code: '123456' }).success).toBe(true);
+  });
+
+  it('requires the full name (first and last name together)', () => {
+    const base = { phoneLocal: '90 123 45 67', password: 'Parol1234', confirmPassword: 'Parol1234', acceptedTerms: true as const };
+    expect(registerSchema.safeParse({ ...base, fullName: 'Ali' }).success).toBe(false);
+    expect(registerSchema.safeParse({ ...base, fullName: 'Ali Valiyev' }).success).toBe(true);
   });
 });

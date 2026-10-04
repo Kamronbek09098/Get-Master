@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cx } from '@/lib/utils';
+import { BareContext } from './bare-context';
 
 const isMobile = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 899px)').matches;
 
@@ -24,10 +25,20 @@ export function ProfileCard({
   /** Telefonda kartochka yig‘ilgan holda chiqadi; shu belgi bo‘lsa ochiq boshlanadi. */
   defaultOpen?: boolean;
 }) {
+  const bare = useContext(BareContext);
   const [open, setOpen] = useState(() => defaultOpen || !isMobile());
   useEffect(() => {
     if (highlight) setOpen(true);
   }, [highlight]);
+
+  if (bare) {
+    return (
+      <section className="gm-pbare" id={id}>
+        {hint && <p className="gm-pbare__hint">{hint}</p>}
+        {children}
+      </section>
+    );
+  }
 
   return (
     <section className={cx('gm-pcard', highlight && 'gm-pcard--highlight', open && 'gm-pcard--open')} id={id}>

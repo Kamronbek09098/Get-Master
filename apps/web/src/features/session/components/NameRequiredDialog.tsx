@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { getErrorMessage } from '@/lib/error-messages';
+import { splitFullName } from '@/lib/account-name';
 import { useMe } from '../hooks/useMe';
 import { sessionService } from '../services/session.service';
 import { t } from '@/i18n';
@@ -17,12 +18,10 @@ export function NameRequiredDialog() {
   const me = useMe();
   const queryClient = useQueryClient();
   const user = me.data;
-  const hasFirst = !!user?.firstName?.trim();
-  const hasLast = !!user?.lastName?.trim();
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [fullName, setFullName] = useState('');
+  const names = splitFullName(fullName);
   const save = useMutation({
-    mutationFn: () => sessionService.updateName({ firstName: (hasFirst ? user?.firstName ?? '' : firstName).trim(), lastName: (hasLast ? user?.lastName ?? '' : lastName).trim() }),
+    mutationFn: () => sessionService.updateName(names as { firstName: string; lastName: string }),
     onSuccess: (updated) => queryClient.setQueryData(['users', 'me'], updated),
   });
 
@@ -32,7 +31,7 @@ export function NameRequiredDialog() {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    save.mutate();
+    if (names) save.mutate();
   }
 
   return (
@@ -40,20 +39,19 @@ export function NameRequiredDialog() {
       open
       dismissible={false}
       onClose={noop}
-      title={t('Ism va familiyangizni kiriting')}
+      title={t('To‘liq ismingizni kiriting')}
       footer={
-        <Button type="submit" form="gm-name-form" loading={save.isPending} disabled={(!hasFirst && !firstName.trim()) || (!hasLast && !lastName.trim())}>
+        <Button type="submit" form="gm-name-form" loading={save.isPending} disabled={!names}>
           {t('Saqlash')}
         </Button>
       }
     >
       <form id="gm-name-form" className="gm-form" onSubmit={handleSubmit}>
         <p style={{ margin: 0, color: 'var(--gm-color-text-muted)' }}>
-          {t('Boshqa foydalanuvchilar sizni ism va familiyangiz bilan ko‘radi. Davom etish uchun ularni kiriting.')}
+          {t('Boshqa foydalanuvchilar sizni ismingiz bilan ko‘radi. Davom etish uchun ism va familiyangizni birga yozing.')}
         </p>
         {save.isError && <Alert tone="danger">{getErrorMessage(save.error)}</Alert>}
-        {!hasFirst && <Input label={t('Ism')} required maxLength={100} value={firstName} onChange={(event) => setFirstName(event.target.value)} />}
-        {!hasLast && <Input label={t('Familiya')} required maxLength={100} value={lastName} onChange={(event) => setLastName(event.target.value)} autoFocus={hasFirst} />}
+        <Input label={t('To‘liq ism')} placeholder={t('Masalan: Aziz Karimov')} autoComplete="name" required autoFocus maxLength={200} value={fullName} onChange={(event) => setFullName(event.target.value)} />
       </form>
     </Modal>
   );

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
+import { splitFullName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useRegister } from '../hooks/useAuth';
 import { formatLocalPhone, toLocalDigits, registerSchema, toFullPhone, type RegisterFormValues } from '../validation';
@@ -24,8 +25,7 @@ export function RegisterForm() {
       {
         phone: toFullPhone(toLocalDigits(values.phoneLocal)),
         password: values.password,
-        firstName: values.firstName,
-        lastName: values.lastName,
+        ...(splitFullName(values.fullName) ?? { firstName: values.fullName, lastName: '' }),
       },
       { onSuccess: (result) => navigate('/otp', { state: { flow: result.existingAccount ? 'login' : 'register' } }) },
     );
@@ -47,8 +47,7 @@ export function RegisterForm() {
         error={errors.phoneLocal?.message}
         {...register('phoneLocal')}
       />
-      <Input label={t('Ism')} required {...register('firstName')} error={errors.firstName?.message} />
-      <Input label={t('Familiya')} required {...register('lastName')} error={errors.lastName?.message} />
+      <Input label={t('To‘liq ism')} placeholder={t('Masalan: Aziz Karimov')} autoComplete="name" maxLength={200} required {...register('fullName')} error={errors.fullName?.message} />
       <Input
         label={t('Parol')}
         type="password"

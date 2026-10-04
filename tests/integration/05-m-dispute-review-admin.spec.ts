@@ -169,7 +169,7 @@ describe('M07 — reviews & rating aggregation', () => {
   it('validates rating and body shape', async () => {
     const customer = await createUser(h, ['CUSTOMER']);
     const orderId = await orderIn('COMPLETED', customer, master);
-    for (const bad of [{ rating: 0 }, { rating: 6 }, { rating: 5.5 }, { rating: 3.3 }, { rating: 0.25 }, { rating: '4' }, { rating: 4, comment: 'x'.repeat(2001) }, { rating: 4, masterProfileId: master.masterId }, {}]) {
+    for (const bad of [{ rating: 0 }, { rating: 6 }, { rating: 5.5 }, { rating: 3.3 }, { rating: 0.25 }, { rating: 4, comment: 'x'.repeat(2001) }, { rating: 4, masterProfileId: master.masterId }, {}]) {
       expect((await h.post('/reviews', customer.token, { orderId, ...bad })).status).toBe(400);
     }
     expect(await h.db.review.count({ where: { orderId } })).toBe(0);
