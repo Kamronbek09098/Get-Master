@@ -138,6 +138,11 @@ export class MasterController {
     return this.masterService.findCovering(query);
   }
 
+  @Get(':id/availability')
+  async findPublicAvailability(@Param('id', ParseUUIDPipe) id: string) {
+    return this.availabilityService.findPublic(await this.masterService.resolvePublicMasterId(id));
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.masterService.findOne(id);

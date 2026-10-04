@@ -5,6 +5,11 @@ export class CreatePortfolioDto {
   @IsUUID()
   mediaAssetId!: string;
 
+  /** «Oldin» surati (ixtiyoriy). Berilsa, `mediaAssetId` — «Keyin» surati. */
+  @IsOptional()
+  @IsUUID()
+  beforeMediaAssetId?: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(255)
@@ -16,4 +21,4 @@ export class CreatePortfolioDto {
   description?: string;
 }
 
-export class UpdatePortfolioDto extends PartialType(OmitType(CreatePortfolioDto, ['mediaAssetId'] as const)) {}
+export class UpdatePortfolioDto extends PartialType(OmitType(CreatePortfolioDto, ['mediaAssetId', 'beforeMediaAssetId'] as const)) {}

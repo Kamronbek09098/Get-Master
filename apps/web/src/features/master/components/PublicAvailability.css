@@ -1,0 +1,5 @@
+.gm-pub-av { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.gm-pub-av li { display: flex; justify-content: space-between; gap: 16px; padding: 10px 14px; border-radius: var(--gm-card-radius-sm); background: var(--gm-color-surface-muted); }
+.gm-pub-av li.is-today { background: var(--gm-color-primary-soft); box-shadow: inset 3px 0 0 var(--gm-color-primary); }
+.gm-pub-av strong { font-variant-numeric: tabular-nums; text-align: right; }
+.gm-pub-av strong.is-off { font-weight: 500; color: var(--gm-color-text-muted); }

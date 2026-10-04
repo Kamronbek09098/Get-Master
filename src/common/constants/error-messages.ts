@@ -114,6 +114,8 @@ export const ERRORS = {
   PROFILE_STATUS_BLOCKED: (status: string) => `Profil holati: ${status}; qo‘llab-quvvatlash xizmatiga murojaat qiling`,
   NOT_ELIGIBLE_TO_OFFER: 'Profilingiz taklif yuborish uchun mos emas',
   PORTFOLIO_ALREADY_REVIEWED: 'Bu portfolio elementi allaqachon ko‘rib chiqilgan',
+  MAX_FAVORITE_MASTERS: (count: number) => `Ko‘pi bilan ${count} ta usta saqlash mumkin`,
+  PORTFOLIO_BEFORE_SAME_AS_AFTER: '«Oldin» va «Keyin» suratlari har xil bo‘lishi kerak',
   PORTFOLIO_ITEM_NOT_FOUND: 'Portfolio elementi topilmadi',
   MAX_PORTFOLIO_ITEMS: (count: number) => `Ko‘pi bilan ${count} ta portfolio elementi qo‘shish mumkin`,
   PORTFOLIO_MEDIA_TYPE: 'Portfolio fayli rasm yoki video bo‘lishi kerak',

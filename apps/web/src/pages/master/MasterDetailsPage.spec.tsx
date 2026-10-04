@@ -24,6 +24,9 @@ vi.mock('@/features/master/hooks/useMaster', () => ({
 vi.mock('@/features/communication/hooks/useCommunication', () => ({
   useOpenMasterChat: () => ({ mutate: openChat, isPending: false, isError: false, error: null }),
 }));
+vi.mock('@/features/master/components/FavoriteButton', () => ({ FavoriteButton: () => <button type="button">Saqlash</button> }));
+vi.mock('@/features/master/components/PublicAvailability', () => ({ PublicAvailability: () => null }));
+vi.mock('@/features/master/components/PublicPortfolio', () => ({ PublicPortfolio: () => <p>portfolio</p> }));
 vi.mock('@/features/review/components/ReviewList', () => ({ ReviewList: () => <p>sharhlar</p> }));
 
 import { MasterDetailsPage } from './MasterDetailsPage';

@@ -241,7 +241,10 @@ export class MediaService {
     if (asset.uploaderId === userId) return;
 
     if (asset.kind === 'MASTER_PORTFOLIO') {
-      const item = await this.db.masterPortfolio.findUnique({ where: { mediaAssetId: asset.id } });
+      const item = await this.db.masterPortfolio.findFirst({
+        where: { OR: [{ mediaAssetId: asset.id }, { beforeMediaAssetId: asset.id }] },
+        select: { status: true },
+      });
       if (item?.status === 'APPROVED') return;
     }
 

@@ -1052,6 +1052,7 @@
 .gm-ptags__btn {
   display: inline-flex;
   align-items: center;
+  min-height: 36px;
   gap: 4px;
   padding: 5px 12px;
   border: 0;
@@ -1503,4 +1504,9 @@
 }
 .gm-ppage > .gm-page-header h1 {
   text-align: center;
+}
+
+/* Sensorli ekran: bosiladigan hudud nomlari kamida 40px balandlikda */
+@media (pointer: coarse) {
+  .gm-ptags__btn { min-height: 40px; }
 }

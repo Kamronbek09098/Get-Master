@@ -12,6 +12,9 @@ import { useOpenMasterChat } from '@/features/communication/hooks/useCommunicati
 import { TrustBadge } from '@/features/trust/components/TrustBadge';
 import { CoverageDialog } from '@/features/geo/components/CoverageDialog';
 import { CoverageMap } from '@/features/geo/components/CoverageMap';
+import { FavoriteButton } from '@/features/master/components/FavoriteButton';
+import { PublicAvailability } from '@/features/master/components/PublicAvailability';
+import { PublicPortfolio } from '@/features/master/components/PublicPortfolio';
 import { ReviewList } from '@/features/review/components/ReviewList';
 import { t } from '@/i18n';
 import './MasterProfile.css';
@@ -45,6 +48,7 @@ export function MasterDetailsPage() {
           <h1 id="gm-mp-name">{name}</h1>
           <div className="gm-mp-hero__badges">
             <TrustBadge verification={data.verification} />
+            <FavoriteButton masterId={data.id} />
             {data.workPlace && (
               <span className="gm-mp-hero__place">
                 <Briefcase size={14} aria-hidden="true" /> {data.workPlace}
@@ -110,6 +114,15 @@ export function MasterDetailsPage() {
           </ul>
         </section>
       )}
+
+      {(data.portfolio ?? []).length > 0 && (
+        <section className="gm-mp-section">
+          <h2>{t('Bajarilgan ishlar')}</h2>
+          <PublicPortfolio items={data.portfolio ?? []} />
+        </section>
+      )}
+
+      <PublicAvailability masterId={data.id} />
 
       {data.coverage && (
         <section className="gm-mp-section">

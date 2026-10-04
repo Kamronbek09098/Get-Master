@@ -1,6 +1,6 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/services/api.client';
 import type { CursorPage } from '@/types/api';
-import type { CoveringMaster, MasterInput, MasterProfile, PublicMaster } from '../types';
+import type { CoveringMaster, MasterInput, MasterProfile, PublicAvailabilityWindow, PublicMaster } from '../types';
 import type { Availability, AvailabilityInput, PortfolioInput, PortfolioItem } from '../manage.types';
 
 export const masterService = {
@@ -26,6 +26,9 @@ export const masterService = {
   },
   get(id: string) {
     return apiGet<PublicMaster>(`/masters/${id}`);
+  },
+  availability(id: string) {
+    return apiGet<PublicAvailabilityWindow[]>(`/masters/${id}/availability`);
   },
   setStatus(status: 'ACTIVE' | 'INACTIVE') {
     return apiPatch<MasterProfile>('/masters/me/status', { status });

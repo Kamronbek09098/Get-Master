@@ -364,6 +364,7 @@ model User {
   adminPermissions         String[]                  @default([]) @map("admin_permissions")
   deletedAt                DateTime?                 @map("deleted_at")
   masterProfile            MasterProfile?
+  favoriteMasters          FavoriteMaster[]          @relation("CustomerFavorites")
   addresses                Address[]
   refreshTokens            RefreshToken[]
   deviceSessions           DeviceSession[]
@@ -390,11 +391,11 @@ model User {
   warrantyClaimsOpened     WarrantyClaim[]           @relation("WarrantyClaimOpener")
   compensationsReceived    Compensation[]            @relation("CompensationRecipient")
   mediaAssets              MediaAsset[]              @relation("MediaUploader")
+  hiddenMessages           MessageHidden[]           @relation("HiddenMessages")
 
   @@index([status])
   @@index([createdAt])
   @@map("users")
-  hiddenMessages MessageHidden[] @relation("HiddenMessages")
 }
 
 model UserRole {
@@ -535,7 +536,9 @@ model MasterProfile {
   userId           String                   @unique @db.Uuid
   bio              String?
   profession       String?                  @db.VarChar(150)
-  /** Ish joyi: ish xona, kompaniya yoki muassasa nomi (oddiy matn). */
+  /**
+   * Ish joyi: ish xona, kompaniya yoki muassasa nomi (oddiy matn).
+   */
   workPlace        String?                  @map("work_place") @db.VarChar(150)
   experienceYears  Int?                     @map("experience_years")
   status           MasterStatus             @default(INACTIVE)
@@ -559,6 +562,7 @@ model MasterProfile {
   user             User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
   services         MasterService[]
   portfolio        MasterPortfolio[]
+  favoritedBy      FavoriteMaster[]         @relation("MasterFavoritedBy")
   availability     MasterAvailability[]
   verifications    MasterVerification[]
   matches          MatchingResult[]
@@ -592,22 +596,41 @@ model MasterService {
 }
 
 model MasterPortfolio {
-  id           String          @id @default(uuid()) @db.Uuid
-  masterId     String          @db.Uuid
-  status       PortfolioStatus @default(PENDING)
-  reviewedById String?         @map("reviewed_by_id") @db.Uuid
-  reviewedAt   DateTime?       @map("reviewed_at")
-  rejectReason String?         @map("reject_reason")
-  title        String?         @db.VarChar(255)
-  description  String?
-  mediaAssetId String?         @unique @map("media_asset_id") @db.Uuid
-  createdAt    DateTime        @default(now())
-  master       MasterProfile   @relation(fields: [masterId], references: [id], onDelete: Cascade)
-  mediaAsset   MediaAsset?     @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull)
+  id                 String          @id @default(uuid()) @db.Uuid
+  masterId           String          @db.Uuid
+  status             PortfolioStatus @default(PENDING)
+  reviewedById       String?         @map("reviewed_by_id") @db.Uuid
+  reviewedAt         DateTime?       @map("reviewed_at")
+  rejectReason       String?         @map("reject_reason")
+  title              String?         @db.VarChar(255)
+  description        String?
+  mediaAssetId       String?         @unique @map("media_asset_id") @db.Uuid
+  /**
+   * «Oldin» surati (ixtiyoriy): bor bo‘lsa, `mediaAssetId` — «Keyin» surati va element oldin/keyin sifatida ko‘rsatiladi.
+   */
+  beforeMediaAssetId String?         @unique @map("before_media_asset_id") @db.Uuid
+  createdAt          DateTime        @default(now())
+  master             MasterProfile   @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  mediaAsset         MediaAsset?     @relation("PortfolioAfter", fields: [mediaAssetId], references: [id], onDelete: SetNull)
+  beforeMediaAsset   MediaAsset?     @relation("PortfolioBefore", fields: [beforeMediaAssetId], references: [id], onDelete: SetNull)
 
   @@index([masterId])
   @@index([status, createdAt])
   @@map("master_portfolio")
+}
+
+/// Mijozning saqlangan (sevimli) ustalari.
+model FavoriteMaster {
+  id         String        @id @default(uuid()) @db.Uuid
+  customerId String        @map("customer_id") @db.Uuid
+  masterId   String        @map("master_id") @db.Uuid
+  createdAt  DateTime      @default(now())
+  customer   User          @relation("CustomerFavorites", fields: [customerId], references: [id], onDelete: Cascade)
+  master     MasterProfile @relation("MasterFavoritedBy", fields: [masterId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, masterId])
+  @@index([masterId])
+  @@map("favorite_masters")
 }
 
 model MasterAvailability {
@@ -822,11 +845,15 @@ model Booking {
   scheduledStartAt DateTime? @map("scheduled_start_at")
   scheduledEndAt   DateTime? @map("scheduled_end_at")
 
-  /** Mijoz/usta tomonidan taklif qilingan yangi vaqt — ikkinchi tomon tasdiqlagunicha kuchga kirmaydi. */
+  /**
+   * Mijoz/usta tomonidan taklif qilingan yangi vaqt — ikkinchi tomon tasdiqlagunicha kuchga kirmaydi.
+   */
   proposedStartAt DateTime? @map("proposed_start_at")
-  proposedById    String?   @db.Uuid @map("proposed_by_id")
+  proposedById    String?   @map("proposed_by_id") @db.Uuid
   proposedAt      DateTime? @map("proposed_at")
-  /** Belgilangan vaqt yaqinlashgani haqida eslatma yuborilganmi (takror yuborilmasligi uchun). */
+  /**
+   * Belgilangan vaqt yaqinlashgani haqida eslatma yuborilganmi (takror yuborilmasligi uchun).
+   */
   reminderSentAt  DateTime? @map("reminder_sent_at")
 
   agreedPrice Decimal @map("agreed_price") @db.Decimal(14, 2)
@@ -950,7 +977,9 @@ model Conversation {
   type         ConversationType
   orderId      String?                   @unique @db.Uuid
   directKey    String?                   @unique @map("direct_key") @db.VarChar(80)
-  /** SUPPORT (admin) suhbati: administrator foydalanuvchiga javob yozishga ruxsat berganmi. */
+  /**
+   * SUPPORT (admin) suhbati: administrator foydalanuvchiga javob yozishga ruxsat berganmi.
+   */
   userCanReply Boolean                   @default(false) @map("user_can_reply")
   createdAt    DateTime                  @default(now())
   updatedAt    DateTime                  @updatedAt
@@ -966,7 +995,9 @@ model ConversationParticipant {
   userId         String       @db.Uuid
   joinedAt       DateTime     @default(now()) @map("joined_at")
   lastReadAt     DateTime?    @map("last_read_at")
-  /** Telegram uslubida: suhbat faqat shu ishtirokchi uchun ro'yxatdan yashiriladi — xabarlar o'chmaydi, yangi faollik bo'lsa qayta chiqadi. */
+  /**
+   * Telegram uslubida: suhbat faqat shu ishtirokchi uchun ro'yxatdan yashiriladi — xabarlar o'chmaydi, yangi faollik bo'lsa qayta chiqadi.
+   */
   deletedAt      DateTime?    @map("deleted_at")
   roles          String[]     @default([])
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -1304,7 +1335,8 @@ model MediaAsset {
   updatedAt            DateTime            @updatedAt
   uploader             User                @relation("MediaUploader", fields: [uploaderId], references: [id], onDelete: Restrict)
   workProof            WorkProof?
-  portfolioItem        MasterPortfolio?
+  portfolioItem        MasterPortfolio?    @relation("PortfolioAfter")
+  portfolioBeforeItem  MasterPortfolio?    @relation("PortfolioBefore")
   verificationDocument MasterVerification?
 
   @@index([uploaderId, status])

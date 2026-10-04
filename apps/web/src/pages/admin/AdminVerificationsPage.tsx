@@ -208,7 +208,8 @@ function PortfolioHistoryCard({ item }: { item: AdminPortfolioItem }) {
           )}
           {item.rejectReason && <Fact label={t('Sabab')}>{item.rejectReason}</Fact>}
         </dl>
-        {item.mediaAssetId && <MediaViewer assetId={item.mediaAssetId} alt={item.title ?? t('Portfolio')} label={item.title ?? t('Portfolio ishi')} />}
+        {item.beforeMediaAssetId && <MediaViewer assetId={item.beforeMediaAssetId} alt={t('Oldin')} label={t('Oldin surati')} />}
+        {item.mediaAssetId && <MediaViewer assetId={item.mediaAssetId} alt={item.title ?? t('Portfolio')} label={item.beforeMediaAssetId ? t('Keyin surati') : (item.title ?? t('Portfolio ishi'))} />}
       </Modal>
     </>
   );
@@ -253,7 +254,8 @@ function PortfolioCard({ item }: { item: AdminPortfolioItem }) {
       <p className="gm-card__meta">
         {name}
         {item.master.user.accountNumber !== undefined && t(' · ID {accountNumber}', { accountNumber: item.master.user.accountNumber })} · {item.master.profession ?? t('kasb ko‘rsatilmagan')}{' '}{t('· Yuborildi: {dateTime}', { dateTime: formatDateTime(item.createdAt) })}</p>
-      {item.mediaAssetId && <MediaViewer assetId={item.mediaAssetId} alt={item.title ?? t('Portfolio')} label={item.title ?? t('Portfolio ishi')} />}
+      {item.beforeMediaAssetId && <MediaViewer assetId={item.beforeMediaAssetId} alt={t('Oldin')} label={t('Oldin surati')} />}
+      {item.mediaAssetId && <MediaViewer assetId={item.mediaAssetId} alt={item.title ?? t('Portfolio')} label={item.beforeMediaAssetId ? t('Keyin surati') : (item.title ?? t('Portfolio ishi'))} />}
       {review.isError && <Alert tone="danger">{getErrorMessage(review.error)}</Alert>}
       <Input label={t('Rad etish sababi (rad etish uchun majburiy)')} value={reason} maxLength={1000} onChange={(e) => setReason(e.target.value)} />
       <div className="gm-action-row" style={{ marginTop: 'var(--gm-space-2)' }}>

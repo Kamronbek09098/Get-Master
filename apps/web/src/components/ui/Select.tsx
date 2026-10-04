@@ -36,8 +36,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           aria-invalid={!!error}
           aria-describedby={describedBy}
           className={cx('gm-field__control', error && 'gm-field__control--error', className)}
-          defaultValue=""
           autoComplete="off"
+          // value (controlled) berilgan bo‘lsa defaultValue qo‘yilmaydi — React ogohlantirishi chiqmasin.
+          {...(rest.value === undefined && rest.defaultValue === undefined ? { defaultValue: '' } : {})}
           {...rest}
         >
           {placeholder && (

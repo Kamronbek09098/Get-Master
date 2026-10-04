@@ -49,6 +49,24 @@ export interface PublicMaster {
   /** Ish hududi: yaxlitlangan markaz (~1 km) va radius. */
   coverage?: { lat: number; lon: number; radiusKm: number } | null;
   services?: Array<{ serviceId: string; basePrice: string; service: { id: string; name: string } }>;
+  /** Admin tasdiqlagan portfolio. `beforeMediaAssetId` bo‘lsa — oldin/keyin juftligi. */
+  portfolio?: PublicPortfolioItem[];
+}
+
+export interface PublicPortfolioItem {
+  id: string;
+  title: string | null;
+  description: string | null;
+  mediaAssetId: string | null;
+  beforeMediaAssetId: string | null;
+  createdAt: string;
+}
+
+/** Ustaning ommaviy ish jadvali (faqat ochiq oynalar). */
+export interface PublicAvailabilityWindow {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
 }
 
 export interface MasterInput {

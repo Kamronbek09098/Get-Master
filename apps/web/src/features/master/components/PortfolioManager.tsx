@@ -22,15 +22,17 @@ export function PortfolioManager({ masterId }: { masterId: string }) {
   const remove = useRemovePortfolio();
   const [title, setTitle] = useState('');
   const [mediaAssetId, setMediaAssetId] = useState<string | null>(null);
+  const [beforeId, setBeforeId] = useState<string | null>(null);
   const [uploadKey, setUploadKey] = useState(0);
 
   function handleAdd() {
     if (!mediaAssetId) return;
     add.mutate(
-      { mediaAssetId, title: title.trim() || undefined },
+      { mediaAssetId, beforeMediaAssetId: beforeId ?? undefined, title: title.trim() || undefined },
       {
         onSuccess: () => {
           setMediaAssetId(null);
+          setBeforeId(null);
           setTitle('');
           setUploadKey((key) => key + 1);
         },
@@ -51,12 +53,21 @@ export function PortfolioManager({ masterId }: { masterId: string }) {
         <div className="gm-pfm__fields">
           <MediaUploadField
             key={uploadKey}
-            label={t('Ish namunasi (rasm)')}
+            label={beforeId ? t('Keyin (ish natijasi)') : t('Ish namunasi (rasm)')}
             accept="image/*"
             kind="MASTER_PORTFOLIO"
             linkType="MasterProfile"
             linkId={masterId}
             onReady={setMediaAssetId}
+          />
+          <MediaUploadField
+            key={`before-${uploadKey}`}
+            label={t('Oldin surati (ixtiyoriy)')}
+            accept="image/*"
+            kind="MASTER_PORTFOLIO"
+            linkType="MasterProfile"
+            linkId={masterId}
+            onReady={setBeforeId}
           />
           <Input label={t('Sarlavha')} placeholder={t('Masalan: Oshxona kranini almashtirish')} value={title} maxLength={255} onChange={(e) => setTitle(e.target.value)} />
         </div>
@@ -74,7 +85,7 @@ export function PortfolioManager({ masterId }: { masterId: string }) {
         <div className="gm-pfm__grid">
           {items.map((item) => (
             <article key={item.id} className="gm-pfm__item">
-              <div className="gm-pfm__thumb">{item.mediaAssetId && <MediaThumbnail assetId={item.mediaAssetId} alt={item.title ?? t('Portfolio')} />}</div>
+              <div className="gm-pfm__thumb">{item.mediaAssetId && <MediaThumbnail assetId={item.mediaAssetId} alt={item.title ?? t('Portfolio')} />}{item.beforeMediaAssetId && <Badge tone="primary">{t('Oldin / Keyin')}</Badge>}</div>
               <div className="gm-pfm__body">
                 <h3>{item.title ?? t('Nomsiz')}</h3>
                 <Badge tone={STATUS_TONE[item.status]}>{STATUS_LABEL[item.status]}</Badge>

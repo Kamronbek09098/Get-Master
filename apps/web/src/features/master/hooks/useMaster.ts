@@ -26,6 +26,10 @@ export function useMasters(q: string, categoryId?: string) {
   });
 }
 
+export function useMasterAvailability(id: string) {
+  return useQuery({ queryKey: ['masters', 'availability', id], queryFn: () => masterService.availability(id), enabled: !!id });
+}
+
 export function useMaster(id: string) {
   return useQuery({ queryKey: ['masters', 'one', id], queryFn: () => masterService.get(id), enabled: !!id });
 }

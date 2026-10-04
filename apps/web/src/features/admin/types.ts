@@ -148,6 +148,7 @@ export interface AdminPortfolioItem {
   description: string | null;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   mediaAssetId: string | null;
+  beforeMediaAssetId?: string | null;
   rejectReason: string | null;
   createdAt: string;
   reviewedAt?: string | null;

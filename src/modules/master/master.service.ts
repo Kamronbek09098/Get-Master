@@ -54,7 +54,7 @@ const PUBLIC_MASTER_SELECT = {
     where: { status: 'APPROVED', mediaAsset: { status: 'READY' } },
     orderBy: { createdAt: 'desc' },
     take: MAX_PORTFOLIO_ITEMS,
-    select: { id: true, title: true, description: true, mediaAssetId: true, createdAt: true },
+    select: { id: true, title: true, description: true, mediaAssetId: true, beforeMediaAssetId: true, createdAt: true },
   },
 } satisfies Prisma.MasterProfileSelect;
 
@@ -445,24 +445,14 @@ export class MasterService {
       if (count >= MAX_PORTFOLIO_ITEMS) {
         throw new ConflictException(ERRORS.MAX_PORTFOLIO_ITEMS(MAX_PORTFOLIO_ITEMS));
       }
-      const asset = await tx.mediaAsset.findUnique({ where: { id: dto.mediaAssetId } });
-      if (
-        !asset ||
-        asset.kind !== 'MASTER_PORTFOLIO' ||
-        asset.uploaderId !== userId ||
-        asset.linkedResourceType !== 'MasterProfile' ||
-        asset.linkedResourceId !== profile.id
-      ) {
-        throw new ForbiddenException(ERRORS.MEDIA_NOT_PORTFOLIO);
+      if (dto.beforeMediaAssetId && dto.beforeMediaAssetId === dto.mediaAssetId) {
+        throw new BadRequestException(ERRORS.PORTFOLIO_BEFORE_SAME_AS_AFTER);
       }
-      if (asset.status !== 'READY') throw new ConflictException(ERRORS.MEDIA_NOT_READY(asset.status));
-      const mime = asset.detectedMimeType ?? '';
-      if (!mime.startsWith('image/') && !mime.startsWith('video/')) {
-        throw new BadRequestException(ERRORS.PORTFOLIO_MEDIA_TYPE);
-      }
+      const asset = await this.requirePortfolioAsset(tx, userId, profile.id, dto.mediaAssetId);
+      const before = dto.beforeMediaAssetId ? await this.requirePortfolioAsset(tx, userId, profile.id, dto.beforeMediaAssetId, true) : null;
       try {
         const created = await tx.masterPortfolio.create({
-          data: { masterId: profile.id, mediaAssetId: asset.id, title: dto.title, description: dto.description },
+          data: { masterId: profile.id, mediaAssetId: asset.id, beforeMediaAssetId: before?.id, title: dto.title, description: dto.description },
         });
         await tx.auditLog.create({
           data: { actorId: userId, action: 'MASTER_PORTFOLIO_CREATED', targetType: 'MasterPortfolio', targetId: created.id },
@@ -502,20 +492,20 @@ export class MasterService {
     const profile = await this.requireOwn(userId);
     const item = await this.db.masterPortfolio.findFirst({
       where: { id: itemId, masterId: profile.id },
-      include: { mediaAsset: true },
+      include: { mediaAsset: true, beforeMediaAsset: true },
     });
     if (!item) throw new NotFoundException(ERRORS.PORTFOLIO_ITEM_NOT_FOUND);
 
     await this.db.$transaction(async (tx) => {
       await tx.masterPortfolio.delete({ where: { id: itemId } });
       if (item.mediaAssetId) await tx.mediaAsset.delete({ where: { id: item.mediaAssetId } });
+      if (item.beforeMediaAssetId) await tx.mediaAsset.delete({ where: { id: item.beforeMediaAssetId } });
       await tx.auditLog.create({
         data: { actorId: userId, action: 'MASTER_PORTFOLIO_REMOVED', targetType: 'MasterPortfolio', targetId: itemId },
       });
     });
 
-    const asset = item.mediaAsset;
-    const keys = [asset?.originalKey, asset?.thumbnailKey, asset?.mediumKey, asset?.quarantineKey].filter(
+    const keys = [item.mediaAsset, item.beforeMediaAsset].flatMap((asset) => [asset?.originalKey, asset?.thumbnailKey, asset?.mediumKey, asset?.quarantineKey]).filter(
       (key): key is string => !!key,
     );
     await Promise.all(
@@ -526,6 +516,43 @@ export class MasterService {
       ),
     );
     return { deleted: true };
+  }
+
+  /** Portfolio uchun fayl tekshiruvi: shu ustaniki, tayyor va rasm/video (oldin surati faqat rasm). */
+  private async requirePortfolioAsset(tx: Prisma.TransactionClient, userId: string, masterId: string, assetId: string, imageOnly = false) {
+    const asset = await tx.mediaAsset.findUnique({ where: { id: assetId } });
+    if (
+      !asset ||
+      asset.kind !== 'MASTER_PORTFOLIO' ||
+      asset.uploaderId !== userId ||
+      asset.linkedResourceType !== 'MasterProfile' ||
+      asset.linkedResourceId !== masterId
+    ) {
+      throw new ForbiddenException(ERRORS.MEDIA_NOT_PORTFOLIO);
+    }
+    if (asset.status !== 'READY') throw new ConflictException(ERRORS.MEDIA_NOT_READY(asset.status));
+    const mime = asset.detectedMimeType ?? '';
+    if (imageOnly ? !mime.startsWith('image/') : !mime.startsWith('image/') && !mime.startsWith('video/')) {
+      throw new BadRequestException(ERRORS.PORTFOLIO_MEDIA_TYPE);
+    }
+    return asset;
+  }
+
+  /** Berilgan id'lar bo‘yicha ommaviy ko‘rinadigan ustalar (tartib saqlanadi). */
+  async findPublicByIds(ids: string[]) {
+    if (ids.length === 0) return [];
+    const rows = await this.db.masterProfile.findMany({
+      where: { id: { in: ids }, status: 'ACTIVE', verification: 'VERIFIED' },
+      select: PUBLIC_MASTER_SELECT,
+    });
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    return ids.flatMap((id) => (byId.has(id) ? [toPublic(byId.get(id)!)] : []));
+  }
+
+  /** Ommaviy ko‘rinadigan (faol va tasdiqlangan) usta id'si; `idOrNumber` — UUID yoki hisob raqami. */
+  async resolvePublicMasterId(idOrNumber: string): Promise<string> {
+    const master = await this.findOne(idOrNumber);
+    return master.id;
   }
 
   private async requireOwn(userId: string) {

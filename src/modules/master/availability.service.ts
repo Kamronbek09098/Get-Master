@@ -34,6 +34,20 @@ export class AvailabilityService {
     });
   }
 
+  /** Ommaviy ish jadvali: faqat hozir amal qiladigan, band emas deb belgilangan oynalar. */
+  findPublic(masterId: string) {
+    const now = new Date();
+    return this.db.masterAvailability.findMany({
+      where: {
+        masterId,
+        isAvailable: true,
+        AND: [{ OR: [{ effectiveFrom: null }, { effectiveFrom: { lte: now } }] }, { OR: [{ effectiveUntil: null }, { effectiveUntil: { gte: now } }] }],
+      },
+      select: { dayOfWeek: true, startTime: true, endTime: true },
+      orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+    });
+  }
+
   async create(masterId: string, dto: CreateAvailabilityDto) {
     const candidate = this.toShape(dto);
     return this.db.$transaction(async (tx) => {

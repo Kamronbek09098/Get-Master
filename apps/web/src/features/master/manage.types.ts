@@ -20,6 +20,7 @@ export interface PortfolioItem {
   title: string | null;
   description: string | null;
   mediaAssetId: string | null;
+  beforeMediaAssetId?: string | null;
   status: PortfolioStatus;
   rejectReason: string | null;
   createdAt: string;
@@ -29,6 +30,7 @@ export type PortfolioStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 
 export interface PortfolioInput {
   mediaAssetId: string;
+  beforeMediaAssetId?: string;
   title?: string;
   description?: string;
 }

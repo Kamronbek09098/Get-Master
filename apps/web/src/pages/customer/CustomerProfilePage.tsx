@@ -8,6 +8,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDate } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
 import { useAddresses, useCustomerProfile } from '@/features/customer/hooks/useCustomer';
+import { PaymentPreferenceCard, SavedMastersCard } from '@/features/customer/components/CustomerSaved';
 import { CustomerActivity } from '@/features/customer/components/CustomerActivity';
 import { CustomerForm } from '@/features/customer/components/CustomerForm';
 import { useMyOrders } from '@/features/order/hooks/useOrders';
@@ -92,6 +93,8 @@ export function CustomerProfilePage() {
         </div>
 
         <div className="gm-pcol">
+          <SavedMastersCard />
+          <PaymentPreferenceCard />
           <ProfileCard icon={Smartphone} title={t('Akkaunt ma’lumotlari')}>
             <InfoRows
               rows={[

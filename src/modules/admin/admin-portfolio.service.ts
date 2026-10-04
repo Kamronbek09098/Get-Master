@@ -24,6 +24,7 @@ export class AdminPortfolioService {
         description: true,
         status: true,
         mediaAssetId: true,
+        beforeMediaAssetId: true,
         rejectReason: true,
         reviewedAt: true,
         reviewedById: true,

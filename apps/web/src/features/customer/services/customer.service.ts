@@ -1,4 +1,5 @@
-import { apiDelete, apiGet, apiPatch, apiPost } from '@/services/api.client';
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '@/services/api.client';
+import type { PublicMaster } from '@/features/master/types';
 import type { Address, AddressInput, CustomerPreferences, CustomerProfile, UpdateProfileInput } from '../types';
 
 export const customerService = {
@@ -16,6 +17,15 @@ export const customerService = {
   },
   updatePreferences(input: Partial<CustomerPreferences>) {
     return apiPatch<CustomerPreferences>('/customers/me/preferences', input);
+  },
+  listFavorites() {
+    return apiGet<PublicMaster[]>('/customers/me/favorites');
+  },
+  addFavorite(masterId: string) {
+    return apiPut<{ saved: boolean }>(`/customers/me/favorites/${masterId}`);
+  },
+  removeFavorite(masterId: string) {
+    return apiDelete<{ saved: boolean }>(`/customers/me/favorites/${masterId}`);
   },
   listAddresses() {
     return apiGet<Address[]>('/customers/me/addresses');

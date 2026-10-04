@@ -1,0 +1,18 @@
+.gm-fav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, #fff 28%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font: 700 13.5px/1 var(--gm-font-sans);
+  cursor: pointer;
+  transition: background-color 160ms var(--gm-ease), transform 160ms var(--gm-ease);
+}
+.gm-fav:hover:not(:disabled) { background: color-mix(in srgb, #fff 12%, transparent); }
+.gm-fav:active:not(:disabled) { transform: scale(0.96); }
+.gm-fav:disabled { opacity: 0.6; cursor: default; }
+.gm-fav.is-saved { background: #fff; color: #d94352; border-color: #fff; }
