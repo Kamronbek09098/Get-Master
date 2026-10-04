@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
+import { PageLoader } from '@/components/common/PageLoader';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { MobileNavigation } from './MobileNavigation';
@@ -25,7 +27,9 @@ export function AppLayout() {
         <main id="gm-main-content" className="gm-app-layout__content">
           {role === 'MASTER' && !needsMasterOnboarding && <VerificationBanner />}
           {role === 'CUSTOMER' && <PhoneRequiredBanner />}
-          <Outlet />
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
       <MobileNavigation />

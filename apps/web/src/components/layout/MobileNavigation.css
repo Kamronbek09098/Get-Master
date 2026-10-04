@@ -131,3 +131,14 @@
 .gm-sheet__icon {
   position: relative;
 }
+
+/* Tutqich: pastga tortib yopish; faol bo‘lim ustida indikator chizig‘i */
+.gm-sheet__grab { display: none; }
+@media (max-width: 899px) {
+  :root { --gm-bottom-nav-h: 64px; }
+  .gm-sheet__grab { display: block; position: relative; height: 24px; margin: -8px 0 4px; cursor: grab; touch-action: none; }
+  .gm-sheet__grab::after { content: ''; position: absolute; left: 50%; top: 8px; width: 40px; height: 4px; margin-left: -20px; border-radius: 2px; background: var(--gm-color-border-strong); }
+  .gm-mobile-nav__link { position: relative; transition: color 160ms var(--gm-ease), background-color 160ms var(--gm-ease), transform 160ms var(--gm-ease); }
+  .gm-mobile-nav__link:active { transform: scale(0.94); }
+  .gm-mobile-nav__link--active::before { content: ''; position: absolute; top: -7px; left: 30%; right: 30%; height: 3px; border-radius: 0 0 3px 3px; background: var(--gm-color-primary); }
+}

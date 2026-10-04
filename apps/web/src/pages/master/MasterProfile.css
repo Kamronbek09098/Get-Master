@@ -1,0 +1,128 @@
+/* Usta profili: Hero → Shaxs → Ishonch → Mutaxassislik → Xizmatlar → Hudud → Sharhlar.
+   (Portfolio, Oldin/Keyin va bo‘sh vaqt jadvali ommaviy API'da yo‘q — ma’lumot paydo bo‘lganda qo‘shiladi.) */
+.gm-mp { display: grid; gap: var(--gm-space-5); }
+
+.gm-mp-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--gm-space-5);
+  padding: clamp(20px, 4vw, 40px);
+  border-radius: var(--gm-card-radius-lg);
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--gm-color-ink);
+  color: #f3f6ff;
+}
+.gm-mp-hero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -40% -10% auto auto;
+  width: 60%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--gm-color-primary) 55%, transparent), transparent);
+  opacity: 0.55;
+  animation: gm-mp-glow 900ms var(--gm-ease, ease-out) both;
+}
+.gm-mp-hero__avatar {
+  display: grid;
+  place-items: center;
+  width: clamp(72px, 10vw, 112px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--gm-color-primary);
+  color: var(--gm-color-primary-contrast);
+  font: 800 clamp(28px, 4vw, 42px) / 1 var(--gm-font-display);
+  box-shadow: 0 0 0 6px color-mix(in srgb, #fff 10%, transparent);
+}
+.gm-mp-hero__kicker {
+  margin: 0 0 6px;
+  font: 600 12px/1.2 'JetBrains Mono', ui-monospace, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #fff 62%, transparent);
+}
+.gm-mp-hero h1 {
+  margin: 0 0 12px;
+  font: 800 clamp(30px, 5vw, 56px) / 1.02 var(--gm-font-display);
+  letter-spacing: -0.04em;
+  color: #fff;
+  text-wrap: balance;
+}
+.gm-mp-hero__badges { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.gm-mp-hero__place { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: color-mix(in srgb, #fff 72%, transparent); }
+/* Asosiy amal doim qo‘l ostida: sahifa oxirigacha pastda yopishib turadi. */
+.gm-mp-cta {
+  position: sticky;
+  bottom: calc(var(--gm-bottom-nav-h, 0px) + 12px + env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+  display: grid;
+  gap: 8px;
+  justify-self: center;
+  width: min(100%, 420px);
+  padding: 10px;
+  border: var(--gm-card-border);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--gm-color-surface) 94%, transparent);
+  box-shadow: var(--gm-shadow-lg);
+}
+.gm-mp-cta .gm-button { width: 100%; }
+
+.gm-mp-trust dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gm-space-3);
+  margin: 0;
+}
+.gm-mp-trust dl > div {
+  display: grid;
+  gap: 6px;
+  padding: var(--gm-card-pad);
+  border: var(--gm-card-border);
+  border-radius: var(--gm-card-radius);
+  background: var(--gm-color-surface);
+}
+.gm-mp-trust dt { display: flex; align-items: center; gap: 6px; font-size: var(--gm-card-label-size); font-weight: 600; color: var(--gm-color-text-muted); }
+.gm-mp-trust dd { margin: 0; font: 800 clamp(22px, 2.6vw, 30px) / 1.1 var(--gm-font-display); letter-spacing: -0.03em; }
+.gm-mp-trust dd small { font: 500 12px/1 var(--gm-font-sans); letter-spacing: 0; color: var(--gm-color-text-muted); }
+.gm-mp-trust .is-ok dd { color: var(--gm-color-success); }
+
+.gm-mp-section {
+  padding: var(--gm-card-pad);
+  border: var(--gm-card-border);
+  border-radius: var(--gm-card-radius-lg);
+  background: var(--gm-color-surface);
+}
+.gm-mp-section > h2 { margin: 0 0 14px; font: 800 clamp(20px, 2.2vw, 26px) / 1.1 var(--gm-font-display); letter-spacing: -0.03em; }
+.gm-mp-bio { margin: 0; max-width: 68ch; font-size: 16px; line-height: 1.65; }
+.gm-mp-services { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.gm-mp-services li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: var(--gm-card-radius-sm);
+  background: var(--gm-color-surface-muted);
+  font-weight: 600;
+}
+.gm-mp-services strong { white-space: nowrap; color: var(--gm-color-primary); }
+
+@keyframes gm-mp-glow { from { opacity: 0; transform: scale(0.7); } to { opacity: 0.55; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .gm-mp-hero::before { animation: none; } }
+
+/* Planshet */
+@media (max-width: 980px) {
+  .gm-mp-hero { grid-template-columns: auto minmax(0, 1fr); }
+  .gm-mp-trust dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Telefon: bosh CTA pastga yopishadi (bitta tugma — hozir ham, skrollda ham ko‘rinadi) */
+@media (max-width: 640px) {
+  .gm-mp { gap: var(--gm-space-4); }
+  .gm-mp-hero { grid-template-columns: 1fr; justify-items: start; gap: var(--gm-space-4); }
+  .gm-mp-cta { width: 100%; }
+}

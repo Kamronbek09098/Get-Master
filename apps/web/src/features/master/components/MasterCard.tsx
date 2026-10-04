@@ -16,7 +16,7 @@ export function MasterCard({ master }: { master: PublicMaster }) {
   const minPrice = prices.length > 0 ? Math.min(...prices) : null;
 
   return (
-    <Link to={`/ustalar-katalogi/${master.user.accountNumber ?? master.id}`} className="gm-master">
+    <Link data-cursor="profile" to={`/ustalar-katalogi/${master.user.accountNumber ?? master.id}`} className="gm-master">
       <div className="gm-master__top">
         <ChatAvatar name={name} seed={master.id} size="lg" />
         <div className="gm-master__id">

@@ -8,6 +8,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDate } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
 import { useAddresses, useCustomerProfile } from '@/features/customer/hooks/useCustomer';
+import { CustomerActivity } from '@/features/customer/components/CustomerActivity';
 import { CustomerForm } from '@/features/customer/components/CustomerForm';
 import { useMyOrders } from '@/features/order/hooks/useOrders';
 import { useMyRequests } from '@/features/request/hooks/useRequests';
@@ -59,6 +60,7 @@ export function CustomerProfilePage() {
 
       <div className="gm-pgrid">
         <div className="gm-pcol">
+          <CustomerActivity orders={orders.data ?? []} />
           <ProfileCard defaultOpen icon={UserRound} title={t('Shaxsiy ma’lumotlar')} hint={t('Ism va familiyangiz boshqa foydalanuvchilarga ko‘rinadi.')}>
             <CustomerForm profile={data} />
           </ProfileCard>

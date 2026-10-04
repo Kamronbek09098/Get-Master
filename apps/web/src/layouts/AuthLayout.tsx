@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import { PageLoader } from '@/components/common/PageLoader';
 import { BadgeCheck, Camera, ShieldCheck, Sparkles, Star, Wallet, ClipboardCheck, BarChart3, Lock, ScrollText, Wrench } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ShaderBackground } from '@/pages/landing/fx/ShaderBackground';
@@ -127,7 +129,9 @@ export function AuthLayout() {
         </div>
         <div className="gm-auth-layout__panel">
           {currentPanelLabel && <div className="gm-panel-badge">{currentPanelLabel}</div>}
-          <Outlet />
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </div>
         {isLogin && (
           <>

@@ -9,7 +9,6 @@ import type { LandingContent } from './landing-content';
 import '@/components/ui/Button.css';
 import '@/components/ui/Badge.css';
 import { Marquee } from './fx/Marquee';
-import { StepsGrid } from './fx/StepsGrid';
 import { Statement } from './fx/Statement';
 import { tiltHandlers } from './fx/interactions';
 import { useAvailableStories } from './story/useAvailableStories';
@@ -19,6 +18,7 @@ import './story/story.css';
 
 // Three.js va GSAP faqat landing ochilganda alohida bo‘lak sifatida yuklanadi.
 const ShaderBackground = lazy(() => import('./fx/ShaderBackground').then((module) => ({ default: module.ShaderBackground })));
+const Journey = lazy(() => import('./journey/Journey').then((module) => ({ default: module.Journey })));
 const RealStory = lazy(() => import('./story/RealStory').then((module) => ({ default: module.RealStory })));
 
 /**
@@ -134,7 +134,9 @@ function Landing({ content }: { content: LandingContent }) {
 
       <Statement label={content.statementLabel} text={content.statement} />
 
-      <StepsGrid title={content.stepsTitle} steps={content.steps} />
+      <Suspense fallback={<div className="gm-film-placeholder" aria-hidden="true" id="qanday" />}>
+        <Journey role={env.appRole === 'MASTER' ? 'master' : 'customer'} />
+      </Suspense>
 
       {content.showCategories && (
         <section className="gm-landing__section" id="xizmatlar">

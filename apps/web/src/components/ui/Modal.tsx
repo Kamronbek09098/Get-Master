@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import './Modal.css';
+import { useSheetDrag } from '@/hooks/useSheetDrag';
 import { t } from '@/i18n';
 
 export interface ModalProps {
@@ -25,6 +26,7 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   // onClose har renderda yangi funksiya bo‘lishi mumkin; effect qayta ishga tushib, fokusni tortib olmasligi uchun ref'da saqlanadi.
+  const drag = useSheetDrag(panelRef, onClose);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
@@ -75,6 +77,7 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
         aria-labelledby={titleId}
         tabIndex={-1}
       >
+        {dismissible && <div className="gm-modal__grab" aria-hidden="true" {...drag} />}
         <div className="gm-modal__header">
           <h2 id={titleId} className="gm-modal__title">
             {title}

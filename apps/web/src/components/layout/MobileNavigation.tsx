@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutGrid, X } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { useMe } from '@/features/session/hooks/useMe';
 import { badgeText, useNavBadges } from '@/features/admin/hooks/useNavBadges';
 import { getNavItems } from './nav-items';
+import { useSheetDrag } from '@/hooks/useSheetDrag';
 import { t } from '@/i18n';
 import './MobileNavigation.css';
 
@@ -15,6 +16,8 @@ export function MobileNavigation() {
   const primary = items.filter((item) => item.primary).slice(0, 4);
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const drag = useSheetDrag(sheetRef, () => setOpen(false));
 
   const badges = useNavBadges(preferredRole, pathname);
   const hiddenBadge = items.some((item) => !primary.includes(item) && badges[item.to]);
@@ -51,7 +54,8 @@ export function MobileNavigation() {
 
       {open && (
         <div className="gm-sheet-overlay" onMouseDown={(e) => e.target === e.currentTarget && setOpen(false)}>
-          <div className="gm-sheet" role="dialog" aria-modal="true" aria-label={t('Barcha bo‘limlar')}>
+          <div ref={sheetRef} className="gm-sheet" role="dialog" aria-modal="true" aria-label={t('Barcha bo‘limlar')}>
+            <div className="gm-sheet__grab" aria-hidden="true" {...drag} />
             <div className="gm-sheet__header">
               <h2>{t('Bo‘limlar')}</h2>
               <button type="button" className="gm-icon-button" aria-label={t('Yopish')} onClick={() => setOpen(false)}>
