@@ -394,7 +394,7 @@ a.gm-audit__person:focus-visible {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--role) 18%, transparent);
 }
 .gm-audit__role--admin {
-  --role: #6d28d9;
+  --role: #1e3a8a;
   --role-bg: color-mix(in srgb, var(--role) 13%, var(--gm-color-surface));
 }
 .gm-audit__role--master {
@@ -448,8 +448,8 @@ a.gm-audit__person:focus-visible {
   letter-spacing: 0.02em;
 }
 .gm-audit__by--admin {
-  background: color-mix(in srgb, #6d28d9 14%, var(--gm-color-surface));
-  color: #6d28d9;
+  background: color-mix(in srgb, #1e3a8a 14%, var(--gm-color-surface));
+  color: #1e3a8a;
 }
 .gm-audit__by--master {
   background: color-mix(in srgb, #0f9d63 14%, var(--gm-color-surface));
@@ -462,4 +462,26 @@ a.gm-audit__person:focus-visible {
 .gm-audit__by--system {
   background: color-mix(in srgb, #64748b 14%, var(--gm-color-surface));
   color: #64748b;
+}
+
+@media (max-width: 640px) {
+  .gm-audit__roles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .gm-audit__role {
+    padding: var(--gm-space-3);
+    gap: var(--gm-space-2);
+  }
+  .gm-audit__role-icon {
+    width: 34px;
+    height: 34px;
+  }
+  .gm-audit__role-text small {
+    display: none;
+  }
+  .gm-audit__role-text strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }

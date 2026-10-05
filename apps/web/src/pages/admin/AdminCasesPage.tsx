@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { UserRef } from '@/features/admin/components/UserRef';
 import { useState } from 'react';
@@ -14,6 +15,7 @@ import { useAdminCases, useUpdateCase } from '@/features/admin/hooks/useAdmin';
 import { CASE_STATUS_LABEL } from '@/features/dispute/types';
 import type { CaseItem, CaseStatus } from '@/features/dispute/types';
 import { t } from '@/i18n';
+import './AdminCasesPage.css';
 
 const STATUS_OPTIONS = (Object.keys(CASE_STATUS_LABEL) as CaseStatus[]).map((value) => ({
   value,
@@ -31,64 +33,97 @@ const NEXT_STATUSES: Record<CaseStatus, CaseStatus[]> = {
 
 function CaseCard({ item, kind }: { item: CaseItem; kind: 'complaints' | 'disputes' }) {
   const update = useUpdateCase(kind);
+  const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<CaseStatus>(item.status);
   const [decision, setDecision] = useState(item.decision ?? '');
   const next = NEXT_STATUSES[item.status];
   const finished = next.length === 0;
   const options = [item.status, ...next].map((value) => ({ value, label: CASE_STATUS_LABEL[value] }));
+  const tone = item.status === 'RESOLVED' || item.status === 'CONFIRMED' ? 'ok' : item.status === 'DISMISSED' ? 'no' : 'wait';
+  const reviewing = item.status !== 'REPORTED';
+  const panelId = `case-${item.id}`;
 
   return (
-    <div className="gm-card">
-      <div className="gm-card__header">
-        <h3>{item.title}</h3>
-        <Badge tone={item.status === 'RESOLVED' || item.status === 'CONFIRMED' ? 'success' : item.status === 'DISMISSED' ? 'neutral' : 'warning'}>
-          {CASE_STATUS_LABEL[item.status]}
-        </Badge>
+    <article className={`gm-acase gm-acase--${tone}`}>
+      <div className="gm-acase__top">
+        <span className="gm-acase__no">
+          {kind === 'complaints' ? t('Shikoyat') : t('Nizo')} № {item.id.slice(0, 8).toUpperCase()}
+        </span>
+        <Badge tone={tone === 'ok' ? 'success' : tone === 'no' ? 'danger' : 'warning'}>{CASE_STATUS_LABEL[item.status]}</Badge>
       </div>
-      <p>{item.description}</p>
-      <p className="gm-card__meta">
-        {formatDateTime(item.createdAt)}
-        {item.orderId && (
-          <>
-            {' · '}
-            <Link to={`/admin/buyurtmalar/${item.orderId}`}>{t('Buyurtmani ochish')}</Link>
-          </>
-        )}
-        {t(' · Yuboruvchi: ')}
-        <UserRef id={item.openedById} />
+
+      <h3 className="gm-acase__title">{item.title}</h3>
+      {!open && <p className="gm-acase__text gm-acase__text--clamp">{item.description}</p>}
+
+      <dl className="gm-acase__facts">
+        <div>
+          <dt>{t('Yuboruvchi')}</dt>
+          <dd><UserRef id={item.openedById} /></dd>
+        </div>
         {item.targetUserId && (
-          <>
-            {t(' · Nishon: ')}
-            <UserRef id={item.targetUserId} />
-          </>
+          <div>
+            <dt>{t('Nishon')}</dt>
+            <dd><UserRef id={item.targetUserId} /></dd>
+          </div>
         )}
-      </p>
-      {finished ? (
-        <div style={{ marginTop: 'var(--gm-space-3)' }}>
-          <Alert tone="info">{t('Bu ish yakunlangan ({item}). Yakunlangan holatni qayta o‘zgartirib bo‘lmaydi.', { item: CASE_STATUS_LABEL[item.status] })}</Alert>
-          {item.decision && (
-            <p className="gm-card__meta" style={{ marginTop: 'var(--gm-space-2)' }}>
-              <strong>{t('Qaror:')}</strong> {item.decision}
-            </p>
+        <div>
+          <dt>{t('Vaqt')}</dt>
+          <dd>{formatDateTime(item.createdAt)}</dd>
+        </div>
+        {item.orderId && (
+          <div>
+            <dt>{t('Buyurtma')}</dt>
+            <dd><Link to={`/admin/buyurtmalar/${item.orderId}`}>{t('Buyurtmani ochish')}</Link></dd>
+          </div>
+        )}
+      </dl>
+
+      {open && (
+        <div id={panelId} className="gm-acase__more">
+          <div className="gm-acase__block">
+            <span className="gm-acase__label">{t('Tavsif')}</span>
+            <p className="gm-acase__text">{item.description}</p>
+          </div>
+
+          <ol className="gm-acase__steps" aria-label={t('Holat')}>
+            <li className="is-done">{t('Yuborildi')}</li>
+            <li className={reviewing ? 'is-done' : ''}>{t('Ko‘rib chiqilmoqda')}</li>
+            <li className={finished ? `is-done is-${tone}` : ''}>{finished ? CASE_STATUS_LABEL[item.status] : t('Qaror')}</li>
+          </ol>
+
+          {finished ? (
+            <>
+              <Alert tone="info">{t('Bu ish yakunlangan ({item}). Yakunlangan holatni qayta o‘zgartirib bo‘lmaydi.', { item: CASE_STATUS_LABEL[item.status] })}</Alert>
+              {item.decision && (
+                <div className="gm-acase__decision">
+                  <strong>{t('Qaror:').replace(/:$/, '')}</strong>
+                  <p>{item.decision}</p>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="gm-form gm-acase__form">
+              {update.isError && <Alert tone="danger">{getErrorMessage(update.error)}</Alert>}
+              <Select label={t('Yangi holat')} options={options} value={status} onChange={(e) => setStatus(e.target.value as CaseStatus)} />
+              <Textarea label={t('Qaror / izoh')} rows={3} maxLength={2000} value={decision} onChange={(e) => setDecision(e.target.value)} />
+              <div className="gm-acase__actions">
+                <Button
+                  loading={update.isPending}
+                  disabled={status === item.status}
+                  onClick={() => update.mutate({ id: item.id, status, decision: decision.trim() || undefined })}
+                >{t('Saqlash')}</Button>
+                {status === item.status && <span className="gm-acase__hint">{t('Saqlash uchun yangi holatni tanlang')}</span>}
+              </div>
+            </div>
           )}
         </div>
-      ) : (
-        <div className="gm-form" style={{ marginTop: 'var(--gm-space-3)' }}>
-          {update.isError && <Alert tone="danger">{getErrorMessage(update.error)}</Alert>}
-          <Select label={t('Yangi holat')} options={options} value={status} onChange={(e) => setStatus(e.target.value as CaseStatus)} />
-          <Textarea label={t('Qaror / izoh')} rows={2} maxLength={2000} value={decision} onChange={(e) => setDecision(e.target.value)} />
-          <div>
-            <Button
-              size="sm"
-              loading={update.isPending}
-              disabled={status === item.status}
-              onClick={() => update.mutate({ id: item.id, status, decision: decision.trim() || undefined })}
-            >{t('Saqlash')}</Button>
-            {status === item.status && <span className="gm-card__meta" style={{ marginLeft: 'var(--gm-space-3)' }}>{t('Saqlash uchun yangi holatni tanlang')}</span>}
-          </div>
-        </div>
       )}
-    </div>
+
+      <button type="button" className="gm-acase__toggle" aria-expanded={open} aria-controls={open ? panelId : undefined} onClick={() => setOpen((v) => !v)}>
+        {open ? t('Yig‘ish') : finished ? t('To‘liq ko‘rish') : t('Ko‘rib chiqish')}
+        <ChevronDown size={16} aria-hidden="true" className={open ? 'is-up' : ''} />
+      </button>
+    </article>
   );
 }
 
@@ -101,7 +136,7 @@ export function AdminCasesPage() {
   const items = cases.data?.items ?? [];
 
   return (
-    <div>
+    <div className="gm-acases">
       <div className="gm-page-header">
         <div>
           <h1>{t('Shikoyat va nizolar')}</h1>

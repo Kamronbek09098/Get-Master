@@ -45,3 +45,9 @@
 .gm-pmenu-page .gm-mprof__stat dt { font-size: 11.5px; text-align: center; }
 .gm-pmenu-page .gm-mprof__id { padding: 20px; }
 .gm-pmenu-page .gm-mprof__id .gm-chat-avatar { width: 84px; height: 84px; font-size: 28px; }
+
+@media (max-width: 640px) {
+  .gm-pmenu-page .gm-mprof__stats { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .gm-pmenu-page .gm-mprof__stats > * { grid-column: span 2; }
+  .gm-pmenu-page .gm-mprof__stats > :nth-child(n+4):nth-last-child(-n+2) { grid-column: span 3; }
+}
