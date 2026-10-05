@@ -182,7 +182,7 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
           />
           <Input
             label={t('To‘liq ism')}
-            placeholder={t('Masalan: Aziz Karimov')}
+            placeholder={t('Masalan: Kamronbek Ziyovuddinov')}
             value={fullName}
             maxLength={200}
             onChange={(event) => setFullName(event.target.value)}

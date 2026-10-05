@@ -221,6 +221,13 @@
     padding: 0;
   }
 }
+
+/* ===== Telefon: markazlashgan kirish ekrani (logo + nom + karta + kartalar) ===== */
+.gm-auth-hero,
+.gm-auth-tiles {
+  display: none;
+}
+
 @media (max-width: 899px) {
   .gm-auth-layout .gm-auth-layout__main {
     position: relative;
@@ -397,7 +404,9 @@
 
   .gm-auth-tiles svg {
     color: var(--gm-color-primary);
-  }}
+  }
+
+}
 
 @media (max-width: 899px) {
   .gm-auth-layout:not(.gm-auth-layout--login) .gm-auth-layout__main {
@@ -439,6 +448,8 @@
   .gm-auth-layout .gm-auth-page h1 {
     font-size: 28px;
   }
+
+
   .gm-auth-layout--login .gm-auth-layout__panel {
     margin-bottom: var(--gm-space-3);
   }
@@ -469,6 +480,8 @@
   .gm-auth-layout--login .gm-auth-layout__panel {
     margin-bottom: 0;
   }
+
+
   .gm-auth-layout__brand {
     justify-content: space-between;
     padding: clamp(28px, 4vw, 56px);
@@ -491,7 +504,9 @@
 @media (min-width: 900px) and (max-height: 640px) {
   .gm-auth-layout .gm-auth-layout__panel {
     padding: var(--gm-space-4) var(--gm-space-5);
-  }}
+  }
+
+}
 
 @media (min-width: 900px) and (max-height: 640px) {
   .gm-auth-layout__brand {
@@ -556,7 +571,9 @@
   .gm-auth-layout .gm-auth-form .gm-button {
     margin-top: 4px;
     min-height: 44px;
-  }}
+  }
+
+}
 
 /* ===== Kirish kartasi: yagona, tartibli ko‘rinish (Mijoz / Usta / Admin) ===== */
 .gm-auth-page__switch {
@@ -681,10 +698,19 @@
     --gm-auth-zoom: 1.5;
   }
 }
-@media (min-width: 900px) {  .gm-auth-layout--login .gm-auth-layout__panel {
+@media (min-width: 900px) {
+  .gm-auth-layout__panel,
+  .gm-auth-layout__pitch,
+  .gm-auth-layout__logo,
+  .gm-auth-layout__foot {
+    zoom: var(--gm-auth-zoom);
+  }
+  .gm-auth-layout--login .gm-auth-layout__panel {
     max-width: 420px;
   }
 }
+
+
 /* ===== Telefon/planshet: barcha kirish sahifalari (OTP, ro‘yxatdan o‘tish) ekranda vertikal markazda ===== */
 @media (max-width: 899px) {
   .gm-auth-layout .gm-auth-layout__main,

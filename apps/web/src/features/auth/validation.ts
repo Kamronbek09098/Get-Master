@@ -36,7 +36,7 @@ export const registerSchema = z
     phoneLocal: localPhoneSchema,
     password: z.string().min(8, t('Kamida 8 ta belgi')).max(128, t('Juda uzun')),
     confirmPassword: z.string().min(1, t('Parolni qayta kiriting')),
-    fullName: z.string().trim().max(200).refine((value) => splitFullName(value) !== null, t('To‘liq ismni kiriting (masalan: Aziz Karimov)')),
+    fullName: z.string().trim().max(200).refine((value) => splitFullName(value) !== null, t('To‘liq ismni kiriting (masalan: Kamronbek Ziyovuddinov)')),
     acceptedTerms: z.literal(true, { errorMap: () => ({ message: t('Davom etish uchun shartlarni qabul qiling') }) }),
   })
   .refine((values) => values.password === values.confirmPassword, {

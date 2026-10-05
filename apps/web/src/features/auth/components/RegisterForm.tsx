@@ -47,7 +47,7 @@ export function RegisterForm() {
         error={errors.phoneLocal?.message}
         {...register('phoneLocal')}
       />
-      <Input label={t('To‘liq ism')} placeholder={t('Masalan: Aziz Karimov')} autoComplete="name" maxLength={200} required {...register('fullName')} error={errors.fullName?.message} />
+      <Input label={t('To‘liq ism')} placeholder={t('Masalan: Kamronbek Ziyovuddinov')} autoComplete="name" maxLength={200} required {...register('fullName')} error={errors.fullName?.message} />
       <Input
         label={t('Parol')}
         type="password"

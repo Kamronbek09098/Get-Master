@@ -51,7 +51,7 @@ export function NameRequiredDialog() {
           {t('Boshqa foydalanuvchilar sizni ismingiz bilan ko‘radi. Davom etish uchun ism va familiyangizni birga yozing.')}
         </p>
         {save.isError && <Alert tone="danger">{getErrorMessage(save.error)}</Alert>}
-        <Input label={t('To‘liq ism')} placeholder={t('Masalan: Aziz Karimov')} autoComplete="name" required autoFocus maxLength={200} value={fullName} onChange={(event) => setFullName(event.target.value)} />
+        <Input label={t('To‘liq ism')} placeholder={t('Masalan: Kamronbek Ziyovuddinov')} autoComplete="name" required autoFocus maxLength={200} value={fullName} onChange={(event) => setFullName(event.target.value)} />
       </form>
     </Modal>
   );

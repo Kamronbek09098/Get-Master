@@ -11,7 +11,7 @@ export function accountName(user: NamedAccount | null | undefined): string {
   return t('Ism kiritilmagan');
 }
 
-/** To‘liq ism («Aziz Karimov») → ism va familiya (birinchi so‘z — ism, qolgani — familiya). Kamida ikki so‘z bo‘lmasa — null. */
+/** To‘liq ism («Kamronbek Ziyovuddinov») → ism va familiya (birinchi so‘z — ism, qolgani — familiya). Kamida ikki so‘z bo‘lmasa — null. */
 export function splitFullName(full: string): { firstName: string; lastName: string } | null {
   const parts = full.trim().split(/\s+/).filter(Boolean);
   if (parts.length < 2) return null;
@@ -20,4 +20,3 @@ export function splitFullName(full: string): { firstName: string; lastName: stri
 
 export const joinFullName = (firstName?: string | null, lastName?: string | null) => [firstName, lastName].filter(Boolean).join(' ').trim();
 
-export const FULL_NAME_HINT = t('Ism va familiyangizni birga yozing (masalan: Aziz Karimov)');
