@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { ScrollVideo } from '@/components/media/ScrollVideo';
-import { getGsap } from '@/lib/motion/gsap';
 import { prefersReducedMotion } from '@/lib/motion/tokens';
 import { INPUT_METHODS, type LandingContent } from '../landing-content';
 import type { StoryDef } from './stories';
@@ -16,41 +14,37 @@ const smooth = (a: number, b: number, x: number) => {
 };
 
 /**
- * HAQIQIY XIZMAT CHAQIRUVI: skroll — haqiqiy videoni boshqaradi (pastga — oldinga, yuqoriga — orqaga).
+ * HAQIQIY XIZMAT CHAQIRUVI: haqiqiy video o‘zi avtomatik (ovozsiz, takrorlanib) ijro etiladi; bosqich yozuvlari video vaqtiga
+ * ketma-ket mos keladi. Skroll videoni boshqarmaydi — pastga skroll qilinsa, sahifaning keyingi kartalariga tushiladi.
  * Dastur ekrani ko‘rsatilmaydi: hikoya haqiqiy dunyoda (mijoz, usta, uy, asboblar, natija).
  * GetMaster — faqat «ishga tushiruvchi» (kichik yorliq) va yakunda sokin belgi sifatida paydo bo‘ladi.
  */
 export function RealStory({ content, stories }: { content: LandingContent; stories: StoryDef[] }) {
   const sectionRef = useRef<HTMLElement>(null);
-  const progress = useRef(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [activeId, setActiveId] = useState(stories[0]!.id);
   const active = stories.find((story) => story.id === activeId) ?? stories[0]!;
   const [reduced] = useState(prefersReducedMotion);
 
   useEffect(() => {
     const section = sectionRef.current;
-    if (!section || reduced) return;
-    const { ScrollTrigger } = getGsap();
+    const video = videoRef.current;
+    if (!section || !video || reduced) return;
     const chapters = Array.from(section.querySelectorAll<HTMLElement>('[data-chapter]'));
     const ticks = Array.from(section.querySelectorAll<HTMLElement>('[data-tick]'));
-    const hero = section.querySelector<HTMLElement>('[data-hero]');
     const trigger = section.querySelector<HTMLElement>('[data-trigger]');
     const brand = section.querySelector<HTMLElement>('[data-brand]');
     const bar = section.querySelector<HTMLElement>('[data-bar]');
     const at = active.chapters.map((chapter) => chapter.at);
 
-    const apply = (raw: number) => {
-      // Video 0–92% oralig‘ida ijro etiladi; oxirgi 8% — yakuniy kadr «nafas oladi» (mijoz reaksiyasi va sokin belgi).
-      const p = Math.min(1, raw / 0.92);
-      progress.current = p;
+    // p — video vaqti (0..1): bosqich yozuvlari, xronologiya va chiziq shunga mos.
+    const apply = (p: number) => {
       chapters.forEach((el, i) => {
         const start = at[i]!;
         const end = at[i + 1] ?? 1.01;
         const fadeIn = i === 0 ? 1 : smooth(start - 0.03, start + 0.015, p);
         const fadeOut = i === chapters.length - 1 ? 0 : smooth(end - 0.03, end - 0.005, p);
-        // 1-bob (muammo) ustiga hero sarlavha tushadi — shu sabab chuqurroq xiralashadi.
-        const on = fadeIn * (1 - fadeOut) * (i === 0 ? 1 - smooth(0.04, 0.09, p) : 1);
-        el.style.setProperty('--on', on.toFixed(3));
+        el.style.setProperty('--on', (fadeIn * (1 - fadeOut)).toFixed(3));
       });
       let idx = 0;
       at.forEach((v, i) => {
@@ -60,34 +54,59 @@ export function RealStory({ content, stories }: { content: LandingContent; stori
         tick.classList.toggle('is-on', i === idx);
         tick.classList.toggle('is-past', i < idx);
       });
-      hero?.style.setProperty('--on', (1 - smooth(0.03, 0.09, p)).toFixed(3));
       // «So‘rov yuborildi» — GetMaster ishga tushiruvchi kichik lahza (≈6–14%).
       trigger?.style.setProperty('--on', (smooth(0.05, 0.08, p) * (1 - smooth(0.12, 0.16, p))).toFixed(3));
-      // Yakuniy sokin belgi (≈97–100%).
-      brand?.style.setProperty('--on', smooth(0.945, 0.985, raw).toFixed(3));
+      // Yakuniy sokin belgi (≈95–100%).
+      brand?.style.setProperty('--on', smooth(0.945, 0.985, p).toFixed(3));
       if (bar) bar.style.transform = `scaleX(${p.toFixed(3)})`;
-      section.classList.toggle('is-scrolled', raw > 0.02);
     };
-    apply(0);
-    const st = ScrollTrigger.create({ trigger: section, start: 'top top', end: 'bottom bottom', onUpdate: (self) => apply(self.progress) });
-    return () => st.kill();
+
+    let frame = 0;
+    const tick = () => {
+      const duration = video.duration;
+      apply(duration > 0 ? Math.min(1, video.currentTime / duration) : 0);
+      frame = requestAnimationFrame(tick);
+    };
+    // Faqat ko‘rinib turganda ijro etiladi (batareya va trafikni tejaydi).
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          void video.play().catch(() => undefined);
+          if (!frame) frame = requestAnimationFrame(tick);
+        } else {
+          video.pause();
+          cancelAnimationFrame(frame);
+          frame = 0;
+        }
+      },
+      { threshold: 0.25 },
+    );
+    observer.observe(section);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
   }, [active, reduced]);
 
   const seek = (p: number) => {
-    const section = sectionRef.current;
-    if (!section) return;
-    const total = section.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: section.offsetTop + total * p, behavior: reduced ? 'auto' : 'smooth' });
+    const video = videoRef.current;
+    if (video && video.duration > 0) video.currentTime = Math.min(video.duration - 0.05, p * video.duration);
   };
 
+  const scrollDown = () => window.scrollTo({ top: (sectionRef.current?.offsetTop ?? 0) + (sectionRef.current?.offsetHeight ?? window.innerHeight), behavior: 'smooth' });
+
   const base = storyBase(active.id);
-  const sources = [
-    { src: `${base}.webm`, type: 'video/webm' },
-    { src: `${base}.mp4`, type: 'video/mp4' },
-  ];
+  // Telefonda yengil (≤720p) nusxa, kompyuterda WebM → MP4.
+  const mobile = useMemo(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 820px)').matches, []);
+  const sources = mobile
+    ? [{ src: `${base}-m.mp4`, type: 'video/mp4' }]
+    : [
+        { src: `${base}.webm`, type: 'video/webm' },
+        { src: `${base}.mp4`, type: 'video/mp4' },
+      ];
 
   const heroCopy = (
-    <div className="gm-rs__hero" data-hero>
+    <div className="gm-rs__hero">
       <p className="gm-rs__label">{content.eyebrow}</p>
       <h1>
         <span>{content.title}</span> <em>{content.highlight}</em>
@@ -147,15 +166,22 @@ export function RealStory({ content, stories }: { content: LandingContent; stori
   return (
     <section className="gm-rs" ref={sectionRef} aria-label={t('Haqiqiy xizmat chaqiruvi')}>
       <div className="gm-rs__sticky">
-        <ScrollVideo
-          key={active.id}
+        <video
+          key={active.id + (mobile ? '-m' : '')}
+          ref={videoRef}
           className="gm-rs__video"
-          progress={progress}
-          sources={sources}
-          mobileSources={[{ src: `${base}-m.mp4`, type: 'video/mp4' }]}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
           poster={`${base}.jpg`}
-          label={active.label}
-        />
+          aria-label={active.label}
+        >
+          {sources.map((source) => (
+            <source key={source.src} src={source.src} type={source.type} />
+          ))}
+        </video>
         <div className="gm-rs__scrim" aria-hidden="true" />
         {picker}
         {heroCopy}
@@ -195,10 +221,10 @@ export function RealStory({ content, stories }: { content: LandingContent; stori
             <i data-bar />
           </li>
         </ol>
-        <div className="gm-rs__hint" aria-hidden="true">
-          <span>{t('Skroll')}</span>
-          <i />
-        </div>
+        <button type="button" className="gm-rs__hint" onClick={scrollDown} aria-label={t('Pastga tushish')}>
+          <span>{t('Pastga')}</span>
+          <i aria-hidden="true" />
+        </button>
       </div>
     </section>
   );

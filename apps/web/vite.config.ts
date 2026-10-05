@@ -40,12 +40,29 @@ function buildCsp(html: string, apiBase: string | undefined): string {
  * ildiz shrift esa 90% (global.css) — natijada butun interfeys aniq 10% kichik. vw/vh va @media o‘zgarmaydi,
  * 1px va undan ingichka chiziqlar ham o‘zgarmaydi. (CSS `zoom` ishlatilmaydi: u vw/vh va xarita koordinatalarini buzadi.)
  */
+/** Yozuv va tugma o‘lchamlari qo‘shimcha 10% katta: font-size/font va tugma tokenlari (balandlik, shrift, ichki bo‘shliq). */
+const TEXT_SCALE = 1.1;
+const SCALED_TOKENS = /^--gm-(btn-(h|fs|px)|card-(title|label)-size)/;
+/** Bosh sahifa va kirish sahifalari o‘z o‘lchamlariga ega — ular yuqoridagi qo‘shimcha kattalashtirishdan chiqarilgan. */
+const SCALE_EXCLUDED = /\/src\/(pages\/landing\/|layouts\/AuthLayout)/;
+
+const done = new WeakSet<object>();
 const pxToRem = {
   postcssPlugin: 'getmaster-px-to-rem',
-  Declaration(decl: { value: string; source?: { input?: { file?: string } } }) {
+  Declaration(decl: { prop: string; value: string; source?: { input?: { file?: string } } }) {
     const file = decl.source?.input?.file?.replace(/\\/g, '/') ?? '';
-    if (!file.includes('/src/') || !decl.value.includes('px')) return;
-    const next = decl.value.replace(/(-?\d*\.?\d+)px\b/g, (match, n: string) => (Math.abs(Number(n)) <= 1 ? match : `${+(Number(n) / 16).toFixed(4)}rem`));
+    if (!file.includes('/src/') || done.has(decl)) return;
+    const scaleText = !SCALE_EXCLUDED.test(file) && (decl.prop === 'font-size' || decl.prop === 'font' || SCALED_TOKENS.test(decl.prop));
+    const k = scaleText ? TEXT_SCALE : 1;
+    let next = decl.value;
+    if (next.includes('px')) {
+      next = next.replace(/(-?\d*\.?\d+)px\b/g, (match, n: string) => (Math.abs(Number(n)) <= 1 ? match : `${+((Number(n) * k) / 16).toFixed(4)}rem`));
+    }
+    // rem bilan yozilgan shriftlar ham shu koeffitsientga (px dan o‘tkazilganlari allaqachon hisoblangan)
+    if (scaleText && decl.value === next && /rem\b/.test(next) && !next.includes('var(')) {
+      next = next.replace(/(-?\d*\.?\d+)rem\b/g, (_m, n: string) => `${+(Number(n) * k).toFixed(4)}rem`);
+    }
+    done.add(decl);
     if (next !== decl.value) decl.value = next;
   },
 };

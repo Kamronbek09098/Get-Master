@@ -39,7 +39,7 @@ html {
 
 /* Piktogrammalar (size={..} px atributi) ham 10% kichik */
 svg.lucide {
-  zoom: 0.9;
+  zoom: 0.99;
 }
 
 /* Ilova to‘liq ekranda (status bar ostigacha) ko‘rinadi; xavfsiz zona padding bilan hal qilinadi. */

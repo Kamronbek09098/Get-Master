@@ -178,27 +178,6 @@ body { letter-spacing: -0.003em; }
 .gm-pcard__head p { text-align: left; justify-content: flex-start; }
 .gm-pcard__head > div { flex: 1; min-width: 0; }
 
-/* Sarlavhalar, izoh va tablar — ilova uslubida chapdan (avvalgi markazlash bekor qilinadi) */
-@media (min-width: 641px) {
-  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-page-header,
-  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-ohead,
-  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-masters-head {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    text-align: left;
-    gap: var(--gm-space-3);
-  }
-  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-page-header > div,
-  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-ohead > div { align-items: flex-start; width: auto; }
-  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-page-lead,
-  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-ohead p,
-  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-masters-head p { margin: 0; text-wrap: pretty; }
-  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-tabs,
-  :root:not([data-panel='ADMIN']) .gm-app-layout__content .gm-olist-tabs { margin-left: 0; margin-right: auto; }
-}
-:root .gm-ppage > .gm-page-header { justify-content: flex-start; text-align: left; }
-:root .gm-ppage > .gm-page-header h1 { text-align: left; }
 
 /* Birlashtirilgan profil kartasi: forma va akkaunt ma'lumotlari orasida ajratgich */
 .gm-pmerge__divider { height: 1px; margin: 22px 0 6px; background: var(--gm-color-border); }

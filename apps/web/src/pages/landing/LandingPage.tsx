@@ -15,6 +15,7 @@ import { useAvailableStories } from './story/useAvailableStories';
 import { useSmoothScroll } from './fx/useSmoothScroll';
 import './Landing.css';
 import './story/story.css';
+import './landing-polish.css';
 
 // Three.js va GSAP faqat landing ochilganda alohida bo‘lak sifatida yuklanadi.
 const ShaderBackground = lazy(() => import('./fx/ShaderBackground').then((module) => ({ default: module.ShaderBackground })));
