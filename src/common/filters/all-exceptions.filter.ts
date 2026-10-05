@@ -52,6 +52,8 @@ export interface ErrorNotifier {
     path?: string;
     requestId?: string | null;
     stack?: string;
+    req?: unknown;
+    details?: string[];
   }): void;
 }
 
@@ -66,7 +68,11 @@ interface ErrorResult {
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
 
-  constructor(private readonly notifier?: ErrorNotifier) {}
+  private readonly notifiers: ErrorNotifier[];
+
+  constructor(notifier?: ErrorNotifier | ErrorNotifier[]) {
+    this.notifiers = Array.isArray(notifier) ? notifier : notifier ? [notifier] : [];
+  }
 
   private isBodyParserError(exception: unknown): exception is { status: number; type: string } {
     const error = exception as { status?: unknown; type?: unknown } | null;
@@ -109,7 +115,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     try {
-      this.notifier?.notifyError({
+      const alert = {
         status: result.status,
         code: result.code,
         message: result.message,
@@ -117,7 +123,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
         path: req.url,
         requestId: req.id ?? req.headers['x-request-id'] ?? null,
         stack: result.status >= 500 && exception instanceof Error ? exception.stack : undefined,
-      });
+        req,
+        details: result.details,
+      };
+      for (const notifier of this.notifiers) {
+        try {
+          notifier.notifyError(alert);
+        } catch {
+          // bir bildirgich ishlamasa, boshqasi to‘xtamasin
+        }
+      }
     } catch {
     }
 

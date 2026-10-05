@@ -410,6 +410,7 @@ export interface AdminAccount {
   isSuperAdmin: boolean;
   adminPermissions?: string[];
   isSelf?: boolean;
+  twoFactorEnabled?: boolean;
   createdAt: string;
   lastLoginAt?: string | null;
 }

@@ -7,6 +7,7 @@ import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import type { BadgeTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Switch } from '@/components/ui/Switch';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime } from '@/lib/utils';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
@@ -15,7 +16,7 @@ import { AdminPermissionsDialog } from '@/features/admin/components/AdminPermiss
 import { PERMISSION_LABEL } from '@/features/admin/permissions';
 import { PasswordResetDialog } from '@/features/admin/components/PasswordResetDialog';
 import { UserActionDialog } from '@/features/admin/components/UserActionDialog';
-import { useAdminAccounts, useSetSuperAdmin } from '@/features/admin/hooks/useAdmin';
+import { useAdminAccounts, useSetSuperAdmin, useSetUserTwoFactor } from '@/features/admin/hooks/useAdmin';
 import type { UserAction } from '@/features/admin/user-actions';
 import type { AdminAccount, AdminUser } from '@/features/admin/types';
 import { useMe } from '@/features/session/hooks/useMe';
@@ -52,6 +53,7 @@ export function AdminAdminsPage() {
   const isSuper = !!me.data?.isSuperAdmin;
   const admins = useAdminAccounts(isSuper);
   const setSuper = useSetSuperAdmin();
+  const setTwoFactor = useSetUserTwoFactor();
   const [creating, setCreating] = useState(false);
   const [dialog, setDialog] = useState<{ admin: AdminAccount; action: UserAction } | null>(null);
   const [passwordFor, setPasswordFor] = useState<AdminAccount | null>(null);
@@ -78,6 +80,7 @@ export function AdminAdminsPage() {
       {admins.isLoading && <PageLoader label={t('Adminlar yuklanmoqda…')} />}
       {admins.isError && <Alert tone="danger">{getErrorMessage(admins.error)}</Alert>}
       {setSuper.isError && <Alert tone="danger">{getErrorMessage(setSuper.error)}</Alert>}
+      {setTwoFactor.isError && <Alert tone="danger">{getErrorMessage(setTwoFactor.error)}</Alert>}
       {admins.data && items.length === 0 && <EmptyState title={t('Adminlar yo‘q')} />}
 
       <div className="gm-adm__list">
@@ -90,7 +93,7 @@ export function AdminAdminsPage() {
                 <ChatAvatar name={nameOf(admin)} seed={admin.id} size="md" />
                 <div className="gm-adm__info">
                   <h2>
-                    <Link to={`/admin/foydalanuvchilar/${admin.accountNumber}`}>{nameOf(admin)}</Link>
+                    <Link to={`/admin/foydalanuvchilar/${admin.accountNumber}`} className="gm-adm__open" aria-label={t('{name} profilini ochish', { name: nameOf(admin) })}>{nameOf(admin)}</Link>
                   </h2>
                   <p>{t('ID {accountNumber} · {phone}', { accountNumber: admin.accountNumber, phone: admin.phone })}</p>
                   <p className="gm-adm__meta">{t('Qo‘shilgan: {dateTime}', { dateTime: formatDateTime(admin.createdAt) })}{admin.lastLoginAt && t(' · Oxirgi kirish: {dateTime}', { dateTime: formatDateTime(admin.lastLoginAt) })}
@@ -116,6 +119,19 @@ export function AdminAdminsPage() {
                 ) : (
                   <Badge tone="warning">{t('Hech qaysi')}</Badge>
                 )}
+              </div>
+
+              <div className="gm-adm__twofa">
+                <div>
+                  <strong>{t('Kirishda tasdiqlash kodi (OTP)')}</strong>
+                  <span>{admin.twoFactorEnabled !== false ? t('Kirganda telefonga kod yuboriladi.') : t('Faqat login va parol bilan kiriladi.')}</span>
+                </div>
+                <Switch
+                  label={admin.twoFactorEnabled !== false ? t('Kirishda kod so‘ralsin') : t('Kirishda kod so‘ralmaydi')}
+                  checked={admin.twoFactorEnabled !== false}
+                  disabled={setTwoFactor.isPending && setTwoFactor.variables?.id === admin.id}
+                  onChange={(enabled) => setTwoFactor.mutate({ id: admin.id, enabled })}
+                />
               </div>
 
               {!admin.isSelf && (

@@ -24,6 +24,7 @@ import { UserActionDialog } from '@/features/admin/components/UserActionDialog';
 import { PasswordResetDialog } from '@/features/admin/components/PasswordResetDialog';
 import type { UserAction } from '@/features/admin/user-actions';
 import type { AdminUser } from '@/features/admin/types';
+import { AdminAccountProfile } from './AdminAccountProfile';
 import './AdminUserProfilePage.css';
 import { t } from '@/i18n';
 
@@ -82,16 +83,20 @@ export function AdminUserProfilePage() {
   if (number !== null && me.data?.accountNumber === number) return <Navigate to="/sozlamalar" replace />;
 
   const data = user.data;
+  const isAdminAccount = !!data?.roles.includes('ADMIN');
   const status = data ? (STATUS[data.status] ?? { label: data.status, tone: 'neutral' as BadgeTone }) : null;
 
   return (
     <div className="gm-uprofile">
       {openChat.isError && <Alert tone="danger">{getErrorMessage(openChat.error)}</Alert>}
-      <Link to="/admin/foydalanuvchilar" className="gm-uprofile__back">
-        <ArrowLeft size={16} />{' '}{t('Foydalanuvchilar')}</Link>
+      <Link to={isAdminAccount ? '/admin/adminlar' : '/admin/foydalanuvchilar'} className="gm-uprofile__back">
+        <ArrowLeft size={16} />{' '}{isAdminAccount ? t('Adminlar') : t('Foydalanuvchilar')}</Link>
       {user.isLoading && <PageLoader />}
       {user.isError && <Alert tone="danger">{getErrorMessage(user.error)}</Alert>}
-      {data && status && (
+      {data && isAdminAccount && (
+        <AdminAccountProfile data={data} viewerId={me.data?.id} viewerIsSuper={!!me.data?.isSuperAdmin} viewerNumber={me.data?.accountNumber} onDelete={() => setAction('DELETE')} />
+      )}
+      {data && status && !isAdminAccount && (
         <>
           <header className="gm-uprofile__hero">
             <ChatAvatar name={accountName(data)} seed={data.id} size="lg" />
@@ -180,9 +185,13 @@ export function AdminUserProfilePage() {
           )}
 
           <section className="gm-uprofile__stats" aria-label={t('Statistika')}>
-            <Stat icon={<Package size={18} />} value={data.stats.orders} label={t('Buyurtmalar')} />
-            <Stat icon={<Wrench size={18} />} value={data.stats.requests} label={t('So‘rovlar')} />
-            <Stat icon={<MessageSquare size={18} />} value={data.stats.messages} label={t('Xabarlar')} />
+            {!isAdminAccount && (
+              <>
+                <Stat icon={<Package size={18} />} value={data.stats.orders} label={t('Buyurtmalar')} />
+                <Stat icon={<Wrench size={18} />} value={data.stats.requests} label={t('So‘rovlar')} />
+                <Stat icon={<MessageSquare size={18} />} value={data.stats.messages} label={t('Xabarlar')} />
+              </>
+            )}
             <Stat icon={<Smartphone size={18} />} value={data.stats.activeDevices} label={t('Faol qurilmalar')} />
             {data.masterProfile && <Stat icon={<Star size={18} />} value={Number(data.masterProfile.ratingAvg).toFixed(1)} label={t('Reyting · {completedOrders} ish', { completedOrders: data.masterProfile.completedOrders })} />}
           </section>
@@ -247,7 +256,7 @@ export function AdminUserProfilePage() {
               )}
             </section>
 
-            {data.masterProfile && (
+            {!isAdminAccount && data.masterProfile && (
               <section className="gm-uprofile__card">
                 <h2>{t('Usta profili')}</h2>
                 <Field icon={<Wrench size={16} />} label={t('Kasbi')}>
@@ -288,7 +297,7 @@ export function AdminUserProfilePage() {
               </section>
             )}
 
-            {data.addresses && data.addresses.length > 0 && (
+            {!isAdminAccount && data.addresses && data.addresses.length > 0 && (
               <section className="gm-uprofile__card">
                 <h2>{t('Manzillari')}</h2>
                 {data.addresses.map((address) => (
@@ -299,7 +308,7 @@ export function AdminUserProfilePage() {
               </section>
             )}
 
-            {data.recentOrders && data.recentOrders.length > 0 && (
+            {!isAdminAccount && data.recentOrders && data.recentOrders.length > 0 && (
               <section className="gm-uprofile__card">
                 <h2>{t('Oxirgi buyurtmalar')}</h2>
                 <ul className="gm-uprofile__orders">

@@ -384,6 +384,7 @@ model User {
   notifications            Notification[]
   reviewedVerifications    MasterVerification[]      @relation("VerificationReviewer")
   auditLogs                AuditLog[]                @relation("AuditActor")
+  errorLogs                ErrorLog[]                @relation("ErrorLogUser")
   outboxEvents             OutboxEvent[]             @relation("OutboxCreator")
   orderStatusHistoryActors OrderStatusHistory[]      @relation("OrderStatusActor")
   additionalWorkRequests   AdditionalWorkRequest[]   @relation("AdditionalWorkRequester")
@@ -1405,4 +1406,43 @@ model AuditLog {
   @@index([targetType, targetId, createdAt])
   @@index([action, createdAt])
   @@map("audit_logs")
+}
+
+/// Tizimda yuz bergan xatoliklar: server (HTTP 4xx/5xx, ushlanmagan xatolar) va mijoz (veb/ilova: UI qulashi, tarmoq, API xabarlari).
+model ErrorLog {
+  id          String    @id @default(uuid()) @db.Uuid
+  /// SERVER | CLIENT
+  source      String    @db.VarChar(16)
+  /// HTTP | UNHANDLED | UI_CRASH | UI_ERROR | API_ERROR | NETWORK
+  kind        String    @db.VarChar(32)
+  /// ERROR (5xx, qulash) | WARNING (4xx, foydalanuvchi xatosi)
+  severity    String    @db.VarChar(16)
+  status      Int?
+  code        String?   @db.VarChar(100)
+  message     String
+  stack       String?
+  method      String?   @db.VarChar(10)
+  path        String?   @db.VarChar(500)
+  pageUrl     String?   @map("page_url") @db.VarChar(500)
+  requestId   String?   @map("request_id") @db.VarChar(100)
+  userId      String?   @map("user_id") @db.Uuid
+  userRole    String?   @map("user_role") @db.VarChar(20)
+  panel       String?   @db.VarChar(20)
+  platform    String?   @db.VarChar(20)
+  userAgent   String?   @map("user_agent") @db.VarChar(400)
+  ipAddress   String?   @map("ip_address") @db.VarChar(64)
+  appVersion  String?   @map("app_version") @db.VarChar(40)
+  context     Json?
+  /// Bir xil xatoliklarni guruhlash uchun (manba+tur+kod+status+yo‘l shabloni+xabar boshi).
+  fingerprint String    @db.VarChar(64)
+  resolvedAt  DateTime? @map("resolved_at")
+  createdAt   DateTime  @default(now())
+  user        User?     @relation("ErrorLogUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([fingerprint, createdAt])
+  @@index([userId, createdAt])
+  @@index([source, severity, createdAt])
+  @@index([resolvedAt])
+  @@map("error_logs")
 }

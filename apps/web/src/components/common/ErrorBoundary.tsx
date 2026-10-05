@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import { Button } from '@/components/ui/Button';
+import { reportClientError } from '@/lib/error-reporter';
 import './ErrorBoundary.css';
 import { t } from '@/i18n';
 
@@ -21,6 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error('Kutilmagan interfeys xatosi:', error, info.componentStack);
+    reportClientError({ kind: 'UI_CRASH', message: error.message, stack: error.stack, context: { componentStack: info.componentStack?.slice(0, 1500) } });
   }
 
   render() {

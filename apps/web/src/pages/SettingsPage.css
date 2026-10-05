@@ -119,6 +119,15 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: var(--gm-space-3);
   margin-top: var(--gm-space-4);
+  /* Namuna tugmalari tanlangan o‘lchamga qaramay doim bir xil (o‘rtacha) hajmda turadi */
+  --gm-btn-h-sm: 32px;
+  --gm-btn-h-md: 44px;
+  --gm-btn-h-lg: 50px;
+  --gm-btn-fs-sm: 12.5px;
+  --gm-btn-fs-md: 14px;
+  --gm-btn-fs-lg: 15px;
+  --gm-btn-px: 18px;
 }

@@ -1,5 +1,6 @@
 import { env } from '@/lib/env';
 import { ApiError, type ApiEnvelope } from '@/types/api';
+import { reportClientError } from '@/lib/error-reporter';
 import { t } from '@/i18n';
 
 const AUTH_PATH_PREFIX = '/auth/';
@@ -61,7 +62,10 @@ async function request<T>(path: string, options: RequestOptions = {}, isRetry = 
       body: isFormData ? (options.body as FormData) : options.body !== undefined ? JSON.stringify(options.body) : undefined,
       signal: options.signal,
     });
-  } catch {
+  } catch (cause) {
+    if (!(cause instanceof DOMException && cause.name === 'AbortError') && !path.startsWith('/client-errors')) {
+      reportClientError({ kind: 'NETWORK', message: t('Internet aloqasi yo’q yoki server javob bermayapti.'), method: options.method ?? 'GET', path, status: 0, code: 'NETWORK_ERROR' });
+    }
     throw new ApiError({
       statusCode: 0,
       code: 'NETWORK_ERROR',

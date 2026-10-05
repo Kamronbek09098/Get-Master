@@ -57,6 +57,7 @@ import { LegalModule } from './modules/legal/legal.module';
 import { TrustSafetyModule } from './modules/trust-safety/trust-safety.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { UsersModule } from './modules/users/users.module';
+import { ErrorLogModule } from './modules/error-log/error-log.module';
 
 @Module({
   imports: [
@@ -65,7 +66,7 @@ import { UsersModule } from './modules/users/users.module';
     MetricsModule, TelegramModule, PrismaModule, AuthModule, OtpModule, AdminModule, BookingModule, ClassificationModule, CommunicationModule,
     ComplaintModule, CustomerModule, GeoModule, DisputeModule, MailModule, MasterModule, MatchingModule, MediaModule, NotificationModule,
     OfferModule, OrderModule, PaymentModule, RequestModule, ReviewModule, ServiceModule, TrustModule,
-    WorkModule, WarrantyModule, LegalModule, TrustSafetyModule, AuditModule, UsersModule,
+    WorkModule, WarrantyModule, LegalModule, TrustSafetyModule, AuditModule, UsersModule, ErrorLogModule,
   ],
   controllers: [AppController],
   providers: [

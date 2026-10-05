@@ -1,0 +1,24 @@
+import { apiGet, apiPost } from '@/services/api.client';
+import type { ErrorFilters, ErrorGroup, ErrorPage, ErrorSummary } from './types';
+
+function qs(params: Record<string, string | undefined>): string {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) if (value) search.set(key, value);
+  const query = search.toString();
+  return query ? `?${query}` : '';
+}
+
+export const errorLogService = {
+  list(filters: ErrorFilters, page: number) {
+    return apiGet<ErrorPage>(`/admin/errors${qs({ ...filters, page: String(page), limit: '25' })}`);
+  },
+  summary() {
+    return apiGet<ErrorSummary>('/admin/errors/summary');
+  },
+  groups(days: number) {
+    return apiGet<ErrorGroup[]>(`/admin/errors/groups${qs({ days: String(days) })}`);
+  },
+  resolve(input: { ids?: string[]; fingerprint?: string }, value: boolean) {
+    return apiPost<{ updated: number }>('/admin/errors/resolve', { ...input, value });
+  },
+};

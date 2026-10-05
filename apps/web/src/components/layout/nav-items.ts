@@ -6,6 +6,7 @@ import {
   MessagesSquare,
   Blocks,
   BriefcaseBusiness,
+  Bug,
   CalendarClock,
   ClipboardList,
   CreditCard,
@@ -67,6 +68,7 @@ function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permiss
       { to: '/admin/katalog', label: t('Xizmatlar katalogi'), icon: Blocks, group: 'Kontent', permission: 'CATALOG' },
       { to: '/admin/siyosatlar', label: t('Siyosatlar'), icon: FileText, group: 'Kontent', permission: 'POLICIES' },
       { to: '/admin/audit', label: t('Audit jurnali'), icon: ScrollText, group: 'Kontent', permission: 'AUDIT' },
+      ...(options.superAdmin ? [{ to: '/admin/errorlar', label: t('Errorlar'), icon: Bug, group: 'Kontent' } satisfies NavItem] : []),
       { to: '/bildirishnomalar', label: t('Bildirishnomalar'), icon: Bell, group: ACCOUNT },
       { to: '/sozlamalar', label: t('Sozlamalar'), icon: Settings, group: ACCOUNT },
     ].filter(allowed);

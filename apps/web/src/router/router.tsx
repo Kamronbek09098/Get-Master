@@ -1,5 +1,6 @@
 import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { RouteError } from '@/components/common/RouteError';
 import { RootShell } from './RootShell';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -54,6 +55,7 @@ const AdminSafetyPage = lazy(() => import('@/pages/admin/AdminSafetyPage').then(
 const AdminCatalogPage = lazy(() => import('@/pages/admin/AdminCatalogPage').then((m) => ({ default: m.AdminCatalogPage })));
 const AdminPoliciesPage = lazy(() => import('@/pages/admin/AdminPoliciesPage').then((m) => ({ default: m.AdminPoliciesPage })));
 const AdminAuditPage = lazy(() => import('@/pages/admin/AdminAuditPage').then((m) => ({ default: m.AdminAuditPage })));
+const AdminErrorsPage = lazy(() => import('@/pages/admin/AdminErrorsPage').then((m) => ({ default: m.AdminErrorsPage })));
 const AdminDevOpsPage = lazy(() => import('@/pages/admin/AdminDevOpsPage').then((m) => ({ default: m.AdminDevOpsPage })));
 const AdminChatsPage = lazy(() => import('@/pages/admin/AdminChatsPage').then((m) => ({ default: m.AdminChatsPage })));
 
@@ -69,6 +71,7 @@ const shared = (el: ReactNode) => only(['CUSTOMER', 'MASTER'], el);
 export const router = createBrowserRouter([
   {
     element: <RootShell />,
+    errorElement: <RouteError />,
     children: [
       { path: '/', element: <RoleSelectPage /> },
       { path: '/shartlar', element: <TermsPage /> },
@@ -148,6 +151,7 @@ export const router = createBrowserRouter([
           { path: '/admin/katalog', element: admin(<AdminCatalogPage />) },
           { path: '/admin/siyosatlar', element: admin(<AdminPoliciesPage />) },
           { path: '/admin/audit', element: admin(<AdminAuditPage />) },
+          { path: '/admin/errorlar', element: admin(<AdminErrorsPage />) },
           { path: '/admin/devops', element: admin(<AdminDevOpsPage />) },
           { path: '/admin/suhbatlar', element: admin(<AdminChatsPage />) },
           { path: '/admin/xabarlar', element: admin(<ChatPage />) },
