@@ -485,3 +485,16 @@ a.gm-audit__person:focus-visible {
     white-space: nowrap;
   }
 }
+
+/* Rol kartalari: izoh sarlavha va hisoblagich bilan to‘qnashmasin */
+.gm-audit__roles { display: flex; flex-wrap: wrap; }
+.gm-audit__role { flex: 1 1 220px; }
+.gm-audit__role { gap: 12px; min-height: 68px; }
+.gm-audit__role-text { gap: 2px; }
+.gm-audit__role-text strong { font-size: 0.95rem; line-height: 1.25; }
+.gm-audit__role-text small { font-size: 0.75rem; overflow-wrap: anywhere; hyphens: auto; }
+.gm-audit__role-count { flex: none; align-self: flex-start; }
+@media (max-width: 640px) {
+  .gm-audit__role { flex-basis: calc(50% - 8px); }
+  .gm-audit__role-count { align-self: center; }
+}

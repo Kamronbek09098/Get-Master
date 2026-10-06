@@ -199,3 +199,13 @@
   font-size: 13px;
   font-weight: 600;
 }
+
+/* Bo‘lim sarlavhasi: raqam, sarlavha va izoh orasida yetarli masofa */
+.gm-reqform__section { gap: 20px; padding: 20px; }
+.gm-reqform__head { gap: 14px; align-items: center; }
+.gm-reqform__head h2 { font-size: 1.15rem; line-height: 1.25; }
+.gm-reqform__head p { margin: 4px 0 0; font-size: 0.9rem; line-height: 1.4; }
+.gm-reqform__num { width: 34px; height: 34px; font-size: 1rem; }
+@media (max-width: 640px) {
+  .gm-reqform__section { gap: 16px; padding: 16px; }
+}
