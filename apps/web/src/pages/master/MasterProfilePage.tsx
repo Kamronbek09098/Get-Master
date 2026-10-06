@@ -20,6 +20,7 @@ import { useLogout } from '@/features/auth/hooks/useAuth';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { InfoRows, ProfileCard } from '@/features/profile/ProfileCard';
 import { ProfileMenuList, ProfileSubPage } from '@/features/profile/ProfileMenu';
+import { GoogleLinkSettings } from '@/features/session/components/GoogleLinkSettings';
 import '@/features/profile/Profile.css';
 import './MasterOwnProfile.css';
 import { t } from '@/i18n';
@@ -74,6 +75,8 @@ export function MasterProfilePage() {
         <div className="gm-mprof__mainform">
           <MasterForm key={data.id} profile={data} />
         </div>
+        <div className="gm-pmerge__divider" />
+        <GoogleLinkSettings />
       </ProfileSubPage>
     );
   }

@@ -19,6 +19,7 @@ import { useMyRequests } from '@/features/request/hooks/useRequests';
 import { ProfileHero } from '@/features/profile/ProfileHero';
 import { InfoRows } from '@/features/profile/ProfileCard';
 import { ProfileMenuList, ProfileSubPage } from '@/features/profile/ProfileMenu';
+import { GoogleLinkSettings } from '@/features/session/components/GoogleLinkSettings';
 import '@/features/profile/Profile.css';
 import { t } from '@/i18n';
 
@@ -59,6 +60,8 @@ export function CustomerProfilePage() {
         />
         <div className="gm-pmerge__divider" />
         <CustomerForm profile={data} />
+        <div className="gm-pmerge__divider" />
+        <GoogleLinkSettings />
       </ProfileSubPage>
     );
   }

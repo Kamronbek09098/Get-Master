@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import { Languages, LogOut, MonitorSmartphone, ShieldCheck, SlidersHorizontal, UserRound } from 'lucide-react';
+import { Languages, LogOut, MonitorSmartphone, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DeviceList } from '@/features/auth/components/DeviceList';
 import { useLogout } from '@/features/auth/hooks/useAuth';
-import { GoogleLinkSettings } from '@/features/session/components/GoogleLinkSettings';
 import { TwoFactorSettings } from '@/features/session/components/TwoFactorSettings';
 import { LanguageSettings } from '@/features/session/components/LanguageSettings';
 import { ProfileMenuList, ProfileSubPage } from '@/features/profile/ProfileMenu';
@@ -66,13 +65,6 @@ export function SettingsPage() {
       </ProfileSubPage>
     );
   }
-  if (section === 'google') {
-    return (
-      <ProfileSubPage title={t('Google akkaunt')} backTo={BASE}>
-        <GoogleLinkSettings />
-      </ProfileSubPage>
-    );
-  }
   if (section === 'qurilmalar') {
     return (
       <ProfileSubPage title={t('Faol qurilmalar')} backTo={BASE}>
@@ -92,7 +84,6 @@ export function SettingsPage() {
           { key: 'lang', icon: Languages, label: t('Til'), value: LANGUAGES.find((item) => item.code === lang)?.label, to: `${BASE}/til` },
           { key: 'view', icon: SlidersHorizontal, label: t('Tugmalar o‘lchami'), value: UI_SIZES.find((item) => item.value === size)?.label, to: `${BASE}/korinish` },
           { key: 'security', icon: ShieldCheck, label: t('Ikki bosqichli himoya'), to: `${BASE}/xavfsizlik` },
-          { key: 'google', icon: UserRound, label: t('Google akkaunt'), to: `${BASE}/google` },
           { key: 'devices', icon: MonitorSmartphone, label: t('Faol qurilmalar'), to: `${BASE}/qurilmalar` },
           { key: 'logout', icon: LogOut, label: t('Tizimdan chiqish'), danger: true, onClick: () => logout.mutate(false) },
         ]}

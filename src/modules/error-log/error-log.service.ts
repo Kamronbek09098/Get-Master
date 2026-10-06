@@ -13,8 +13,6 @@ import type { ClientErrorDto } from './dto/client-error.dto';
 import type { ErrorGroupsQueryDto, ErrorListQueryDto } from './dto/error-query.dto';
 
 const RETENTION_DAYS = 30;
-/** Shovqin: sessiya muddati tugashi oddiy hodisa, xatolik emas. */
-const IGNORED_STATUSES = new Set([401]);
 
 export interface ErrorRecord {
   source: 'SERVER' | 'CLIENT';
@@ -43,6 +41,16 @@ const stripQuery = (value: string | null | undefined): string | null => (value ?
 const template = (path: string | null): string =>
   (path ?? '').replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, ':id').replace(/\/\d+(?=\/|$)/g, '/:n');
 
+/** Status yo‘q: interfeys xatosi yoki tarmoq (eski yozuvlarda 0). */
+const NO_STATUS: Prisma.ErrorLogWhereInput = { OR: [{ status: null }, { status: 0 }] };
+
+function statusClassWhere(statusClass?: '4xx' | '5xx' | 'none'): Prisma.ErrorLogWhereInput | null {
+  if (statusClass === '4xx') return { status: { gte: 400, lt: 500 } };
+  if (statusClass === '5xx') return { status: { gte: 500, lt: 600 } };
+  if (statusClass === 'none') return NO_STATUS;
+  return null;
+}
+
 @Injectable()
 export class ErrorLogService implements ErrorNotifier {
   private readonly logger = new Logger(ErrorLogService.name);
@@ -55,7 +63,6 @@ export class ErrorLogService implements ErrorNotifier {
   /** Xatolikni bazaga yozadi. Hech qachon asosiy so‘rovni buzmaydi (xatolik ichida xatolik chiqmasin). */
   async record(input: ErrorRecord): Promise<void> {
     try {
-      if (input.status && IGNORED_STATUSES.has(input.status)) return;
       const path = stripQuery(input.path);
       const severity = input.kind === 'UI_CRASH' || input.kind === 'UNHANDLED' || !input.status || input.status >= 500 ? 'ERROR' : 'WARNING';
       const fingerprint = createHash('sha1')
@@ -66,7 +73,7 @@ export class ErrorLogService implements ErrorNotifier {
           source: input.source,
           kind: input.kind.slice(0, 32),
           severity,
-          status: input.status ?? null,
+          status: input.status || null,
           code: cut(input.code, 100),
           message: cut(input.message, 2000) ?? '',
           stack: cut(input.stack, 8000),
@@ -152,7 +159,10 @@ export class ErrorLogService implements ErrorNotifier {
     if (query.kind) and.push({ kind: query.kind });
     if (query.panel) and.push({ panel: query.panel });
     if (query.platform) and.push({ platform: query.platform });
-    if (query.status) and.push({ status: query.status });
+    if (query.status === 0) and.push(NO_STATUS);
+    else if (query.status) and.push({ status: query.status });
+    const byClass = statusClassWhere(query.statusClass);
+    if (byClass) and.push(byClass);
     if (query.fingerprint) and.push({ fingerprint: query.fingerprint });
     if (query.state === 'open') and.push({ resolvedAt: null });
     if (query.state === 'resolved') and.push({ resolvedAt: { not: null } });
@@ -193,12 +203,13 @@ export class ErrorLogService implements ErrorNotifier {
     const now = Date.now();
     const since24 = new Date(now - 24 * 3600_000);
     const since7d = new Date(now - 7 * 24 * 3600_000);
-    const [last24, last24Errors, openTotal, bySource, byKind, affected, daily] = await Promise.all([
+    const [last24, last24Errors, openTotal, bySource, byKind, byStatus, affected, daily] = await Promise.all([
       this.db.errorLog.count({ where: { createdAt: { gte: since24 } } }),
       this.db.errorLog.count({ where: { createdAt: { gte: since24 }, severity: 'ERROR' } }),
       this.db.errorLog.count({ where: { resolvedAt: null } }),
       this.db.errorLog.groupBy({ by: ['source'], where: { createdAt: { gte: since7d } }, _count: { _all: true } }),
       this.db.errorLog.groupBy({ by: ['kind'], where: { createdAt: { gte: since7d } }, _count: { _all: true } }),
+      this.db.errorLog.groupBy({ by: ['status'], where: { createdAt: { gte: since7d }, resolvedAt: null }, _count: { _all: true }, _max: { createdAt: true } }),
       this.db.errorLog.findMany({ where: { createdAt: { gte: since24 }, userId: { not: null } }, distinct: ['userId'], select: { userId: true } }),
       this.db.$queryRaw<{ day: Date; total: bigint; errors: bigint }[]>`
         SELECT date_trunc('day', "createdAt") AS day, COUNT(*) AS total, COUNT(*) FILTER (WHERE severity = 'ERROR') AS errors
@@ -211,20 +222,45 @@ export class ErrorLogService implements ErrorNotifier {
       affectedUsers24h: affected.length,
       bySource: bySource.map((row) => ({ source: row.source, count: row._count._all })),
       byKind: byKind.map((row) => ({ kind: row.kind, count: row._count._all })),
+      byStatus: this.mergeStatuses(byStatus),
       daily: daily.map((row) => ({ day: row.day, total: Number(row.total), errors: Number(row.errors) })),
     };
+  }
+
+  private mergeStatuses(rows: { status: number | null; _count: { _all: number }; _max: { createdAt: Date | null } }[]) {
+    const merged = new Map<number, { status: number; count: number; lastSeenAt: Date | null }>();
+    for (const row of rows) {
+      const key = row.status ?? 0;
+      const prev = merged.get(key);
+      const last = row._max.createdAt;
+      merged.set(key, { status: key, count: (prev?.count ?? 0) + row._count._all, lastSeenAt: prev?.lastSeenAt && last && prev.lastSeenAt > last ? prev.lastSeenAt : last });
+    }
+    return [...merged.values()].sort((a, b) => a.status - b.status);
   }
 
   async groups(query: ErrorGroupsQueryDto) {
     const days = query.days ?? 7;
     const since = new Date(Date.now() - days * 24 * 3600_000);
+    const filters: Prisma.Sql[] = [Prisma.sql`"createdAt" >= ${since}`];
+    if (query.source) filters.push(Prisma.sql`source = ${query.source}`);
+    if (query.status === 0) filters.push(Prisma.sql`(status IS NULL OR status = 0)`);
+    else if (query.status) filters.push(Prisma.sql`status = ${query.status}`);
+    if (query.statusClass === '4xx') filters.push(Prisma.sql`status BETWEEN 400 AND 499`);
+    if (query.statusClass === '5xx') filters.push(Prisma.sql`status BETWEEN 500 AND 599`);
+    if (query.statusClass === 'none') filters.push(Prisma.sql`(status IS NULL OR status = 0)`);
+    const having =
+      query.state === 'open'
+        ? Prisma.sql`HAVING COUNT(*) FILTER (WHERE resolved_at IS NULL) > 0`
+        : query.state === 'resolved'
+          ? Prisma.sql`HAVING COUNT(*) FILTER (WHERE resolved_at IS NULL) = 0`
+          : Prisma.empty;
     const rows = await this.db.$queryRaw<
       { fingerprint: string; total: bigint; users: bigint; last_seen: Date; first_seen: Date; open: bigint }[]
     >`
       SELECT fingerprint, COUNT(*) AS total, COUNT(DISTINCT user_id) AS users, MAX("createdAt") AS last_seen, MIN("createdAt") AS first_seen,
              COUNT(*) FILTER (WHERE resolved_at IS NULL) AS open
-      FROM error_logs WHERE "createdAt" >= ${since}
-      GROUP BY fingerprint ORDER BY MAX("createdAt") DESC LIMIT 50`;
+      FROM error_logs WHERE ${Prisma.join(filters, ' AND ')}
+      GROUP BY fingerprint ${having} ORDER BY MAX("createdAt") DESC LIMIT 100`;
     if (rows.length === 0) return [];
     const samples = await this.db.errorLog.findMany({
       where: { fingerprint: { in: rows.map((row) => row.fingerprint) } },

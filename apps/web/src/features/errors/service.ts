@@ -15,8 +15,8 @@ export const errorLogService = {
   summary() {
     return apiGet<ErrorSummary>('/admin/errors/summary');
   },
-  groups(days: number) {
-    return apiGet<ErrorGroup[]>(`/admin/errors/groups${qs({ days: String(days) })}`);
+  groups(days: number, filter: Pick<ErrorFilters, 'status' | 'statusClass' | 'state'> = {}) {
+    return apiGet<ErrorGroup[]>(`/admin/errors/groups${qs({ days: String(days), status: filter.status, statusClass: filter.statusClass, state: filter.state })}`);
   },
   resolve(input: { ids?: string[]; fingerprint?: string }, value: boolean) {
     return apiPost<{ updated: number }>('/admin/errors/resolve', { ...input, value });

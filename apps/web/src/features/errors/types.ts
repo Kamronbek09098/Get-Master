@@ -62,6 +62,8 @@ export interface ErrorSummary {
   affectedUsers24h: number;
   bySource: Array<{ source: ErrorSource; count: number }>;
   byKind: Array<{ kind: ErrorKind; count: number }>;
+  /** Hal qilinmagan xatolar, status bo‘yicha (0 — status yo‘q: interfeys/tarmoq). */
+  byStatus: Array<{ status: number; count: number; lastSeenAt: string | null }>;
   daily: Array<{ day: string; total: number; errors: number }>;
 }
 
@@ -70,6 +72,9 @@ export interface ErrorFilters {
   severity?: ErrorSeverity | '';
   panel?: string;
   platform?: string;
+  /** Aniq status (0 — status yo‘q). */
+  status?: string;
+  statusClass?: '4xx' | '5xx' | 'none';
   state?: 'open' | 'resolved' | '';
   q?: string;
   accountNumber?: string;

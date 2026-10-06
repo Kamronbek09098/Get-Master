@@ -20,6 +20,10 @@ export class ErrorListQueryDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(599)
   status?: number;
 
+  /** 4xx (mijoz xatolari) | 5xx (server xatolari) | none (status yo‘q: interfeys, tarmoq). */
+  @IsOptional() @IsIn(['4xx', '5xx', 'none'])
+  statusClass?: '4xx' | '5xx' | 'none';
+
   @IsOptional() @IsIn(['open', 'resolved'])
   state?: 'open' | 'resolved';
 
@@ -46,6 +50,18 @@ export class ErrorListQueryDto {
 }
 
 export class ErrorGroupsQueryDto {
+  @IsOptional() @IsIn(['open', 'resolved'])
+  state?: 'open' | 'resolved';
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(599)
+  status?: number;
+
+  @IsOptional() @IsIn(['4xx', '5xx', 'none'])
+  statusClass?: '4xx' | '5xx' | 'none';
+
+  @IsOptional() @IsIn(['SERVER', 'CLIENT'])
+  source?: 'SERVER' | 'CLIENT';
+
   @IsOptional() @Type(() => Number) @IsIn([1, 7, 30])
   days?: number;
 }
