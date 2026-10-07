@@ -8,6 +8,15 @@ import { TelegramAlertService } from '../../infrastructure/telegram/telegram-ale
 export const MAX_RECORDING_BYTES = 49 * 1024 * 1024;
 const MIME_TYPES = ['video/webm', 'audio/webm', 'video/mp4', 'audio/mp4', 'audio/ogg'];
 
+/** Toshkent vaqti: 2026-10-07_20-39-12. */
+const stamp = (date: Date) => {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Tashkent', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' })
+      .formatToParts(date)
+      .map((item) => [item.type, item.value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day}_${parts.hour}-${parts.minute}-${parts.second}`;
+};
 const esc = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const fullName = (user: { firstName: string | null; lastName: string | null; phone: string | null }) =>
   [user.firstName, user.lastName].filter(Boolean).join(' ') || user.phone || '—';
@@ -25,7 +34,8 @@ export class CallRecordingService {
     private readonly telegram: TelegramAlertService,
   ) {}
 
-  async forward(userId: string, callId: string, req: Request) {
+  async forward(userId: string, callId: string, req: Request, partRaw?: string) {
+    const part = Math.min(Math.max(Number.parseInt(partRaw ?? '1', 10) || 1, 1), 999);
     const call = await this.db.call.findUnique({
       where: { id: callId },
       include: {
@@ -58,7 +68,9 @@ export class CallRecordingService {
       `<b>Boshlangan:</b> ${call.answeredAt.toISOString().replace('T', ' ').slice(0, 19)} UTC · <b>Davomiyligi:</b> ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`,
       `<b>Qo‘ng‘iroq:</b> ${call.id}`,
     ].join('\n');
-    const delivered = await this.telegram.sendCallRecording({ kind, data, mimeType: mime, caption });
+    // Fayl nomi: {qo‘ng‘iroq sanasi}-{bo‘lak raqami} (bo‘linmagan bo‘lsa 1), masalan 2026-10-07_20-39-12-1.webm.
+    const fileBase = `${stamp(call.answeredAt)}-${part}`;
+    const delivered = await this.telegram.sendCallRecording({ kind, data, mimeType: mime, caption: `${caption}\n<b>Bo‘lak:</b> ${part}`, fileBase });
     if (!delivered) this.logger.warn(`Qo‘ng‘iroq ${callId} yozuvi Telegram’ga yetkazilmadi; saqlanmadi.`);
     return { delivered };
   }

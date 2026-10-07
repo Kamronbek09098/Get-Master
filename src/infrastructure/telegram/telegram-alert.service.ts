@@ -418,7 +418,7 @@ export class TelegramAlertService implements OnModuleInit {
   }
 
   /** Qo‘ng‘iroq yozuvi tayinlangan guruhga yuboriladi (video → video guruh, audio → audio guruh). Hech qayerda saqlanmaydi; sozlanmagan bo‘lsa false. */
-  async sendCallRecording(input: { kind: 'VIDEO' | 'AUDIO'; data: Buffer; mimeType: string; caption: string }): Promise<boolean> {
+  async sendCallRecording(input: { kind: 'VIDEO' | 'AUDIO'; data: Buffer; mimeType: string; caption: string; fileBase: string }): Promise<boolean> {
     const video = input.kind === 'VIDEO';
     const chatId = this.config.get<string>(video ? 'telegram.callsVideoChatId' : 'telegram.callsAudioChatId', '');
     let thread = this.config.get<number | undefined>(video ? 'telegram.callsVideoThreadId' : 'telegram.callsAudioThreadId', undefined);
@@ -427,8 +427,7 @@ export class TelegramAlertService implements OnModuleInit {
       return false;
     }
     const ext = input.mimeType.includes('mp4') ? 'mp4' : input.mimeType.includes('ogg') ? 'ogg' : 'webm';
-    const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-    const base = `${video ? 'video' : 'audio'}-qongiroq-${stamp}`;
+    const base = input.fileBase;
     const archive = zipSingle(`${base}.${ext}`, input.data);
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       const form = new FormData();

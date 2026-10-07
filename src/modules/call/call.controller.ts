@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RateLimit } from '../../common/decorators/rate-limit.decorator';
@@ -50,8 +50,8 @@ export class CallController {
   /** Ishtirokchi o‘z yozuvini (webm) yuboradi (tana — xom fayl); yozuv Telegram guruhiga uzatiladi, tizimda saqlanmaydi. */
   @Post(':id/recording')
   @RateLimit({ policy: 'callSignal', scope: 'user' })
-  uploadRecording(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
-    return this.recordings.forward(userId, id, req);
+  uploadRecording(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request, @Query('part') part?: string) {
+    return this.recordings.forward(userId, id, req, part);
   }
 
   @Post(':id/accept')

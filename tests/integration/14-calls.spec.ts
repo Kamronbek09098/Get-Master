@@ -288,9 +288,9 @@ describe('calls: rules and access', () => {
   it('forwards participant recordings to Telegram and never stores them', async () => {
     await resetCalls();
     const telegram = h.app.get(TelegramAlertService);
-    const sent: { kind: string; size: number; caption: string }[] = [];
+    const sent: { kind: string; size: number; caption: string; fileBase: string }[] = [];
     const spy = vi.spyOn(telegram, 'sendCallRecording').mockImplementation(async (input) => {
-      sent.push({ kind: input.kind, size: input.data.length, caption: input.caption });
+      sent.push({ kind: input.kind, size: input.data.length, caption: input.caption, fileBase: input.fileBase });
       return true;
     });
     const stream = await openStream(h, master.token);
@@ -299,15 +299,15 @@ describe('calls: rules and access', () => {
       expect(started.status, JSON.stringify(started.data)).toBe(201);
       const callId: string = started.data.call.id;
       await stream.next('call.incoming');
-      const upload = (token: string, body: Buffer, type = 'video/webm') =>
-        fetch(`${h.baseUrl}/api/v1/calls/${callId}/recording`, { method: 'POST', headers: { cookie: `accessToken=${token}`, 'content-type': type, 'x-forwarded-for': ip() }, body: new Uint8Array(body) });
+      const upload = (token: string, body: Buffer, type = 'video/webm', part?: number) =>
+        fetch(`${h.baseUrl}/api/v1/calls/${callId}/recording${part ? `?part=${part}` : ''}`, { method: 'POST', headers: { cookie: `accessToken=${token}`, 'content-type': type, 'x-forwarded-for': ip() }, body: new Uint8Array(body) });
       expect((await upload(customer.token, Buffer.alloc(2048, 1))).status).toBe(400); // hali javob berilmagan
       expect((await call('POST', `/${callId}/accept`, master.token)).status).toBe(201);
       await call('POST', `/${callId}/end`, customer.token);
       const mine = await upload(customer.token, Buffer.alloc(4096, 7));
       expect(mine.status).toBe(201);
       expect((await mine.json()).data.delivered).toBe(true);
-      expect((await upload(master.token, Buffer.alloc(3000, 9))).status).toBe(201);
+      expect((await upload(master.token, Buffer.alloc(3000, 9), 'video/webm', 2)).status).toBe(201);
       expect((await upload(customer.token, Buffer.alloc(4096, 7), 'text/html')).status).toBe(400);
       expect((await upload(customer.token, Buffer.alloc(10, 7))).status).toBe(400);
       const outsider = await createUser(h);
@@ -316,6 +316,8 @@ describe('calls: rules and access', () => {
       expect(sent.every((item) => item.kind === 'VIDEO')).toBe(true);
       expect(sent[0].size).toBe(4096);
       expect(sent[0].caption).toContain(callId);
+      expect(sent[0].fileBase).toMatch(/^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-1$/);
+      expect(sent[1].fileBase).toMatch(/-2$/);
       // Tizimda yozuv jadvali ham, ombordagi fayllar ham yo‘q.
       const tables = await h.db.$queryRawUnsafe<{ table_name: string }[]>(`SELECT table_name FROM information_schema.tables WHERE table_name LIKE '%recording%'`);
       expect(tables).toEqual([]);
