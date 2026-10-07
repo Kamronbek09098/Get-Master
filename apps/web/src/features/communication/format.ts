@@ -1,6 +1,7 @@
 import { env } from '@/lib/env';
 import type { ChatMessage, Conversation } from './types';
 import { t } from '@/i18n';
+import { describeCallLog, parseCallLog } from '@/features/call/call-log';
 
 const MONTHS_FULL = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
 const MONTHS_SHORT = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
@@ -123,7 +124,8 @@ export function isRead(message: ChatMessage, counterpartLastReadAt: string | nul
 export function previewText(conversation: Conversation, meId: string | undefined): string {
   const last = conversation.lastMessage;
   if (!last) return t('Xabar yo‘q');
-  const text = last.deleted ? t('Xabar o‘chirilgan') : (last.text ?? replySnippet(last));
+  const callEntry = last.type === 'SYSTEM' ? parseCallLog(last.text) : null;
+  const text = last.deleted ? t('Xabar o‘chirilgan') : callEntry ? describeCallLog(callEntry, meId).title : (last.text ?? replySnippet(last));
   return isOwnMessage(last, meId) ? t('Siz: {text}', { text }) : text;
 }
 

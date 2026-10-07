@@ -55,6 +55,8 @@ export const ERRORS = {
   EMAIL_ALREADY_REGISTERED: 'Bu email manzil allaqachon ro‘yxatdan o‘tgan',
   ACCOUNT_DELETE_ACTIVE_ORDERS: 'Faol buyurtmalaringiz bor. Avval ularni yakunlang yoki bekor qiling, so‘ng akkauntni o‘chirishingiz mumkin',
   ACCOUNT_DELETE_ADMIN_FORBIDDEN: 'Administrator akkauntini bu yerdan o‘chirib bo‘lmaydi',
+  CALL_RECORDING_TYPE: 'Qo‘ng‘iroq yozuvi formati noto‘g‘ri',
+  CALL_RECORDING_TOO_LARGE: 'Qo‘ng‘iroq yozuvi juda katta',
   CALL_NOT_FOUND: 'Qo‘ng‘iroq topilmadi',
   CALL_NOT_ALLOWED: 'Bu suhbatda qo‘ng‘iroq qilib bo‘lmaydi',
   CALL_SELF_BUSY: 'Siz hozir boshqa qo‘ng‘iroqdasiz',

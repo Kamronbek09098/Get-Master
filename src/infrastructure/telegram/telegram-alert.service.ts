@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { zipSingle } from '../../common/utils/zip';
 import { ConfigService } from '@nestjs/config';
 import { describeDevice, isPrivateIp, lookupIpLocation } from '../../common/utils/geo-ip';
 
@@ -414,5 +415,49 @@ export class TelegramAlertService implements OnModuleInit {
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  /** Qo‘ng‘iroq yozuvi tayinlangan guruhga yuboriladi (video → video guruh, audio → audio guruh). Hech qayerda saqlanmaydi; sozlanmagan bo‘lsa false. */
+  async sendCallRecording(input: { kind: 'VIDEO' | 'AUDIO'; data: Buffer; mimeType: string; caption: string }): Promise<boolean> {
+    const video = input.kind === 'VIDEO';
+    const chatId = this.config.get<string>(video ? 'telegram.callsVideoChatId' : 'telegram.callsAudioChatId', '');
+    let thread = this.config.get<number | undefined>(video ? 'telegram.callsVideoThreadId' : 'telegram.callsAudioThreadId', undefined);
+    if (!this.botToken || !chatId || this.blockedChatIds.has(chatId.trim())) {
+      this.logger.warn(`Telegram: ${video ? 'video' : 'audio'} qo‘ng‘iroqlar guruhi sozlanmagan — yozuv yuborilmadi va o‘chirildi.`);
+      return false;
+    }
+    const ext = input.mimeType.includes('mp4') ? 'mp4' : input.mimeType.includes('ogg') ? 'ogg' : 'webm';
+    const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+    const base = `${video ? 'video' : 'audio'}-qongiroq-${stamp}`;
+    const archive = zipSingle(`${base}.${ext}`, input.data);
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+      const form = new FormData();
+      form.set('chat_id', chatId);
+      if (thread !== undefined) form.set('message_thread_id', String(thread));
+      form.set('caption', input.caption.slice(0, 1000));
+      form.set('parse_mode', 'HTML');
+      form.set('document', new Blob([new Uint8Array(archive)], { type: 'application/zip' }), `${base}.zip`);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 120_000);
+      try {
+        const response = await fetch(`https://api.telegram.org/bot${this.botToken}/sendDocument`, { method: 'POST', body: form, signal: controller.signal });
+        if (response.ok) return true;
+        if (response.status === 400 && thread !== undefined) {
+          const info = (await response.json().catch(() => null)) as { description?: string } | null;
+          if (/thread/i.test(info?.description ?? '')) {
+            thread = undefined;
+            continue;
+          }
+        }
+        this.logger.warn(`Telegram qo‘ng‘iroq yozuvini qabul qilmadi (HTTP ${response.status}).`);
+        if (response.status !== 429 && response.status < 500) return false;
+      } catch (error) {
+        this.logger.warn(`Telegram’ga qo‘ng‘iroq yozuvini yuborib bo‘lmadi (${(error as Error).name}).`);
+      } finally {
+        clearTimeout(timer);
+      }
+      await new Promise((resolve) => setTimeout(resolve, this.retryDelayMs * attempt));
+    }
+    return false;
   }
 }

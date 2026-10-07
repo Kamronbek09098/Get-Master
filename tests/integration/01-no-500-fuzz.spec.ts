@@ -8,6 +8,8 @@ interface RouteInfo {
 }
 
 const SKIP_PREFIXES = ['/api/v1/auth', '/api/v1/otp', '/api/v1/webhooks'];
+// Server-Sent Events oqimi hech qachon tugamaydi — süpürish uni kutib qotib qoladi (14-calls.spec.ts alohida tekshiradi).
+const STREAM_ROUTES = new Set(['/api/v1/calls/events']);
 const isIdParam = (name: string) => /(^|[a-z])id$/i.test(name);
 // GET /masters/:id deliberately accepts either a UUID or a numeric account number (dual-format
 // public lookup) and does its own format check, returning 404 — not 400 — for anything else.
@@ -24,7 +26,7 @@ function listRoutes(h: Harness): RouteInfo[] {
       routes.push({ method: method.toUpperCase(), path, params: [...path.matchAll(/:([A-Za-z]+)/g)].map((m) => m[1]!) });
     }
   }
-  return routes.filter((r) => !SKIP_PREFIXES.some((p) => r.path.startsWith(p)));
+  return routes.filter((r) => !SKIP_PREFIXES.some((p) => r.path.startsWith(p)) && !STREAM_ROUTES.has(r.path));
 }
 
 function fill(route: RouteInfo, idValue: string): string {

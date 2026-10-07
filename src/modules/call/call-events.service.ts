@@ -112,10 +112,11 @@ export class CallEventsService implements OnModuleInit, OnModuleDestroy {
   /** Foydalanuvchi (panel bo‘yicha) hozir oqim ochib turibdimi — qo‘ng‘iroq qila olinadimi. */
   async isOnline(userId: string, panel: Panel | null): Promise<boolean> {
     try {
-      if (panel) return await this.redis.exists(this.presenceKey(userId, panel));
-      return (await this.redis.exists(this.presenceKey(userId, null))) || [...(this.clients.get(userId) ?? [])].length > 0;
+      // Panelsiz (sarlavhasiz) oqim har qanday panel uchun hisoblanadi.
+      if (panel && (await this.redis.exists(this.presenceKey(userId, panel)))) return true;
+      return await this.redis.exists(this.presenceKey(userId, null));
     } catch {
-      return [...(this.clients.get(userId) ?? [])].some((client) => !panel || client.panel === panel);
+      return [...(this.clients.get(userId) ?? [])].some((client) => !panel || !client.panel || client.panel === panel);
     }
   }
 

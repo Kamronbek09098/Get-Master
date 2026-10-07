@@ -5,6 +5,7 @@ import { RateLimit } from '../../common/decorators/rate-limit.decorator';
 import { RawResponse } from '../../common/decorators/raw-response.decorator';
 import { panelOf } from '../../common/utils/panel';
 import { CallEventsService } from './call-events.service';
+import { CallRecordingService } from './call-recording.service';
 import { CallService } from './call.service';
 import { CallSignalDto, StartCallDto } from './dto/call.dto';
 
@@ -13,6 +14,7 @@ export class CallController {
   constructor(
     private readonly calls: CallService,
     private readonly events: CallEventsService,
+    private readonly recordings: CallRecordingService,
   ) {}
 
   @Get('ice-servers')
@@ -43,6 +45,13 @@ export class CallController {
   @RateLimit({ policy: 'call', scope: 'user' })
   start(@CurrentUser('sub') userId: string, @Body() dto: StartCallDto, @Req() req: Request) {
     return this.calls.start(userId, panelOf(req), dto.conversationId, dto.mode);
+  }
+
+  /** Ishtirokchi o‘z yozuvini (webm) yuboradi (tana — xom fayl); yozuv Telegram guruhiga uzatiladi, tizimda saqlanmaydi. */
+  @Post(':id/recording')
+  @RateLimit({ policy: 'callSignal', scope: 'user' })
+  uploadRecording(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    return this.recordings.forward(userId, id, req);
   }
 
   @Post(':id/accept')

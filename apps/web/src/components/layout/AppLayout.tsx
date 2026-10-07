@@ -11,6 +11,7 @@ import { Alert } from '@/components/ui/Alert';
 import { VerificationBanner } from '@/features/trust/components/VerificationBanner';
 import { PhoneRequiredBanner } from '@/features/session/components/PhoneRequiredBanner';
 import { NameRequiredDialog } from '@/features/session/components/NameRequiredDialog';
+import { CallProvider } from '@/features/call/CallProvider';
 import { t } from '@/i18n';
 import './AppLayout.css';
 
@@ -18,6 +19,7 @@ export function AppLayout() {
   const { role, needsMasterOnboarding } = useCurrentRole();
   useAutoReadNotifications();
   return (
+    <CallProvider>
     <div className="gm-app-layout">
       <a href="#gm-main-content" className="gm-skip-link">
         {t('Asosiy kontentga o‘tish')}
@@ -42,5 +44,6 @@ export function AppLayout() {
       <NameRequiredDialog />
       <Footer />
     </div>
+    </CallProvider>
   );
 }

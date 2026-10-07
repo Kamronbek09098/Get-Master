@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { TelegramAlertService } from '../../src/infrastructure/telegram/telegram-alert.service';
 import { CallService } from '../../src/modules/call/call.service';
 import { bootHarness, createMaster, createUser, firstService, type Harness, type TestMaster, type TestUser, waitFor } from '../helpers/harness';
 
@@ -59,6 +60,7 @@ beforeAll(async () => {
   process.env.STUN_URLS = 'stun:stun.test:3478';
   process.env.TURN_URLS = 'turn:turn.test:3478?transport=udp,turns:turn.test:5349';
   process.env.TURN_SECRET = 'turn-test-secret';
+  process.env.RATE_LIMIT_CALL_MAX = '100';
   h = await bootHarness();
   const service = await firstService(h);
   customer = await createUser(h);
@@ -72,6 +74,7 @@ afterAll(async () => {
   delete process.env.STUN_URLS;
   delete process.env.TURN_URLS;
   delete process.env.TURN_SECRET;
+  delete process.env.RATE_LIMIT_CALL_MAX;
 });
 
 async function resetCalls() {
@@ -162,6 +165,7 @@ describe('calls: lifecycle over SSE', () => {
     const calleeStream = await openStream(h, master.token);
     try {
       const started = await call('POST', '', customer.token, { conversationId, mode: 'VIDEO' });
+      expect(started.status, JSON.stringify(started.data)).toBe(201);
       const callId: string = started.data.call.id;
       await calleeStream.next('call.incoming');
       expect((await call('POST', `/${callId}/cancel`, customer.token)).data.call.status).toBe('CANCELED');
@@ -279,5 +283,45 @@ describe('calls: rules and access', () => {
     expect((await h.api('GET', '/calls/events', { ip: ip() })).status).toBe(401);
     expect((await call('POST', '', customer.token, { conversationId, mode: 'HOLOGRAM' })).status).toBe(400);
     expect((await call('POST', '', customer.token, { conversationId: '00000000-0000-4000-8000-00000000dead', mode: 'AUDIO' })).status).toBe(404);
+  });
+
+  it('forwards participant recordings to Telegram and never stores them', async () => {
+    await resetCalls();
+    const telegram = h.app.get(TelegramAlertService);
+    const sent: { kind: string; size: number; caption: string }[] = [];
+    const spy = vi.spyOn(telegram, 'sendCallRecording').mockImplementation(async (input) => {
+      sent.push({ kind: input.kind, size: input.data.length, caption: input.caption });
+      return true;
+    });
+    const stream = await openStream(h, master.token);
+    try {
+      const started = await call('POST', '', customer.token, { conversationId, mode: 'VIDEO' });
+      expect(started.status, JSON.stringify(started.data)).toBe(201);
+      const callId: string = started.data.call.id;
+      await stream.next('call.incoming');
+      const upload = (token: string, body: Buffer, type = 'video/webm') =>
+        fetch(`${h.baseUrl}/api/v1/calls/${callId}/recording`, { method: 'POST', headers: { cookie: `accessToken=${token}`, 'content-type': type, 'x-forwarded-for': ip() }, body: new Uint8Array(body) });
+      expect((await upload(customer.token, Buffer.alloc(2048, 1))).status).toBe(400); // hali javob berilmagan
+      expect((await call('POST', `/${callId}/accept`, master.token)).status).toBe(201);
+      await call('POST', `/${callId}/end`, customer.token);
+      const mine = await upload(customer.token, Buffer.alloc(4096, 7));
+      expect(mine.status).toBe(201);
+      expect((await mine.json()).data.delivered).toBe(true);
+      expect((await upload(master.token, Buffer.alloc(3000, 9))).status).toBe(201);
+      expect((await upload(customer.token, Buffer.alloc(4096, 7), 'text/html')).status).toBe(400);
+      expect((await upload(customer.token, Buffer.alloc(10, 7))).status).toBe(400);
+      const outsider = await createUser(h);
+      expect((await upload(outsider.token, Buffer.alloc(4096, 7))).status).toBe(404);
+      expect(sent).toHaveLength(2);
+      expect(sent.every((item) => item.kind === 'VIDEO')).toBe(true);
+      expect(sent[0].size).toBe(4096);
+      expect(sent[0].caption).toContain(callId);
+      // Tizimda yozuv jadvali ham, ombordagi fayllar ham yo‘q.
+      const tables = await h.db.$queryRawUnsafe<{ table_name: string }[]>(`SELECT table_name FROM information_schema.tables WHERE table_name LIKE '%recording%'`);
+      expect(tables).toEqual([]);
+    } finally {
+      spy.mockRestore();
+      stream.close();
+    }
   });
 });

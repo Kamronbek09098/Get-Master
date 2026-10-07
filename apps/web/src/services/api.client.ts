@@ -124,3 +124,103 @@ export function apiPut<T>(path: string, body?: unknown): Promise<T> {
 export function apiDelete<T>(path: string): Promise<T> {
   return request<T>(path, { method: 'DELETE' });
 }
+
+export interface StreamEvent {
+  event: string;
+  data: unknown;
+}
+
+/**
+ * Server-Sent Events (SSE) oqimi: `fetch` bilan ochiladi, shuning uchun panel sarlavhasi va cookie yuboriladi
+ * (brauzerning EventSource'i sarlavha qo‘sha olmaydi). Uzilsa — oshib boruvchi kutish bilan qayta ulanadi; 401 bo‘lsa sessiya yangilanadi.
+ * Qaytgan funksiya oqimni to‘xtatadi.
+ */
+export function openEventStream(path: string, onEvent: (event: StreamEvent) => void, onStatus?: (connected: boolean) => void): () => void {
+  const controller = new AbortController();
+  let stopped = false;
+
+  async function run() {
+    let delay = 1000;
+    while (!stopped) {
+      try {
+        const response = await fetch(`${env.apiBaseUrl}${path}`, {
+          credentials: 'include',
+          headers: { ...PANEL_HEADERS, Accept: 'text/event-stream' },
+          signal: controller.signal,
+        });
+        if (response.status === 401) {
+          if (!(await refreshSession())) {
+            notifySessionExpired();
+            await sleep(15_000);
+          }
+          continue;
+        }
+        if (!response.ok || !response.body) throw new Error(`stream ${response.status}`);
+        onStatus?.(true);
+        delay = 1000;
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let index: number;
+          while ((index = buffer.indexOf('\n\n')) >= 0) {
+            const chunk = buffer.slice(0, index);
+            buffer = buffer.slice(index + 2);
+            const event = /^event: (.+)$/m.exec(chunk)?.[1];
+            const data = /^data: (.+)$/m.exec(chunk)?.[1];
+            if (event && data) {
+              try {
+                onEvent({ event, data: JSON.parse(data) as unknown });
+              } catch {
+                /* buzuq hodisa e’tiborsiz */
+              }
+            }
+          }
+        }
+      } catch {
+        if (stopped) return;
+      }
+      onStatus?.(false);
+      if (stopped) return;
+      await sleep(delay);
+      delay = Math.min(delay * 2, 15_000);
+    }
+  }
+
+  void run();
+  return () => {
+    stopped = true;
+    controller.abort();
+  };
+}
+
+const sleep = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+
+/** Sahifa yopilayotganda (pagehide) ham yetib boradigan so‘rov: qo‘ng‘iroqni tugatish uchun. */
+export function apiPostKeepalive(path: string, body: unknown = {}): void {
+  try {
+    void fetch(`${env.apiBaseUrl}${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      keepalive: true,
+      headers: { ...PANEL_HEADERS, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    /* sahifa yopilmoqda */
+  }
+}
+
+/** Xom fayl (masalan, qo‘ng‘iroq yozuvi) yuboradi; javob e'tiborga olinmaydi. */
+export async function apiPostBlob(path: string, blob: Blob): Promise<void> {
+  const response = await fetch(`${env.apiBaseUrl}${path}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { ...PANEL_HEADERS, 'Content-Type': blob.type || 'application/octet-stream' },
+    body: blob,
+  });
+  if (!response.ok) throw new Error(`upload ${response.status}`);
+}

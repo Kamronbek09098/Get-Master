@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent, TouchEvent } from 'react';
-import { AlertCircle, Check, CheckCheck, Clock, Copy, CornerUpLeft, FileText, MoreHorizontal, Pencil, RotateCw, Trash2 } from 'lucide-react';
+import { AlertCircle, Check, CheckCheck, Clock, Copy, CornerUpLeft, FileText, MoreHorizontal, Pencil, Phone, RotateCw, Trash2, Video } from 'lucide-react';
 import { env } from '@/lib/env';
 import { cx } from '@/lib/utils';
 import { accountName } from '@/lib/account-name';
 import { MediaViewer } from '@/features/media/components/MediaViewer';
 import { mediaService } from '@/features/media/services/media.service';
 import { canEdit, clock, replySnippet } from '../format';
+import { describeCallLog, parseCallLog } from '@/features/call/call-log';
 import type { ChatAttachment, ChatMessage } from '../types';
 import { Linkified } from './Linkified';
 import { ChatOrderCard } from './ChatOrderCard';
@@ -90,6 +91,9 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
   const editable = mine && canEdit(message);
   const deletable = settled && message.type !== 'ORDER';
   const hasText = !!message.text;
+  const callEntry = message.type === 'SYSTEM' ? parseCallLog(message.text) : null;
+  const callLog = callEntry ? describeCallLog(callEntry, meId) : null;
+  const callLogMode = callEntry?.mode;
   const panel = env.appRole ?? '';
   // Faqat rasm(lar)dan iborat xabar — Telegramdagidek ramkasiz, rasm pufakchani to‘liq egallaydi.
   const mediaOnly =
@@ -237,7 +241,16 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
           <>
             {message.type === 'ORDER' && message.orderId && <ChatOrderCard orderId={message.orderId} />}
             {message.attachments && message.attachments.length > 0 && <Attachments items={message.attachments} />}
-            {hasText && message.type !== 'ORDER' && (
+            {callLog && (
+              <span className={cx('gm-calllog', callLog.failed && 'is-failed')}>
+                {callLogMode === 'VIDEO' ? <Video size={16} /> : <Phone size={16} />}
+                <span>
+                  <strong>{callLog.title}</strong>
+                  {callLog.detail && <small>{callLog.detail}</small>}
+                </span>
+              </span>
+            )}
+            {hasText && !callLog && message.type !== 'ORDER' && (
               <span className="gm-bubble__text">
                 <Linkified text={message.text ?? ''} />
               </span>

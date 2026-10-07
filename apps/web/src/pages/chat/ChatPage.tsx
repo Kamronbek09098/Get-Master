@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { CallButtons } from '@/features/call/CallButtons';
 import { ArrowLeft, CornerDownLeft, ImagePlus, Keyboard, MessageCircle, Pencil, Reply, Users } from 'lucide-react';
 import { env } from '@/lib/env';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
@@ -117,6 +118,11 @@ export function ChatPage() {
                 <strong>{name}</strong>
                 <span>{selected.type === 'SUPPORT' ? (isAdmin ? t('Administrator xabarlari') : t('Administrator')) : selected.type === 'DIRECT' ? t('Buyurtmadan oldingi suhbat') : t('Buyurtma suhbati')}</span>
               </div>
+              {!isAdmin && selected.type !== 'SUPPORT' && selected.counterpart && (
+                <div className="gm-messenger__calls">
+                  <CallButtons conversationId={selected.id} peerName={name} />
+                </div>
+              )}
               {isAdmin && selected.type === 'SUPPORT' && <ReplyAccessSwitch conversationId={selected.id} allowed={selected.userCanReply === true} />}
             </header>
             <ChatThread key={selected.id} conversation={selected} />

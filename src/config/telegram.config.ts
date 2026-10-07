@@ -1,5 +1,11 @@
 import { registerAs } from '@nestjs/config';
 
+function callTarget(kind: 'VIDEO' | 'AUDIO', raw: string | undefined) {
+  const [chat, thread] = (raw ?? '').trim().split(':');
+  const threadId = thread && Number.isFinite(Number(thread)) ? Number(thread) : undefined;
+  return kind === 'VIDEO' ? { callsVideoChatId: chat ?? '', callsVideoThreadId: threadId } : { callsAudioChatId: chat ?? '', callsAudioThreadId: threadId };
+}
+
 export default registerAs('telegram', () => ({
   botToken: process.env.TELEGRAM_BOT_TOKEN ?? '',
   chatId: process.env.TELEGRAM_CHAT_ID ?? '',
@@ -18,6 +24,10 @@ export default registerAs('telegram', () => ({
   alertsThreadId: process.env.TELEGRAM_ALERTS_THREAD_ID ? Number(process.env.TELEGRAM_ALERTS_THREAD_ID) : undefined,
   // Bot HECH QACHON xabar yubormaydigan guruhlar (vergul bilan ajratilgan chat ID lar).
   blockedChatIds: (process.env.TELEGRAM_BLOCKED_CHAT_IDS ?? '').split(',').map((id) => id.trim()).filter(Boolean),
+  // Qo‘ng‘iroq yozuvlari: video qo‘ng‘iroqlar TELEGRAM_VIDEO_CALL, audio qo‘ng‘iroqlar TELEGRAM_AUDIO_CALL guruhiga yuboriladi (tizimda SAQLANMAYDI).
+  // Qiymat: guruh ID si, mavzulari bor guruh bo‘lsa «guruhID:mavzuID».
+  ...callTarget('VIDEO', process.env.TELEGRAM_VIDEO_CALL),
+  ...callTarget('AUDIO', process.env.TELEGRAM_AUDIO_CALL),
   minStatus: Number(process.env.TELEGRAM_ALERT_MIN_STATUS ?? 500),
   dedupeWindowMs: Number(process.env.TELEGRAM_ALERT_DEDUPE_SECONDS ?? 300) * 1000,
   timeoutMs: 8_000,

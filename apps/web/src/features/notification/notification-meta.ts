@@ -1,4 +1,4 @@
-import { Banknote, BadgeCheck, Bell, CalendarCheck, CalendarClock, CheckCircle2, ClipboardCheck, ClipboardList, Handshake, Image, MapPin, MessageCircle, CreditCard, Package, Scale, ScrollText, Search, Send, Truck, Wrench, XCircle } from 'lucide-react';
+import { Banknote, BadgeCheck, Bell, CalendarCheck, CalendarClock, CheckCircle2, ClipboardCheck, ClipboardList, Handshake, Image, MapPin, MessageCircle, PhoneMissed, CreditCard, Package, Scale, ScrollText, Search, Send, Truck, Wrench, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { STATUS_TEXT } from '@/features/order/order-flow';
 import type { AppNotification } from './types';
@@ -62,6 +62,10 @@ export function notificationMeta(item: AppNotification, base: '/mijoz' | '/usta'
       const id = typeof data.conversationId === 'string' ? data.conversationId : null;
       const chat = admin ? '/admin/xabarlar' : `${base}/chat`;
       return { icon: MessageCircle, tone: 'primary', to: id ? `${chat}?suhbat=${id}` : chat };
+    }
+    case 'call.missed': {
+      const id = typeof data.conversationId === 'string' ? data.conversationId : null;
+      return { icon: PhoneMissed, tone: 'danger', to: id ? `${base}/chat?suhbat=${id}` : `${base}/chat` };
     }
     case 'order.booked':
       return { icon: CalendarCheck, tone: 'success', to: orderPath(base, data.orderId) };
