@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import type { ReactNode } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronDown, FileText, Lock, ScrollText, ShieldCheck } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Logo } from '@/components/common/Logo';
+import { LogoLink } from '@/components/common/Logo';
 import { PageLoader } from '@/components/common/PageLoader';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Alert } from '@/components/ui/Alert';
@@ -12,49 +11,11 @@ import { formatDate } from '@/lib/utils';
 import { usePolicies, usePolicy } from '@/features/legal/hooks/useLegal';
 import { POLICY_TYPE_LABEL } from '@/features/legal/types';
 import type { PolicyType } from '@/features/legal/types';
+import { renderContent } from '@/features/legal/render-content';
 import './TermsPage.css';
 import { t } from '@/i18n';
 
 const ICONS: Partial<Record<PolicyType, LucideIcon>> = { TERMS: FileText, PRIVACY: Lock, PLATFORM_RULES: ScrollText, WARRANTY: ShieldCheck };
-
-/** Matnni bloklarga ajratadi: «## sarlavha», «- ro‘yxat», oddiy abzatslar. */
-function renderContent(content: string): ReactNode {
-  return content
-    .trim()
-    .split(/\n{2,}/)
-    .map((block, index) => {
-      const lines = block.split('\n');
-      if (lines.length === 1 && lines[0]?.startsWith('## ')) return <h3 key={index}>{lines[0].slice(3)}</h3>;
-      // Sarlavha va uning ostidagi ro‘yxat/abzats bitta blokda kelgan bo‘lishi mumkin.
-      const nodes: ReactNode[] = [];
-      let bullets: string[] = [];
-      const flush = () => {
-        if (bullets.length > 0) {
-          nodes.push(
-            <ul key={`ul-${nodes.length}`}>
-              {bullets.map((item, i) => (
-                <li key={i}>{item}</li>
-              ))}
-            </ul>,
-          );
-          bullets = [];
-        }
-      };
-      lines.forEach((line) => {
-        if (line.startsWith('## ')) {
-          flush();
-          nodes.push(<h3 key={`h-${nodes.length}`}>{line.slice(3)}</h3>);
-        } else if (line.startsWith('- ')) {
-          bullets.push(line.slice(2));
-        } else {
-          flush();
-          nodes.push(<p key={`p-${nodes.length}`}>{line}</p>);
-        }
-      });
-      flush();
-      return <div key={index}>{nodes}</div>;
-    });
-}
 
 function PolicyBody({ id, fallback }: { id: string; fallback?: string }) {
   const detail = usePolicy(id);
@@ -80,9 +41,7 @@ export function TermsPage() {
       <header className="gm-terms__bar">
         <button type="button" className="gm-terms__back" onClick={goBack}>
           <ArrowLeft size={18} aria-hidden="true" />{' '}{t('Orqaga')}</button>
-        <Link to="/" aria-label={t('GetMaster — bosh sahifa')}>
-          <Logo />
-        </Link>
+        <LogoLink />
       </header>
 
       <main className="gm-terms__main">

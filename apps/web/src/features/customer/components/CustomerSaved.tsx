@@ -25,7 +25,7 @@ export function SavedMastersCard() {
         <ul className="gm-act">
           {list.map((master) => (
             <li key={master.id} className="gm-act__row">
-              <Link to={`/ustalar-katalogi/${master.user.accountNumber ?? master.id}`} className="gm-act__item">
+              <Link to={`/mijoz/ustalar/${master.user.accountNumber ?? master.id}`} className="gm-act__item">
                 <span className="gm-act__top">
                   <strong>{accountName(master.user)}</strong>
                   <ChevronRight size={16} aria-hidden="true" />

@@ -34,9 +34,9 @@ export function Sidebar() {
                   to={item.to}
                   end={item.to === '/admin'}
                   className={({ isActive }) =>
-                    `gm-sidebar__link${isActive ? ' gm-sidebar__link--active' : ''}${needsMasterOnboarding && item.to !== '/ustalar/profil' ? ' gm-sidebar__link--locked' : ''}`
+                    `gm-sidebar__link${isActive ? ' gm-sidebar__link--active' : ''}${needsMasterOnboarding && item.to !== '/usta/profil' ? ' gm-sidebar__link--locked' : ''}`
                   }
-                  title={needsMasterOnboarding && item.to !== '/ustalar/profil' ? t('Avval usta profilini yarating') : undefined}
+                  title={needsMasterOnboarding && item.to !== '/usta/profil' ? t('Avval usta profilini yarating') : undefined}
                 >
                   <item.icon size={19} strokeWidth={2} aria-hidden="true" />
                   <span>{item.label}</span>

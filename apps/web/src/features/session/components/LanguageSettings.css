@@ -79,3 +79,25 @@
   flex: none;
   color: var(--gm-color-primary);
 }
+
+/* Til tanlash: belgi (✓) yozuvga tegmasin — 4 ta tor ustun o‘rniga sig‘adigan ustunlar */
+.gm-langset__grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.gm-langset__item { gap: 12px; min-height: 62px; padding: 12px 16px; }
+.gm-langset__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-langset__check {
+  box-sizing: content-box;
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  padding: 4px;
+  border-radius: 50%;
+  background: var(--gm-color-primary);
+  color: var(--gm-color-primary-contrast);
+}
+.gm-langset__item--active { box-shadow: 0 0 0 1.5px var(--gm-color-primary); }
+@media (min-width: 640px) {
+  .gm-langset__grid { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+}
+.gm-langset__grid,
+.gm-langset__grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
+@media (min-width: 640px) { .gm-langset__grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); } }

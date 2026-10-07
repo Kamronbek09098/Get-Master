@@ -188,6 +188,21 @@ enum ConversationType {
   DIRECT
 }
 
+enum CallMode {
+  AUDIO
+  VIDEO
+}
+
+enum CallStatus {
+  RINGING
+  ACTIVE
+  ENDED
+  DECLINED
+  MISSED
+  CANCELED
+  FAILED
+}
+
 enum MessageType {
   ORDER
   TEXT
@@ -375,6 +390,8 @@ model User {
   ordersAsCustomer         Order[]                   @relation("OrderCustomer")
   bookingsAsCustomer       Booking[]                 @relation("BookingCustomer")
   sentMessages             Message[]                 @relation("MessageSender")
+  callsMade                Call[]                    @relation("CallCaller")
+  callsReceived            Call[]                    @relation("CallCallee")
   uploadedWorkProofs       WorkProof[]               @relation("WorkProofUploader")
   reviews                  Review[]                  @relation("ReviewAuthor")
   casesOpened              Case[]                    @relation("CaseOpenedBy")
@@ -987,6 +1004,7 @@ model Conversation {
   order        Order?                    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   participants ConversationParticipant[]
   messages     Message[]
+  calls        Call[]
 
   @@map("conversations")
 }
@@ -1007,6 +1025,30 @@ model ConversationParticipant {
   @@id([conversationId, userId])
   @@index([userId])
   @@map("conversation_participants")
+}
+
+/// Audio/video qo‘ng‘iroq (WebRTC): holati serverda, media esa qurilmalar o‘rtasida to‘g‘ridan-to‘g‘ri (yoki TURN orqali) o‘tadi.
+model Call {
+  id             String       @id @default(uuid()) @db.Uuid
+  conversationId String       @db.Uuid
+  callerId       String       @db.Uuid
+  calleeId       String       @db.Uuid
+  callerPanel    String?      @map("caller_panel") @db.VarChar(16)
+  calleePanel    String?      @map("callee_panel") @db.VarChar(16)
+  mode           CallMode
+  status         CallStatus   @default(RINGING)
+  endReason      String?      @map("end_reason") @db.VarChar(32)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  answeredAt     DateTime?    @map("answered_at")
+  endedAt        DateTime?    @map("ended_at")
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  caller         User         @relation("CallCaller", fields: [callerId], references: [id], onDelete: Restrict)
+  callee         User         @relation("CallCallee", fields: [calleeId], references: [id], onDelete: Restrict)
+
+  @@index([conversationId, createdAt])
+  @@index([callerId, status])
+  @@index([calleeId, status])
+  @@map("calls")
 }
 
 model Message {

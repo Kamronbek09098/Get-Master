@@ -69,7 +69,7 @@ export function ChatPage() {
               ? t('Mijozlar sizga yozganda yoki buyurtma qabul qilinganda suhbat shu yerda paydo bo‘ladi. Ko‘proq mijoz topish uchun faol takliflarga javob bering.')
               : t('Ustani tanlab, uning sahifasidagi «Chat orqali bog‘lanish» tugmasi bilan birinchi suhbatingizni boshlang.')}
           </p>
-          <Link to={asMaster ? '/ustalar/faol-takliflar' : '/ustalar-katalogi'} className="gm-blank__cta">
+          <Link to={asMaster ? '/usta/faol-takliflar' : '/mijoz/ustalar'} className="gm-blank__cta">
             {asMaster ? t('Faol takliflarni ko‘rish') : t('Ustalarni ko‘rish')}
           </Link>
           <ul className="gm-blank__features">

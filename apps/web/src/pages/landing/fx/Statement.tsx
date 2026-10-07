@@ -22,8 +22,8 @@ export function Statement({ label, text }: { label: string; text: string }) {
       const rect = section.getBoundingClientRect();
       const vh = window.innerHeight;
       // 0: bo‘lim ekran pastiga kirdi → 1: bo‘lim markazi ekran markazidan o‘tib bo‘ldi.
-      const progress = Math.min(1, Math.max(0, (vh * 0.85 - rect.top) / (rect.height + vh * 0.35)));
-      const lit = progress * (spans.length + 6);
+      const progress = Math.min(1, Math.max(0, (vh * 0.9 - rect.top) / (rect.height + vh * 0.25)));
+      const lit = progress * (spans.length + 10);
       spans.forEach((span, index) => {
         const value = Math.min(1, Math.max(0, lit - index));
         span.style.setProperty('--on', value.toFixed(3));

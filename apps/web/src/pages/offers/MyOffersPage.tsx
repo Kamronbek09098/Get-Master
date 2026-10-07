@@ -38,7 +38,7 @@ export function MyOffersPage() {
             { icon: <CheckCircle2 size={16} aria-hidden="true" />, title: t('Javobni kuting'), text: t('Mijoz qabul qilsa, buyurtma boshlanadi.') },
           ]}
           action={
-            <Link to="/ustalar/faol-takliflar">
+            <Link to="/usta/faol-takliflar">
               <Button>{t('Faol takliflarni ko‘rish')}</Button>
             </Link>
           }

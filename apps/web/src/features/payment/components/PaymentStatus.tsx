@@ -23,6 +23,10 @@ const TONE: Record<PaymentStatusEnum, 'neutral' | 'success' | 'danger' | 'warnin
   PARTIALLY_REFUNDED: 'warning',
 };
 
+export function PaymentBadge({ status }: { status: PaymentStatusEnum }) {
+  return <Badge tone={TONE[status]}>{LABEL[status]}</Badge>;
+}
+
 export function PaymentStatus({ payment }: { payment: Payment }) {
   return (
     <p>

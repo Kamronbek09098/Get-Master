@@ -30,7 +30,7 @@ export function OfferList({ requestId }: { requestId: string }) {
     accept.mutate(
       { offerId, idempotencyKey },
       {
-        onSuccess: (result) => navigate(`/mijozlar/buyurtmalar/${result.order.id}`),
+        onSuccess: (result) => navigate(`/mijoz/buyurtmalar/${result.order.id}`),
         onSettled: () => {
           setPendingId(null);
           setIdempotencyKey(newIdempotencyKey());

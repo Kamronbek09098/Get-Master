@@ -2,7 +2,7 @@ import { SetMetadata } from '@nestjs/common';
 
 export const RATE_LIMIT_KEY = 'rateLimit';
 
-export type RateLimitPolicy = 'register' | 'login' | 'otpRequest' | 'otpVerify' | 'chat';
+export type RateLimitPolicy = 'register' | 'login' | 'otpRequest' | 'otpVerify' | 'chat' | 'call' | 'callSignal';
 
 export interface RateLimitOptions {
   scope: 'ip' | 'ip+phone' | 'user';

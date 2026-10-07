@@ -142,6 +142,10 @@ export class RequestService {
     const request = await this.db.problemRequest.findUnique({
       where: { id: requestId },
       include: {
+        service: { select: { id: true, name: true } },
+        category: { select: { id: true, name: true } },
+        address: { select: { title: true, addressLine: true, city: true, district: true } },
+        _count: { select: { attachments: true } },
         booking: {
           select: {
             order: {

@@ -67,12 +67,24 @@ const pxToRem = {
   },
 };
 
+/** Butun loyiha uchun BITTA .env — loyiha ildizida (apps/web ichida .env fayllari yo‘q). */
+const ENV_DIR = fileURLToPath(new URL('../..', import.meta.url));
+/** Panel roli rejimdan olinadi: `vite --mode customer|master|admin`. Rejimsiz (asosiy sayt) — rol yo‘q. */
+const ROLE_BY_MODE: Record<string, string> = { customer: 'CUSTOMER', master: 'MASTER', admin: 'ADMIN' };
+
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-  const role = env.VITE_APP_ROLE;
+  const env = loadEnv(mode, ENV_DIR, '');
+  const role = ROLE_BY_MODE[mode] ?? env.VITE_APP_ROLE ?? '';
   const panel = PANELS[role];
+  // Google client ID backend bilan umumiy: alohida VITE_ qiymat bo‘lmasa, GOOGLE_CLIENT_ID dan olinadi.
+  const googleClientId = env.VITE_GOOGLE_CLIENT_ID || env.GOOGLE_CLIENT_ID || '';
 
   return {
+    envDir: ENV_DIR,
+    define: {
+      'import.meta.env.VITE_APP_ROLE': JSON.stringify(role),
+      'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify(googleClientId),
+    },
     plugins: [
       react(),
       {

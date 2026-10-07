@@ -1,15 +1,28 @@
 import { providerLabel } from '@/features/payment/labels';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/common/EmptyState';
-import { CreditCard, ClipboardList, ReceiptText } from 'lucide-react';
+import { ChevronRight, CreditCard, ClipboardList, ReceiptText } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, formatMoney } from '@/lib/utils';
 import { usePaymentHistory } from '@/features/payment/hooks/usePayment';
-import { PaymentStatus } from '@/features/payment/components/PaymentStatus';
+import { ProviderLogo } from '@/features/payment/components/ProviderLogo';
+import { PaymentBadge } from '@/features/payment/components/PaymentStatus';
+import type { PaymentStatus as PaymentStatusEnum } from '@/types/common';
+import './PaymentHistoryPage.css';
 import { t } from '@/i18n';
+
+const STATUS_TONE: Record<PaymentStatusEnum, 'ok' | 'bad' | 'wait'> = {
+  PENDING: 'wait',
+  PROCESSING: 'wait',
+  SUCCEEDED: 'ok',
+  FAILED: 'bad',
+  CANCELLED: 'bad',
+  REFUNDED: 'wait',
+  PARTIALLY_REFUNDED: 'wait',
+};
 
 export function PaymentHistoryPage() {
   const history = usePaymentHistory();
@@ -39,24 +52,37 @@ export function PaymentHistoryPage() {
             { icon: <ReceiptText size={16} aria-hidden="true" />, title: t('Tarixni kuzating'), text: t('Har bir to‘lov holati va qaytarishlar shu yerda.') },
           ]}
           action={
-            <Link to="/mijozlar/sorov-yaratish">
+            <Link to="/mijoz/sorov-yaratish">
               <Button>{t('Yangi buyurtma yaratish')}</Button>
             </Link>
           }
         />
       )}
-      <div className="gm-list">
-        {items.map((payment) => (
-          <Link key={payment.id} to={`/mijozlar/buyurtmalar/${payment.orderId}`} className="gm-card">
-            <PaymentStatus payment={payment} />
-            <p className="gm-card__meta">
-              {providerLabel(payment.provider)} · {formatDateTime(payment.createdAt)}
-              {payment.refundedAmount !== '0' && Number(payment.refundedAmount) > 0 && t(' · Qaytarilgan: {refundedAmount}', { refundedAmount: payment.refundedAmount })}
-            </p>
-            {payment.failureReason && <p className="gm-card__meta">{t('Sabab:')}{' '}{payment.failureReason}</p>}
-          </Link>
-        ))}
-      </div>
+      <ul className="gm-phist">
+        {items.map((payment) => {
+          const refunded = Number(payment.refundedAmount) > 0;
+          return (
+            <li key={payment.id}>
+              <Link to={`/mijoz/buyurtmalar/${payment.orderId}`} className={`gm-phist__card gm-phist__card--${STATUS_TONE[payment.status]}`}>
+                <span className="gm-phist__icon" aria-hidden="true">
+                  <ProviderLogo provider={payment.provider} size={44} />
+                </span>
+                <div className="gm-phist__main">
+                  <strong>{providerLabel(payment.provider)}</strong>
+                  <time dateTime={payment.createdAt}>{formatDateTime(payment.createdAt)}</time>
+                  {refunded && <small className="gm-phist__note">{t(' · Qaytarilgan: {refundedAmount}', { refundedAmount: formatMoney(payment.refundedAmount, payment.currency) }).replace(/^ · /, '')}</small>}
+                  {payment.failureReason && <small className="gm-phist__note gm-phist__note--bad">{t('Sabab:')}{' '}{payment.failureReason}</small>}
+                </div>
+                <div className="gm-phist__side">
+                  <strong className="gm-phist__amount">{formatMoney(payment.amount, payment.currency)}</strong>
+                  <PaymentBadge status={payment.status} />
+                </div>
+                <ChevronRight size={18} className="gm-phist__chevron" aria-hidden="true" />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

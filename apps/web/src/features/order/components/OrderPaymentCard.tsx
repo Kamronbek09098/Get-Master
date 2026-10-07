@@ -9,6 +9,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatMoney, newIdempotencyKey } from '@/lib/utils';
 import { useConfirmCash, useCreatePayment } from '@/features/payment/hooks/usePayment';
 import { PaymentMethodCards } from '@/features/payment/components/PaymentMethodCards';
+import { ProviderLogo } from '@/features/payment/components/ProviderLogo';
 import { PAYMENT_STATUS_LABEL, PROVIDER_LABEL, providerLabel } from '@/features/payment/labels';
 import type { PaymentProvider } from '@/types/common';
 import '@/features/payment/components/Payment.css';
@@ -117,9 +118,13 @@ export function OrderPaymentCard({
       </header>
       <div className="gm-opaycard__body">
         <div className="gm-opaycard__method">
-          <span className="gm-paym__icon" aria-hidden="true">
-            {payment?.provider === 'CASH' ? <Banknote size={20} /> : <CreditCard size={20} />}
-          </span>
+          {payment ? (
+            <ProviderLogo provider={payment.provider} size={44} />
+          ) : (
+            <span className="gm-paym__icon gm-paym__icon--empty" aria-hidden="true">
+              <CreditCard size={22} />
+            </span>
+          )}
           <div>
             <strong>{payment ? providerLabel(payment.provider) : t('Usul tanlanmagan')}</strong>
             <small>{t('To‘lov usuli')}</small>

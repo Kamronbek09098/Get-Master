@@ -98,7 +98,7 @@ export function CustomerOrdersPage() {
           <p className="gm-page-lead">{t('Barcha so‘rov va buyurtmalaringiz bir joyda: takliflar, ish jarayoni va to‘lovlar.')}</p>
         </div>
         {!empty && (
-          <Link to="/mijozlar/sorov-yaratish">
+          <Link to="/mijoz/sorov-yaratish">
             <Button size="sm">
               <Plus size={16} />{' '}{t('Yangi buyurtma')}</Button>
           </Link>
@@ -136,7 +136,7 @@ export function CustomerOrdersPage() {
             { title: t('Ustani tanlang'), text: t('Reyting va narxni solishtirib, o‘zingizga qulayini tanlang.') },
           ]}
           action={
-            <Link to="/mijozlar/sorov-yaratish">
+            <Link to="/mijoz/sorov-yaratish">
               <Button>
                 <Plus size={18} />{' '}{t('Yangi buyurtma yaratish')}</Button>
             </Link>
@@ -157,7 +157,7 @@ export function CustomerOrdersPage() {
             </div>
             <div className="gm-mopage__search">
               <Search size={16} aria-hidden="true" />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Nomi, xizmat, usta yoki № bo‘yicha qidirish')} aria-label={t('Qidirish')} />
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Qidirish: nom, usta yoki №')} aria-label={t('Qidirish')} />
             </div>
           </div>
 

@@ -209,3 +209,77 @@
 @media (max-width: 640px) {
   .gm-reqform__section { gap: 16px; padding: 16px; }
 }
+
+/* Yakuniy sayqal: manzil to‘liq ko‘rinadi, tugma va izoh tekis, bosqichlar o‘rtada */
+.gm-reqform__addresses { grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+.gm-reqform__address { padding: 14px 16px; }
+.gm-reqform__address strong { font-size: 0.95rem; }
+.gm-reqform__address small { overflow: visible; white-space: normal; text-overflow: clip; line-height: 1.4; overflow-wrap: anywhere; }
+.gm-reqform__submit { padding-top: 4px; gap: 12px 18px; }
+.gm-reqform__submit .gm-button { min-width: 200px; }
+.gm-reqform__submit > span { line-height: 1.4; }
+.gm-reqform .gm-field { gap: 8px; }
+.gm-reqform .gm-field__label { font-size: 0.9rem; }
+.gm-reqform .gm-field__hint { font-size: 0.82rem; }
+@media (max-width: 640px) {
+  .gm-reqform__submit .gm-button { width: 100%; }
+  .gm-reqform__submit > span { width: 100%; text-align: center; }
+}
+
+/* «Davom etish»: o‘rtada, izoh esa tugma tagida */
+.gm-reqform__submit {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+}
+.gm-reqform__submit > span { width: auto; max-width: 40ch; font-size: 0.85rem; }
+
+/* «Davom etish»: katta tugma, yozuv aniq o‘rtada; izoh tugma ostida, tugma o‘rtasiga tekis */
+.gm-reqform__submit { align-items: center; gap: 12px; }
+.gm-reqform__submit .gm-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: min(320px, 100%);
+  min-height: 60px;
+  padding: 0 40px;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+.gm-reqform__submit .gm-button .gm-button__label { display: block; width: 100%; text-align: center; line-height: 1.2; letter-spacing: 0; }
+.gm-reqform__submit > span { display: block; width: min(320px, 100%); text-align: center; font-size: 0.9rem; }
+@media (max-width: 640px) {
+  .gm-reqform__submit .gm-button { width: 100%; min-width: 0; }
+  .gm-reqform__submit > span { width: 100%; }
+}
+
+/* Bo‘lim sarlavhalari kartaning o‘rtasida: raqam tepada, sarlavha va izoh uning ostida */
+.gm-reqform__head { flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.gm-reqform__head > div { display: grid; justify-items: center; gap: 4px; }
+.gm-reqform__head h2 { text-align: center; }
+.gm-reqform__head p { margin: 0; text-align: center; }
+.gm-reqform__section .gm-chooser > legend.gm-field__label { text-align: center; }
+
+/* ===== 2- va 3-bo‘lim kartalari: kengroq maydonlar, to‘liq manzil, markazlangan tugma ===== */
+.gm-reqform .gm-field__control { min-height: 54px; padding-inline: 18px; font-size: 16px; }
+.gm-reqform textarea.gm-field__control { min-height: 160px; padding-block: 16px; line-height: 1.55; }
+.gm-reqform .gm-field__label { font-size: 0.92rem; font-weight: 800; }
+.gm-reqform__meter { margin: -6px 0 0; padding-inline: 4px; font-size: 0.84rem; }
+
+.gm-reqform__addresses { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+.gm-reqform__address { gap: 16px; padding: 18px 20px; border-radius: 16px; }
+.gm-reqform__address > svg:first-child { box-sizing: content-box; width: 22px; height: 22px; padding: 11px; border-radius: 14px; background: var(--gm-color-primary-soft); }
+.gm-reqform__address--checked > svg:first-child { background: color-mix(in srgb, var(--gm-color-primary) 16%, var(--gm-color-surface)); }
+.gm-reqform__address strong { font-size: 1rem; }
+.gm-reqform__address small { font-size: 0.86rem; margin-top: 2px; }
+.gm-reqform__address--checked { box-shadow: 0 0 0 1.5px var(--gm-color-primary), 0 10px 22px -16px var(--gm-color-primary); }
+.gm-reqform__address-check { box-sizing: content-box; width: 14px; height: 14px; padding: 5px; border-radius: 50%; background: var(--gm-color-primary); color: var(--gm-color-primary-contrast); }
+.gm-reqform__add-address { align-self: center; justify-content: center; min-height: 50px; padding: 0 28px; border-radius: 14px; font-size: 0.95rem; font-weight: 800; }
+@media (max-width: 640px) {
+  .gm-reqform__add-address { align-self: stretch; }
+}

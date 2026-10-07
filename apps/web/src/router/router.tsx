@@ -1,5 +1,6 @@
 import { lazy } from 'react';
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate, useLocation, useParams } from 'react-router-dom';
+import { getNavItems } from '@/components/layout/nav-items';
 import { RouteError } from '@/components/common/RouteError';
 import { RootShell } from './RootShell';
 import { AuthLayout } from '@/layouts/AuthLayout';
@@ -8,6 +9,8 @@ import { ProtectedRoute, RedirectIfAuthed } from './ProtectedRoute';
 import { OrdersRedirect } from './OrdersRedirect';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { RoleGuard } from './RoleGuard';
+import { env } from '@/lib/env';
+import { useAuthStore } from '@/store/auth.store';
 import type { ReactNode } from 'react';
 import type { Role } from '@/types/common';
 import { RoleSelectPage } from '@/pages/RoleSelectPage';
@@ -38,7 +41,6 @@ import { MasterSchedulePage } from '@/pages/master/MasterSchedulePage';
 import { MasterPortfolioPage } from '@/pages/master/MasterPortfolioPage';
 import { EarningsPage } from '@/pages/payments/EarningsPage';
 import { PaymentHistoryPage } from '@/pages/payments/PaymentHistoryPage';
-import { LegalPage } from '@/pages/legal/LegalPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { SafetyPage } from '@/pages/safety/SafetyPage';
 
@@ -68,12 +70,32 @@ const admin = (el: ReactNode) => only(['ADMIN'], el);
 const shared = (el: ReactNode) => only(['CUSTOMER', 'MASTER'], el);
 
 
-export const router = createBrowserRouter([
+/** Eski manzillar (/mijozlar/…, /ustalar/…, /ustalar-katalogi/…) yangi (/mijoz/…, /usta/…) manzillarga o‘tkaziladi. */
+function LegacyRedirect({ to }: { to: string }) {
+  const { '*': rest = '' } = useParams();
+  const { search, hash } = useLocation();
+  return <Navigate to={`${to}${rest ? `/${rest}` : ''}${search}${hash}`} replace />;
+}
+
+/**
+ * getmaster.uz/mijoz va getmaster.uz/usta: kirmagan foydalanuvchiga shu panelning bosh sahifasi (landing) ko‘rsatiladi —
+ * u yerdan «Kirish» / «Ro‘yxatdan o‘tish» qilinadi. Kirgan bo‘lsa, shu paneldagi birinchi bo‘limga o‘tadi.
+ */
+function PanelHome({ role }: { role: Role }) {
+  const hasSession = useAuthStore((s) => s.hasSession);
+  if (!hasSession) return <RoleSelectPage />;
+  const [first] = getNavItems(role, { superAdmin: false });
+  return <Navigate to={first?.to ?? '/'} replace />;
+}
+
+const panelRouter = createBrowserRouter([
   {
     element: <RootShell />,
     errorElement: <RouteError />,
     children: [
       { path: '/', element: <RoleSelectPage /> },
+      { path: '/mijoz', element: <PanelHome role="CUSTOMER" /> },
+      { path: '/usta', element: <PanelHome role="MASTER" /> },
       { path: '/shartlar', element: <TermsPage /> },
       {
         element: <AuthLayout />,
@@ -104,38 +126,38 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         children: [
-          { path: '/mijozlar/sorovlar', element: <Navigate to="/mijozlar/buyurtmalar" replace /> },
-          { path: '/mijozlar/sorov-yaratish', element: customer(<CreateRequestPage />) },
-          { path: '/mijozlar/sorovlar/:id', element: customer(<RequestDetailsPage />) },
-          { path: '/mijozlar/buyurtmalar', element: customer(<CustomerOrdersPage />) },
-          { path: '/mijozlar/buyurtmalar/:id', element: customer(<OrderDetailsPage />) },
-          { path: '/mijozlar/buyurtmalar/:orderId/tolov', element: customer(<PaymentPage />) },
-          { path: '/ustalar/buyurtmalar', element: master(<OrdersPage />) },
-          { path: '/ustalar/buyurtmalar/:id', element: master(<OrderDetailsPage />) },
-          { path: '/ustalar/takliflar', element: master(<CreateOfferPage />) },
-          { path: '/mijozlar/profil', element: customer(<CustomerProfilePage />) },
-          { path: '/mijozlar/profil/:section', element: customer(<CustomerProfilePage />) },
-          { path: '/mijozlar/manzillar', element: customer(<CustomerPage />) },
-          { path: '/mijozlar/chat', element: customer(<ChatPage />) },
-          { path: '/mijozlar/kafolat', element: customer(<WarrantyPage />) },
-          { path: '/mijozlar/shikoyatlar', element: customer(<ComplaintsPage />) },
-          { path: '/mijozlar/nizolar', element: customer(<DisputesPage />) },
-          { path: '/ustalar/profil', element: master(<MasterProfilePage />) },
-          { path: '/ustalar/profil/:section', element: master(<MasterProfilePage />) },
-          { path: '/ustalar/chat', element: master(<ChatPage />) },
-          { path: '/ustalar/kafolat', element: master(<WarrantyPage />) },
-          { path: '/ustalar/nizolar', element: master(<DisputesPage />) },
-          { path: '/ustalar-katalogi', element: customer(<MasterPage />) },
-          { path: '/ustalar-katalogi/:id', element: customer(<MasterDetailsPage />) },
+          { path: '/mijoz/sorovlar', element: <Navigate to="/mijoz/buyurtmalar" replace /> },
+          { path: '/mijoz/sorov-yaratish', element: customer(<CreateRequestPage />) },
+          { path: '/mijoz/sorovlar/:id', element: customer(<RequestDetailsPage />) },
+          { path: '/mijoz/buyurtmalar', element: customer(<CustomerOrdersPage />) },
+          { path: '/mijoz/buyurtmalar/:id', element: customer(<OrderDetailsPage />) },
+          { path: '/mijoz/buyurtmalar/:orderId/tolov', element: customer(<PaymentPage />) },
+          { path: '/usta/buyurtmalar', element: master(<OrdersPage />) },
+          { path: '/usta/buyurtmalar/:id', element: master(<OrderDetailsPage />) },
+          { path: '/usta/takliflar', element: master(<CreateOfferPage />) },
+          { path: '/mijoz/profil', element: customer(<CustomerProfilePage />) },
+          { path: '/mijoz/profil/:section', element: customer(<CustomerProfilePage />) },
+          { path: '/mijoz/manzillar', element: customer(<CustomerPage />) },
+          { path: '/mijoz/chat', element: customer(<ChatPage />) },
+          { path: '/mijoz/kafolat', element: customer(<WarrantyPage />) },
+          { path: '/mijoz/shikoyatlar', element: customer(<ComplaintsPage />) },
+          { path: '/mijoz/nizolar', element: customer(<DisputesPage />) },
+          { path: '/usta/profil', element: master(<MasterProfilePage />) },
+          { path: '/usta/profil/:section', element: master(<MasterProfilePage />) },
+          { path: '/usta/chat', element: master(<ChatPage />) },
+          { path: '/usta/kafolat', element: master(<WarrantyPage />) },
+          { path: '/usta/nizolar', element: master(<DisputesPage />) },
+          { path: '/mijoz/ustalar', element: customer(<MasterPage />) },
+          { path: '/mijoz/ustalar/:id', element: customer(<MasterDetailsPage />) },
           { path: '/bronlar', element: shared(<OrdersRedirect />) },
           { path: '/bronlar/:id', element: shared(<OrdersRedirect />) },
-          { path: '/mijozlar/tolovlar', element: customer(<PaymentHistoryPage />) },
-          { path: '/ustalar/faol-takliflar', element: master(<ActiveOffersPage />) },
-          { path: '/ustalar/mening-takliflarim', element: master(<MyOffersPage />) },
-          { path: '/ustalar/jadval', element: master(<MasterSchedulePage />) },
-          { path: '/ustalar/portfolio', element: master(<MasterPortfolioPage />) },
-          { path: '/ustalar/daromad', element: master(<EarningsPage />) },
-          { path: '/huquqiy', element: shared(<LegalPage />) },
+          { path: '/mijoz/tolovlar', element: customer(<PaymentHistoryPage />) },
+          { path: '/usta/faol-takliflar', element: master(<ActiveOffersPage />) },
+          { path: '/usta/mening-takliflarim', element: master(<MyOffersPage />) },
+          { path: '/usta/jadval', element: master(<MasterSchedulePage />) },
+          { path: '/usta/portfolio', element: master(<MasterPortfolioPage />) },
+          { path: '/usta/daromad', element: master(<EarningsPage />) },
+          { path: '/huquqiy', element: <Navigate to="/sozlamalar" replace /> },
           { path: '/xavfsizlik', element: shared(<SafetyPage />) },
           { path: '/admin', element: admin(<AdminHome />) },
           { path: '/admin/hisobot', element: admin(<AdminReportsPage />) },
@@ -160,7 +182,28 @@ export const router = createBrowserRouter([
           { path: '/sozlamalar/:section', element: <SettingsPage /> },
         ],
       },
+      { path: '/mijozlar/*', element: <LegacyRedirect to="/mijoz" /> },
+      { path: '/ustalar/*', element: <LegacyRedirect to="/usta" /> },
+      { path: '/ustalar-katalogi/*', element: <LegacyRedirect to="/mijoz/ustalar" /> },
+      { path: '/ustalar-katalogi', element: <Navigate to="/mijoz/ustalar" replace /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },
 ]);
+
+/**
+ * Asosiy sayt (getmaster.uz, rol belgilanmagan): faqat yo‘naltirish sahifasi. Kirish va ro‘yxatdan o‘tish — har bir panelning o‘zida (mijoz / usta / admin alohida).
+ */
+const portalRouter = createBrowserRouter([
+  {
+    element: <RootShell />,
+    errorElement: <RouteError />,
+    children: [
+      { path: '/', element: <RoleSelectPage /> },
+      { path: '/shartlar', element: <TermsPage /> },
+      { path: '*', element: <NotFoundPage /> },
+    ],
+  },
+]);
+
+export const router = env.appRole ? panelRouter : portalRouter;

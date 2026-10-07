@@ -538,6 +538,51 @@ export class MasterService {
     return asset;
   }
 
+  /**
+   * Ustaning yakunlangan ishlari natijasi (ommaviy): xizmat nomi, sana va mijoz bahosi.
+   * Manzil, narx va ish rasmlari (mijozning shaxsiy ma’lumoti) bu yerga chiqmaydi.
+   */
+  async findCompletedJobs(idOrNumber: string) {
+    const masterId = await this.resolvePublicMasterId(idOrNumber);
+    const [orders, grouped] = await Promise.all([
+      this.db.order.findMany({
+        where: { masterId, status: 'COMPLETED' },
+        orderBy: [{ completedAt: 'desc' }, { id: 'desc' }],
+        take: 12,
+        select: {
+          id: true,
+          completedAt: true,
+          booking: { select: { service: { select: { name: true } }, request: { select: { title: true } } } },
+          review: { select: { rating: true, comment: true, status: true, author: { select: { firstName: true, lastName: true } } } },
+        },
+      }),
+      this.db.review.groupBy({ by: ['rating'], where: { masterProfileId: masterId, status: 'PUBLISHED' }, _count: { _all: true } }),
+    ]);
+    const distribution: Record<string, number> = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+    let total = 0;
+    let sum = 0;
+    for (const row of grouped) {
+      const bucket = String(Math.min(5, Math.max(1, Math.ceil(row.rating))));
+      distribution[bucket] += row._count._all;
+      total += row._count._all;
+      sum += row.rating * row._count._all;
+    }
+    return {
+      summary: { reviews: total, average: total > 0 ? Math.round((sum / total) * 10) / 10 : null, distribution },
+      items: orders.map((order) => {
+        const review = order.review?.status === 'PUBLISHED' ? order.review : null;
+        const author = review?.author;
+        const authorName = author?.firstName ? `${author.firstName}${author.lastName ? ` ${author.lastName.charAt(0)}.` : ''}` : null;
+        return {
+          id: order.id,
+          title: order.booking.service?.name ?? order.booking.request.title,
+          completedAt: order.completedAt,
+          review: review ? { rating: review.rating, comment: review.comment, authorName } : null,
+        };
+      }),
+    };
+  }
+
   /** Berilgan id'lar bo‘yicha ommaviy ko‘rinadigan ustalar (tartib saqlanadi). */
   async findPublicByIds(ids: string[]) {
     if (ids.length === 0) return [];

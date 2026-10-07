@@ -75,7 +75,7 @@ export function TwoFactorSettings() {
 
       <p className="gm-twofa__text">
         {enabled
-          ? t('Akkauntga har safar kirganingizda login va paroldan keyin telefoningizga kelgan tasdiqlash kodi ham so‘raladi. Bu akkauntingizni begonalardan himoya qiladi.')
+          ? t('Akkauntga har safar kirganingizda login va paroldan keyin emailingizga (xohlasangiz SMS orqali) kelgan tasdiqlash kodi ham so‘raladi. Bu akkauntingizni begonalardan himoya qiladi.')
           : t('Hozir akkauntga faqat login va parol bilan kiriladi, tasdiqlash kodi so‘ralmaydi. Xavfsizlik uchun ikki bosqichli autentifikatsiyani yoqib qo‘yish tavsiya etiladi.')}
       </p>
 
@@ -89,15 +89,16 @@ export function TwoFactorSettings() {
         open={confirmOpen}
         onClose={closeConfirm}
         title={t('Ikki bosqichli autentifikatsiyani o‘chirish')}
+        className="gm-modal--confirm gm-modal--confirm-danger gm-twofa-modal"
+        icon={
+          <span className="gm-confirm__icon" aria-hidden="true">
+            <ShieldOff size={28} />
+          </span>
+        }
         footer={
-          <>
-            <Button variant="secondary" onClick={closeConfirm} disabled={setTwoFactor.isPending}>
-              {t('Bekor qilish')}
-            </Button>
-            <Button variant="danger" loading={setTwoFactor.isPending} disabled={password.length < 1} onClick={confirmDisable}>
-              {t('O‘chirish')}
-            </Button>
-          </>
+          <Button variant="danger" loading={setTwoFactor.isPending} disabled={password.length < 1} onClick={confirmDisable}>
+            {t('O‘chirish')}
+          </Button>
         }
       >
         <form

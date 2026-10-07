@@ -16,12 +16,16 @@ export interface ModalProps {
   wide?: boolean;
   /** O‘rtacha kengaytirilgan oyna (forma + ro‘yxat uchun, 720px). */
   large?: boolean;
+  /** Qo‘shimcha sinf (masalan, tasdiqlash oynasi uchun). */
+  className?: string;
+  /** Sarlavha tepasida o‘rtada chiqadigan belgi (tasdiqlash oynasi uchun). */
+  icon?: ReactNode;
 }
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export function Modal({ open, onClose, title, children, footer, dismissible = true, wide = false, large = false }: ModalProps) {
+export function Modal({ open, onClose, title, children, footer, dismissible = true, wide = false, large = false, className, icon }: ModalProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
@@ -71,13 +75,14 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
     <div className="gm-modal-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div
         ref={panelRef}
-        className={wide ? 'gm-modal gm-modal--wide' : large ? 'gm-modal gm-modal--large' : 'gm-modal'}
+        className={[wide ? 'gm-modal gm-modal--wide' : large ? 'gm-modal gm-modal--large' : 'gm-modal', className].filter(Boolean).join(' ')}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
       >
         {dismissible && <div className="gm-modal__grab" aria-hidden="true" {...drag} />}
+        {icon && <div className="gm-modal__icon">{icon}</div>}
         <div className="gm-modal__header">
           <h2 id={titleId} className="gm-modal__title">
             {title}

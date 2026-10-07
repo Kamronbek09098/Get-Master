@@ -10,9 +10,9 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cx, formatDateTime, formatMoney, formatRelativeTime } from '@/lib/utils';
 import { OrderStatus } from '@/features/order/components/OrderStatus';
-import { STATUS_TEXT } from '@/features/order/order-flow';
 import { useAdminOrders, useAdminOrdersSummary } from '@/features/admin/hooks/useAdmin';
 import type { AdminOrderFilters, AdminOrderStatus } from '@/features/admin/types';
+import { PAYMENT_STATUS_LABEL, providerLabel } from '@/features/payment/labels';
 import './AdminOrdersPage.css';
 import { t } from '@/i18n';
 
@@ -27,6 +27,16 @@ const TABS: Array<{ value: AdminOrderStatus | ''; label: string }> = [
   { value: 'CANCELLED', label: t('Bekor qilingan') },
   { value: 'DISPUTED', label: t('Nizoli') },
 ];
+const STATUS_TONE: Partial<Record<AdminOrderStatus, string>> = {
+  BOOKED: 'info',
+  CONFIRMED: 'info',
+  ON_THE_WAY: 'info',
+  IN_PROGRESS: 'info',
+  WAITING_CONFIRMATION: 'wait',
+  COMPLETED: 'ok',
+  CANCELLED: 'off',
+  DISPUTED: 'bad',
+};
 const dayStart = (value: string) => (value ? new Date(`${value}T00:00:00`).toISOString() : undefined);
 const dayEnd = (value: string) => (value ? new Date(`${value}T23:59:59.999`).toISOString() : undefined);
 
@@ -129,7 +139,7 @@ export function AdminOrdersPage() {
               onClick={() => selectView({ status: tab.value })}
             >
               {tab.label}
-              {tab.value && (counts[tab.value] ?? 0) > 0 && <span className="gm-aord__count">{counts[tab.value]}</span>}
+              {(tab.value ? (counts[tab.value] ?? 0) : (summary.data?.total ?? 0)) > 0 && <span className="gm-aord__count">{tab.value ? counts[tab.value] : summary.data?.total}</span>}
             </button>
           ))}
         </div>
@@ -167,20 +177,32 @@ export function AdminOrdersPage() {
       <ul className="gm-aord__list">
         {items.map((order) => (
           <li key={order.id}>
-            <Link to={`/admin/buyurtmalar/${order.id}`} className={cx('gm-aord__row', order.status === 'DISPUTED' && 'gm-aord__row--disputed')}>
+            <Link to={`/admin/buyurtmalar/${order.id}`} className={cx('gm-aord__row', `gm-aord__row--${STATUS_TONE[order.status] ?? 'info'}`)}>
               <div className="gm-aord__main">
                 <div className="gm-aord__title">
                   <strong>{order.title}</strong>
                   <OrderStatus status={order.status} />
                 </div>
-                <p>
-                  {accountName(order.customer)} <small>ID {order.customer.accountNumber}</small> <ArrowRight size={12} aria-hidden="true" /> {accountName(order.master.user)} <small>ID {order.master.user.accountNumber}</small>
-                  {order.master.profession && <small> · {order.master.profession}</small>}
+                <p className="gm-aord__who">
+                  <span>
+                    <em>{t('Mijoz')}</em> {accountName(order.customer)} <small>ID {order.customer.accountNumber}</small>
+                  </span>
+                  <ArrowRight size={14} aria-hidden="true" />
+                  <span>
+                    <em>{t('Usta')}</em> {accountName(order.master.user)} <small>ID {order.master.user.accountNumber}</small>
+                    {order.master.profession && <small> · {order.master.profession}</small>}
+                  </span>
                 </p>
                 <div className="gm-aord__meta">
                   <span>№{order.orderNumber}</span>
                   <span title={formatDateTime(order.createdAt)}>{formatRelativeTime(order.createdAt)}</span>
                   {order.scheduledStartAt && <span>{t('Reja:')}{' '}{formatDateTime(order.scheduledStartAt)}</span>}
+                  <span className={cx('gm-aord__chip', order.payment?.status === 'SUCCEEDED' ? 'gm-aord__chip--paid' : 'gm-aord__chip--muted')}>
+                    <Wallet size={12} />{' '}
+                    {order.payment
+                      ? `${providerLabel(order.payment.provider)} · ${PAYMENT_STATUS_LABEL[order.payment.status]}`
+                      : t('To‘lov usuli tanlanmagan')}
+                  </span>
                   {order._count.workProofs > 0 && (
                     <span className="gm-aord__chip">
                       <Camera size={12} /> {order._count.workProofs} rasm
@@ -195,7 +217,6 @@ export function AdminOrdersPage() {
               </div>
               <div className="gm-aord__amount">
                 <strong>{formatMoney(order.finalAmount, order.currency)}</strong>
-                <small>{STATUS_TEXT[order.status]}</small>
               </div>
             </Link>
           </li>

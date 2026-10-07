@@ -53,3 +53,68 @@
 :root .gm-marquee__row li { word-spacing: 0.14em; letter-spacing: -0.005em; gap: 12px; }
 :root .gm-marquee__row { gap: 14px; }
 :root .gm-statement { padding-top: clamp(56px, 8vw, 110px); }
+
+/* Matn bloklari sahifa o‘rtasida (chap yoki o‘ngga yopishmasin) */
+.gm-statement { display: grid; justify-items: center; text-align: center; }
+.gm-statement__label { justify-content: center; }
+.gm-statement__text { margin-inline: auto; text-align: center; }
+
+/* Yakuniy chaqiriq bloki: yozuv va tugma o‘rtada */
+.gm-landing__cta { flex-direction: column; justify-content: center; align-items: center; gap: 22px; text-align: center; }
+.gm-landing__cta > div { display: grid; justify-items: center; }
+
+/* Matn bloki keyingi bo‘lim bilan yopishmasin: pastda ham yetarli bo‘sh joy */
+.gm-statement { padding-bottom: clamp(90px, 11vw, 170px); }
+
+/* Ishonch bo‘limi va yakuniy chaqiriq bloki orasida masofa */
+.gm-landing__cta { margin-top: clamp(40px, 6vw, 84px); }
+
+/* ===== Ko‘rsatkich kartalari (24/7, 100%, Kafolat, Xavfsiz): tartibli, aniq va hero bilan yopishmaydigan ===== */
+.gm-landing .gm-landing__stats { transform: none; max-width: 1180px; margin: clamp(36px, 5vw, 64px) auto clamp(40px, 5vw, 72px); padding: 0 var(--gm-space-5); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.gm-landing .gm-landing__stat { --tone: #2563eb; --tone-bg: #e6eeff; display: flex; flex-direction: row; align-items: center; gap: 16px; min-height: 96px; padding: 20px 22px; border: 1px solid color-mix(in srgb, var(--gm-color-text) 9%, transparent); border-radius: 22px; background: #fff; box-shadow: 0 8px 24px -14px rgba(10, 18, 48, 0.25); text-align: left; transition: none; }
+.gm-landing .gm-landing__stat:hover { transform: none; box-shadow: 0 8px 24px -14px rgba(10, 18, 48, 0.25); border-color: color-mix(in srgb, var(--gm-color-text) 9%, transparent); }
+.gm-landing .gm-landing__stat[data-tone='1'] { --tone: #0b8f63; --tone-bg: #dcf7ec; }
+.gm-landing .gm-landing__stat[data-tone='2'] { --tone: #b45309; --tone-bg: #fff0d6; }
+.gm-landing .gm-landing__stat[data-tone='3'] { --tone: #6d28d9; --tone-bg: #efe6ff; }
+.gm-landing__stat-icon { display: grid; flex: none; place-items: center; width: 52px; height: 52px; border-radius: 17px; background: var(--tone-bg); color: var(--tone); }
+.gm-landing__stat-text { display: grid; gap: 3px; min-width: 0; }
+.gm-landing .gm-landing__stat strong { color: #0a1230; font-family: var(--gm-font-display); font-size: clamp(22px, 2vw, 28px); font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; }
+.gm-landing .gm-landing__stat-text > span { color: #44506e; font-size: 14px; font-weight: 600; line-height: 1.35; }
+@media (max-width: 980px) {
+  .gm-landing .gm-landing__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+}
+@media (max-width: 520px) {
+  .gm-landing .gm-landing__stat { gap: 12px; min-height: 84px; padding: 16px 14px; border-radius: 18px; }
+  .gm-landing__stat-icon { width: 44px; height: 44px; border-radius: 14px; }
+  .gm-landing .gm-landing__stat-text > span { font-size: 12.5px; }
+}
+
+/* Ko‘rsatkich kartasi: aniq ikonka plitkasi va izoh belgisi (masalan, «1 daqiqa») */
+.gm-landing__stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--tone) 8%, #fff), var(--tone-bg));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone) 16%, transparent);
+}
+.gm-landing__stat-icon svg { display: block; }
+.gm-landing .gm-landing__stat-text > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gm-landing__stat-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  justify-self: start;
+  margin-top: 3px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  background: var(--tone-bg);
+  color: var(--tone);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.3;
+}
+@media (max-width: 520px) {
+  .gm-landing__stat-icon { width: 46px; height: 46px; border-radius: 15px; }
+  .gm-landing .gm-landing__stat-text > span { white-space: normal; }
+}

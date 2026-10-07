@@ -27,16 +27,16 @@ vi.mock('@/features/communication/hooks/useCommunication', () => ({
 vi.mock('@/features/master/components/FavoriteButton', () => ({ FavoriteButton: () => <button type="button">Saqlash</button> }));
 vi.mock('@/features/master/components/PublicAvailability', () => ({ PublicAvailability: () => null }));
 vi.mock('@/features/master/components/PublicPortfolio', () => ({ PublicPortfolio: () => <p>portfolio</p> }));
-vi.mock('@/features/review/components/ReviewList', () => ({ ReviewList: () => <p>sharhlar</p> }));
+vi.mock('@/features/master/components/CompletedJobs', () => ({ CompletedJobs: () => <p>sharhlar</p> }));
 
 import { MasterDetailsPage } from './MasterDetailsPage';
 
 function renderPage() {
   return render(
-    <MemoryRouter initialEntries={['/ustalar-katalogi/m1']}>
+    <MemoryRouter initialEntries={['/mijoz/ustalar/m1']}>
       <Routes>
-        <Route path="/ustalar-katalogi/:id" element={<MasterDetailsPage />} />
-        <Route path="/mijozlar/chat" element={<p>chat sahifasi</p>} />
+        <Route path="/mijoz/ustalar/:id" element={<MasterDetailsPage />} />
+        <Route path="/mijoz/chat" element={<p>chat sahifasi</p>} />
       </Routes>
     </MemoryRouter>,
   );

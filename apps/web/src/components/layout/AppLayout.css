@@ -43,3 +43,17 @@
     zoom: 0.9;
   }
 }
+
+/* Kompyuter: sahifa oxirida ortiqcha bo‘sh joy qolmasin — oxirgi kontent ekran pastida ko‘rinadi, keraksiz pastga surilmaydi */
+@media (min-width: 900px) {
+  .gm-app-layout__content { padding-bottom: 12px; }
+  .gm-footer { padding: 4px 16px 10px; line-height: 1.2; }
+}
+
+/* Qisqa sahifada ham ekran pastga surilmasin: yon panel balandligi pastki yozuv qatorini hisobga oladi
+   (sahifa balandligi = ekran balandligi, ortiqcha surilish yo‘q) */
+@media (min-width: 900px) {
+  .gm-app-layout { --gm-footer-h: 28px; }
+  .gm-footer { box-sizing: border-box; display: flex; align-items: center; justify-content: center; height: var(--gm-footer-h); min-height: var(--gm-footer-h); padding: 0 16px; }
+  .gm-sidebar { height: calc(var(--gm-vh, 100vh) - var(--gm-header-height) - var(--gm-safe-top, 0px) - var(--gm-footer-h)); }
+}

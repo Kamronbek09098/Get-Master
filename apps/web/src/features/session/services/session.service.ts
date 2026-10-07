@@ -8,6 +8,12 @@ export const sessionService = {
   setTwoFactor(input: { enabled: boolean; password?: string }) {
     return apiPatch<Me>('/users/me/two-factor', input);
   },
+  setEmail(input: { email: string; password?: string }) {
+    return apiPatch<Me>('/users/me/email', input);
+  },
+  deleteAccount(password?: string) {
+    return apiPost<{ deleted: true }>('/users/me/delete-account', { password });
+  },
   setPassword(password: string) {
     return apiPost<Me>('/users/me/password', { password });
   },

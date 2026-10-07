@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, PackageCheck } from 'lucide-react';
+import { ArrowLeft, CalendarClock, Camera, Check, FileText, Hourglass, MapPin, PackageCheck, Send, Wrench } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
@@ -19,6 +19,16 @@ import { MatchingResults } from '@/features/matching/components/MatchingResults'
 import './RequestDetails.css';
 import { t } from '@/i18n';
 
+const MIN_REASON = 3;
+const STEPS = [
+  { key: 'DRAFT', label: t('Qoralama') },
+  { key: 'SUBMITTED', label: t('Yuborildi') },
+  { key: 'OFFERS_RECEIVED', label: t('Takliflar') },
+  { key: 'BOOKED', label: t('Band qilindi') },
+] as const;
+/** Holatning bosqichdagi o‘rni (MATCHING — «Yuborildi» bosqichi ichida). */
+const STEP_INDEX: Record<string, number> = { DRAFT: 0, SUBMITTED: 1, MATCHING: 1, OFFERS_RECEIVED: 2, BOOKED: 3 };
+
 export function RequestDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const request = useRequest(id ?? '');
@@ -26,6 +36,23 @@ export function RequestDetailsPage() {
   const cancelRequest = useCancelRequest(id ?? '');
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState('');
+  const [reasonError, setReasonError] = useState('');
+  const [shake, setShake] = useState(0);
+
+  const closeCancel = () => {
+    setCancelOpen(false);
+    setReasonError('');
+    cancelRequest.reset();
+  };
+  const confirmCancel = () => {
+    const value = reason.trim();
+    if (value.length < MIN_REASON) {
+      setReasonError(value.length === 0 ? t('Bekor qilish sababini yozing') : t('Sabab juda qisqa — kamida {min} ta belgi yozing', { min: MIN_REASON }));
+      setShake((n) => n + 1);
+      return;
+    }
+    cancelRequest.mutate(value, { onSuccess: () => { closeCancel(); setReason(''); } });
+  };
 
   if (!id) return null;
   if (request.isLoading) return <PageLoader label={t('So‘rov yuklanmoqda…')} />;
@@ -34,38 +61,99 @@ export function RequestDetailsPage() {
 
   const data = request.data;
   const canCancel = CANCELLABLE_STATUSES.includes(data.status);
+  const stepIndex = STEP_INDEX[data.status];
   const canReceiveOffers = OFFER_ELIGIBLE_STATUSES.includes(data.status);
 
   return (
     <div className="gm-rqd">
-      <Link to="/mijozlar/buyurtmalar" className="gm-pay__back gm-rqd__back">
+      <Link to="/mijoz/buyurtmalar" className="gm-pay__back gm-rqd__back">
         <ArrowLeft size={16} aria-hidden="true" />{' '}{t('Buyurtmalarga qaytish')}</Link>
 
       <header className="gm-rqd__hero">
         <div className="gm-rqd__hero-top">
           <h1>{data.title}</h1>
           <RequestStatus status={data.status} />
+          <p className="gm-rqd__created">
+            <CalendarClock size={14} aria-hidden="true" /> {t('Yaratildi')}: <time dateTime={data.createdAt}>{formatDateTime(data.createdAt)}</time>
+          </p>
         </div>
-        <p className="gm-rqd__desc">{data.description}</p>
-        <dl className="gm-rqd__meta">
+        <div className="gm-rqd__problem">
+          <span className="gm-rqd__label">
+            <FileText size={14} aria-hidden="true" /> {t('Muammo tavsifi')}
+          </span>
+          <p className="gm-rqd__desc">{data.description}</p>
+        </div>
+        <dl className="gm-rqd__facts">
           <div>
-            <dt>{t('Yaratildi')}</dt>
-            <dd>{formatDateTime(data.createdAt)}</dd>
+            <dt>
+              <Wrench size={14} aria-hidden="true" /> {t('Xizmat')}
+            </dt>
+            <dd className={data.service ? undefined : 'is-empty'}>
+              {data.service ? data.service.name : t('Tanlanmagan')}
+              {data.category && data.service && <small>{data.category.name}</small>}
+            </dd>
+          </div>
+          <div>
+            <dt>
+              <MapPin size={14} aria-hidden="true" /> {t('Manzil')}
+            </dt>
+            <dd className={data.address ? undefined : 'is-empty'}>
+              {data.address ? [data.address.city, data.address.district, data.address.addressLine].filter(Boolean).join(', ') : t('Ko‘rsatilmagan')}
+              {data.address?.title && <small>{data.address.title}</small>}
+            </dd>
+          </div>
+          <div>
+            <dt>
+              <CalendarClock size={14} aria-hidden="true" /> {t('Qulay vaqt')}
+            </dt>
+            <dd className={data.preferredStartAt ? undefined : 'is-empty'}>{data.preferredStartAt ? formatDateTime(data.preferredStartAt) : t('Istalgan vaqt')}</dd>
+          </div>
+          <div>
+            <dt>
+              <Camera size={14} aria-hidden="true" /> {t('Rasmlar')}
+            </dt>
+            <dd className={data._count?.attachments ? undefined : 'is-empty'}>{data._count?.attachments ? `${data._count.attachments} ta` : t('Yuklanmagan')}</dd>
           </div>
           {data.expiresAt && (
             <div>
-              <dt>{t('Amal qilish muddati')}</dt>
+              <dt>
+                <Hourglass size={14} aria-hidden="true" /> {t('Amal qilish muddati')}
+              </dt>
               <dd>{formatDateTime(data.expiresAt)}</dd>
             </div>
           )}
         </dl>
+        {stepIndex !== undefined && (
+          <ol className="gm-rqd__steps" aria-label={t('So‘rov bosqichlari')}>
+            {STEPS.map((step, index) => (
+              <li key={step.key} className={index < stepIndex ? 'is-done' : index === stepIndex ? 'is-current' : undefined} aria-current={index === stepIndex ? 'step' : undefined}>
+                <span className="gm-rqd__dot">{index < stepIndex ? <Check size={13} aria-hidden="true" /> : index + 1}</span>
+                <span>{step.label}</span>
+              </li>
+            ))}
+          </ol>
+        )}
       </header>
 
+      {(data.status === 'CANCELLED' || data.status === 'EXPIRED') && (
+        <Alert tone="warning">
+          {data.status === 'EXPIRED' ? t('So‘rovning amal qilish muddati tugagan.') : data.cancellationReason ? `${t('Bekor qilish sababi:')} ${data.cancellationReason}` : t('So‘rov bekor qilingan.')}
+        </Alert>
+      )}
+
       {data.status === 'DRAFT' && (
-        <div className="gm-detail-section">
-          <h2>{t('So‘rov hali yuborilmagan')}</h2>
-          {submitRequest.isError && <Alert tone="danger">{getErrorMessage(submitRequest.error)}</Alert>}
-          <Button loading={submitRequest.isPending} onClick={() => submitRequest.mutate()}>{t('So‘rovni yuborish')}</Button>
+        <div className="gm-detail-section gm-rqd__draft">
+          <span className="gm-rqd__draft-icon" aria-hidden="true">
+            <Send size={22} />
+          </span>
+          <div className="gm-rqd__draft-text">
+            <h2>{t('Tekshirib chiqing va yuboring')}</h2>
+            <p>{t('Yuborganingizdan so‘ng tizim mos ustalarni topadi va ular sizga narx bilan taklif yuboradi.')}</p>
+            {submitRequest.isError && <Alert tone="danger">{getErrorMessage(submitRequest.error)}</Alert>}
+          </div>
+          <Button size="lg" loading={submitRequest.isPending} onClick={() => submitRequest.mutate()}>
+            <Send size={16} aria-hidden="true" /> {t('So‘rovni yuborish')}
+          </Button>
         </div>
       )}
 
@@ -114,7 +202,7 @@ export function RequestDetailsPage() {
             <p className="gm-card__meta">
               {data.order.master.profession ?? t('Usta')}{' '}{t('· ID {accountNumber} · {money}', { accountNumber: data.order.master.user.accountNumber, money: formatMoney(data.order.finalAmount, data.order.currency) })}</p>
             <div style={{ marginTop: 'var(--gm-space-3)' }}>
-              <Link to={`/mijozlar/buyurtmalar/${data.order.id}`}>
+              <Link to={`/mijoz/buyurtmalar/${data.order.id}`}>
                 <Button>{t('Buyurtmani ochish')}</Button>
               </Link>
             </div>
@@ -131,21 +219,37 @@ export function RequestDetailsPage() {
 
       {canCancel && (
         <div className="gm-rqd__danger">
-          <p>{t('So‘rov kerak bo‘lmay qolgan bo‘lsa, uni bekor qilishingiz mumkin.')}</p>
           <Button variant="danger" size="sm" onClick={() => setCancelOpen(true)}>{t('So‘rovni bekor qilish')}</Button>
+          <p>{t('So‘rov kerak bo‘lmay qolgan bo‘lsa, uni bekor qilishingiz mumkin.')}</p>
         </div>
       )}
 
       <ConfirmDialog
         open={cancelOpen}
         title={t('So‘rovni bekor qilish')}
-        description={t('Bekor qilish sababini kiriting.')}
+        description={t('Bekor qilish sababini kiriting:')}
         tone="danger"
+        confirmLabel={t('Bekor qilish')}
         loading={cancelRequest.isPending}
-        onCancel={() => setCancelOpen(false)}
-        onConfirm={() => cancelRequest.mutate(reason, { onSuccess: () => setCancelOpen(false) })}
+        onCancel={closeCancel}
+        onConfirm={confirmCancel}
       >
-        <Textarea label={t('Sabab')} required value={reason} onChange={(e) => setReason(e.target.value)} />
+        <Textarea
+          key={shake}
+          label={t('Sabab')}
+          required
+          maxLength={500}
+          rows={3}
+          placeholder={t('Masalan: muammo o‘zi hal bo‘ldi')}
+          autoFocus={shake > 0}
+          className={reasonError ? 'gm-field__control--shake' : undefined}
+          error={reasonError || (cancelRequest.isError ? getErrorMessage(cancelRequest.error) : undefined)}
+          value={reason}
+          onChange={(e) => {
+            setReason(e.target.value);
+            if (reasonError) setReasonError('');
+          }}
+        />
       </ConfirmDialog>
     </div>
   );

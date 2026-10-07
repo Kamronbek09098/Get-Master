@@ -104,6 +104,8 @@ export class OutboxProcessor implements OnModuleInit, OnModuleDestroy {
                 outboxEventId: event.id,
                 // Bildirishnoma bosilganda kerakli sahifaga o‘tish uchun.
                 ...(typeof (event.payload as Record<string, unknown>)?.orderId === 'string' ? { orderId: (event.payload as Record<string, unknown>).orderId as string } : {}),
+                // Buyurtma holati o‘zgarganda ro‘yxatda mos ikona ko‘rsatish uchun.
+                ...(typeof (event.payload as Record<string, unknown>)?.newStatus === 'string' ? { status: (event.payload as Record<string, unknown>).newStatus as string } : {}),
               },
               status: 'SENT',
               sentAt: new Date(),

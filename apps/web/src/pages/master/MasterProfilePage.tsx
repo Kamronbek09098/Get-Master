@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Award, BadgeCheck, CalendarClock, LogOut, MapPin, MessageCircle, Power, Settings, ShieldCheck, Smartphone, Star, UserRound, Wrench } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -16,7 +16,7 @@ import { ServiceForm } from '@/features/service/components/ServiceForm';
 import { TrustProfile } from '@/features/trust/components/TrustProfile';
 import { TrustBadge } from '@/features/trust/components/TrustBadge';
 import { FOCUS_VERIFICATION_EVENT } from '@/features/trust/components/VerificationBanner';
-import { useLogout } from '@/features/auth/hooks/useAuth';
+import { LogoutDialog } from '@/features/auth/components/LogoutDialog';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { InfoRows, ProfileCard } from '@/features/profile/ProfileCard';
 import { ProfileMenuList, ProfileSubPage } from '@/features/profile/ProfileMenu';
@@ -25,7 +25,7 @@ import '@/features/profile/Profile.css';
 import './MasterOwnProfile.css';
 import { t } from '@/i18n';
 
-const BASE = '/ustalar/profil';
+const BASE = '/usta/profil';
 const STATUS_TONE = { ACTIVE: 'success', INACTIVE: 'neutral', BUSY: 'warning', RESTRICTED: 'danger', SUSPENDED: 'danger' } as const;
 const percent = (value: string | number | undefined) => `${Math.round(Number(value ?? 0))}%`;
 
@@ -34,7 +34,7 @@ export function MasterProfilePage() {
   const { section } = useParams();
   const profile = useMyMasterProfile();
   const me = useMe();
-  const logout = useLogout();
+  const [logoutOpen, setLogoutOpen] = useState(false);
   const navigate = useNavigate();
   const { hash } = useLocation();
   const loaded = !profile.isLoading;
@@ -182,9 +182,10 @@ export function MasterProfilePage() {
           { key: 'trust', icon: ShieldCheck, label: t('Tasdiqlash'), value: <TrustBadge verification={data.verification} />, to: `${BASE}/tasdiqlash` },
           { key: 'area', icon: MapPin, label: t('Ish hududi'), to: `${BASE}/hudud` },
           { key: 'settings', icon: Settings, label: t('Sozlamalar'), to: '/sozlamalar' },
-          { key: 'logout', icon: LogOut, label: t('Tizimdan chiqish'), danger: true, onClick: () => logout.mutate(false) },
+          { key: 'logout', icon: LogOut, label: t('Tizimdan chiqish'), danger: true, onClick: () => setLogoutOpen(true) },
         ]}
       />
+      <LogoutDialog open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </div>
   );
 }

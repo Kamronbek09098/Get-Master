@@ -46,6 +46,22 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     await this.client.expire(key, seconds);
   }
 
+  async publish(channel: string, message: string): Promise<void> {
+    await this.client.publish(channel, message);
+  }
+
+  /** Alohida ulanishda kanalga obuna bo‘ladi (obuna rejimidagi ulanish boshqa buyruqlar uchun yaroqsiz). Qaytgan funksiya obunani yopadi. */
+  async subscribe(channel: string, handler: (message: string) => void): Promise<() => Promise<void>> {
+    const subscriber = this.client.duplicate();
+    subscriber.on('message', (received, message) => {
+      if (received === channel) handler(message);
+    });
+    await subscriber.subscribe(channel);
+    return async () => {
+      subscriber.disconnect();
+    };
+  }
+
   async exists(key: string): Promise<boolean> {
     return (await this.client.exists(key)) === 1;
   }

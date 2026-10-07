@@ -65,7 +65,7 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
 
   const customer = role === 'CUSTOMER';
   const offersSeen = useSeen('offers');
-  const onRequests = pathname.startsWith('/mijozlar/buyurtmalar') || pathname.startsWith('/mijozlar/sorovlar');
+  const onRequests = pathname.startsWith('/mijoz/buyurtmalar') || pathname.startsWith('/mijoz/sorovlar');
   // «Ko‘rilgan vaqt» so‘rov kalitiga kirmaydi: aks holda natija vaqtni yangilaydi → kalit o‘zgaradi → so‘rov qayta ketadi (cheksiz tsikl).
   const offersSeenRef = useRef(offersSeen);
   offersSeenRef.current = offersSeen;
@@ -91,7 +91,7 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
   });
 
   const master = role === 'MASTER';
-  const onMasterOrders = pathname.startsWith('/ustalar/buyurtmalar');
+  const onMasterOrders = pathname.startsWith('/usta/buyurtmalar');
   // Buyurtma holati o'zgarganda (usta yetib keldi, ishni tugatdi va h.k.) "Buyurtmalar" bo'limida ham belgi yonsin.
   const orderNotifications = useNotifications(customer || master);
   const orderNotifUnread = (orderNotifications.data?.items ?? []).filter(
@@ -150,9 +150,9 @@ export function useNavBadges(role: string | null, pathname: string): Record<stri
   };
 
   put('/bildirishnomalar', unread.data?.count ?? 0);
-  if (chatRole) put(role === 'MASTER' ? '/ustalar/chat' : '/mijozlar/chat', chatUnread.data?.count ?? 0);
-  if (customer) put('/mijozlar/buyurtmalar', onRequests ? 0 : (offers.data?.offers ?? 0) + orderNotifUnread);
-  if (master) put('/ustalar/buyurtmalar', onMasterOrders ? 0 : orderNotifUnread);
+  if (chatRole) put(role === 'MASTER' ? '/usta/chat' : '/mijoz/chat', chatUnread.data?.count ?? 0);
+  if (customer) put('/mijoz/buyurtmalar', onRequests ? 0 : (offers.data?.offers ?? 0) + orderNotifUnread);
+  if (master) put('/usta/buyurtmalar', onMasterOrders ? 0 : orderNotifUnread);
   if (admin) {
     const data = badges.data;
     put('/admin/tasdiqlash', onVerifications ? 0 : (data?.verifications ?? 0));

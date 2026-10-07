@@ -10,3 +10,13 @@ export function useSetTwoFactor() {
     onSuccess: (me) => queryClient.setQueryData(['users', 'me'], me),
   });
 }
+
+/** Tasdiqlash kodlari yuboriladigan email manzilni saqlash. */
+export function useSetEmail() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { email: string; password?: string }) => sessionService.setEmail(input),
+    gcTime: 0,
+    onSuccess: (me) => queryClient.setQueryData(['users', 'me'], me),
+  });
+}

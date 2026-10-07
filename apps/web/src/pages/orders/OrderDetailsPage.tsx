@@ -186,7 +186,7 @@ export function OrderDetailsPage() {
       );
     } else if (status === 'COMPLETED')
       step = (
-        <StepCard tone="done" icon={<Star size={22} />} title={t('Buyurtma yakunlandi')} lead={t('Ustani baholang. Fikringiz boshqa mijozlarga yordam beradi.')}>
+        <StepCard tone="done" icon={<Star size={22} />} title={t('Buyurtma yakunlandi')} lead={data.review ? undefined : t('Ustani baholang. Fikringiz boshqa mijozlarga yordam beradi.')}>
           <ReviewForm orderId={id} existing={data.review} />
 
         </StepCard>

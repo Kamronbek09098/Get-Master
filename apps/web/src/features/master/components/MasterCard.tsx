@@ -1,6 +1,7 @@
 import { accountName } from '@/lib/account-name';
+import { MediaThumbnail } from '@/features/media/components/MediaThumbnail';
 import { Link } from 'react-router-dom';
-import { BadgeCheck, Briefcase, MessageCircle, Star, Wrench } from 'lucide-react';
+import { BadgeCheck, MessageCircle, Star } from 'lucide-react';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { formatMoney } from '@/lib/utils';
 import type { PublicMaster } from '../types';
@@ -15,8 +16,10 @@ export function MasterCard({ master }: { master: PublicMaster }) {
   const prices = services.map((item) => Number(item.basePrice)).filter((price) => price > 0);
   const minPrice = prices.length > 0 ? Math.min(...prices) : null;
 
+  const photos = (master.portfolio ?? []).filter((item) => item.mediaAssetId).slice(0, 3);
+
   return (
-    <Link to={`/ustalar-katalogi/${master.user.accountNumber ?? master.id}`} className="gm-master">
+    <Link to={`/mijoz/ustalar/${master.user.accountNumber ?? master.id}`} className="gm-master">
       <div className="gm-master__top">
         <ChatAvatar name={name} seed={master.id} size="lg" />
         <div className="gm-master__id">
@@ -33,22 +36,20 @@ export function MasterCard({ master }: { master: PublicMaster }) {
 
       <div className="gm-master__stats">
         <span className="gm-master__stat" title={t('{ratingCount} ta sharh', { ratingCount: master.ratingCount })}>
-          <Star size={15} className="gm-master__star" fill="currentColor" />
-          <strong>{master.ratingCount > 0 ? rating.toFixed(1) : t('Yangi')}</strong>
-          {master.ratingCount > 0 && <small>({master.ratingCount})</small>}
+          <strong>
+            <Star size={14} className="gm-master__star" fill="currentColor" />
+            {master.ratingCount > 0 ? rating.toFixed(1) : t('Yangi')}
+          </strong>
+          <small>{master.ratingCount > 0 ? t('{ratingCount} ta sharh', { ratingCount: master.ratingCount }) : t('Reyting')}</small>
         </span>
         <span className="gm-master__stat">
-          <Briefcase size={15} />
           <strong>{master.completedOrders}</strong>
-          <small>buyurtma</small>
+          <small>{t('bajarilgan ish')}</small>
         </span>
-        {master.experienceYears ? (
-          <span className="gm-master__stat">
-            <Wrench size={15} />
-            <strong>{master.experienceYears}</strong>
-            <small>{t('yil tajriba')}</small>
-          </span>
-        ) : null}
+        <span className="gm-master__stat">
+          <strong>{master.experienceYears ? master.experienceYears : '—'}</strong>
+          <small>{t('yil tajriba')}</small>
+        </span>
       </div>
 
       {services.length > 0 && (
@@ -58,6 +59,14 @@ export function MasterCard({ master }: { master: PublicMaster }) {
           ))}
           {services.length > MAX_TAGS && <li className="gm-master__more">+{services.length - MAX_TAGS}</li>}
         </ul>
+      )}
+
+      {photos.length > 0 && (
+        <div className="gm-master__photos" aria-hidden="true">
+          {photos.map((item) => (
+            <MediaThumbnail key={item.id} assetId={item.mediaAssetId as string} alt="" />
+          ))}
+        </div>
       )}
 
       <div className="gm-master__foot">

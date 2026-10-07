@@ -370,3 +370,26 @@
   flex-wrap: wrap;
   gap: var(--gm-space-2);
 }
+
+/* Usul belgilari — o‘zining rangli fonli SVG'si bor, qo‘shimcha plitka kerak emas */
+.gm-paym__icon,
+.gm-paym__icon--click,
+.gm-paym__icon--payme,
+.gm-paym__icon--uzum {
+  width: 32px;
+  height: 32px;
+  border-radius: 0;
+  background: transparent;
+}
+.gm-paym__icon svg { display: block; }
+
+/* Usul tanlanmagan holatdagi belgi: kulrang plitka */
+.gm-paym__icon.gm-paym__icon--empty {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-text-muted);
+}

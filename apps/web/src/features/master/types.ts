@@ -86,3 +86,14 @@ export interface MasterInput {
 export interface CoveringMaster extends PublicMaster {
   distanceKm: number;
 }
+
+/** Ustaning yakunlangan ishlari natijasi: baholar taqsimoti va oxirgi ishlar. */
+export interface PublicCompletedJobs {
+  summary: { reviews: number; average: number | null; distribution: Record<'1' | '2' | '3' | '4' | '5', number> };
+  items: Array<{
+    id: string;
+    title: string;
+    completedAt: string | null;
+    review: { rating: number; comment: string | null; authorName: string | null } | null;
+  }>;
+}

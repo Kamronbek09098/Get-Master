@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsPhoneNumber, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, MaxLength } from 'class-validator';
 
 export class SignInDto {
   @IsPhoneNumber('UZ')
@@ -9,4 +9,9 @@ export class SignInDto {
   @IsNotEmpty()
   @MaxLength(128)
   password!: string;
+
+  /** Kodni SMS orqali olish (standart — email). SMS xizmati ulangan bo‘lishi kerak. */
+  @IsOptional()
+  @IsIn(['SMS'])
+  codeChannel?: 'SMS';
 }

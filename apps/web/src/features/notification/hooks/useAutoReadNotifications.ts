@@ -16,7 +16,7 @@ export function useAutoReadNotifications() {
   const hasSession = useAuthStore((state) => state.hasSession);
   const role = env.appRole ?? preferredRole;
   const admin = role === 'ADMIN';
-  const base = role === 'MASTER' ? '/ustalar' : '/mijozlar';
+  const base = role === 'MASTER' ? '/usta' : '/mijoz';
   const notifications = useNotifications(hasSession);
   const { mutate } = useMarkAsRead();
   const sent = useRef(new Set<string>());

@@ -8,7 +8,7 @@ import './Order.css';
 import { t } from '@/i18n';
 
 export function OrderCard({ order }: { order: OrderListItem }) {
-  const basePath = order.viewerRole === 'MASTER' ? '/ustalar/buyurtmalar' : '/mijozlar/buyurtmalar';
+  const basePath = order.viewerRole === 'MASTER' ? '/usta/buyurtmalar' : '/mijoz/buyurtmalar';
   const index = stepIndex(order.status);
   const percent = order.status === 'COMPLETED' ? 100 : index >= 0 ? Math.round(((index + 1) / FLOW_STEPS.length) * 100) : 0;
   const party = order.viewerRole === 'MASTER' ? 'Mijoz' : 'Usta';

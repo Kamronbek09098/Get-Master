@@ -15,7 +15,7 @@ import { CoverageMap } from '@/features/geo/components/CoverageMap';
 import { FavoriteButton } from '@/features/master/components/FavoriteButton';
 import { PublicAvailability } from '@/features/master/components/PublicAvailability';
 import { PublicPortfolio } from '@/features/master/components/PublicPortfolio';
-import { ReviewList } from '@/features/review/components/ReviewList';
+import { CompletedJobs } from '@/features/master/components/CompletedJobs';
 import { t } from '@/i18n';
 import './MasterProfile.css';
 
@@ -117,7 +117,7 @@ export function MasterDetailsPage() {
 
       {(data.portfolio ?? []).length > 0 && (
         <section className="gm-mp-section">
-          <h2>{t('Bajarilgan ishlar')}</h2>
+          <h2>{t('Portfolio')}</h2>
           <PublicPortfolio items={data.portfolio ?? []} />
         </section>
       )}
@@ -160,17 +160,14 @@ export function MasterDetailsPage() {
         </section>
       )}
 
-      <section className="gm-mp-section">
-        <h2>{t('Sharhlar')}</h2>
-        <ReviewList masterId={data.id} />
-      </section>
+      <CompletedJobs masterId={data.id} completedOrders={data.completedOrders} />
 
       {/* 9 · Chaqiruv: sahifa oxirida (DOM da oxirgi), skrollda pastda yopishib turadi */}
       <div className="gm-mp-cta gm-action-row">
         <Button
           size="lg"
           loading={openChat.isPending}
-          onClick={() => openChat.mutate(data.id, { onSuccess: (conversation) => navigate(`/mijozlar/chat?suhbat=${conversation.id}`) })}
+          onClick={() => openChat.mutate(data.id, { onSuccess: (conversation) => navigate(`/mijoz/chat?suhbat=${conversation.id}`) })}
         >
           <MessageCircle size={20} />{' '}{t('Chat orqali bog‘lanish')}</Button>
         {openChat.isError && <Alert tone="danger">{getErrorMessage(openChat.error)}</Alert>}

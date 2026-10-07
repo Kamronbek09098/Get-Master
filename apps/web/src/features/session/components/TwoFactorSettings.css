@@ -66,3 +66,27 @@
 .gm-twofa__hint {
   font-size: 14px;
 }
+
+/* Faqat «Kirishda kod so‘ralmaydi» qatori (yozuv + almashtirgich) o‘rtada; chiziq va umumiy ko‘rinish avvalgidek */
+.gm-twofa__switch { display: flex; justify-content: center; }
+.gm-twofa__switch .gm-switch { justify-content: center; }
+
+/* O‘chirishni tasdiqlash oynasi: tasdiqlash oynalari bilan bir xil uslub (markazda, ramkasiz tugma), «Joriy parol» yorlig‘i ko‘rinadi */
+.gm-twofa-modal .gm-twofa__form { width: 100%; gap: 16px; }
+.gm-twofa-modal .gm-alert { text-align: center; justify-content: center; }
+.gm-twofa-modal .gm-alert__title { text-align: center; }
+.gm-twofa-modal .gm-field__label {
+  position: static;
+  display: block;
+  width: auto;
+  height: auto;
+  margin: 0 0 8px;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+.gm-twofa-modal .gm-field { text-align: center; }
+.gm-twofa-modal .gm-field__control { text-align: left; }

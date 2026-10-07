@@ -6,13 +6,13 @@ describe('getNavItems', () => {
     const paths = getNavItems('ADMIN', { superAdmin: true }).map((item) => item.to);
     expect(paths[0]).toBe('/admin');
     expect(paths).toContain('/admin/tasdiqlash');
-    expect(paths).not.toContain('/mijozlar/sorovlar');
-    expect(paths).not.toContain('/ustalar/profil');
+    expect(paths).not.toContain('/mijoz/sorovlar');
+    expect(paths).not.toContain('/usta/profil');
   });
 
   it('gives masters their working tools', () => {
     const paths = getNavItems('MASTER').map((item) => item.to);
-    expect(paths).toEqual(expect.arrayContaining(['/ustalar/jadval', '/ustalar/portfolio', '/ustalar/daromad', '/ustalar/mening-takliflarim']));
+    expect(paths).toEqual(expect.arrayContaining(['/usta/jadval', '/usta/portfolio', '/usta/daromad', '/usta/mening-takliflarim']));
     expect(getNavItems('MASTER').filter((item) => item.primary).length).toBeLessThanOrEqual(4);
     expect(paths.some((path) => path.startsWith('/admin'))).toBe(false);
   });
@@ -20,8 +20,8 @@ describe('getNavItems', () => {
   it('defaults to the customer menu', () => {
     for (const role of ['CUSTOMER', null] as const) {
       const paths = getNavItems(role).map((item) => item.to);
-      expect(paths[0]).toBe('/mijozlar/buyurtmalar');
-      expect(paths).toContain('/mijozlar/tolovlar');
+      expect(paths[0]).toBe('/mijoz/buyurtmalar');
+      expect(paths).toContain('/mijoz/tolovlar');
     }
   });
 

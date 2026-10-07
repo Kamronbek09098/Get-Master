@@ -52,11 +52,13 @@ export function useLogin() {
         setPendingPhone(null);
         setDevCode(null);
         setDeviceLimit(null);
+        useAuthStore.getState().setDelivery(null, false);
         return;
       }
       loginSecret.set(variables.phone, variables.password);
       setPendingPhone(variables.phone);
       setDevCode(result.developmentCode ?? null);
+      useAuthStore.getState().setDelivery(result.delivery ?? null, result.smsAvailable === true);
       setDeviceLimit(result.deviceLimit ? { max: result.deviceLimit.max, active: result.deviceLimit.active } : null);
     },
   });

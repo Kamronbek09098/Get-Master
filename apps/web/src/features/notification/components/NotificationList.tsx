@@ -21,7 +21,7 @@ type Filter = 'all' | 'unread';
 export function NotificationList() {
   const navigate = useNavigate();
   const preferredRole = useAuthStore((state) => state.preferredRole);
-  const base = (env.appRole ?? preferredRole) === 'MASTER' ? '/ustalar' : '/mijozlar';
+  const base = (env.appRole ?? preferredRole) === 'MASTER' ? '/usta' : '/mijoz';
   const admin = (env.appRole ?? preferredRole) === 'ADMIN';
   const notifications = useNotifications();
   const markAsRead = useMarkAsRead();

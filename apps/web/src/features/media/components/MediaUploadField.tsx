@@ -7,6 +7,7 @@ import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
 import type { LinkTargetType, MediaAssetKind } from '@/types/common';
 import { useMediaStatus, useUploadMedia } from '../hooks/useMedia';
+import { MAX_UPLOAD_BYTES, MAX_UPLOAD_MB, prepareUpload } from '../prepare-image';
 import { MediaThumbnail } from './MediaThumbnail';
 import './MediaUploadField.css';
 import { t } from '@/i18n';
@@ -44,6 +45,8 @@ export function MediaUploadField({ label, accept = 'image/*,video/*', kind, link
   const inputRef = useRef<HTMLInputElement>(null);
   const [assetId, setAssetId] = useState<string | null>(null);
   const [notifiedReady, setNotifiedReady] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const [localError, setLocalError] = useState('');
 
   const upload = useUploadMedia();
   const status = useMediaStatus(assetId);
@@ -56,15 +59,23 @@ export function MediaUploadField({ label, accept = 'image/*,video/*', kind, link
     }
   }, [currentStatus, notifiedReady, assetId, onReady]);
 
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const picked = event.target.files?.[0];
+    event.target.value = '';
+    if (!picked) return;
     setNotifiedReady(false);
+    setLocalError('');
+    setPreparing(true);
+    const file = await prepareUpload(picked);
+    setPreparing(false);
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setLocalError(t('Fayl juda katta: {size} MB. Eng ko‘pi bilan {max} MB yuklash mumkin.', { size: (file.size / 1024 / 1024).toFixed(1), max: MAX_UPLOAD_MB }));
+      return;
+    }
     upload.mutate(
       { file, kind, linkType, linkId },
       { onSuccess: (asset) => setAssetId(asset.id) },
     );
-    event.target.value = '';
   }
 
   return (
@@ -80,9 +91,10 @@ export function MediaUploadField({ label, accept = 'image/*,video/*', kind, link
         onChange={(e) => void handleFileChange(e)}
         className="gm-visually-hidden"
       />
-      <Button type="button" variant="secondary" className="gm-media-upload__pick" loading={upload.isPending} onClick={() => inputRef.current?.click()}>
+      <Button type="button" variant="secondary" className="gm-media-upload__pick" loading={upload.isPending || preparing} onClick={() => inputRef.current?.click()}>
         <Upload size={18} />{' '}{t('Fayl tanlash')}</Button>
 
+      {localError && <Alert tone="danger">{localError}</Alert>}
       {upload.isError && <Alert tone="danger">{getErrorMessage(upload.error)}</Alert>}
 
       {assetId && currentStatus && (

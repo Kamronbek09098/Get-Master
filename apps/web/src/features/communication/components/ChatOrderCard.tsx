@@ -44,7 +44,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
   const status = order.status;
   const index = stepIndex(status);
   const percent = status === 'COMPLETED' ? 100 : index >= 0 ? Math.round(((index + 1) / FLOW_STEPS.length) * 100) : 0;
-  const link = `${master ? '/ustalar' : '/mijozlar'}/buyurtmalar/${order.id}`;
+  const link = `${master ? '/usta' : '/mijoz'}/buyurtmalar/${order.id}`;
   const error = [confirm, travel, arrive, start, submit, complete, cancel, cash].find((mutation) => mutation.isError)?.error;
   const busy = [confirm, travel, arrive, start, submit, complete, cash].some((mutation) => mutation.isPending);
   const canCancel = status === 'BOOKED' || status === 'CONFIRMED';

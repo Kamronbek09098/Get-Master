@@ -13,6 +13,7 @@ export function PhoneRequiredBanner() {
   if (!user || !user.roles.includes('CUSTOMER') || user.roles.includes('ADMIN') || (user.phone && user.phoneVerifiedAt)) return null;
   return (
     <>
+      <div className="gm-phone-banner">
       <Alert tone="warning" title={t('Buyurtma berish uchun telefon raqamingizni tasdiqlang')}>
         <p style={{ margin: '0 0 10px' }}>
           {user.phone ? t('Raqamingiz hali tasdiqlanmagan.') : t('Akkauntingizda telefon raqami yo‘q.')} {t('Tasdiqlamaguncha buyurtma yaratib bo‘lmaydi.')}
@@ -21,6 +22,7 @@ export function PhoneRequiredBanner() {
           {t('Raqamni kiritish va tasdiqlash')}
         </Button>
       </Alert>
+      </div>
       <PhoneVerifyDialog open={open} onClose={() => setOpen(false)} />
     </>
   );

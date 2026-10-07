@@ -8,11 +8,13 @@ export interface DialogProps {
   description?: ReactNode;
   children?: ReactNode;
   footer: ReactNode;
+  className?: string;
+  icon?: ReactNode;
 }
 
-export function Dialog({ open, onClose, title, description, children, footer }: DialogProps) {
+export function Dialog({ open, onClose, title, description, children, footer, className, icon }: DialogProps) {
   return (
-    <Modal open={open} onClose={onClose} title={title} footer={footer}>
+    <Modal open={open} onClose={onClose} title={title} footer={footer} className={className} icon={icon}>
       {description && <p style={{ color: 'var(--gm-color-text-muted)', marginBottom: children ? 'var(--gm-space-4)' : 0 }}>{description}</p>}
       {children}
     </Modal>

@@ -65,3 +65,5 @@
     font-size: 13px;
   }
 }
+
+.gm-steps { justify-content: center; flex-wrap: wrap; }

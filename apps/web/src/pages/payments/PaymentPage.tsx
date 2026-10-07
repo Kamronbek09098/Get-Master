@@ -14,7 +14,7 @@ import { t } from '@/i18n';
 export function PaymentPage() {
   const { orderId = '' } = useParams<{ orderId: string }>();
   const order = useOrder(orderId);
-  const back = `/mijozlar/buyurtmalar/${orderId}`;
+  const back = `/mijoz/buyurtmalar/${orderId}`;
 
   if (order.isLoading) return <PageLoader label={t('Buyurtma yuklanmoqda…')} />;
   if (order.isError) return <Alert tone="danger">{getErrorMessage(order.error)}</Alert>;

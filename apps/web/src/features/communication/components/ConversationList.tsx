@@ -65,7 +65,7 @@ export function ConversationList({ selectedId, onSelect }: { selectedId: string 
             : t('Ustani tanlab, «Chat orqali bog‘lanish» tugmasi bilan birinchi suhbatingizni boshlang.')}
         </p>
         {!asMaster && (
-          <Link to="/ustalar-katalogi" className="gm-convos__blank-cta">{t('Ustalarni ko‘rish')}</Link>
+          <Link to="/mijoz/ustalar" className="gm-convos__blank-cta">{t('Ustalarni ko‘rish')}</Link>
         )}
       </div>
     );

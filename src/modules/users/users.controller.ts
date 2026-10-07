@@ -7,6 +7,8 @@ import { RequestPhoneDto, VerifyPhoneDto } from './dto/phone.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SetPasswordDto } from './dto/set-password.dto';
 import { SetTwoFactorDto } from './dto/two-factor.dto';
+import { SetEmailDto } from './dto/set-email.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 import { UpdateNameDto } from './dto/update-name.dto';
 import { UsersService } from './users.service';
 
@@ -22,6 +24,17 @@ export class UsersController {
   @Patch('me/two-factor')
   setTwoFactor(@CurrentUser('sub') userId: string, @Body() dto: SetTwoFactorDto) {
     return this.usersService.setTwoFactor(userId, dto);
+  }
+
+  @RateLimit({ policy: 'login', scope: 'ip', escalate: true })
+  @Post('me/delete-account')
+  deleteAccount(@CurrentUser('sub') userId: string, @Body() dto: DeleteAccountDto, @Req() req: Request) {
+    return this.usersService.deleteAccount(userId, dto, clientIpOf(req));
+  }
+
+  @Patch('me/email')
+  setEmail(@CurrentUser('sub') userId: string, @Body() dto: SetEmailDto) {
+    return this.usersService.setEmail(userId, dto);
   }
 
   /** Parolsiz (masalan, Google orqali ochilgan) akkauntga birinchi marta parol o‘rnatish. */

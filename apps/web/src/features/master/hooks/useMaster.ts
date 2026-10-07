@@ -30,6 +30,10 @@ export function useMasterAvailability(id: string) {
   return useQuery({ queryKey: ['masters', 'availability', id], queryFn: () => masterService.availability(id), enabled: !!id });
 }
 
+export function useMasterCompletedJobs(id: string) {
+  return useQuery({ queryKey: ['masters', 'completed-jobs', id], queryFn: () => masterService.completedJobs(id), enabled: !!id });
+}
+
 export function useMaster(id: string) {
   return useQuery({ queryKey: ['masters', 'one', id], queryFn: () => masterService.get(id), enabled: !!id });
 }

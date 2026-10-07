@@ -33,3 +33,9 @@
   color: var(--gm-color-danger);
   max-width: 240px;
 }
+
+/* Yuklangan rasmlar ro‘yxati (so‘rov yaratishda) */
+.gm-attached { margin-bottom: var(--gm-space-4); padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--gm-color-success) 30%, var(--gm-color-border)); border-radius: 16px; background: color-mix(in srgb, var(--gm-color-success-bg) 55%, var(--gm-color-surface)); }
+.gm-attached__title { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; color: var(--gm-color-success); font-size: 0.9rem; font-weight: 800; }
+.gm-attached__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+.gm-attached__grid .gm-media-thumb { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; border: 1px solid var(--gm-color-border); background: var(--gm-color-surface-muted); }

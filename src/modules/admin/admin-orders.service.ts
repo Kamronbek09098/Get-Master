@@ -53,12 +53,13 @@ export class AdminOrdersService {
         customer: { select: PERSON },
         master: { select: { id: true, profession: true, user: { select: PERSON } } },
         booking: { select: { scheduledStartAt: true, request: { select: { title: true } } } },
+        payments: { orderBy: { createdAt: 'desc' }, take: 5, select: { provider: true, status: true } },
         _count: { select: { workProofs: true, cases: true, payments: true } },
       },
       ...cursorArgs(query),
     });
     const page = toCursorPage(rows, query);
-    return { ...page, items: page.items.map(({ master, booking, ...order }) => ({ ...order, master: { ...master, user: master.user }, title: booking.request.title, scheduledStartAt: booking.scheduledStartAt })) };
+    return { ...page, items: page.items.map(({ master, booking, payments, ...order }) => ({ ...order, payment: payments.find((row) => row.status === 'SUCCEEDED') ?? payments[0] ?? null, master: { ...master, user: master.user }, title: booking.request.title, scheduledStartAt: booking.scheduledStartAt })) };
   }
 
   /** Holatlar bo‘yicha umumiy sonlar va daromad ko‘rsatkichlari (filtrlar bilan bog‘liq emas). */

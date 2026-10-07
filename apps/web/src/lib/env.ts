@@ -12,7 +12,14 @@ function resolveApiBaseUrl(): string {
   return /^https?:\/\/(localhost|127\.0\.0\.1)[:/]/.test(configured) ? '/api/v1' : configured;
 }
 
+/** Asosiy sayt (getmaster.uz) yo‘naltiradigan panellar manzili. Bir domenda: getmaster.uz/mijoz va getmaster.uz/usta. Dev'da ildizdagi .env ichida VITE_DEV_CUSTOMER_URL / VITE_DEV_MASTER_URL beriladi (productionga ta’sir qilmaydi). */
+const devOnly = (value: unknown) => (import.meta.env.DEV ? (value as string | undefined) : undefined);
+const customerUrl = devOnly(import.meta.env.VITE_DEV_CUSTOMER_URL) || (import.meta.env.VITE_CUSTOMER_URL as string | undefined) || '/mijoz';
+const masterUrl = devOnly(import.meta.env.VITE_DEV_MASTER_URL) || (import.meta.env.VITE_MASTER_URL as string | undefined) || '/usta';
+
 export const env = {
+  customerUrl,
+  masterUrl,
   apiBaseUrl: resolveApiBaseUrl(),
   /** Google profilidan telefonni ham so‘rash (Google Cloud'da People API va user.phonenumbers.read ruxsati sozlangan bo‘lsa). */
   googlePhone: import.meta.env.VITE_GOOGLE_PHONE === '1',

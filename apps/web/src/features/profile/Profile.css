@@ -1510,3 +1510,10 @@
 @media (pointer: coarse) {
   .gm-ptags__btn { min-height: 40px; }
 }
+
+/* Profil ko‘rsatkichlari: juft bo‘lmasa oxirgisi butun qatorni egallaydi (telefonda bo‘sh joy qolmasin) */
+.gm-phero__stats > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+@media (min-width: 560px) {
+  .gm-phero__stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .gm-phero__stats > div:last-child:nth-child(odd) { grid-column: auto; }
+}

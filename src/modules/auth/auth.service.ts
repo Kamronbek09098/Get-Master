@@ -213,7 +213,7 @@ export class AuthService {
     if (!(await this.redis.setIfAbsent(`resendreg:cooldown:${phone}`, '1', cooldown))) {
       throw new TooManyRequestsException(ERRORS.OTP_WAIT(Math.max(1, await this.redis.ttl(`resendreg:cooldown:${phone}`))));
     }
-    const hourly = await this.redis.consume(`resendreg:hourly:${phone}`, this.config.get<number>('limits.otp.maxRequestsPerWindow', 5), 3600);
+    const hourly = await this.redis.consume(`resendreg:hourly:${phone}`, this.config.get<number>('limits.otp.maxRequestsPerWindow', 3), 3600);
     if (!hourly.allowed) throw new TooManyRequestsException(ERRORS.OTP_LIMIT_EXCEEDED);
 
     const user = await this.db.user.findUnique({ where: { phone }, select: { id: true, status: true, deletedAt: true } });
@@ -622,10 +622,13 @@ export class AuthService {
         ip: this.clientIp(req),
         device: this.deviceCookie(req),
         panel: panelOf(req),
+        channel: dto.codeChannel,
+        reveal: true,
       }),
       this.deviceLimitState(user.id, req),
     ]);
-    return { verificationRequired: true, ...(deviceLimit ? { deviceLimit } : {}), ...this.devCode(issued) };
+    const { delivery, smsAvailable } = issued as { delivery?: unknown; smsAvailable?: boolean };
+    return { verificationRequired: true, delivery, smsAvailable, ...(deviceLimit ? { deviceLimit } : {}), ...this.devCode(issued) };
   }
 
   /** Yangi qurilma uchun faol qurilmalar limiti to‘lganmi (kirish `createSession` da rad etilishidan oldin bilish uchun). */

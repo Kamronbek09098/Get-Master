@@ -2,12 +2,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { env } from '@/lib/env';
 import type { Role } from '@/types/common';
+import type { CodeDelivery } from '@/features/auth/types';
 
 interface AuthState {
   hasSession: boolean;
   preferredRole: Role | null;
   pendingPhone: string | null;
   devCode: string | null;
+  /** Oxirgi kirish kodi qayerga yuborilgani (faqat xotirada). */
+  delivery: CodeDelivery | null;
+  smsAvailable: boolean;
+  setDelivery: (delivery: CodeDelivery | null, smsAvailable: boolean) => void;
   /** Ro‘yxatdan o‘tgan foydalanuvchiga bir marta ko‘rsatish uchun (faqat xotirada, hech qayerda saqlanmaydi). */
   newCredentials: { phone: string; password: string } | null;
   setNewCredentials: (value: { phone: string; password: string } | null) => void;
@@ -27,6 +32,9 @@ export const useAuthStore = create<AuthState>()(
       preferredRole: null,
       pendingPhone: null,
       devCode: null,
+      delivery: null,
+      smsAvailable: false,
+      setDelivery: (delivery, smsAvailable) => set({ delivery, smsAvailable }),
       newCredentials: null,
       setNewCredentials: (newCredentials) => set({ newCredentials }),
       deviceLimit: null,
@@ -35,7 +43,7 @@ export const useAuthStore = create<AuthState>()(
       setSession: (hasSession) => set({ hasSession }),
       setPreferredRole: (preferredRole) => set({ preferredRole: env.appRole ?? preferredRole }),
       setPendingPhone: (pendingPhone) => set({ pendingPhone }),
-      clear: () => set({ hasSession: false, pendingPhone: null, devCode: null, deviceLimit: null, newCredentials: null }),
+      clear: () => set({ hasSession: false, pendingPhone: null, devCode: null, delivery: null, smsAvailable: false, deviceLimit: null, newCredentials: null }),
     }),
     {
       name: 'getmaster.auth-ui',

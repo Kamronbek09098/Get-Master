@@ -268,7 +268,7 @@
 .gm-j-send { --sent: clamp(0, calc((var(--sp) - 0.78) * 12), 1); }
 
 /* ——— 1 · Muammo ——— */
-.gm-j-problem { display: grid; gap: 14px; }
+.gm-j-problem { display: grid; gap: 22px; }
 .gm-j-problem__film { padding: 0; overflow: hidden; aspect-ratio: 16 / 9; }
 .gm-j-film { position: absolute; inset: 0; background: #0a1020; }
 .gm-j-film video { position: relative; width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -294,7 +294,7 @@
   color: #ffd5d9;
 }
 .gm-j-alert i { width: 8px; height: 8px; border-radius: 50%; background: var(--j-bad); animation: gm-j-pulse 1.6s ease-out infinite; }
-.gm-j-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.gm-j-chips { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; padding: 0; list-style: none; }
 .gm-j-chips li {
   display: inline-flex;
   align-items: center;
@@ -493,7 +493,7 @@
 .gm-j-track__eta { font: 700 13px/1 'JetBrains Mono', ui-monospace, monospace; color: var(--j-mute); }
 .gm-j-live { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--j-accent); }
 .gm-j-live::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: gm-j-pulse 1.6s ease-out infinite; }
-.gm-j-track ol { position: relative; display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.gm-j-track ol { position: relative; display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
 .gm-j-track ol::before,
 .gm-j-track ol::after {
   content: '';

@@ -24,6 +24,8 @@ export function OtpPage() {
   const preferredRole = useAuthStore((s) => s.preferredRole);
   const devCode = useAuthStore((s) => s.devCode);
   const deviceLimit = useAuthStore((s) => s.deviceLimit);
+  const delivery = useAuthStore((s) => s.delivery);
+  const smsAvailable = useAuthStore((s) => s.smsAvailable);
   const hasNewCredentials = useAuthStore((s) => s.newCredentials !== null);
   const [created, setCreated] = useState(false);
   const setDevCode = useAuthStore((s) => s.setDevCode);
@@ -67,7 +69,24 @@ export function OtpPage() {
         ? await authService.resendRegistration(pendingPhone as string)
         : await authService.login({ phone: pendingPhone as string, password: password as string });
       setDevCode(result.developmentCode ?? null);
+      if (!isRegisterFlow) useAuthStore.getState().setDelivery(('delivery' in result ? result.delivery : null) ?? null, ('smsAvailable' in result && result.smsAvailable === true));
       pushToast(t('Yangi kod yuborildi.'), 'success');
+      return true;
+    } catch (error) {
+      setResendError(error);
+      return false;
+    }
+  }
+
+  /** Kodni email o‘rniga SMS orqali olish (parol xotirada saqlangan bo‘lsa — kirish so‘rovi SMS kanali bilan takrorlanadi). */
+  async function handleSendSms(): Promise<boolean> {
+    setResendError(null);
+    try {
+      const password = loginSecret.get(pendingPhone as string);
+      const result = await authService.login({ phone: pendingPhone as string, password: password as string, codeChannel: 'SMS' });
+      setDevCode(result.developmentCode ?? null);
+      useAuthStore.getState().setDelivery(result.delivery ?? null, result.smsAvailable === true);
+      pushToast(t('Kod SMS orqali yuborildi.'), 'success');
       return true;
     } catch (error) {
       setResendError(error);
@@ -121,7 +140,7 @@ export function OtpPage() {
   }
 
   return (
-    <div className="gm-auth-page">
+    <div className="gm-auth-page gm-otp-page">
       <h1>{isRegisterFlow ? t('Ro‘yxatdan o‘tishni tasdiqlash') : t('Kirishni tasdiqlash')}</h1>
       {devCode && (
         <Alert tone="info" title={t('Dev rejim')}>
@@ -146,18 +165,16 @@ export function OtpPage() {
           {t('Agar bu telefon raqami bilan avval ro‘yxatdan o‘tgan bo‘lsangiz,')} <Link to="/login">{t('kirish sahifasidan')}</Link> {t('foydalaning. Aks holda kodni qayta tekshirib kiriting.')}
         </Alert>
       )}
-      {!!resendError && <Alert tone="danger">{getErrorMessage(resendError)}</Alert>}
+      {!!resendError && !/Soatiga/.test(getErrorMessage(resendError)) && <Alert tone="danger">{getErrorMessage(resendError)}</Alert>}
       <OtpForm
         phone={pendingPhone}
         loading={mutation.isPending}
         error={mutation.error}
         onSubmit={handleSubmit}
         onResend={isRegisterFlow || loginSecret.get(pendingPhone) ? handleResend : undefined}
-        onExpiredHint={
-          isRegisterFlow
-            ? t('Kod eskirdi. Yangi kod yuborilishini so‘rang yoki qaytadan urinib ko‘ring.')
-            : t('Kod eskirdi. Login sahifasiga qaytib, telefon raqami va parolingizni qayta kiriting — yangi kod shu tarzda yuboriladi.')
-        }
+        actionError={resendError}
+        delivery={isRegisterFlow ? null : delivery}
+        onSendSms={!isRegisterFlow && smsAvailable && delivery?.channel !== 'SMS' && loginSecret.get(pendingPhone) ? handleSendSms : undefined}
       />
     </div>
   );

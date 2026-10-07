@@ -147,11 +147,11 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
                   </label>
                 ))}
               </div>
-              <Link to="/mijozlar/manzillar" className="gm-reqform__add-address">
+              <Link to="/mijoz/manzillar" className="gm-reqform__add-address">
                 <Plus size={16} aria-hidden="true" />{' '}{t('Yangi manzil qo‘shish')}</Link>
             </>
           ) : (
-            <Link to="/mijozlar/manzillar" className="gm-reqform__add-address">
+            <Link to="/mijoz/manzillar" className="gm-reqform__add-address">
               <Plus size={16} aria-hidden="true" />{' '}{t('Manzil qo‘shish')}</Link>
           )}
           {errors.addressId && (

@@ -22,7 +22,7 @@ export function MyOrderCard({ item }: { item: MyOrderItem }) {
     const draft = request.status === 'DRAFT';
     const waiting = request.status === 'SUBMITTED' || request.status === 'MATCHING';
     return (
-      <Link to={`/mijozlar/sorovlar/${request.id}`} className={`gm-mo ${offers > 0 || draft ? 'gm-mo--action' : ''}`}>
+      <Link to={`/mijoz/sorovlar/${request.id}`} className={`gm-mo ${offers > 0 || draft ? 'gm-mo--action' : ''}`}>
         <span className="gm-mo__icon" aria-hidden="true">
           <Icon size={22} strokeWidth={1.9} />
         </span>
@@ -63,7 +63,7 @@ export function MyOrderCard({ item }: { item: MyOrderItem }) {
   const percent = order.status === 'COMPLETED' ? 100 : index >= 0 ? Math.round(((index + 1) / FLOW_STEPS.length) * 100) : 0;
   const needsConfirm = order.status === 'WAITING_CONFIRMATION';
   return (
-    <Link to={`/mijozlar/buyurtmalar/${order.id}`} className={`gm-mo ${needsConfirm ? 'gm-mo--action' : ''}`}>
+    <Link to={`/mijoz/buyurtmalar/${order.id}`} className={`gm-mo ${needsConfirm ? 'gm-mo--action' : ''}`}>
       <span className="gm-mo__icon" aria-hidden="true">
         <Icon size={22} strokeWidth={1.9} />
       </span>
@@ -79,7 +79,7 @@ export function MyOrderCard({ item }: { item: MyOrderItem }) {
           <p className="gm-mo__alert">
             <AlertCircle size={14} aria-hidden="true" />{' '}{t('Usta ishni tugatdi. Natijani ko‘rib, tasdiqlang')}</p>
         )}
-        {index >= 0 && (
+        {index >= 0 && order.status !== 'COMPLETED' && (
           <div className="gm-mo__bar" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label={t('Bajarilish darajasi')}>
             <span style={{ width: `${percent}%` }} />
           </div>

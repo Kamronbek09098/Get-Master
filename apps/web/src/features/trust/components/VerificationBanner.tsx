@@ -42,7 +42,7 @@ const NOTICE: Record<Unverified, { tone: AlertTone; title: string; text: string;
 };
 
 export const FOCUS_VERIFICATION_EVENT = 'gm:focus-verification';
-const PROFILE_PATH = '/ustalar/profil';
+const PROFILE_PATH = '/usta/profil';
 
 export function VerificationBanner() {
   const profile = useMyMasterProfile();

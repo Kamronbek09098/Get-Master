@@ -80,7 +80,7 @@ export function AuthLayout() {
       <aside className="gm-auth-layout__brand" aria-hidden={false}>
         <ShaderBackground variant="brand" />
         <Link to="/" className="gm-auth-layout__logo" aria-label={t('GetMaster — bosh sahifa')}>
-          <Logo />
+          <Logo onDark />
         </Link>
         <div className="gm-auth-layout__pitch">
           <span className="gm-auth-layout__eyebrow">

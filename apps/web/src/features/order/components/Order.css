@@ -437,3 +437,38 @@
 .gm-oprogress__extra li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 13.5px; }
 .gm-oprogress__extra span { color: var(--gm-color-text-muted); font-size: 12.5px; }
 .gm-oprogress__extra em { flex-basis: 100%; color: var(--gm-color-text-muted); }
+
+/* Bekor qilingan / nizoli buyurtma: o‘tilgan bosqichlar + oxirgi qizil «to‘xtatildi» belgisi */
+.gm-oprogress--stopped .gm-oprogress__step--done:nth-last-child(2)::after { background: var(--gm-color-danger); }
+.gm-oprogress__step--stop { color: var(--gm-color-danger); }
+.gm-oprogress__step--stop .gm-oprogress__dot {
+  border-color: var(--gm-color-danger);
+  background: var(--gm-color-danger);
+  color: #fff;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--gm-color-danger) 16%, transparent);
+}
+.gm-oprogress__step--stop .gm-oprogress__time { color: var(--gm-color-text-muted); }
+
+/* ===== Qadam kartalari («Sizning navbatingiz» va boshqalar): keng bo‘shliq, o‘rtaga tekislangan, katta tugmalar ===== */
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) { gap: 16px; padding: 28px clamp(20px, 4vw, 36px); text-align: center; }
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) .gm-ocard__badge { align-self: center; padding: 5px 14px; font-size: 0.74rem; letter-spacing: 0.05em; }
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) .gm-ocard__title { justify-content: center; font-size: 1.15rem; line-height: 1.3; text-align: center; }
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) .gm-ocard__title svg { width: 22px; height: 22px; }
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) p { max-width: 52ch; margin-inline: auto; }
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) .gm-ocard__lead { font-size: 15px; line-height: 1.6; }
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) .gm-oactions { justify-content: center; gap: 12px; margin-top: 4px; }
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) .gm-oactions .gm-button,
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) > .gm-button { min-height: 52px; min-width: 220px; padding-inline: 32px; border-radius: 14px; font-size: 1rem; font-weight: 800; }
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) > .gm-button { align-self: center; }
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) .gm-oneed { max-width: 52ch; margin-inline: auto; font-size: 0.9rem; }
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) .gm-field,
+:is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) form { text-align: left; }
+@media (max-width: 560px) {
+  :is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) { padding: 22px 18px; }
+  :is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) .gm-oactions { flex-direction: column; align-items: stretch; }
+  :is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) .gm-oactions .gm-button,
+  :is(.gm-ocard--next, .gm-ocard--wait, .gm-ocard--done, .gm-ocard--stop) > .gm-button { width: 100%; min-width: 0; }
+}
+.gm-ocard--stop .gm-ocard__title svg { color: var(--gm-color-danger); }
+.gm-ocard--done .gm-ocard__title svg { color: var(--gm-color-success); }
+.gm-ocard--wait .gm-ocard__title svg { color: var(--gm-color-warning); }

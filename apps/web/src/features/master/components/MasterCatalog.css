@@ -268,3 +268,49 @@
     justify-content: center;
   }
 }
+
+/* ===== Usta kartasi: statistik plitkalar va portfolio lentasi ===== */
+.gm-master__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gm-space-2);
+}
+.gm-master__stat {
+  display: grid;
+  gap: 3px;
+  align-content: start;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--gm-color-surface-muted);
+}
+.gm-master__stat strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--gm-font-display);
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.gm-master__stat small {
+  font-size: 0.72rem;
+  line-height: 1.25;
+  color: var(--gm-color-text-muted);
+}
+.gm-master__photos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gm-space-2);
+}
+.gm-master__photos .gm-media-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--gm-color-surface-muted);
+}
+@media (max-width: 380px) {
+  .gm-master__stat strong { font-size: 1.05rem; }
+}

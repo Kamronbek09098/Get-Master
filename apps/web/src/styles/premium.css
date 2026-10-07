@@ -203,3 +203,56 @@ body { letter-spacing: -0.003em; }
 
 /* Karta ichidagi bo‘sh holat: ixcham (ulkan bo‘sh quti bo‘lmasin) */
 :root .gm-pcard .gm-empty-state { min-height: 0; padding: 22px 16px; gap: 4px; }
+
+/* Matn maydonlari: fokusda bitta tekis chiziq — tashqi halqa/soya va ikkinchi kontur yo‘q */
+.gm-field__control.gm-field__control:focus,
+.gm-field__control.gm-field__control:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--gm-color-primary);
+}
+.gm-field__control.gm-field__control--error:focus,
+.gm-field__control.gm-field__control--error:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: var(--gm-color-danger);
+}
+
+/* Matn maydonining pastki o‘ng burchagidagi o‘lcham tutqichi (chiziqchalar) olib tashlandi */
+textarea,
+textarea.gm-field__control {
+  resize: none;
+}
+
+/* Tugmalar: ichki yozuv chetga yopishmasin — har qanday zichlikda kamida shuncha yon bo‘shliq va balandlik */
+.gm-button--sm { min-height: max(var(--gm-btn-h-sm), 38px); padding-inline: max(calc(var(--gm-btn-px) - 2px), 18px); }
+.gm-button--md { min-height: max(var(--gm-btn-h-md), 46px); padding-inline: max(var(--gm-btn-px), 22px); }
+.gm-button--lg { min-height: max(var(--gm-btn-h-lg), 54px); padding-inline: max(calc(var(--gm-btn-px) + 4px), 28px); }
+.gm-button .gm-button__label { text-align: center; }
+
+/* ===== Yuqori va pastki qismlar asosiy ko‘rinishdan ajralib turmasin (bir xil fon, yengil chiziqlar) ===== */
+.gm-header {
+  background: color-mix(in srgb, var(--gm-color-bg) 88%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--gm-color-border) 55%, transparent);
+  backdrop-filter: saturate(160%) blur(14px);
+}
+@media (min-width: 900px) {
+  .gm-sidebar {
+    background: color-mix(in srgb, var(--gm-color-bg) 55%, var(--gm-color-surface));
+    border-right-color: color-mix(in srgb, var(--gm-color-border) 55%, transparent);
+  }
+  /* Pastki yozuv qatori yon panel tagida emas, asosiy kontent ostida va o‘sha fonda */
+  .gm-footer {
+    padding-left: calc(var(--gm-sidebar-width) + 16px);
+    background: transparent;
+    position: relative;
+  }
+  .gm-footer::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: var(--gm-sidebar-width);
+    background: color-mix(in srgb, var(--gm-color-bg) 55%, var(--gm-color-surface));
+    border-right: 1px solid color-mix(in srgb, var(--gm-color-border) 55%, transparent);
+  }
+}

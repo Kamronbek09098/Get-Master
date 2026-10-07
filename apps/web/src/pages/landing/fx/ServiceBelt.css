@@ -1,0 +1,25 @@
+/* ---------- Xizmatlar lentasi: 3 qator oq kartochka ---------- */
+.gm-belt { pointer-events: none; user-select: none; cursor: default; --cw: clamp(176px, 15vw, 216px); --ch: clamp(116px, 9vw, 128px); --gap: 22px; display: grid; gap: var(--gap); margin-top: clamp(36px, 5vw, 64px); padding: 26px 0 30px; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); }
+.gm-belt-row { overflow: hidden; padding-block: 18px; margin-block: -18px; }
+.gm-belt-track { display: flex; width: max-content; animation: gm-belt-left var(--dur, 55s) linear infinite; }
+.gm-belt-row--right .gm-belt-track { animation-name: gm-belt-right; }
+.gm-belt-list { display: flex; gap: var(--gap); margin: 0; padding: 0 var(--gap) 0 0; list-style: none; }
+/* O‘rtadagi qator yarim kartochkaga surilgan: 1-chi va 3-chi qator kartochkalari aynan bir xil joyda */
+.gm-belt-row--right .gm-belt-track { margin-left: calc((var(--cw) + var(--gap)) / -2); }
+.gm-belt-list li { display: flex; flex: none; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: var(--cw); height: var(--ch); padding: 12px; border-radius: 20px; background: #ffffff; color: #0a1230; box-shadow: 0 6px 18px -10px rgba(10, 18, 48, 0.22), 0 0 0 1px rgba(30, 58, 138, 0.08); }
+/* Haqiqiy buyum tasviri uchun yumshoq rangli «plitka» */
+.gm-belt-icon { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 19px; background: var(--tint, #e8f0ff); color: #1d4ed8; }
+.gm-belt-list strong { max-width: 100%; overflow: hidden; font-family: var(--gm-font-display, inherit); font-size: 15.5px; font-weight: 700; letter-spacing: -0.015em; text-overflow: ellipsis; white-space: nowrap; }
+/* Lenta 4 nusxadan iborat: bitta nusxa kengligicha siljiydi, shuning uchun qatorda hech qachon bo‘sh joy qolmaydi */
+@keyframes gm-belt-left { to { transform: translateX(-25%); } }
+@keyframes gm-belt-right { from { transform: translateX(-25%); } to { transform: translateX(0); } }
+@media (max-width: 720px) {
+  .gm-belt { --cw: 156px; --ch: 108px; --gap: 16px; }
+  .gm-belt-list li { border-radius: 18px; }
+  .gm-belt-list strong { font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) { .gm-belt-track { animation: none; } }
+
+
+/* Mijoz va usta bosh sahifalarida: atrofidagi bo‘limlardan yetarli masofada */
+.gm-landing .gm-belt { margin-block: clamp(44px, 6vw, 84px); }

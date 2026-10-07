@@ -61,7 +61,7 @@ describe('ConversationList', () => {
     );
     expect(screen.getByText('Suhbatlar hali yo‘q')).toBeInTheDocument();
     expect(screen.getByText(/Chat orqali bog‘lanish/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Ustalarni ko‘rish' })).toHaveAttribute('href', '/ustalar-katalogi');
+    expect(screen.getByRole('link', { name: 'Ustalarni ko‘rish' })).toHaveAttribute('href', '/mijoz/ustalar');
   });
 
   it('tells a master that chats appear when customers write', () => {

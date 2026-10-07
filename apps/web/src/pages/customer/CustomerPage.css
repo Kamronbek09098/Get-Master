@@ -193,3 +193,28 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Manzillarim: keng bo‘shliqlar, katta tugmalar, yozuvlar chetga yopishmaydi ===== */
+.gm-addr-card.gm-addr-card { gap: 16px 18px; padding: 22px 24px; }
+.gm-addr-card__icon { width: 48px; height: 48px; border-radius: 14px; }
+.gm-addr-card__body h3 { font-size: 1.05rem; }
+.gm-addr-card__line { font-size: 0.95rem; line-height: 1.5; }
+.gm-addr-card__chips { gap: 8px; margin-top: 10px; }
+.gm-addr-card__delete { min-height: 44px; padding: 0 22px; gap: 8px; font-size: 14px; font-weight: 700; }
+.gm-addr-card__foot { padding-top: 18px; }
+.gm-addr-card__foot .gm-covbtn { min-height: 56px; padding: 10px 18px 10px 14px; font-size: 15px; border-radius: 16px; }
+
+.gm-addrform.gm-addrform { padding: 26px 28px 28px; }
+.gm-addrform__head { gap: 16px; padding-bottom: 18px; }
+.gm-addrform__form { gap: 20px; }
+.gm-addrform .gm-field__label { font-size: 14px; }
+.gm-addrform .gm-addrpick__actions { gap: 12px; }
+.gm-addrform .gm-addrpick__actions .gm-button { min-height: 50px; padding: 0 22px; border-radius: 14px; font-size: 14.5px; font-weight: 700; gap: 10px; }
+.gm-addrform .gm-addrpick__hint,
+.gm-addrform .gm-addrpick__coords { font-size: 13px; line-height: 1.5; padding-inline: 2px; }
+.gm-addrform .gm-field__control { padding-inline: 18px; }
+.gm-addrform__submit { min-height: 56px; padding: 0 28px; border-radius: 16px; font-size: 16px; font-weight: 800; }
+@media (max-width: 480px) {
+  .gm-addr-card.gm-addr-card { padding: 18px 16px; }
+  .gm-addrform.gm-addrform { padding: 20px 16px 22px; }
+}

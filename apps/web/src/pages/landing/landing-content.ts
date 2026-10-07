@@ -1,8 +1,12 @@
 import {
   Armchair,
   BadgeCheck,
+  CalendarClock,
   Camera,
   ClipboardCheck,
+  Clock,
+  Coins,
+  Lock,
   Droplets,
   Hammer,
   Handshake,
@@ -13,6 +17,7 @@ import {
   Snowflake,
   Sparkles,
   Star,
+  Tag,
   TrendingUp,
   Type,
   UserPlus,
@@ -37,7 +42,7 @@ export interface LandingContent {
   lead: string;
   primaryCta: string;
   secondaryCta: string;
-  stats: Array<{ value: string; label: string }>;
+  stats: Array<{ value: string; label: string; icon: LucideIcon; note?: string }>;
   statementLabel: string;
   statement: string;
   stepsTitle: string;
@@ -75,10 +80,10 @@ export const CUSTOMER_CONTENT: LandingContent = {
   primaryCta: t('So‘rov yaratish'),
   secondaryCta: t('Qanday ishlaydi'),
   stats: [
-    { value: '24/7', label: t('So‘rov qabul qilish') },
-    { value: '100%', label: t('Tasdiqlangan ustalar') },
-    { value: 'Kafolat', label: t('Har bir ishga') },
-    { value: 'Xavfsiz', label: t('Onlayn to‘lov') },
+    { value: '24/7', label: t('So‘rov qabul qilish'), icon: Clock },
+    { value: '100%', label: t('Tasdiqlangan ustalar'), icon: BadgeCheck },
+    { value: 'Kafolat', label: t('Har bir ishga'), icon: ShieldCheck },
+    { value: 'Xavfsiz', label: t('Onlayn to‘lov'), icon: Lock },
   ],
   statementLabel: t('(01) Biz haqimizda'),
   statement: t('Har kuni biror narsa buziladi. Biz bu muammoni hal qiladigan tasdiqlangan ustani — narxi aniq, ishi kafolatli — daqiqalar ichida topib beramiz.'),
@@ -108,10 +113,10 @@ export const MASTER_CONTENT: LandingContent = {
   primaryCta: t('Usta sifatida boshlash'),
   secondaryCta: t('Qanday ishlaydi'),
   stats: [
-    { value: '0 so‘m', label: t('Ro‘yxatdan o‘tish') },
-    { value: 'O‘zingiz', label: t('Narxni belgilaysiz') },
-    { value: 'Shaffof', label: t('Daromad va to‘lovlar') },
-    { value: 'Erkin', label: t('Ish jadvali') },
+    { value: '0 so‘m', label: t('Ro‘yxatdan o‘tish'), icon: Coins, note: t('1 daqiqa') },
+    { value: 'O‘zingiz', label: t('Narxni belgilaysiz'), icon: Tag },
+    { value: 'Shaffof', label: t('Daromad va to‘lovlar'), icon: TrendingUp },
+    { value: 'Erkin', label: t('Ish jadvali'), icon: CalendarClock },
   ],
   statementLabel: t('(01) Ustalar uchun'),
   statement: t('Mijoz izlash — ish emas. Profilingizni yarating, narxni o‘zingiz belgilang, yaqin atrofdagi so‘rovlar o‘zi sizni topadi va daromad shaffof bo‘ladi.'),

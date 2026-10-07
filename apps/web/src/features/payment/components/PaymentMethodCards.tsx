@@ -1,7 +1,8 @@
-import { Banknote, Check, CreditCard } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { cx } from '@/lib/utils';
 import type { PaymentProvider } from '@/types/common';
 import { PROVIDER_OPTIONS } from '../labels';
+import { ProviderLogo } from './ProviderLogo';
 import './Payment.css';
 import { t } from '@/i18n';
 
@@ -30,7 +31,7 @@ export function PaymentMethodCards({
           <label key={option.value} className={cx('gm-paym__card', selected && 'gm-paym__card--selected', disabled && 'gm-paym__card--disabled')}>
             <input type="radio" name="payment-method" value={option.value} checked={selected} disabled={disabled} onChange={() => onChange(option.value)} />
             <span className={cx('gm-paym__icon', BRAND[option.value] && `gm-paym__icon--${BRAND[option.value]}`)} aria-hidden="true">
-              {option.value === 'CASH' ? <Banknote size={20} /> : BRAND[option.value] ? option.label[0] : <CreditCard size={20} />}
+              <ProviderLogo provider={option.value} size={32} />
             </span>
             <span className="gm-paym__text">
               <strong>

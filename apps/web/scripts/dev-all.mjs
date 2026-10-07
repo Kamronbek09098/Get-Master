@@ -1,12 +1,14 @@
 import { spawn } from 'node:child_process';
 
 const apps = [
+  { script: 'dev:site', label: 'sayt  ' },
   { script: 'dev:customer', label: 'mijoz ' },
   { script: 'dev:master', label: 'usta  ' },
   { script: 'dev:admin', label: 'admin ' },
 ];
 
 console.log('\n  GetMaster frontend panellari:');
+console.log('    Asosiy sayt   → http://localhost:5170  (getmaster.uz: mijoz va usta shu yerdan kiradi)');
 console.log('    Mijoz paneli  → http://localhost:5173');
 console.log('    Usta paneli   → http://localhost:5174');
 console.log('    Admin paneli  → http://localhost:5175\n');

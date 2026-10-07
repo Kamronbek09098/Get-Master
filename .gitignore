@@ -16,5 +16,5 @@ logs/
 
 uploads/
 tmp/
-/apps/web/.env
+/apps/web/.env*
 data/

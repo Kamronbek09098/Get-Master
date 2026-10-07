@@ -908,3 +908,26 @@ body {
   overscroll-behavior-x: none;
 }
 
+
+/* Butun ilovada matn va rasmlar belgilanmasin / sudralmasin (kirish maydonlari va «nusxalash» elementlari bundan mustasno) */
+*,
+*::before,
+*::after {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input,
+textarea,
+select,
+[contenteditable='true'],
+[contenteditable='true'] * {
+  -webkit-user-select: text;
+  user-select: text;
+}
+img,
+video,
+svg,
+a {
+  -webkit-user-drag: none;
+}

@@ -11,7 +11,7 @@ const SKIP_PREFIXES = ['/api/v1/auth', '/api/v1/otp', '/api/v1/webhooks'];
 const isIdParam = (name: string) => /(^|[a-z])id$/i.test(name);
 // GET /masters/:id deliberately accepts either a UUID or a numeric account number (dual-format
 // public lookup) and does its own format check, returning 404 — not 400 — for anything else.
-const ACCEPTS_NON_UUID = new Set(['GET /api/v1/masters/:id']);
+const ACCEPTS_NON_UUID = new Set(['GET /api/v1/masters/:id', 'GET /api/v1/masters/:id/completed-jobs']);
 
 function listRoutes(h: Harness): RouteInfo[] {
   const server = h.app.getHttpAdapter().getInstance() as any;

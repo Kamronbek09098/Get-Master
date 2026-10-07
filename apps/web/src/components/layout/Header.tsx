@@ -1,9 +1,10 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Bell, LogOut, Settings } from 'lucide-react';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { Logo } from '@/components/common/Logo';
 import { useAuthStore } from '@/store/auth.store';
-import { useLogout } from '@/features/auth/hooks/useAuth';
+import { LogoutDialog } from '@/features/auth/components/LogoutDialog';
 import { useUnreadCount } from '@/features/notification/hooks/useNotifications';
 import { useMe } from '@/features/session/hooks/useMe';
 import { currentPanelLabel } from '@/lib/panel';
@@ -18,7 +19,7 @@ const ROLE_LABEL: Record<string, string> = { CUSTOMER: t('Mijoz'), MASTER: t('Us
 
 export function Header() {
   const preferredRole = useAuthStore((s) => s.preferredRole);
-  const logout = useLogout();
+  const [logoutOpen, setLogoutOpen] = useState(false);
   const navigate = useNavigate();
   const me = useMe();
   const unread = useUnreadCount();
@@ -53,10 +54,11 @@ export function Header() {
           }
           items={[
             { label: t('Sozlamalar va sessiyalar'), icon: <Settings size={17} />, onSelect: () => navigate('/sozlamalar') },
-            { label: t('Chiqish'), icon: <LogOut size={17} />, onSelect: () => logout.mutate(false), danger: true },
+            { label: t('Chiqish'), icon: <LogOut size={17} />, onSelect: () => setLogoutOpen(true), danger: true },
           ]}
         />
       </div>
+      <LogoutDialog open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </header>
   );
 }

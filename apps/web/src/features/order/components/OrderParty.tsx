@@ -9,7 +9,7 @@ import { t } from '@/i18n';
 
 export function OrderParty({ order }: { order: OrderDetailsData }) {
   const name = accountName(order.counterpart);
-  const base = order.viewerRole === 'MASTER' ? '/ustalar' : '/mijozlar';
+  const base = order.viewerRole === 'MASTER' ? '/usta' : '/mijoz';
   const role = order.viewerRole === 'MASTER' ? 'Mijoz' : 'Usta';
 
   return (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Globe, LogOut, Monitor, Smartphone, Tablet } from 'lucide-react';
+import { Globe, Lock, LogOut, Monitor, Smartphone, Tablet } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -40,7 +40,7 @@ export function DeviceList() {
           {t('Akkauntingizga ulangan faol qurilmalar:')} <strong>{items.length}</strong> {t('ta.')} {t('Tanimagan qurilma ko‘rsangiz, uni darhol chiqaring va parolni almashtiring.')}
         </p>
         {others.length > 0 && (
-          <Button size="sm" variant="secondary" disabled={blocked} onClick={() => setConfirmOthers(true)}>
+          <Button size="md" variant="secondary" className="gm-devices__others" disabled={blocked} onClick={() => setConfirmOthers(true)}>
             <LogOut size={16} /> {t('Boshqa qurilmalardan chiqish')}
           </Button>
         )}
@@ -81,13 +81,14 @@ export function DeviceList() {
               </div>
               {!session.isCurrent && !session.canRevoke && (
                 <span className="gm-device__locked" title={t('Yangi qurilma o‘zidan oldin ulangan qurilmalarni 24 soat chiqara olmaydi')}>
-                  {t('{time} dan keyin', { time: formatDateTime(session.revokeLockedUntil) })}
+                  <Lock size={13} aria-hidden="true" /> {t('Chiqarish mumkin:')} {t('{time} dan keyin', { time: formatDateTime(session.revokeLockedUntil) })}
                 </span>
               )}
               {!session.isCurrent && session.canRevoke && (
                 <Button
                   size="sm"
                   variant="ghost"
+                  className="gm-device__revoke"
                   loading={revoke.isPending && busyId === session.id}
                   onClick={() => {
                     setBusyId(session.id);

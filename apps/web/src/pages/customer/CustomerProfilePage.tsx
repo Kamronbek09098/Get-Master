@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
 import { CalendarDays, ClipboardList, Heart, LogOut, MapPin, Package, Settings, UserRound, Users, Wallet } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -12,7 +13,7 @@ import { useFavorites } from '@/features/customer/hooks/useFavorites';
 import { PaymentPreferenceCard, SavedMastersCard } from '@/features/customer/components/CustomerSaved';
 import { CustomerActivity } from '@/features/customer/components/CustomerActivity';
 import { CustomerForm } from '@/features/customer/components/CustomerForm';
-import { useLogout } from '@/features/auth/hooks/useAuth';
+import { LogoutDialog } from '@/features/auth/components/LogoutDialog';
 import { providerLabel } from '@/features/payment/labels';
 import { useMyOrders } from '@/features/order/hooks/useOrders';
 import { useMyRequests } from '@/features/request/hooks/useRequests';
@@ -23,7 +24,7 @@ import { GoogleLinkSettings } from '@/features/session/components/GoogleLinkSett
 import '@/features/profile/Profile.css';
 import { t } from '@/i18n';
 
-const BASE = '/mijozlar/profil';
+const BASE = '/mijoz/profil';
 
 /** Mijoz profili: asosiy sahifada menyu, har bir qator — alohida ichki bo‘lim (ilova uslubi). */
 export function CustomerProfilePage() {
@@ -34,7 +35,7 @@ export function CustomerProfilePage() {
   const requests = useMyRequests();
   const favorites = useFavorites();
   const preferences = useCustomerPreferences();
-  const logout = useLogout();
+  const [logoutOpen, setLogoutOpen] = useState(false);
 
   if (profile.isLoading) return <PageLoader label={t('Profil yuklanmoqda…')} />;
   if (profile.isError) return <Alert tone="danger">{getErrorMessage(profile.error)}</Alert>;
@@ -115,14 +116,15 @@ export function CustomerProfilePage() {
       <ProfileMenuList
         rows={[
           { key: 'edit', icon: UserRound, label: t('Profilni tahrirlash'), to: `${BASE}/tahrirlash` },
-          { key: 'addr', icon: MapPin, label: t('Manzillarim'), value: addressCount || undefined, to: '/mijozlar/manzillar' },
-          { key: 'masters', icon: Users, label: t('Birga ishlagan ustalar'), to: `${BASE}/ustalar` },
+          { key: 'addr', icon: MapPin, label: t('Manzillarim'), value: addressCount || undefined, to: '/mijoz/manzillar' },
+          { key: 'masters', icon: Users, label: t('Birga ishlagan ustalar'), to: `${BASE}/usta` },
           { key: 'saved', icon: Heart, label: t('Saqlangan ustalar'), value: favorites.data?.length || undefined, to: `${BASE}/saqlangan` },
           { key: 'pay', icon: Wallet, label: t('To‘lov usuli'), value: providerLabel(preferences.data?.paymentMethod ?? 'CASH'), to: `${BASE}/tolov` },
           { key: 'settings', icon: Settings, label: t('Sozlamalar'), to: '/sozlamalar' },
-          { key: 'logout', icon: LogOut, label: t('Tizimdan chiqish'), danger: true, onClick: () => logout.mutate(false) },
+          { key: 'logout', icon: LogOut, label: t('Tizimdan chiqish'), danger: true, onClick: () => setLogoutOpen(true) },
         ]}
       />
+      <LogoutDialog open={logoutOpen} onClose={() => setLogoutOpen(false)} />
     </div>
   );
 }

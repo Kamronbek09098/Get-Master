@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatLocalPhone, localPhoneSchema, toFullPhone, toLocalDigits } from '@/features/auth/validation';
+import { OtpCodeInput } from '@/features/auth/components/OtpCodeInput';
 import { sessionService } from '../services/session.service';
 import { t } from '@/i18n';
 
@@ -83,16 +84,7 @@ export function PhoneVerifyDialog({ open, onClose }: { open: boolean; onClose: (
         {sent && (
           <>
             {devCode && <Alert tone="info">{t('Sinov kodi: {code}', { code: devCode })}</Alert>}
-            <Input
-              label={t('Tasdiqlash kodi')}
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              maxLength={6}
-              required
-              autoFocus
-              value={code}
-              onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
-            />
+            <OtpCodeInput value={code} onChange={setCode} label={t('Tasdiqlash kodi')} />
           </>
         )}
       </form>

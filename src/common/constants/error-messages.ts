@@ -53,6 +53,16 @@ export const ERRORS = {
   PHONE_VERIFICATION_REQUIRED: 'Buyurtma berish uchun telefon raqamingizni kiriting va tasdiqlang',
   PHONE_ALREADY_REGISTERED: 'Bu telefon raqam allaqachon ro‘yxatdan o‘tgan',
   EMAIL_ALREADY_REGISTERED: 'Bu email manzil allaqachon ro‘yxatdan o‘tgan',
+  ACCOUNT_DELETE_ACTIVE_ORDERS: 'Faol buyurtmalaringiz bor. Avval ularni yakunlang yoki bekor qiling, so‘ng akkauntni o‘chirishingiz mumkin',
+  ACCOUNT_DELETE_ADMIN_FORBIDDEN: 'Administrator akkauntini bu yerdan o‘chirib bo‘lmaydi',
+  CALL_NOT_FOUND: 'Qo‘ng‘iroq topilmadi',
+  CALL_NOT_ALLOWED: 'Bu suhbatda qo‘ng‘iroq qilib bo‘lmaydi',
+  CALL_SELF_BUSY: 'Siz hozir boshqa qo‘ng‘iroqdasiz',
+  CALL_PEER_BUSY: 'Foydalanuvchi hozir boshqa qo‘ng‘iroqda',
+  CALL_INVALID_STATE: 'Qo‘ng‘iroq holati bu amalga mos emas',
+  CALL_SIGNAL_TOO_LARGE: 'Signal juda katta',
+  CALL_CONVERSATION_CLOSED: 'Buyurtma yopilgan: qo‘ng‘iroq qilib bo‘lmaydi',
+  SMS_NOT_AVAILABLE: 'SMS orqali kod yuborish hozircha mavjud emas. Kodni emailga olishingiz mumkin',
   INVALID_PHONE: 'O‘zbekiston telefon raqami noto‘g‘ri',
   ACCOUNT_NOT_AVAILABLE: 'Hisob mavjud emas yoki bloklangan',
   ACCOUNT_VERIFICATION_REQUIRED: 'Hisobni tasdiqlash talab qilinadi',
@@ -79,9 +89,9 @@ export const ERRORS = {
   INVALID_VERIFICATION_CODE: 'Tasdiqlash kodi noto‘g‘ri yoki muddati tugagan',
   VERIFICATION_ATTEMPTS_EXCEEDED: 'Tasdiqlash urinishlari soni tugadi',
   INVALID_VERIFICATION_REQUEST: 'Tasdiqlash so‘rovi noto‘g‘ri',
-  OTP_LIMIT_EXCEEDED: 'Kod so‘rash limiti tugadi',
+  OTP_LIMIT_EXCEEDED: 'Kod so‘rash limiti tugadi. Keyinroq qayta urinib ko‘ring',
   OTP_LIMIT_WAIT: (minutes: number) =>
-    `Kod so‘rash limiti tugadi. ${minutes} daqiqadan so‘ng qayta urinib ko‘ring`,
+    `Soatiga 3 martadan ortiq kod so‘rab bo‘lmaydi. ${minutes} daqiqadan so‘ng qayta urinib ko‘ring`,
   OTP_WAIT: (seconds: number) => `Yangi kod so‘rashdan oldin ${seconds} soniya kuting`,
   RATE_LIMIT_BLOCKED: (seconds: number) => {
     const minutes = Math.ceil(seconds / 60);

@@ -1,14 +1,15 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import { Logo } from '@/components/common/Logo';
+import { ArrowRight, Clock } from 'lucide-react';
+import { LogoLink } from '@/components/common/Logo';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { env } from '@/lib/env';
 import { CATEGORIES, CUSTOMER_CONTENT, MASTER_CONTENT } from './landing-content';
 import type { LandingContent } from './landing-content';
 import '@/components/ui/Button.css';
 import '@/components/ui/Badge.css';
-import { Marquee } from './fx/Marquee';
+import { ServiceBelt } from './fx/ServiceBelt';
+import { ServiceArt, hasServiceArt } from './fx/ServiceArt';
 import { Statement } from './fx/Statement';
 import { tiltHandlers } from './fx/interactions';
 import { useAvailableStories } from './story/useAvailableStories';
@@ -104,9 +105,7 @@ function Landing({ content }: { content: LandingContent }) {
       <div id="gm-scroll-progress" className="gm-scroll-progress" aria-hidden="true" />
       <header className={atTop ? 'gm-landing__nav is-top' : 'gm-landing__nav'}>
         <div className="gm-landing__nav-inner">
-          <Link to="/" aria-label="GetMaster">
-            <Logo />
-          </Link>
+          <LogoLink />
           <nav className="gm-landing__links" aria-label={t('Bo‘limlar')}>
             <a href="#qanday">{t('Qanday ishlaydi')}</a>
             {content.showCategories && <a href="#xizmatlar">{t('Xizmatlar')}</a>}
@@ -123,15 +122,28 @@ function Landing({ content }: { content: LandingContent }) {
       <CinematicHero content={content} />
 
       <section className="gm-landing__stats" aria-label={t('Qisqacha')}>
-        {content.stats.map((stat) => (
-          <div key={stat.label} className="gm-landing__stat" data-reveal style={{ ['--i' as string]: content.stats.indexOf(stat) }}>
-            <strong>{stat.value}</strong>
-            <span>{stat.label}</span>
-          </div>
-        ))}
+        {content.stats.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <div key={stat.label} className="gm-landing__stat" data-tone={index % 4} data-reveal style={{ ['--i' as string]: index }}>
+              <span className="gm-landing__stat-icon" aria-hidden="true">
+                <Icon size={26} strokeWidth={2.1} />
+              </span>
+              <span className="gm-landing__stat-text">
+                <strong>{stat.value}</strong>
+                <span>{stat.label}</span>
+                {stat.note && (
+                  <em className="gm-landing__stat-note">
+                    <Clock size={12} strokeWidth={2.4} aria-hidden="true" /> {stat.note}
+                  </em>
+                )}
+              </span>
+            </div>
+          );
+        })}
       </section>
 
-      <Marquee items={CATEGORIES} />
+      <ServiceBelt />
 
       <Statement label={content.statementLabel} text={content.statement} />
 
@@ -146,7 +158,7 @@ function Landing({ content }: { content: LandingContent }) {
             {CATEGORIES.map((category, index) => (
               <Link key={category.name} to="/register" className="gm-landing__category gm-tilt" {...tiltHandlers} data-reveal style={{ ['--i' as string]: index % 6 }}>
                 <span>
-                  <category.icon size={26} strokeWidth={1.9} />
+                  {hasServiceArt(category.name) ? <ServiceArt name={category.name} size={38} /> : <category.icon size={26} strokeWidth={1.9} />}
                 </span>
                 {category.name}
               </Link>
@@ -181,7 +193,7 @@ function Landing({ content }: { content: LandingContent }) {
       </section>
 
       <footer className="gm-landing__footer">
-        <Logo />
+        <LogoLink />
         <p>{t('© {getFullYear} GetMaster. Barcha huquqlar himoyalangan.', { getFullYear: new Date().getFullYear() })}</p>
       </footer>
     </div>

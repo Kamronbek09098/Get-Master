@@ -11,7 +11,7 @@
 .gm-rs__hero { --on: 1; left: max(24px, calc((100vw - 1200px) / 2 + 24px)); top: clamp(88px, 14.5vh, 170px); max-width: 740px; pointer-events: auto; }
 .gm-rs__hero h1 { margin: 0; font-family: var(--gm-font-display); font-size: clamp(37.4px, 5.06vw, 74.8px); font-weight: 800; line-height: 1.02; letter-spacing: -0.045em; color: #fff; }
 .gm-rs__hero h1 em { display: block; font-style: normal; color: #ffb020; }
-.gm-rs__inputs { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
+.gm-rs__inputs { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0 0; padding: 0; list-style: none; }
 .gm-rs__inputs li { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px; background: rgba(0, 0, 0, 0.28); font-size: 13.75px; font-weight: 600; }
 .gm-rs__cta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
 .gm-rs .gm-button--md { min-height: 44px; padding: 0 20px; font-size: 15.4px; border-radius: 13px; gap: 9px; }

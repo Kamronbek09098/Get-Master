@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:site": "vite --port 5170 --strictPort",
     "dev:customer": "vite --mode customer --port 5173 --strictPort",
     "dev:master": "vite --mode master --port 5174 --strictPort",
     "dev:admin": "vite --mode admin --port 5175 --strictPort",

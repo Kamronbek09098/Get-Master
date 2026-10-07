@@ -1,6 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Disallow: /mijozlar
-Disallow: /ustalar
+Disallow: /mijoz
+Disallow: /usta
 Disallow: /sozlamalar

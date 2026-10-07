@@ -19,6 +19,7 @@ const OTP_PURPOSE_LABEL: Record<OtpPurpose, string> = {
 import { MetricsService } from '../../infrastructure/metrics/metrics.service';
 import { RedisService } from '../../infrastructure/redis/redis.service';
 import { TelegramAlertService } from '../../infrastructure/telegram/telegram-alert.service';
+import { SmsService } from '../../infrastructure/sms/sms.service';
 
 /** 6 xonali kod 5 daqiqada eskiradi va 5 urinish bilan cheklangan — shu sabab xesh narxi parolnikidan past (tezroq javob). */
 const OTP_HASH_COST = 10;
@@ -26,6 +27,8 @@ const OTP_HASH_COST = 10;
 let dummyOtpHash: Promise<string> | undefined;
 /** Faol kod topilmaganda xuddi shuncha vaqt sarflash uchun (hech qachon mos kelmaydigan xesh). */
 const dummyHash = (): Promise<string> => (dummyOtpHash ??= hashSecret(randomInt(100000, 1_000_000).toString(), OTP_HASH_COST));
+
+type DeliveryRoute = { kind: 'EMAIL'; email: string; phone: string } | { kind: 'SMS'; phone: string } | { kind: 'NONE' };
 
 @Injectable()
 export class OtpService {
@@ -38,6 +41,7 @@ export class OtpService {
     private readonly metrics: MetricsService,
     private readonly telegram: TelegramAlertService,
     private readonly redis: RedisService,
+    private readonly sms: SmsService,
   ) {}
 
   private get ttlMs(): number {
@@ -63,11 +67,13 @@ export class OtpService {
     phoneInput: string,
     purpose: OtpPurpose,
     userId?: string,
-    context?: { ip?: string; device?: string; panel?: string | null; resend?: boolean },
+    context?: { ip?: string; device?: string; panel?: string | null; resend?: boolean; channel?: 'SMS'; reveal?: boolean },
   ) {
     const phone = this.normalizePhone(phoneInput);
     const panel = context?.panel ?? null;
     const now = new Date();
+    // Kod qayerga yuboriladi: standart — email (bo‘lsa), SMS — foydalanuvchi so‘raganda (yoki email bo‘lmasa va SMS ulangan bo‘lsa).
+    const route = await this.resolveRoute(phone, context?.channel);
     // Kod va uning xeshi oldindan, tekshiruvlar bilan parallel tayyorlanadi (kutish vaqti qisqaradi).
     const code = randomInt(100000, 1_000_000).toString();
     const codeHashPromise = hashSecret(code, OTP_HASH_COST);
@@ -109,7 +115,10 @@ export class OtpService {
       );
     }
 
-    if (lastPhone) {
+    // Email → SMS almashtirish: oynada bir marta kutmasdan ruxsat (umumiy so‘rovlar limiti baribir amal qiladi).
+    const smsSwitch = !!lastPhone && context?.channel === 'SMS' && (await this.redis.setIfAbsent(`otpsms:${purpose}:${phone}`, '1', Math.ceil(this.windowMs / 1000)));
+
+    if (lastPhone && !smsSwitch) {
       const remaining = Math.ceil(
         (this.resendMs - (now.getTime() - lastPhone.createdAt.getTime())) /
           1000,
@@ -166,12 +175,14 @@ export class OtpService {
     await this.redis.del(this.failKey(phone, purpose));
 
     // Yetkazish (Telegram/email) javobni kechiktirmaydi: fonda bajariladi, xato logga yoziladi.
-    void this.deliver(phone, code, purpose, context?.resend === true).catch((error: unknown) => this.logger.error(`${purpose} kodini yuborishda xato: ${(error as Error).message}`));
+    void this.deliver(route, phone, code, purpose, context?.resend === true).catch((error: unknown) => this.logger.error(`${purpose} kodini yuborishda xato: ${(error as Error).message}`));
 
     const metadata = {
       verificationRequired: true,
       expiresIn: this.ttlMs / 1000,
       resendAfter: this.resendMs / 1000,
+      // Faqat parol tekshirilgan (kirish) holatda: kod qayerga yuborilgani. Ochiq so‘rovda email bor-yo‘qligi oshkor qilinmaydi.
+      ...(context?.reveal ? { delivery: this.publicRoute(route), smsAvailable: this.sms.isEnabled() } : {}),
     };
     if (this.config.get<string>('app.environment') !== 'production' && process.env.OTP_DEV_ECHO === 'true') {
       return { ...metadata, developmentCode: code };
@@ -179,23 +190,61 @@ export class OtpService {
     return metadata;
   }
 
-  private async deliver(phone: string, code: string, purpose: OtpPurpose, resend = false): Promise<void> {
-    let delivered = false;
+  private maskEmail(email: string): string {
+    return email.replace(/^(.{2})[^@]*(@.*)$/, '$1•••$2');
+  }
+
+  private maskPhone(phone: string): string {
+    return phone.replace(/^(\+\d{3})\d+(\d{2})$/, '$1 •• ••• •• $2');
+  }
+
+  private publicRoute(route: DeliveryRoute): { channel: 'EMAIL' | 'SMS' | 'NONE'; destination?: string } {
+    if (route.kind === 'EMAIL') return { channel: 'EMAIL', destination: this.maskEmail(route.email) };
+    if (route.kind === 'SMS') return { channel: 'SMS', destination: this.maskPhone(route.phone) };
+    return { channel: 'NONE' };
+  }
+
+  /**
+   * Kod yo‘nalishi. Standart — foydalanuvchi emaili (bo‘lsa va pochta sozlangan bo‘lsa).
+   * SMS: foydalanuvchi so‘raganda yoki emaili bo‘lmasa (SMS xizmati ulangan bo‘lsa). SMS ulanmagan holda so‘ralsa — xato.
+   */
+  private async resolveRoute(phone: string, requested?: 'SMS'): Promise<DeliveryRoute> {
+    if (requested === 'SMS') {
+      if (!this.sms.isEnabled()) throw new BadRequestException(ERRORS.SMS_NOT_AVAILABLE);
+      return { kind: 'SMS', phone };
+    }
+    const user = await this.db.user.findUnique({ where: { phone }, select: { email: true } });
+    if (user?.email && this.mail.isEnabled()) return { kind: 'EMAIL', email: user.email, phone };
+    if (this.sms.isEnabled()) return { kind: 'SMS', phone };
+    return { kind: 'NONE' };
+  }
+
+  /** Yetkazish: tanlangan yo‘nalish bo‘yicha. Email yuborilmasa va SMS ulangan bo‘lsa — kod SMS orqali jo‘natiladi. Telegram OTP chat — ichki (operator) nusxa. */
+  private async deliver(route: DeliveryRoute, phone: string, code: string, purpose: OtpPurpose, resend = false): Promise<void> {
     const purposeLabel = resend ? `${OTP_PURPOSE_LABEL[purpose]} (kod qayta yuborildi)` : OTP_PURPOSE_LABEL[purpose];
-    if (await this.telegram.sendOtp({ phone, code, purposeLabel, ttlMinutes: this.ttlMs / 60_000 })) {
-      delivered = true;
-    }
-    try {
-      const user = await this.db.user.findUnique({ where: { phone }, select: { email: true } });
-      if (user?.email && this.mail.isEnabled()) {
-        await this.mail.sendVerificationCode(user.email, code, purpose, this.ttlMs / 60_000);
-        delivered = true;
+    const ttlMinutes = this.ttlMs / 60_000;
+    const telegramCopy = this.telegram.sendOtp({ phone, code, purposeLabel, ttlMinutes });
+    let sent = false;
+    if (route.kind === 'EMAIL') {
+      try {
+        await this.mail.sendVerificationCode(route.email, code, purpose, ttlMinutes);
+        sent = true;
+      } catch (error) {
+        this.logger.error(`${purpose} uchun OTP emailga yuborib bo‘lmadi: ${(error as Error).message}`);
+        if (this.sms.isEnabled()) route = { kind: 'SMS', phone };
       }
-    } catch (error) {
-      this.logger.error(`${purpose} uchun OTP emailga yuborib bo‘lmadi: ${(error as Error).message}`);
     }
-    if (!delivered) {
-      this.logger.warn(`${purpose} kodini yuborish uchun kanal yo‘q (Telegram, email/SMTP sozlanmagan; SMS transport yo‘q)`);
+    if (route.kind === 'SMS') {
+      try {
+        await this.sms.send(phone, `GetMaster: tasdiqlash kodi ${code}. Kod ${Math.round(ttlMinutes)} daqiqa amal qiladi. Uni hech kimga bermang.`);
+        sent = true;
+      } catch (error) {
+        this.logger.error(`${purpose} uchun OTP SMS yuborib bo‘lmadi: ${(error as Error).message}`);
+      }
+    }
+    const operatorCopy = await telegramCopy;
+    if (!sent && !operatorCopy) {
+      this.logger.warn(`${purpose} kodini yuborish uchun kanal yo‘q (email/SMTP, SMS va Telegram sozlanmagan)`);
     }
   }
 

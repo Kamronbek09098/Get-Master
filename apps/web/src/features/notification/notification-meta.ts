@@ -1,4 +1,4 @@
-import { Banknote, BadgeCheck, Bell, CalendarCheck, CalendarClock, ClipboardList, Image, MessageCircle, CreditCard, Package, ScrollText, Search, Send } from 'lucide-react';
+import { Banknote, BadgeCheck, Bell, CalendarCheck, CalendarClock, CheckCircle2, ClipboardCheck, ClipboardList, Handshake, Image, MapPin, MessageCircle, CreditCard, Package, Scale, ScrollText, Search, Send, Truck, Wrench, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { STATUS_TEXT } from '@/features/order/order-flow';
 import type { AppNotification } from './types';
@@ -27,7 +27,35 @@ export function adminAuditPath(action: string, fallback?: unknown): string {
   return typeof fallback === 'string' ? fallback : '/admin/audit';
 }
 
-export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/ustalar', admin = false): NotificationMeta {
+/** Buyurtma holati bo‘yicha ikona va rang (eski bildirishnomalarda holat yo‘q — sarlavhadan aniqlanadi). */
+const ORDER_STATUS_META: Record<string, { icon: LucideIcon; tone: NotificationTone }> = {
+  CONFIRMED: { icon: Handshake, tone: 'success' },
+  ON_THE_WAY: { icon: Truck, tone: 'primary' },
+  ARRIVED: { icon: MapPin, tone: 'primary' },
+  IN_PROGRESS: { icon: Wrench, tone: 'primary' },
+  WAITING_CONFIRMATION: { icon: ClipboardCheck, tone: 'warning' },
+  COMPLETED: { icon: CheckCircle2, tone: 'success' },
+  CANCELLED: { icon: XCircle, tone: 'danger' },
+  EXPIRED: { icon: XCircle, tone: 'danger' },
+  DISPUTED: { icon: Scale, tone: 'warning' },
+};
+const TITLE_STATUS: Array<[string, string]> = [
+  ['yo‘lga', 'ON_THE_WAY'],
+  ['yetib', 'ARRIVED'],
+  ['boshladi', 'IN_PROGRESS'],
+  ['tugatdi', 'WAITING_CONFIRMATION'],
+  ['yakunlandi', 'COMPLETED'],
+  ['bekor', 'CANCELLED'],
+  ['muddati tugadi', 'EXPIRED'],
+  ['nizo', 'DISPUTED'],
+  ['tasdiqladi', 'CONFIRMED'],
+];
+function orderStatusMeta(item: AppNotification, data: Record<string, unknown>) {
+  const status = typeof data.status === 'string' ? data.status : TITLE_STATUS.find(([word]) => item.title.toLowerCase().includes(word))?.[1];
+  return status ? ORDER_STATUS_META[status] : undefined;
+}
+
+export function notificationMeta(item: AppNotification, base: '/mijoz' | '/usta', admin = false): NotificationMeta {
   const data = item.data ?? {};
   switch (item.template) {
     case 'chat.message': {
@@ -38,7 +66,7 @@ export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/us
     case 'order.booked':
       return { icon: CalendarCheck, tone: 'success', to: orderPath(base, data.orderId) };
     case 'order.status_changed':
-      return { icon: Package, tone: 'primary', to: orderPath(base, data.orderId) };
+      return { ...(orderStatusMeta(item, data) ?? { icon: Package, tone: 'primary' as const }), to: orderPath(base, data.orderId) };
     case 'order.reschedule_proposed':
       return { icon: CalendarClock, tone: 'warning', to: orderPath(base, data.orderId) };
     case 'order.reschedule_accepted':
@@ -54,22 +82,22 @@ export function notificationMeta(item: AppNotification, base: '/mijozlar' | '/us
     case 'payment.received':
       return { icon: CreditCard, tone: 'success', to: typeof data.orderId === 'string' ? `${orderPath(base, data.orderId)}#tolov` : `${base}/buyurtmalar` };
     case 'payment.succeeded':
-      return { icon: CreditCard, tone: 'success', to: base === '/mijozlar' ? (typeof data.orderId === 'string' ? `/mijozlar/buyurtmalar/${data.orderId}` : '/mijozlar/tolovlar') : undefined };
+      return { icon: CreditCard, tone: 'success', to: base === '/mijoz' ? (typeof data.orderId === 'string' ? `/mijoz/buyurtmalar/${data.orderId}` : '/mijoz/tolovlar') : undefined };
     case 'payment.failed':
-      return { icon: CreditCard, tone: 'danger', to: base === '/mijozlar' ? (typeof data.orderId === 'string' ? `/mijozlar/buyurtmalar/${data.orderId}/tolov` : '/mijozlar/tolovlar') : undefined };
+      return { icon: CreditCard, tone: 'danger', to: base === '/mijoz' ? (typeof data.orderId === 'string' ? `/mijoz/buyurtmalar/${data.orderId}/tolov` : '/mijoz/tolovlar') : undefined };
     case 'matching.wave':
-      return { icon: Search, tone: 'warning', to: base === '/ustalar' ? '/ustalar/faol-takliflar' : undefined };
+      return { icon: Search, tone: 'warning', to: base === '/usta' ? '/usta/faol-takliflar' : undefined };
     case 'trust.review':
-      return { icon: BadgeCheck, tone: data.decision === 'APPROVE' ? 'success' : 'warning', to: '/ustalar/profil' };
+      return { icon: BadgeCheck, tone: data.decision === 'APPROVE' ? 'success' : 'warning', to: '/usta/profil' };
     case 'portfolio.reviewed':
-      return { icon: Image, tone: data.status === 'REJECTED' ? 'danger' : 'success', to: '/ustalar/portfolio' };
+      return { icon: Image, tone: data.status === 'REJECTED' ? 'danger' : 'success', to: '/usta/portfolio' };
     case 'admin.audit': {
       const action = typeof data.action === 'string' ? data.action : '';
       const tone: NotificationTone = /DELETED|REJECT|MISMATCH|SUSPENDED/.test(action) ? 'danger' : /APPROVE|REACTIVATED/.test(action) ? 'success' : /SUBMITTED|REGISTERED|CREATED/.test(action) ? 'primary' : 'warning';
       return { icon: ScrollText, tone, to: adminAuditPath(action, data.path) };
     }
     case 'offer.received':
-      return { icon: Send, tone: 'success', to: typeof data.requestId === 'string' ? `/mijozlar/sorovlar/${data.requestId}` : '/mijozlar/buyurtmalar' };
+      return { icon: Send, tone: 'success', to: typeof data.requestId === 'string' ? `/mijoz/sorovlar/${data.requestId}` : '/mijoz/buyurtmalar' };
     default:
       return item.template?.startsWith('request') ? { icon: ClipboardList, tone: 'primary' } : { icon: Bell, tone: 'neutral' };
   }
@@ -100,13 +128,13 @@ const STATUS_BY_LABEL = Object.fromEntries(Object.entries(STATUS_TEXT).map(([cod
  * Bildirishnomaning ko‘rinadigan sarlavha va matni. Yangilari serverda tayyor yoziladi; eski
  * («ON_THE_WAY -> ARRIVED», «... o‘zgardi») yozuvlar joriy holatni aytadigan jumlaga almashtiriladi.
  */
-export function notificationText(item: AppNotification, base: '/mijozlar' | '/ustalar'): { title: string; body: string } {
+export function notificationText(item: AppNotification, base: '/mijoz' | '/usta'): { title: string; body: string } {
   if (item.template !== 'order.status_changed') return { title: item.title, body: item.body };
   const legacy = /->|→|o‘zgardi|o'zgardi/.test(item.body) || /o‘zgardi|o'zgardi/.test(item.title);
   if (!legacy) return { title: item.title, body: item.body };
   const mentioned = [...item.body.matchAll(/[A-Z]+(?:_[A-Z]+)+|\b[A-Z]{4,}\b|«([^»]+)»/g)].map((match) => (match[1] ? STATUS_BY_LABEL[match[1]] : match[0]));
   const newStatus = mentioned[mentioned.length - 1];
-  const known = newStatus ? LEGACY[base === '/ustalar' ? 'master' : 'customer'][newStatus] : undefined;
+  const known = newStatus ? LEGACY[base === '/usta' ? 'master' : 'customer'][newStatus] : undefined;
   if (known) return known;
   const label = newStatus ? (STATUS_TEXT as Record<string, string>)[newStatus] : undefined;
   return label ? { title: t('Buyurtma yangilandi'), body: t('Buyurtmaning hozirgi holati: {label}.', { label }) } : { title: item.title, body: item.body };

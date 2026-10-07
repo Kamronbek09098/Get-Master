@@ -15,6 +15,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime, formatMoney } from '@/lib/utils';
 import { AccountLink } from '@/features/admin/components/AccountLink';
 import { useAdminOrder, useCancelOrder, useResolveOrder } from '@/features/admin/hooks/useAdmin';
+import type { PaymentProvider } from '@/types/common';
 import type { AdminMediaInfo, AdminOrderDetail, AdminOrderPerson } from '@/features/admin/types';
 import { MediaViewer } from '@/features/media/components/MediaViewer';
 import { fixFilename, formatBytes, formatMime } from '@/features/media/file-info';
@@ -22,6 +23,8 @@ import { OrderStatus } from '@/features/order/components/OrderStatus';
 import { STATUS_TEXT } from '@/features/order/order-flow';
 import { useConfirmCash } from '@/features/payment/hooks/usePayment';
 import { providerLabel } from '@/features/payment/labels';
+import { ProviderLogo } from '@/features/payment/components/ProviderLogo';
+import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import './AdminOrderDetailPage.css';
 import { t } from '@/i18n';
 
@@ -72,6 +75,7 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 function Party({ role, person, extra }: { role: string; person: AdminOrderPerson; extra?: string }) {
   return (
     <div className="gm-aordd__party">
+      <ChatAvatar name={accountName(person)} seed={person.id} size="lg" />
       <small>{role}</small>
       <AccountLink accountNumber={person.accountNumber} className="gm-aordd__link">
         {accountName(person)}
@@ -155,7 +159,7 @@ export function AdminOrderDetailPage() {
       {query.isError && <Alert tone="danger">{getErrorMessage(query.error)}</Alert>}
       {order && (
         <>
-          <header className="gm-aordd__hero">
+          <header className={`gm-aordd__hero gm-aordd__hero--${order.status}`}>
             <div className="gm-aordd__heading">
               <div className="gm-aordd__title">
                 <h1>{order.booking.request.title}</h1>
@@ -197,7 +201,7 @@ export function AdminOrderDetailPage() {
               <small>{t('Qo‘shimcha ish')}</small>
               <strong>{formatMoney(order.additionalAmount, order.currency)}</strong>
             </div>
-            <div>
+            <div className="gm-aordd__money-main">
               <small>{t('Yakuniy summa')}</small>
               <strong>{formatMoney(order.finalAmount, order.currency)}</strong>
             </div>
@@ -324,8 +328,12 @@ export function AdminOrderDetailPage() {
                     const info = PAYMENT[payment.status] ?? { label: payment.status, tone: 'neutral' as BadgeTone };
                     return (
                       <li key={payment.id}>
-                        <div>
-                          <strong>{formatMoney(payment.amount, payment.currency)}</strong> · {providerLabel(payment.provider)}
+                        <div className="gm-aordd__pay">
+                          <ProviderLogo provider={payment.provider as PaymentProvider} size={34} />
+                          <span className="gm-aordd__pay-main">
+                            <strong>{formatMoney(payment.amount, payment.currency)}</strong>
+                            <small>{providerLabel(payment.provider)}</small>
+                          </span>
                           <Badge tone={info.tone}>{info.label}</Badge>
                         </div>
                         <small>

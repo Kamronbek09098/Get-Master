@@ -40,7 +40,7 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
   const [picked, setMethod] = useState<PaymentProvider | null>(null);
   // Tanlov: foydalanuvchi bosgani > kutilayotgan to‘lov usuli > profildagi afzal usul > naqd.
   const method: PaymentProvider = picked ?? (hasPending ? current.provider : (preferred ?? 'CASH'));
-  const back = `/mijozlar/buyurtmalar/${order.id}`;
+  const back = `/mijoz/buyurtmalar/${order.id}`;
   const amount = formatMoney(order.finalAmount, order.currency);
 
   const result = createPayment.data?.payment ?? (current && SETTLED.includes(current.status) ? { ...current, succeededAt: null } : null);
@@ -69,7 +69,7 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
           <Link to={back}>
             <Button>{t('Buyurtmaga qaytish')}</Button>
           </Link>
-          <Link to="/mijozlar/tolovlar">
+          <Link to="/mijoz/tolovlar">
             <Button variant="secondary">{t('To‘lovlar tarixi')}</Button>
           </Link>
         </div>

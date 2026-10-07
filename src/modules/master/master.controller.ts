@@ -143,6 +143,11 @@ export class MasterController {
     return this.availabilityService.findPublic(await this.masterService.resolvePublicMasterId(id));
   }
 
+  @Get(':id/completed-jobs')
+  findCompletedJobs(@Param('id') id: string) {
+    return this.masterService.findCompletedJobs(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.masterService.findOne(id);

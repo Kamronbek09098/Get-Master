@@ -32,8 +32,6 @@ export function ReviewForm({ orderId, existing }: { orderId: string; existing?: 
           {done.comment ? <p>{done.comment}</p> : <p className="gm-card__meta">{t('Izoh qoldirilmagan')}</p>}
           <small>{formatDate(done.createdAt)}</small>
         </div>
-        <Button type="button" disabled aria-disabled="true">
-          <CheckCircle2 size={16} aria-hidden="true" />{' '}{t('Sharh qoldirilgan')}</Button>
       </div>
     );
   }

@@ -1,31 +1,46 @@
 .gm-logo {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   color: var(--gm-color-text);
   text-decoration: none;
 }
 
 .gm-logo__mark {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 11px;
-  color: var(--gm-color-primary-contrast);
-  background: linear-gradient(135deg, var(--gm-color-primary), color-mix(in srgb, var(--gm-color-primary) 55%, #000));
-  box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--gm-color-primary) 80%, transparent);
-  transform: rotate(-8deg);
+  display: block;
+  flex: none;
+  height: 42px;
+  line-height: 0;
 }
+
+.gm-logo__img {
+  display: block;
+  width: auto;
+  height: 100%;
+  user-select: none;
+}
+.gm-logo__img--dark { display: none; }
+
+/* To‘q mavzu, to‘q fon (brend paneli, landing tepasi) — oq tomli variant */
+:root[data-theme='dark'] .gm-logo__img--color,
+.gm-logo--on-dark .gm-logo__img--color,
+.gm-landing__nav.is-top .gm-logo__img--color { display: none; }
+:root[data-theme='dark'] .gm-logo__img--dark,
+.gm-logo--on-dark .gm-logo__img--dark,
+.gm-landing__nav.is-top .gm-logo__img--dark { display: block; }
 
 .gm-logo__word {
   font-family: var(--gm-font-display);
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
 .gm-logo__word b {
   font-weight: 800;
-  color: var(--gm-color-primary);
+  color: #1373f5;
 }
+:root[data-theme='dark'] .gm-logo__word b,
+.gm-logo--on-dark .gm-logo__word b { color: #4a9bff; }
+.gm-logo--on-dark { color: #fff; }

@@ -1,0 +1,354 @@
+/* ===== Asosiy sayt (portal): to‘q, kinematografik, skroll bilan ishlaydi ===== */
+.gm-portal {
+  /* Yorug‘ mavzu (asosiy) */
+  --pt-bg: #eaf1ff;
+  --pt-bg-2: #d9e6ff;
+  --pt-ink: #0a1230;
+  --pt-mute: #1f2a4d;
+  --pt-line: rgba(30, 58, 138, 0.14);
+  --pt-card: rgba(255, 255, 255, 0.82);
+  --pt-card-soft: rgba(255, 255, 255, 0.6);
+  --pt-card-hover: #ffffff;
+  --pt-shade: radial-gradient(ellipse 80% 70% at 50% 46%, rgba(244, 248, 255, 0.78), rgba(244, 248, 255, 0.5) 60%, rgba(236, 243, 255, 0.18));
+  --pt-shadow: 0 10px 34px rgba(30, 58, 138, 0.12);
+  --pt-stroke: rgba(10, 18, 48, 0.55);
+  --pt-btn-bg: #0a1230;
+  --pt-btn-fg: #ffffff;
+  --pt-blue: #2563eb;
+  --pt-blue-2: #1d4ed8;
+  --pt-green: #0b8f63;
+  --pt-green-2: #0e9f6e;
+  --pt-amber: #b45309;
+  --pt-grad-a: #172e8f;
+  --pt-grad-b: #5b21b6;
+  --pt-fact: linear-gradient(120deg, #0a1230, #1d4ed8 70%, #7c3aed);
+  --pt-finale-grad: linear-gradient(100deg, #0a1230, #1d4ed8 55%, #7c3aed);
+  position: relative;
+  background: var(--pt-bg);
+  color: var(--pt-ink);
+  overflow-x: clip;
+  font-family: var(--gm-font-body, inherit);
+}
+/* Qorong‘i mavzu */
+:root[data-theme='dark'] .gm-portal {
+  --pt-bg: #060b1d;
+  --pt-bg-2: #0a1230;
+  --pt-ink: #f4f7ff;
+  --pt-mute: rgba(232, 238, 255, 0.9);
+  --pt-line: rgba(160, 180, 255, 0.18);
+  --pt-card: var(--pt-card);
+  --pt-card-soft: rgba(255, 255, 255, 0.035);
+  --pt-card-hover: rgba(255, 255, 255, 0.11);
+  --pt-shade: radial-gradient(900px 520px at 78% 12%, rgba(79, 139, 255, 0.18), transparent 60%), radial-gradient(700px 480px at 12% 96%, rgba(34, 201, 151, 0.12), transparent 62%), radial-gradient(ellipse 75% 70% at 50% 48%, rgba(6, 11, 29, 0.72), rgba(6, 11, 29, 0.5) 65%, rgba(6, 11, 29, 0.34)), linear-gradient(180deg, rgba(6, 11, 29, 0.35), rgba(6, 11, 29, 0.6));
+  --pt-shadow: none;
+  --pt-stroke: rgba(226, 232, 255, 0.6);
+  --pt-btn-bg: #ffffff;
+  --pt-btn-fg: #0a1230;
+  --pt-blue: #6ea0ff;
+  --pt-blue-2: #2563eb;
+  --pt-green: #2fd9a6;
+  --pt-green-2: #0e9f6e;
+  --pt-amber: #ffb62e;
+  --pt-grad-a: #ffb62e;
+  --pt-grad-b: #ffe9a8;
+  --pt-fact: linear-gradient(120deg, #ffffff, #6ea0ff);
+  --pt-finale-grad: linear-gradient(100deg, #ffffff, #ffb62e);
+}
+.gm-portal h1, .gm-portal h2, .gm-portal h3 { font-family: var(--gm-font-display, inherit); color: var(--pt-ink); margin: 0; }
+.gm-portal a { color: inherit; text-decoration: none; }
+.gm-portal .gm-scroll-progress { position: fixed; inset: 0 0 auto 0; z-index: 60; height: 3px; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, var(--pt-blue), var(--pt-green), var(--pt-amber)); }
+
+/* ---------- Hero ---------- */
+.gm-portal__hero { position: relative; display: flex; flex-direction: column; min-height: 100svh; overflow: hidden; background: var(--pt-bg-2); isolation: isolate; }
+.gm-portal__hero-media { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; pointer-events: none; }
+.gm-portal__hero-shade { position: absolute; inset: 0; z-index: -1; background: var(--pt-shade); }
+.gm-portal__nav { display: flex; align-items: center; justify-content: space-between; gap: 24px; width: 100%; max-width: 1240px; margin: 0 auto; padding: 22px clamp(20px, 4vw, 40px); }
+.gm-portal__logo { display: inline-flex; color: var(--pt-ink); }
+.gm-portal__nav-links { display: flex; gap: 6px; padding: 5px; border: 1px solid var(--pt-line); border-radius: 999px; background: var(--pt-card); backdrop-filter: blur(14px); }
+.gm-portal__nav-links a { padding: 9px 16px; border-radius: 999px; color: var(--pt-mute); font-size: 14px; font-weight: 600; transition: background-color 0.2s ease, color 0.2s ease; }
+.gm-portal__nav-links a:hover { background: var(--pt-card-hover); color: var(--pt-ink); }
+.gm-portal__hero-inner { display: flex; flex: 1; flex-direction: column; justify-content: center; width: 100%; max-width: 1240px; margin: 0 auto; padding: 24px clamp(20px, 4vw, 40px) 110px; transform: translate3d(0, calc(var(--p, 0) * -70px), 0); opacity: calc(1 - var(--p, 0) * 1.6); will-change: transform, opacity; }
+.gm-portal__eyebrow { display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; margin: 0 0 22px; padding: 7px 14px; border: 1px solid var(--pt-line); border-radius: 999px; background: var(--pt-card); color: var(--pt-mute); font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; }
+.gm-portal__eyebrow i { width: 8px; height: 8px; border-radius: 50%; background: var(--pt-green-2); box-shadow: 0 0 0 4px rgba(34, 201, 151, 0.22); animation: gm-pt-pulse 2.2s ease-in-out infinite; }
+.gm-portal__hero h1 { display: grid; gap: 0.04em; font-size: clamp(48px, 9.2vw, 148px); font-weight: 800; line-height: 0.96; letter-spacing: -0.05em; }
+.gm-portal__line { display: block; overflow: hidden; padding-bottom: 0.06em; }
+.gm-portal__line:last-child .gm-portal__word { background: linear-gradient(100deg, var(--pt-grad-a), var(--pt-grad-b)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent; }
+.gm-portal__word { display: inline-block; margin-right: 0.22em; transform: translate3d(0, 108%, 0) rotate(3deg); opacity: 0; animation: gm-pt-word 0.95s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; animation-delay: calc(0.12s + var(--i) * 0.11s); }
+.gm-portal__lead { max-width: 560px; margin: 26px 0 38px; color: var(--pt-mute); font-size: clamp(16px, 1.4vw, 20px); line-height: 1.6; opacity: 0; animation: gm-pt-fade 0.9s ease 0.7s forwards; }
+
+/* ---------- Tanlov «eshiklari» ---------- */
+.gm-portal__doors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; max-width: 880px; opacity: 0; animation: gm-pt-rise 1s cubic-bezier(0.2, 0.8, 0.2, 1) 0.85s forwards; }
+.gm-portal__door, .gm-portal__side, .gm-portal__card { --mx: 50%; --my: 0%; position: relative; isolation: isolate; overflow: hidden; border: 1px solid var(--pt-line); background: var(--pt-card); box-shadow: var(--pt-shadow); backdrop-filter: blur(16px); }
+.gm-portal__door { display: flex; align-items: center; gap: 18px; min-height: 124px; padding: 22px 24px; border-radius: 26px; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s ease, background-color 0.3s ease; }
+.gm-portal__door-glow { position: absolute; inset: 0; z-index: -1; opacity: 0; background: radial-gradient(380px circle at var(--mx) var(--my), var(--glow, rgba(79, 139, 255, 0.35)), transparent 62%); transition: opacity 0.35s ease; }
+.gm-portal__door--customer, .gm-portal__side--customer { --glow: rgba(79, 139, 255, 0.4); --tone: var(--pt-blue); }
+.gm-portal__door--master, .gm-portal__side--master { --glow: rgba(34, 201, 151, 0.38); --tone: var(--pt-green); }
+.gm-portal__door:hover, .gm-portal__door:focus-visible { transform: translateY(-6px); border-color: color-mix(in srgb, var(--tone) 70%, transparent); background: var(--pt-card-hover); }
+.gm-portal__door:hover .gm-portal__door-glow, .gm-portal__side:hover .gm-portal__door-glow, .gm-portal__card:hover .gm-portal__door-glow { opacity: 1; }
+.gm-portal__door:focus-visible, .gm-portal__btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--pt-amber) 70%, transparent); outline-offset: 3px; }
+.gm-portal__door-icon { display: grid; flex: none; place-items: center; width: 62px; height: 62px; border-radius: 20px; color: #fff; background: linear-gradient(145deg, color-mix(in srgb, var(--tone) 95%, #fff 5%), color-mix(in srgb, var(--tone) 55%, #000)); box-shadow: 0 10px 30px color-mix(in srgb, var(--tone) 45%, transparent); }
+.gm-portal__door-body { display: grid; flex: 1; gap: 3px; min-width: 0; }
+.gm-portal__door-body small { color: var(--tone); font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.gm-portal__door-body strong { font-family: var(--gm-font-display, inherit); font-size: clamp(22px, 2.2vw, 28px); line-height: 1.15; letter-spacing: -0.02em; }
+.gm-portal__door-body > span { color: var(--pt-mute); font-size: 14.5px; line-height: 1.4; }
+.gm-portal__door-go { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border: 1px solid var(--pt-line); border-radius: 50%; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.25s ease, color 0.25s ease; }
+.gm-portal__door:hover .gm-portal__door-go { transform: translateX(6px); background: var(--tone); border-color: transparent; color: #fff; }
+.gm-portal__cue { position: absolute; left: 50%; bottom: 26px; display: grid; justify-items: center; gap: 4px; transform: translateX(-50%); color: var(--pt-mute); font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; opacity: calc(1 - var(--p, 0) * 6); }
+.gm-portal__cue svg { animation: gm-pt-bob 1.8s ease-in-out infinite; }
+
+/* ---------- So‘zma-so‘z yonib chiqadigan matn ---------- */
+.gm-portal__statement { padding: clamp(150px, 22vw, 300px) clamp(20px, 4vw, 40px) clamp(70px, 11vw, 150px); background: var(--pt-bg); }
+.gm-portal__statement p { max-width: 1100px; margin: 0 auto; font-family: var(--gm-font-display, inherit); font-size: clamp(28px, 4.6vw, 64px); font-weight: 700; line-height: 1.16; letter-spacing: -0.035em; }
+.gm-portal__statement span { opacity: calc(0.16 + 0.84 * clamp(0, calc((var(--p, 0) * 1.5 - 0.18) * var(--n) - var(--i)), 1)); }
+
+/* ---------- Qanday ishlaydi (yopishqoq) ---------- */
+.gm-portal__how { position: relative; height: 340svh; background: linear-gradient(180deg, var(--pt-bg), var(--pt-bg-2) 40%, var(--pt-bg)); }
+.gm-portal__how-sticky { position: sticky; top: 0; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); align-items: center; gap: clamp(28px, 6vw, 96px); height: 100svh; max-width: 1240px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 40px); }
+.gm-portal__kicker { margin: 0 0 14px; color: var(--pt-amber); font-size: 12px; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
+.gm-portal__how-head h2, .gm-portal__section-head h2 { font-size: clamp(34px, 5vw, 70px); font-weight: 800; line-height: 1.02; letter-spacing: -0.04em; }
+.gm-portal__how-rail { position: relative; width: 4px; height: 160px; margin-top: 36px; border-radius: 4px; background: var(--pt-line); overflow: hidden; }
+.gm-portal__how-rail i { position: absolute; inset: 0; transform-origin: 50% 0; transform: scaleY(var(--p, 0)); background: linear-gradient(180deg, var(--pt-blue), var(--pt-green)); }
+.gm-portal__how-list { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.gm-portal__how-list li { box-shadow: var(--pt-shadow); display: grid; grid-template-columns: auto auto 1fr; align-items: center; gap: 18px; padding: 20px 24px; border: 1px solid var(--pt-line); border-radius: 24px; background: var(--pt-card-soft); opacity: 0.55; transform: scale(0.97); transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.4s ease, background-color 0.4s ease; }
+.gm-portal__how-list li.is-done { opacity: 0.6; }
+.gm-portal__how-list li.is-active { opacity: 1; transform: scale(1); border-color: color-mix(in srgb, var(--pt-blue) 65%, transparent); background: linear-gradient(135deg, rgba(79, 139, 255, 0.16), rgba(34, 201, 151, 0.08)); box-shadow: 0 24px 60px rgba(37, 99, 235, 0.2); }
+.gm-portal__how-num { font-family: var(--gm-font-mono, ui-monospace, monospace); font-size: 14px; font-weight: 700; color: var(--pt-amber); }
+.gm-portal__how-icon { display: grid; place-items: center; width: 54px; height: 54px; border-radius: 18px; background: var(--pt-card-hover); color: var(--pt-blue); }
+.gm-portal__how-list .is-active .gm-portal__how-icon { background: var(--pt-blue-2); color: #fff; }
+.gm-portal__how-list h3 { font-size: clamp(19px, 1.8vw, 24px); letter-spacing: -0.02em; }
+.gm-portal__how-list p { margin: 6px 0 8px; color: var(--pt-mute); font-size: 15px; line-height: 1.55; }
+.gm-portal__how-list small { color: var(--pt-green); font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* ---------- Ikki tomon ---------- */
+.gm-portal__sides, .gm-portal__trust { max-width: 1240px; margin: 0 auto; padding: clamp(70px, 10vw, 140px) clamp(20px, 4vw, 40px) 0; }
+.gm-portal__section-head { display: grid; gap: 4px; max-width: 760px; margin-bottom: clamp(32px, 5vw, 56px); }
+.gm-portal__sides-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.gm-portal__side { display: flex; flex-direction: column; gap: 18px; min-height: 440px; padding: clamp(26px, 3vw, 40px); border-radius: 32px; }
+.gm-portal__side--customer { background: linear-gradient(160deg, rgba(37, 99, 235, 0.16), var(--pt-card) 62%); }
+.gm-portal__side--master { background: linear-gradient(160deg, rgba(14, 159, 110, 0.16), var(--pt-card) 62%); }
+.gm-portal__side-icon { display: grid; place-items: center; width: 62px; height: 62px; border-radius: 20px; color: #fff; background: linear-gradient(145deg, var(--tone), color-mix(in srgb, var(--tone) 50%, #000)); }
+.gm-portal__side .gm-portal__kicker { margin: 0; color: var(--tone); }
+.gm-portal__side h3 { font-size: clamp(26px, 3vw, 40px); font-weight: 800; line-height: 1.08; letter-spacing: -0.035em; }
+.gm-portal__side ul { display: grid; gap: 12px; margin: 4px 0 auto; padding: 0; list-style: none; }
+.gm-portal__side li { display: flex; align-items: center; gap: 12px; color: var(--pt-mute); font-size: 16px; line-height: 1.4; }
+.gm-portal__side li svg { flex: none; color: var(--tone); }
+.gm-portal__btn { display: inline-flex; align-items: center; justify-content: center; align-self: flex-start; gap: 10px; min-height: 52px; padding: 0 24px; border-radius: 999px; background: var(--pt-btn-bg); color: var(--pt-btn-fg); font-size: 16px; font-weight: 800; transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease; }
+.gm-portal__btn:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(30, 58, 138, 0.28); }
+.gm-portal__side--customer .gm-portal__btn { background: var(--pt-blue-2); color: #fff; }
+.gm-portal__side--master .gm-portal__btn { background: var(--pt-green-2); color: #fff; }
+.gm-portal__btn--customer { background: var(--pt-blue-2) !important; color: #fff !important; }
+.gm-portal__btn--master { background: var(--pt-green-2) !important; color: #fff !important; }
+
+/* ---------- Ishonch ---------- */
+.gm-portal__facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin-bottom: clamp(60px, 8vw, 110px); border: 1px solid var(--pt-line); border-radius: 28px; background: var(--pt-line); overflow: hidden; }
+.gm-portal__facts > div { display: grid; gap: 6px; padding: clamp(22px, 3vw, 38px); background: var(--pt-card-hover); }
+.gm-portal__facts strong { font-family: var(--gm-font-display, inherit); font-size: clamp(34px, 4.6vw, 64px); font-weight: 800; line-height: 1; letter-spacing: -0.04em; background: var(--pt-fact); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.gm-portal__facts span { color: var(--pt-mute); font-size: 14.5px; font-weight: 600; }
+.gm-portal__trust-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.gm-portal__card { display: grid; align-content: start; gap: 10px; padding: 28px; border-radius: 26px; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s ease; }
+.gm-portal__card:hover { transform: translateY(-5px); border-color: rgba(160, 180, 255, 0.4); }
+.gm-portal__card-icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 6px; border-radius: 16px; background: rgba(79, 139, 255, 0.16); color: var(--pt-blue); }
+.gm-portal__card h3 { font-size: 20px; letter-spacing: -0.02em; }
+.gm-portal__card p { margin: 0; color: var(--pt-mute); font-size: 15px; line-height: 1.55; }
+
+/* ---------- Yakun ---------- */
+.gm-portal__finale { position: relative; margin-top: clamp(70px, 10vw, 140px); overflow: hidden; background: radial-gradient(900px 480px at 50% 0%, rgba(79, 139, 255, 0.22), transparent 62%), radial-gradient(700px 420px at 85% 100%, rgba(34, 201, 151, 0.16), transparent 60%), var(--pt-bg); }
+.gm-portal__finale-inner { display: grid; justify-items: center; gap: 18px; max-width: 900px; margin: 0 auto; padding: clamp(80px, 12vw, 170px) clamp(20px, 4vw, 40px) clamp(50px, 7vw, 90px); text-align: center; transform: translate3d(0, calc((0.55 - var(--p, 0.5)) * 90px), 0); }
+.gm-portal__finale h2 { font-size: clamp(48px, 9vw, 140px); font-weight: 800; line-height: 0.98; letter-spacing: -0.05em; background: var(--pt-finale-grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.gm-portal__finale p { margin: 0; color: var(--pt-mute); font-size: clamp(16px, 1.5vw, 20px); }
+.gm-portal__finale-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 14px; }
+.gm-portal__finale-actions .gm-portal__btn { align-self: auto; min-height: 58px; padding: 0 30px; }
+.gm-portal__footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; max-width: 1240px; margin: 0 auto; padding: 26px clamp(20px, 4vw, 40px) 34px; border-top: 1px solid var(--pt-line); color: var(--pt-mute); font-size: 14px; }
+.gm-portal__footer p { margin: 0; }
+.gm-portal__footer a { font-weight: 700; }
+.gm-portal__footer a:hover { color: var(--pt-ink); }
+
+/* ---------- Ochilish (reveal) ---------- */
+.gm-portal [data-reveal] { opacity: 0; transform: translate3d(0, 38px, 0); transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.2, 0.8, 0.2, 1); transition-delay: calc(var(--i, 0) * 0.12s); }
+.gm-portal [data-reveal].is-in { opacity: 1; transform: none; }
+
+@keyframes gm-pt-word { to { transform: none; opacity: 1; } }
+@keyframes gm-pt-fade { to { opacity: 1; } }
+@keyframes gm-pt-rise { from { opacity: 0; transform: translate3d(0, 40px, 0); } to { opacity: 1; transform: none; } }
+@keyframes gm-pt-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+@keyframes gm-pt-pulse { 0%, 100% { box-shadow: 0 0 0 4px rgba(34, 201, 151, 0.22); } 50% { box-shadow: 0 0 0 8px rgba(34, 201, 151, 0); } }
+
+/* ---------- Planshet va telefon ---------- */
+@media (max-width: 980px) {
+  .gm-portal__nav-links { display: none; }
+  .gm-portal__how { height: auto; }
+  .gm-portal__how-sticky { position: static; grid-template-columns: 1fr; height: auto; padding-block: clamp(64px, 12vw, 110px) 0; }
+  .gm-portal__how-rail { display: none; }
+  .gm-portal__how-list li { opacity: 1; transform: none; }
+  .gm-portal__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gm-portal__trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .gm-portal__doors, .gm-portal__sides-grid { grid-template-columns: 1fr; }
+  .gm-portal__door { min-height: 104px; padding: 18px; gap: 14px; }
+  .gm-portal__door-icon { width: 54px; height: 54px; border-radius: 17px; }
+  .gm-portal__hero-inner { padding-bottom: 96px; }
+  .gm-portal__trust-grid { grid-template-columns: 1fr; }
+  .gm-portal__side { min-height: 0; }
+  .gm-portal__how-list li { grid-template-columns: auto 1fr; padding: 18px; }
+  .gm-portal__how-num { display: none; }
+  .gm-portal__btn { align-self: stretch; }
+  .gm-portal__finale-actions { flex-direction: column; align-self: stretch; }
+  .gm-portal__finale-actions .gm-portal__btn { width: 100%; }
+  .gm-portal__footer { flex-direction: column; align-items: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-portal__word, .gm-portal__lead, .gm-portal__doors { animation: none; opacity: 1; transform: none; }
+  .gm-portal [data-reveal] { opacity: 1; transform: none; transition: none; }
+  .gm-portal__hero-inner, .gm-portal__finale-inner { transform: none; opacity: 1; }
+  .gm-portal__how { height: auto; }
+  .gm-portal__how-sticky { position: static; height: auto; padding-block: 90px 0; }
+  .gm-portal__how-list li { opacity: 1; transform: none; }
+  .gm-portal__statement span { opacity: 1; }
+}
+
+/* Mavzu tugmasi */
+.gm-portal__nav-end { display: flex; align-items: center; gap: 12px; }
+.gm-portal .gm-icon-button { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--pt-line); border-radius: 50%; background: var(--pt-card); color: var(--pt-ink); box-shadow: var(--pt-shadow); backdrop-filter: blur(12px); cursor: pointer; transition: transform 0.2s ease, background-color 0.2s ease; }
+.gm-portal .gm-icon-button:hover { transform: rotate(12deg) scale(1.05); background: var(--pt-card-hover); }
+.gm-portal .gm-icon-button:focus-visible { outline: 3px solid color-mix(in srgb, var(--pt-blue) 55%, transparent); outline-offset: 2px; }
+.gm-portal__door-body > span, .gm-portal__lead { color: var(--pt-mute); }
+
+/* Boshqa landing uslublari (.gm-*trust*) portalga o‘tib ketmasin */
+.gm-portal .gm-portal__trust, .gm-portal .gm-portal__sides, .gm-portal .gm-portal__statement { background: transparent; }
+.gm-portal .gm-portal__statement { background: var(--pt-bg); }
+.gm-portal__statement span { opacity: calc(0.3 + 0.7 * clamp(0, calc((var(--p, 0) * 1.25 - 0.1) * var(--n) - var(--i)), 1)); }
+:root[data-theme='dark'] .gm-portal__facts > div { background: var(--pt-bg-2); }
+
+/* Joylashuv: yozuv va tugmalar sahifa chetiga yopishmasin — o‘rtada, muvozanatli */
+.gm-portal__hero-inner { align-items: center; text-align: center; }
+.gm-portal__eyebrow { align-self: center; }
+.gm-portal__hero h1 { justify-items: center; }
+.gm-portal__lead { margin-inline: auto; max-width: 620px; }
+.gm-portal__doors { width: 100%; margin-inline: auto; max-width: 940px; text-align: left; }
+.gm-portal__section-head { margin-inline: auto; justify-items: center; text-align: center; }
+.gm-portal__statement p { text-align: center; }
+.gm-portal__how-head { text-align: left; }
+.gm-portal__side { text-align: left; }
+@media (max-width: 720px) {
+  .gm-portal__hero h1 { font-size: clamp(42px, 13vw, 64px); }
+  .gm-portal__how-head { text-align: center; }
+  .gm-portal__how-head .gm-portal__how-rail { display: none; }
+}
+
+/* Yozuvlar: aniq, o‘qilishi qulay */
+.gm-portal__hero h1 { letter-spacing: -0.055em; }
+.gm-portal__lead { font-size: clamp(17px, 1.5vw, 21px); line-height: 1.6; font-weight: 500; }
+.gm-portal__door-body > span { font-size: 15px; }
+.gm-portal__door-body small, .gm-portal__kicker, .gm-portal__eyebrow { font-weight: 800; }
+.gm-portal__nav-links a { font-weight: 700; color: var(--pt-mute); }
+.gm-portal__eyebrow { color: var(--pt-ink); }
+
+/* ===== Kartalar: mukammal ko‘rinish ===== */
+.gm-portal__door, .gm-portal__side, .gm-portal__card { border-color: color-mix(in srgb, var(--pt-ink) 10%, transparent); }
+:root[data-theme='dark'] .gm-portal__door, :root[data-theme='dark'] .gm-portal__side, :root[data-theme='dark'] .gm-portal__card { border-color: rgba(160, 180, 255, 0.2); }
+
+/* Ikki tomon kartalari */
+.gm-portal__side { gap: 22px; min-height: 0; padding: clamp(28px, 3.2vw, 44px); border-radius: 34px; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 24px 60px -24px color-mix(in srgb, var(--tone) 40%, transparent); transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.4s ease; }
+.gm-portal__side:hover { transform: translateY(-6px); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 34px 70px -22px color-mix(in srgb, var(--tone) 55%, transparent); }
+.gm-portal__side::before { content: ''; position: absolute; inset: 0 0 auto 0; z-index: -1; height: 5px; background: linear-gradient(90deg, var(--tone), color-mix(in srgb, var(--tone) 30%, transparent)); }
+.gm-portal__side::after { content: ''; position: absolute; right: -60px; top: -60px; z-index: -1; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--tone) 22%, transparent), transparent 70%); }
+.gm-portal__side-top { display: flex; align-items: center; gap: 14px; }
+.gm-portal__side-icon { width: 58px; height: 58px; border-radius: 19px; box-shadow: 0 12px 28px -8px color-mix(in srgb, var(--tone) 70%, transparent); }
+.gm-portal__side .gm-portal__kicker { padding: 7px 13px; border-radius: 999px; background: color-mix(in srgb, var(--tone) 13%, transparent); letter-spacing: 0.14em; }
+.gm-portal__side h3 { font-size: clamp(26px, 2.8vw, 38px); }
+.gm-portal__side ul { gap: 0; margin: 0 0 auto; border-top: 1px solid var(--pt-line); }
+.gm-portal__side li { gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--pt-line); color: var(--pt-ink); font-size: 16px; font-weight: 500; }
+.gm-portal__side li svg { width: 22px; height: 22px; padding: 3px; border-radius: 50%; background: color-mix(in srgb, var(--tone) 16%, transparent); }
+.gm-portal__btn--wide { align-self: stretch; justify-content: space-between; min-height: 58px; padding: 0 26px; font-size: 16.5px; }
+.gm-portal__btn--wide svg { transition: transform 0.25s ease; }
+.gm-portal__btn--wide:hover svg { transform: translate(3px, -3px); }
+
+/* Ishonch kartalari */
+.gm-portal__card { --tone: var(--pt-blue); gap: 12px; padding: 28px 28px 30px; border-radius: 28px; }
+.gm-portal__card[data-tone='green'] { --tone: var(--pt-green); --glow: rgba(34, 201, 151, 0.3); }
+.gm-portal__card[data-tone='amber'] { --tone: #d97706; --glow: rgba(245, 158, 11, 0.3); }
+.gm-portal__card[data-tone='violet'] { --tone: #7c3aed; --glow: rgba(124, 58, 237, 0.28); }
+.gm-portal__card:hover { transform: translateY(-6px); border-color: color-mix(in srgb, var(--tone) 55%, transparent); box-shadow: 0 26px 50px -24px color-mix(in srgb, var(--tone) 55%, transparent); }
+.gm-portal__card-icon { width: 54px; height: 54px; margin-bottom: 10px; border-radius: 18px; background: linear-gradient(145deg, color-mix(in srgb, var(--tone) 22%, transparent), color-mix(in srgb, var(--tone) 8%, transparent)); color: var(--tone); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tone) 28%, transparent); }
+.gm-portal__card-icon svg { width: 24px; height: 24px; }
+.gm-portal__card-no { position: absolute; right: 22px; top: 18px; color: color-mix(in srgb, var(--pt-ink) 22%, transparent); font-family: var(--gm-font-mono, ui-monospace, monospace); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; }
+.gm-portal__card h3 { font-size: 21px; }
+.gm-portal__card p { font-size: 15.5px; color: var(--pt-mute); }
+
+/* «Qanday ishlaydi» qadamlari */
+.gm-portal__how-list li { border-radius: 26px; padding: 22px 26px; }
+.gm-portal__how-icon { width: 58px; height: 58px; border-radius: 19px; }
+.gm-portal__how-list li.is-active .gm-portal__how-icon { box-shadow: 0 12px 28px -8px rgba(37, 99, 235, 0.6); }
+
+/* Tanlov eshiklari va ko‘rsatkichlar */
+.gm-portal__door { border-radius: 28px; box-shadow: 0 20px 44px -26px color-mix(in srgb, var(--tone) 55%, transparent), var(--pt-shadow); }
+.gm-portal__door:hover { box-shadow: 0 28px 56px -24px color-mix(in srgb, var(--tone) 70%, transparent); }
+.gm-portal__facts { border-radius: 30px; box-shadow: var(--pt-shadow); }
+@media (max-width: 720px) {
+  .gm-portal__side { padding: 24px 20px; border-radius: 28px; }
+  .gm-portal__side li { padding: 12px 0; font-size: 15.5px; }
+  .gm-portal__card { padding: 24px 22px; }
+}
+
+/* Logotip: yorug‘ fonda «Master» yozuvi aniq ko‘rinsin */
+:root:not([data-theme='dark']) .gm-portal .gm-logo__word b { color: #0b4fd0; }
+
+.gm-portal .gm-belt { margin-top: clamp(36px, 5vw, 64px); }
+
+/* Ko‘rsatkichlar: yozuvlar har bir katakning o‘rtasida */
+.gm-portal__facts > div { justify-items: center; align-content: center; text-align: center; }
+
+/* Ishonch kartalari: ikonka, sarlavha va matn kartaning o‘rtasida */
+.gm-portal__card { justify-items: center; align-content: center; text-align: center; padding: 32px 28px 30px; }
+.gm-portal__card-icon { margin-bottom: 12px; }
+.gm-portal__card p { max-width: 30ch; }
+.gm-portal__trust-grid { gap: 22px; }
+
+/* Sarlavha: pastga tushuvchi harflar (y, j) kesilib qolmasin */
+.gm-portal__line { padding-bottom: 0.2em; margin-bottom: -0.14em; }
+.gm-portal__word { padding-bottom: 0.14em; margin-bottom: -0.14em; }
+.gm-portal__hero h1 { gap: 0; }
+.gm-portal__lead { margin-top: 38px; }
+
+/* ===== Yorug‘ rejim: «Men mijozman / Men ustaman» tugmalari qorong‘i rejimdagidek shaffof shisha ko‘rinishida ===== */
+:root:not([data-theme='dark']) .gm-portal__door {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.34));
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 22px 50px -26px color-mix(in srgb, var(--tone) 70%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+}
+:root:not([data-theme='dark']) .gm-portal__door:hover { background: linear-gradient(135deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.5)); border-color: #fff; box-shadow: 0 30px 60px -26px color-mix(in srgb, var(--tone) 80%, transparent), inset 0 1px 0 #fff; }
+:root:not([data-theme='dark']) .gm-portal__door--customer .gm-portal__door-icon { background: linear-gradient(145deg, #7aa8ff, #2f6bf2); box-shadow: 0 14px 30px -10px rgba(47, 107, 242, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.55); }
+:root:not([data-theme='dark']) .gm-portal__door--master .gm-portal__door-icon { background: linear-gradient(145deg, #4fe3b0, #0e9f6e); box-shadow: 0 14px 30px -10px rgba(14, 159, 110, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.55); }
+:root:not([data-theme='dark']) .gm-portal__door-body > span { color: #26335a; }
+:root:not([data-theme='dark']) .gm-portal__door-body strong { color: #0a1230; }
+:root:not([data-theme='dark']) .gm-portal__door--customer .gm-portal__door-body small { color: #1d4ed8; }
+:root:not([data-theme='dark']) .gm-portal__door--master .gm-portal__door-body small { color: #0b7a55; }
+:root:not([data-theme='dark']) .gm-portal__door-go { border-color: rgba(255, 255, 255, 0.85); background: rgba(255, 255, 255, 0.55); color: #0a1230; box-shadow: inset 0 1px 0 #fff; }
+:root:not([data-theme='dark']) .gm-portal__door:hover .gm-portal__door-go { background: var(--tone); border-color: transparent; color: #fff; }
+
+/* Hero surati: juda sekin «kameraning yaqinlashishi» (harakat kamaytirilgan bo‘lsa o‘chiq) */
+img.gm-portal__hero-media { animation: gm-pt-push 36s ease-in-out infinite alternate; transform-origin: 62% 50%; }
+@keyframes gm-pt-push { from { transform: scale(1); } to { transform: scale(1.07); } }
+@media (prefers-reduced-motion: reduce) { img.gm-portal__hero-media { animation: none; } }
+
+/* Sayt sahifasida matn va rasmlar belgilanmasin / sudralmasin */
+.gm-portal,
+.gm-portal * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.gm-portal img,
+.gm-portal video {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+.gm-portal input,
+.gm-portal textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}

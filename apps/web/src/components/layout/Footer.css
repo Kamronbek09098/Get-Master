@@ -10,3 +10,7 @@
     padding-bottom: 88px;
   }
 }
+
+@media (min-width: 900px) {
+  .gm-footer { padding: 4px 16px 10px; }
+}

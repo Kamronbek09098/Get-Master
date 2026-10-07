@@ -47,3 +47,7 @@
   }
 
 .gm-story__problem { margin: 0; max-width: 64ch; font-size: 15.5px; line-height: 1.55; overflow-wrap: anywhere; }
+
+/* Bitta rasm bo‘lsa — katta va tartibli (kichkina kvadrat bo‘lib qolmasin) */
+.gm-story__gallery:has(> li:only-child) { grid-template-columns: minmax(0, 440px); }
+.gm-story__gallery li { box-shadow: 0 6px 18px -12px rgba(10, 18, 48, 0.4); }

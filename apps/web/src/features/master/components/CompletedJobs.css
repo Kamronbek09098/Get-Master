@@ -1,0 +1,46 @@
+.gm-cj__summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 20px;
+  border: 1px solid var(--gm-color-border);
+  border-radius: var(--gm-radius-lg);
+  background: var(--gm-color-surface);
+  box-shadow: var(--gm-shadow-sm);
+}
+.gm-cj__score { display: grid; justify-items: center; gap: 4px; min-width: 110px; }
+.gm-cj__score strong { font: 800 44px/1 var(--gm-font-display); letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.gm-cj__score small { color: var(--gm-color-text-muted); font-size: 12px; }
+.gm-cj__bars { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.gm-cj__bars li { display: grid; grid-template-columns: 30px minmax(0, 1fr) 28px; align-items: center; gap: 10px; font-size: 12.5px; color: var(--gm-color-text-muted); }
+.gm-cj__bars span { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; color: var(--gm-color-text); }
+.gm-cj__bars span svg { color: var(--gm-color-accent); }
+.gm-cj__bars i { height: 8px; border-radius: 999px; background: var(--gm-color-surface-muted); overflow: hidden; }
+.gm-cj__bars b { display: block; height: 100%; border-radius: inherit; background: var(--gm-color-accent); transition: width 600ms var(--gm-ease); }
+.gm-cj__bars em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; }
+.gm-cj__facts { display: grid; gap: 10px; margin: 0; }
+.gm-cj__facts div { padding: 10px 14px; border-radius: 14px; background: var(--gm-color-surface-muted); }
+.gm-cj__facts dt { font-size: 11.5px; color: var(--gm-color-text-muted); }
+.gm-cj__facts dd { margin: 2px 0 0; font: 800 22px/1.1 var(--gm-font-display); letter-spacing: -0.02em; }
+.gm-cj__list { display: grid; gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; }
+.gm-cj__job { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--gm-color-border); border-radius: var(--gm-radius-lg); background: var(--gm-color-surface); }
+.gm-cj__job header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; }
+.gm-cj__done { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--gm-color-text); }
+.gm-cj__done svg { color: var(--gm-color-success); flex: none; }
+.gm-cj__job time { font-size: 12.5px; color: var(--gm-color-text-muted); }
+.gm-cj__review { display: grid; gap: 4px; padding: 10px 12px; border-radius: 12px; background: var(--gm-color-surface-muted); }
+.gm-cj__review p { margin: 0; line-height: 1.5; overflow-wrap: anywhere; }
+.gm-cj__review small { color: var(--gm-color-text-muted); }
+.gm-cj__muted { margin: 0; font-size: 13px; color: var(--gm-color-text-muted); }
+@media (max-width: 720px) {
+  .gm-cj__summary { grid-template-columns: 1fr; gap: 16px; }
+  .gm-cj__score { justify-items: start; }
+  .gm-cj__facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .gm-cj__bars b { transition: none; } }
+
+/* Izohsiz baho: ixcham qator (takrorlanuvchi «Izoh qoldirilmagan» bloklari yo‘q) */
+.gm-cj__rate { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+.gm-cj__review--plain { padding: 0; background: none; }
+.gm-cj__job:has(.gm-cj__review--plain) { gap: 6px; padding-block: 12px; }

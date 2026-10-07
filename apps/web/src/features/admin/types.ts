@@ -1,5 +1,6 @@
 import type { CaseStatus } from '@/features/dispute/types';
 import type { MasterVerificationStatus } from '@/features/master/types';
+import type { PaymentProvider, PaymentStatus } from '@/types/common';
 
 export type DevOpsWindow = '1h' | '24h' | '7d';
 
@@ -317,6 +318,7 @@ export interface AdminOrderRow {
   scheduledStartAt: string | null;
   customer: AdminOrderPerson;
   master: { id: string; profession: string | null; user: AdminOrderPerson };
+  payment: { provider: PaymentProvider; status: PaymentStatus } | null;
   _count: { workProofs: number; cases: number; payments: number };
 }
 

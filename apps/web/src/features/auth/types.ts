@@ -20,6 +20,14 @@ export type GoogleSignInResult =
 export interface LoginInput {
   phone: string;
   password: string;
+  /** Kodni SMS orqali olish (standart — email). */
+  codeChannel?: 'SMS';
+}
+
+/** Kod qayerga yuborilgani (email yoki SMS), manzil yashirin ko‘rinishda. */
+export interface CodeDelivery {
+  channel: 'EMAIL' | 'SMS' | 'NONE';
+  destination?: string;
 }
 
 export interface DeviceLimitInfo {
@@ -34,6 +42,10 @@ export interface LoginResult {
   /** Yangi qurilma uchun faol qurilmalar limiti to‘lgan bo‘lsa — kod kiritishdan oldin ogohlantirish uchun. */
   deviceLimit?: DeviceLimitInfo;
   developmentCode?: string;
+  /** Kod qayerga yuborilgani. */
+  delivery?: CodeDelivery;
+  /** SMS orqali yuborish mumkinmi (xizmat ulangan bo‘lsa). */
+  smsAvailable?: boolean;
 }
 
 export interface VerifyOtpInput {

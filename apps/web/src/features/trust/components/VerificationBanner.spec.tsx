@@ -25,7 +25,7 @@ describe('VerificationBanner', () => {
     renderBanner();
     expect(screen.getByText('Profilingiz hali tasdiqlanmagan')).toBeInTheDocument();
     expect(screen.getByText(/faollashtirib bo‘lmaydi/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Hujjat yuborish/ })).toHaveAttribute('href', '/ustalar/profil#tasdiqlash');
+    expect(screen.getByRole('link', { name: /Hujjat yuborish/ })).toHaveAttribute('href', '/usta/profil#tasdiqlash');
   });
 
   it('says documents are being reviewed, without asking for another upload', () => {

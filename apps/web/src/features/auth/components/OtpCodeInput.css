@@ -1,0 +1,25 @@
+/* Kod kataklari: kenglik ekranga moslashadi (telefonda ham, kompyuterda ham), kataklar chetga yopishmaydi */
+.gm-otpbox { display: flex; justify-content: center; gap: clamp(6px, 2vw, 12px); width: 100%; }
+.gm-otpbox__cell {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 60px;
+  height: clamp(52px, 14vw, 64px);
+  padding: 0;
+  border: 1.5px solid var(--gm-color-border-strong);
+  border-radius: clamp(12px, 3vw, 16px);
+  background: color-mix(in srgb, var(--gm-color-surface-muted) 70%, var(--gm-color-surface));
+  color: var(--gm-color-text);
+  font: 800 clamp(1.3rem, 5.4vw, 1.7rem)/1 var(--gm-font-display);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  caret-color: var(--gm-color-primary);
+  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s var(--gm-ease);
+}
+.gm-otpbox__cell.is-filled { border-color: color-mix(in srgb, var(--gm-color-primary) 45%, var(--gm-color-border-strong)); background: var(--gm-color-surface); }
+.gm-otpbox__cell:focus,
+.gm-otpbox__cell:focus-visible { outline: none; border-color: var(--gm-color-primary); background: var(--gm-color-surface); transform: translateY(-2px); box-shadow: 0 10px 20px -14px var(--gm-color-primary); }
+.gm-otpbox__cell:disabled { opacity: 0.5; cursor: not-allowed; }
+.gm-otpbox--invalid .gm-otpbox__cell { border-color: var(--gm-color-danger); background: color-mix(in srgb, var(--gm-color-danger) 6%, var(--gm-color-surface)); animation: gm-otpbox-shake 380ms cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes gm-otpbox-shake { 10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(3px); } 30%, 50%, 70% { transform: translateX(-4px); } 40%, 60% { transform: translateX(4px); } }
+@media (prefers-reduced-motion: reduce) { .gm-otpbox__cell, .gm-otpbox--invalid .gm-otpbox__cell { transition: none; animation: none; } }

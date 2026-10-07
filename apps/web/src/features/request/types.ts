@@ -19,6 +19,11 @@ export interface ProblemRequest {
   expiresAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Tanlangan xizmat, toifa va manzil (faqat bitta so‘rovni olishda keladi). */
+  service?: { id: string; name: string } | null;
+  category?: { id: string; name: string } | null;
+  address?: { title: string | null; addressLine: string; city: string | null; district: string | null } | null;
+  _count?: { attachments: number };
   /** So‘rov bo‘yicha yaratilgan buyurtma (usta tanlangach). */
   order?: {
     id: string;

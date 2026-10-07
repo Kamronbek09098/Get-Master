@@ -37,7 +37,7 @@ export function MatchingResults({ requestId, serviceSelected = true }: { request
         <p className="gm-rqd__run">{STATUS_LABEL[matching.data.run.status] ?? matching.data.run.status}</p>
       )}
       {results.map((result, index) => (
-        <Link key={result.id} to={`/ustalar-katalogi/${result.master?.user.accountNumber ?? result.masterId}`} className="gm-card">
+        <Link key={result.id} to={`/mijoz/ustalar/${result.master?.user.accountNumber ?? result.masterId}`} className="gm-card">
           <div className="gm-card__header">
             <h3>{index + 1}{t('-o‘rin')}</h3>
             {result.score && <span>{t('Ball:')}{' '}{Number(result.score).toFixed(2)}</span>}

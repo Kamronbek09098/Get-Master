@@ -45,8 +45,8 @@ export function RoleGuard({ roles, children }: { roles: Role[]; children: ReactN
   if (isLoading) return <PageLoader label="Yuklanmoqda…" />;
   if (isError && isConnectionProblem(error)) return <ConnectionProblem onRetry={refetch} />;
   if (isError || !role) return <ExpiredSession />;
-  if (needsMasterOnboarding && roles.includes('MASTER') && !roles.includes('CUSTOMER') && !pathname.startsWith('/ustalar/profil')) {
-    return <Navigate to="/ustalar/profil" replace />;
+  if (needsMasterOnboarding && roles.includes('MASTER') && !roles.includes('CUSTOMER') && !pathname.startsWith('/usta/profil')) {
+    return <Navigate to="/usta/profil" replace />;
   }
   if (!roles.includes(role)) {
     const [first] = getNavItems(role, { superAdmin: true }); // bosh sahifa; bo‘lim huquqlarini «/admin» o‘zi tekshiradi

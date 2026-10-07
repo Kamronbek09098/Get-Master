@@ -216,3 +216,178 @@
     width: 100%;
   }
 }
+
+/* ===== So‘rov tafsiloti: yangilangan ko‘rinish ===== */
+.gm-rqd { max-width: 880px; gap: 18px; }
+.gm-rqd__hero { gap: 16px; padding: 24px 26px; }
+.gm-rqd__hero-top h1 { font: 800 clamp(1.5rem, 3vw, 2rem)/1.2 var(--gm-font-display); letter-spacing: -0.03em; }
+.gm-rqd__problem { display: grid; gap: 8px; padding: 14px 16px; border-radius: 14px; background: var(--gm-color-surface-muted); }
+.gm-rqd__label { display: inline-flex; align-items: center; gap: 6px; color: var(--gm-color-text-muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+.gm-rqd__desc { font-size: 0.98rem; line-height: 1.65; overflow-wrap: anywhere; word-break: break-word; }
+.gm-rqd__meta { gap: 10px; padding-top: 0; border-top: 0; }
+.gm-rqd__meta div { gap: 3px; padding: 10px 14px; border: 1px solid var(--gm-color-border); border-radius: 12px; min-width: 150px; }
+.gm-rqd__meta dt { display: inline-flex; align-items: center; gap: 6px; font-size: 0.74rem; }
+.gm-rqd__meta dt svg { color: var(--gm-color-primary); }
+
+/* Bosqichlar */
+.gm-rqd__steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 0; padding: 14px 0 0; list-style: none; border-top: 1px solid var(--gm-color-border); }
+.gm-rqd__steps li { position: relative; display: grid; justify-items: center; gap: 6px; padding: 0 4px; color: var(--gm-color-text-muted); font-size: 0.8rem; font-weight: 600; text-align: center; }
+.gm-rqd__steps li:not(:first-child)::before { content: ''; position: absolute; top: 13px; right: 50%; width: 100%; height: 2px; background: var(--gm-color-border); z-index: 0; }
+.gm-rqd__steps li.is-done:not(:first-child)::before,
+.gm-rqd__steps li.is-current:not(:first-child)::before { background: var(--gm-color-primary); }
+.gm-rqd__dot { position: relative; z-index: 1; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--gm-color-border); background: var(--gm-color-surface); font-size: 0.78rem; font-weight: 800; }
+.gm-rqd__steps li.is-done .gm-rqd__dot { border-color: var(--gm-color-primary); background: var(--gm-color-primary); color: var(--gm-color-primary-contrast); }
+.gm-rqd__steps li.is-current { color: var(--gm-color-text); }
+.gm-rqd__steps li.is-current .gm-rqd__dot { border-color: var(--gm-color-primary); color: var(--gm-color-primary); box-shadow: 0 0 0 4px var(--gm-color-primary-soft); }
+
+/* Qoralama: keyingi qadam bloki */
+.gm-rqd__draft { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 18px; padding: 20px 24px; border: 1px solid color-mix(in srgb, var(--gm-color-primary) 35%, var(--gm-color-border)); background: linear-gradient(100deg, var(--gm-color-primary-soft), var(--gm-color-surface) 70%); }
+.gm-rqd__draft-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; background: var(--gm-color-primary); color: var(--gm-color-primary-contrast); box-shadow: 0 8px 18px -8px var(--gm-color-primary); }
+.gm-rqd__draft-text h2 { margin: 0 0 4px; font: 800 1.1rem/1.25 var(--gm-font-display); }
+.gm-rqd__draft-text p { margin: 0; color: var(--gm-color-text-muted); font-size: 0.9rem; line-height: 1.5; }
+.gm-rqd__draft .gm-button { white-space: nowrap; }
+.gm-rqd__draft .gm-button svg { margin-right: 4px; }
+
+.gm-rqd__danger { background: color-mix(in srgb, var(--gm-color-danger-bg) 35%, transparent); border-color: color-mix(in srgb, var(--gm-color-danger) 30%, var(--gm-color-border)); }
+
+@media (max-width: 640px) {
+  .gm-rqd__hero { padding: 18px 16px; }
+  .gm-rqd__meta div { flex: 1 1 100%; min-width: 0; }
+  .gm-rqd__steps li { font-size: 0.7rem; }
+  .gm-rqd__draft { grid-template-columns: auto 1fr; padding: 16px; }
+  .gm-rqd__draft .gm-button { grid-column: 1 / -1; width: 100%; }
+}
+
+/* ===== Bir xil ichki bo‘shliq: matn va tugmalar chetga yopishib qolmasin ===== */
+.gm-rqd { --rqd-pad: 28px; }
+.gm-rqd__hero { padding: var(--rqd-pad); }
+.gm-rqd > .gm-detail-section { padding: var(--rqd-pad); }
+.gm-rqd__draft { padding: 24px var(--rqd-pad); gap: 20px; }
+.gm-rqd__danger { padding: 18px var(--rqd-pad); gap: 14px 24px; }
+.gm-rqd__danger .gm-button { padding-inline: 20px; }
+.gm-rqd__draft .gm-button { padding-inline: 24px; }
+.gm-rqd__steps { padding-inline: 8px; }
+.gm-rqd__problem { padding: 16px 18px; }
+.gm-rqd__meta div { padding: 12px 16px; }
+@media (max-width: 640px) {
+  .gm-rqd { --rqd-pad: 18px; }
+  .gm-rqd__danger { padding: 16px var(--rqd-pad); }
+}
+
+/* Markazlashtirish: bekor qilish bloki va sana kartalari */
+.gm-rqd__danger {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.gm-rqd__danger p { max-width: 52ch; }
+.gm-rqd__danger .gm-button { align-self: center; min-width: 220px; }
+.gm-rqd__meta { justify-content: center; }
+.gm-rqd__meta div { align-items: center; text-align: center; }
+.gm-rqd__meta dt { justify-content: center; }
+@media (max-width: 640px) {
+  .gm-rqd__danger { align-items: center; }
+  .gm-rqd__danger .gm-button { width: 100%; min-width: 0; }
+}
+
+/* Bekor qilish: ramkasiz va fonsiz; matn tepada, tugma pastda (qizil yozuvli yumshoq tugma) */
+.gm-rqd__danger {
+  border: 0;
+  background: none;
+  box-shadow: none;
+  padding-block: 8px 4px;
+}
+.gm-rqd__danger .gm-button,
+.gm-rqd__danger .gm-button--danger {
+  border: 1.5px solid color-mix(in srgb, var(--gm-color-danger) 35%, transparent);
+  background: color-mix(in srgb, var(--gm-color-danger) 10%, var(--gm-color-surface));
+  color: var(--gm-color-danger);
+  box-shadow: none;
+  font-weight: 800;
+  transition: background-color 180ms var(--gm-ease), border-color 180ms var(--gm-ease), transform 160ms var(--gm-ease);
+}
+@media (hover: hover) {
+  .gm-rqd__danger .gm-button:hover:not(:disabled) {
+    border-color: var(--gm-color-danger);
+    background: color-mix(in srgb, var(--gm-color-danger) 18%, var(--gm-color-surface));
+    filter: none;
+  }
+}
+.gm-rqd__danger .gm-button:focus-visible { outline: 2px solid var(--gm-color-danger); outline-offset: 2px; }
+
+/* Bekor qilish: katta tugma, kichik izoh */
+.gm-rqd__danger { gap: 12px; padding-block: 12px 6px; }
+.gm-rqd__danger .gm-button {
+  min-width: min(360px, 100%);
+  min-height: 56px;
+  padding-inline: 36px;
+  border-radius: 16px;
+  font-size: 1.05rem;
+  letter-spacing: -0.005em;
+}
+.gm-rqd__danger p { max-width: 46ch; font-size: 12px; line-height: 1.5; opacity: 0.85; }
+@media (max-width: 640px) {
+  .gm-rqd__danger .gm-button { width: 100%; min-height: 54px; }
+}
+
+/* Qog‘oz samolyot ikonkasi: optik markazga keltirish */
+.gm-rqd__draft-icon { display: flex; align-items: center; justify-content: center; line-height: 0; }
+.gm-rqd__draft-icon svg { display: block; flex: none; transform: translate(-1px, 1px); }
+
+/* Tugma yozuvi har holatda (hover, bosilgan, fokus) qizil qolsin — umumiy `.gm-button--danger:hover` oq rang bermasin */
+.gm-rqd__danger .gm-button.gm-button--danger,
+.gm-rqd__danger .gm-button.gm-button--danger:hover:not(:disabled),
+.gm-rqd__danger .gm-button.gm-button--danger:active:not(:disabled),
+.gm-rqd__danger .gm-button.gm-button--danger:focus-visible {
+  color: var(--gm-color-danger);
+  filter: none;
+}
+.gm-rqd__danger .gm-button.gm-button--danger:hover:not(:disabled) {
+  border-color: var(--gm-color-danger);
+  background: color-mix(in srgb, var(--gm-color-danger) 16%, var(--gm-color-surface));
+  transform: translateY(-1px);
+}
+.gm-rqd__danger .gm-button.gm-button--danger:active:not(:disabled) {
+  transform: scale(0.98);
+  background: color-mix(in srgb, var(--gm-color-danger) 22%, var(--gm-color-surface));
+}
+
+/* Ramkasiz, to‘qroq tugma: chuqur qizil yozuv va quyuqroq pushti fon */
+.gm-rqd__danger .gm-button.gm-button--danger,
+.gm-rqd__danger .gm-button.gm-button--danger:hover:not(:disabled),
+.gm-rqd__danger .gm-button.gm-button--danger:active:not(:disabled),
+.gm-rqd__danger .gm-button.gm-button--danger:focus-visible {
+  border-color: transparent;
+  color: color-mix(in srgb, var(--gm-color-danger) 82%, #3b0a0a);
+}
+.gm-rqd__danger .gm-button.gm-button--danger {
+  background: color-mix(in srgb, var(--gm-color-danger) 22%, var(--gm-color-surface));
+  box-shadow: 0 8px 18px -12px var(--gm-color-danger);
+}
+.gm-rqd__danger .gm-button.gm-button--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--gm-color-danger) 30%, var(--gm-color-surface));
+}
+.gm-rqd__danger .gm-button.gm-button--danger:active:not(:disabled) {
+  background: color-mix(in srgb, var(--gm-color-danger) 38%, var(--gm-color-surface));
+}
+.gm-rqd__danger .gm-button.gm-button--danger:focus-visible { outline: 2px solid var(--gm-color-danger); outline-offset: 3px; }
+
+/* ===== Yakuniy sayqal: tafsilotlar, sana, bosqichlar ===== */
+.gm-rqd__hero-top { row-gap: 6px; }
+.gm-rqd__created { flex: 1 0 100%; display: inline-flex; align-items: center; gap: 6px; margin: 0; color: var(--gm-color-text-muted); font-size: 0.86rem; }
+.gm-rqd__created svg { color: var(--gm-color-primary); }
+.gm-rqd__created time { color: var(--gm-color-text); font-weight: 600; }
+.gm-rqd__facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 0; }
+.gm-rqd__facts > div { display: grid; align-content: start; gap: 4px; padding: 12px 14px; border: 1px solid var(--gm-color-border); border-radius: 14px; background: var(--gm-color-surface); }
+.gm-rqd__facts dt { display: inline-flex; align-items: center; gap: 6px; color: var(--gm-color-text-muted); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.gm-rqd__facts dt svg { color: var(--gm-color-primary); }
+.gm-rqd__facts dd { display: grid; gap: 1px; margin: 0; font-size: 0.95rem; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+.gm-rqd__facts dd small { color: var(--gm-color-text-muted); font-size: 0.78rem; font-weight: 500; }
+.gm-rqd__facts dd.is-empty { color: var(--gm-color-text-muted); font-weight: 500; }
+.gm-rqd__steps li { font-size: 0.86rem; color: color-mix(in srgb, var(--gm-color-text-muted) 85%, var(--gm-color-text)); }
+.gm-rqd__dot { width: 30px; height: 30px; }
+.gm-rqd__steps li:not(:first-child)::before { top: 14px; }
+.gm-rqd__danger p { font-size: 12.5px; opacity: 1; color: var(--gm-color-text-muted); }
+@media (max-width: 640px) { .gm-rqd__facts { grid-template-columns: 1fr 1fr; } .gm-rqd__facts > div { padding: 10px 12px; } }
+@media (max-width: 420px) { .gm-rqd__facts { grid-template-columns: 1fr; } }

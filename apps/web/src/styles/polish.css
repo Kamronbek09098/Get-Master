@@ -297,3 +297,9 @@ input[type='checkbox']:not([role='switch']):disabled {
 .gm-delete-both input[type='checkbox']:not([role='switch']) {
   --gm-check: var(--gm-color-danger);
 }
+
+/* Ogohlantirish bannerlari sarlavhaga yopishmasin */
+.gm-phone-banner,
+.gm-app-layout__content > .gm-alert { margin-bottom: var(--gm-space-5); }
+.gm-chooser__search input::placeholder { text-overflow: ellipsis; }
+.gm-chooser__search input { text-overflow: ellipsis; }

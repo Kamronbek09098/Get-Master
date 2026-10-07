@@ -199,3 +199,100 @@ button.gm-aord__stat:focus-visible {
   justify-content: center;
   margin-top: var(--gm-space-4);
 }
+.gm-aord__chip--paid {
+  background: var(--gm-color-success-bg);
+  color: var(--gm-color-success);
+}
+.gm-aord__chip--muted {
+  background: var(--gm-color-surface-muted);
+  color: var(--gm-color-text-muted);
+}
+
+/* ===== Buyurtmalar ro‘yxati: yangilangan ko‘rinish ===== */
+.gm-aord__stats { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.gm-aord__stat {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas: 'icon num' 'icon label';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 0;
+  padding: 14px 16px;
+  border-radius: var(--gm-radius-lg);
+  box-shadow: var(--gm-shadow-sm);
+}
+.gm-aord__stat > svg {
+  grid-area: icon;
+  box-sizing: content-box;
+  padding: 11px;
+  border-radius: 14px;
+  background: var(--gm-color-primary-soft);
+}
+.gm-aord__stat--warn > svg { background: var(--gm-color-danger-bg); }
+.gm-aord__stat strong { grid-area: num; font: 800 1.45rem/1.1 var(--gm-font-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.gm-aord__stat small { grid-area: label; }
+.gm-aord__stat--on { box-shadow: 0 0 0 2px var(--gm-color-primary) inset, var(--gm-shadow-sm); }
+.gm-aord__stat--warn.gm-aord__stat--on { box-shadow: 0 0 0 2px var(--gm-color-danger) inset, var(--gm-shadow-sm); }
+@media (hover: hover) { button.gm-aord__stat:hover { transform: translateY(-2px); box-shadow: var(--gm-shadow-md); } }
+
+.gm-aord__filters { border-radius: var(--gm-radius-lg); box-shadow: var(--gm-shadow-sm); }
+.gm-aord__search input:focus-visible,
+.gm-aord__dates input:focus-visible { outline: 2px solid var(--gm-focus-ring); outline-offset: 1px; background: var(--gm-color-surface); }
+
+.gm-aord__row {
+  --tone: var(--gm-color-primary);
+  position: relative;
+  padding: 16px 20px 16px 22px;
+  border-left-width: 1px;
+  overflow: hidden;
+  box-shadow: var(--gm-shadow-sm);
+  transition: transform 220ms var(--gm-ease), box-shadow 220ms var(--gm-ease), border-color 200ms;
+}
+.gm-aord__row::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--tone); }
+.gm-aord__row--info { --tone: var(--gm-color-primary); }
+.gm-aord__row--wait { --tone: var(--gm-color-warning); }
+.gm-aord__row--ok { --tone: var(--gm-color-success); }
+.gm-aord__row--off { --tone: var(--gm-color-text-muted); }
+.gm-aord__row--bad { --tone: var(--gm-color-danger); }
+.gm-aord__row:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--tone) 45%, var(--gm-color-border)); }
+.gm-aord__row:focus-visible { outline: 2px solid var(--gm-focus-ring); outline-offset: 2px; }
+.gm-aord__title strong { font: 700 1.05rem/1.25 var(--gm-font-display); }
+.gm-aord__who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 6px 0 8px !important; }
+.gm-aord__who > span { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 5px; min-width: 0; }
+.gm-aord__who em { font-style: normal; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gm-color-text-muted); }
+.gm-aord__who svg { flex: none; color: var(--gm-color-text-muted); }
+.gm-aord__meta > span:first-child { font-weight: 800; color: var(--gm-color-text); }
+.gm-aord__chip { padding: 3px 10px; font-size: 0.74rem; }
+.gm-aord__amount { align-items: flex-end; gap: 4px; padding-left: var(--gm-space-3); text-align: right; }
+.gm-aord__amount strong { font: 800 1.2rem/1.1 var(--gm-font-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.gm-aord__amount small { color: var(--tone); font-weight: 700; font-size: 0.78rem; }
+@media (max-width: 640px) {
+  .gm-aord__row { padding: 14px 14px 14px 18px; }
+  .gm-aord__amount { flex-direction: row; align-items: baseline; justify-content: space-between; width: 100%; padding: 10px 0 0; border-top: 1px dashed var(--gm-color-border); }
+}
+@media (prefers-reduced-motion: reduce) { .gm-aord__row, button.gm-aord__stat { transition: none; } }
+
+/* ===== Tuzatishlar: statistika qatori sig‘maslik muammosi ===== */
+.gm-aord__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.gm-aord__stats > * { min-width: 0; }
+.gm-aord__stat strong { font-size: clamp(1.15rem, 1.6vw, 1.45rem); overflow-wrap: anywhere; }
+.gm-aord__stat small { overflow-wrap: anywhere; line-height: 1.25; }
+/* Summa kartasi — butun qatorni egallaydi, raqam sig‘adi */
+.gm-aord__stats > :last-child {
+  grid-column: 1 / -1;
+  grid-template-columns: auto auto 1fr;
+  grid-template-areas: 'icon num label';
+  column-gap: 14px;
+}
+.gm-aord__stats > :last-child small { justify-self: start; font-size: 0.82rem; }
+.gm-aord__stats > :last-child strong { font-size: clamp(1.3rem, 2vw, 1.7rem); white-space: nowrap; }
+@media (max-width: 899px) {
+  .gm-aord__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .gm-aord__stats > :last-child { grid-template-columns: auto 1fr; grid-template-areas: 'icon num' 'icon label'; }
+  .gm-aord__stats > :last-child strong { white-space: normal; }
+}
+/* Sana maydoni va filtrlar */
+.gm-aord__dates input { min-width: 150px; cursor: pointer; }
+.gm-aord__tabs { row-gap: 6px; }
