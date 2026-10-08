@@ -127,3 +127,73 @@
 @media (max-width: 860px) { .gm-show__faq-groups { grid-template-columns: 1fr; } }
 .gm-show { scroll-margin-top: 80px; }
 .gm-show__block { scroll-margin-top: 90px; }
+.gm-pub__plan header h3 { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 1.25rem; }
+.gm-show .gm-pub__cta:not(.gm-pub__cta--ghost) { color: var(--gm-color-primary-contrast) !important; }
+.gm-show .gm-pub__cta--ghost { color: var(--gm-color-text) !important; }
+
+/* ===== Ko‘p beriladigan savollar: to‘liq kenglikdagi yumshoq kartalar, o‘ngda "+" tugmasi ===== */
+.gm-show__head--faq h2 { font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif; font-weight: 500; letter-spacing: -0.01em; font-synthesis: none; }
+.gm-faq__pill { display: inline-flex; padding: 7px 18px; border-radius: 999px; border: 1px solid var(--gm-color-border); background: var(--gm-color-surface); color: var(--gm-color-text); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.12em; box-shadow: 0 4px 14px rgba(20, 30, 60, 0.06); }
+.gm-faq { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.gm-faq--single { width: 100%; max-width: 980px; margin: 0 auto; }
+.gm-faq__col { display: grid; gap: 14px; align-content: start; }
+.gm-faq__item { border-radius: 26px; border: 1px solid var(--gm-color-border); background: var(--gm-color-surface); box-shadow: 0 14px 34px rgba(20, 30, 60, 0.07); transition: box-shadow 0.25s ease, border-color 0.25s ease; }
+.gm-faq__item:hover { box-shadow: 0 18px 40px rgba(20, 30, 60, 0.11); }
+.gm-faq__item.is-open { border-color: color-mix(in srgb, var(--gm-color-primary) 35%, var(--gm-color-border)); }
+.gm-faq__item button { display: flex; align-items: center; gap: 16px; width: 100%; padding: 22px 22px 22px 28px; border: 0; background: transparent; color: var(--gm-color-text); font: inherit; font-size: 1.05rem; font-weight: 700; text-align: left; cursor: pointer; border-radius: 26px; }
+.gm-faq__q { flex: 1; min-width: 0; line-height: 1.4; }
+.gm-faq__plus { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--gm-color-accent) 28%, var(--gm-color-surface)), color-mix(in srgb, var(--gm-color-success) 16%, var(--gm-color-surface))); color: var(--gm-color-text); transition: transform 0.25s ease; }
+.gm-faq__item.is-open .gm-faq__plus { transform: rotate(45deg); }
+.gm-faq__item p { margin: 0; padding: 0 84px 24px 28px; color: var(--gm-color-text-muted); line-height: 1.7; font-size: 0.97rem; }
+@media (max-width: 640px) { .gm-faq__item button { padding: 16px 14px 16px 18px; font-size: 0.98rem; } .gm-faq__plus { width: 38px; height: 38px; border-radius: 13px; } .gm-faq__item p { padding: 0 18px 18px; } }
+
+/* ===== Bosh sahifa teaserlari va /katalog sahifasi ===== */
+.gm-show__head { display: grid; gap: 4px; justify-items: center; text-align: center; }
+.gm-show__head h2 { font-size: clamp(1.8rem, 4.5vw, 3rem); letter-spacing: -0.03em; }
+.gm-show__kicker { margin: 0 0 6px; color: var(--gm-color-warning); font-size: 0.75rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; }
+.gm-show__lead { margin: 6px 0 0; max-width: 56ch; color: var(--gm-color-text-muted); }
+.gm-show__all { justify-self: center; display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 999px; border: 1px solid var(--gm-color-border-strong); background: var(--gm-color-surface); color: var(--gm-color-text); font-weight: 700; text-decoration: none; transition: transform 0.2s ease, border-color 0.2s ease; }
+.gm-show__all:hover { transform: translateY(-2px); border-color: var(--gm-color-primary); }
+.gm-pub__back { display: inline-flex; align-items: center; gap: 6px; width: fit-content; color: var(--gm-color-text-muted); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+.gm-pub__back:hover { color: var(--gm-color-text); }
+.gm-pub__main > .gm-show__block { scroll-margin-top: 90px; }
+
+/* ===== /katalog: bo‘limlar paneli (tab) ===== */
+.gm-pub__tabs { max-width: 1120px; margin: 0 auto; padding: 0 16px; display: flex; justify-content: center; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.gm-pub__tabs::-webkit-scrollbar { display: none; }
+.gm-pub__tabs button { position: relative; flex: none; display: inline-flex; flex-direction: column; align-items: center; gap: 4px; min-width: 96px; padding: 10px 18px 12px; border: 0; background: transparent; color: var(--gm-color-text-muted); font: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer; }
+.gm-pub__tabs button:hover { color: var(--gm-color-text); }
+.gm-pub__tabs button.is-active { color: var(--gm-color-text); }
+.gm-pub__tabs button.is-active::after { content: ''; position: absolute; left: 12px; right: 12px; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--gm-color-primary); }
+.gm-pub__tabs button.is-active svg { color: var(--gm-color-primary); }
+.gm-pub__tabs em { position: absolute; top: 6px; right: 6px; padding: 1px 7px; border-radius: 999px; background: var(--gm-color-surface-muted); color: var(--gm-color-text); font-size: 0.7rem; font-style: normal; }
+.gm-pub__bar { padding-bottom: 0; }
+.gm-pub__bar-in { padding-bottom: 4px; }
+
+/* Usta kartasidagi xizmat narxlari (nuqtali chiziq bilan) */
+.gm-pub__svc { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.gm-pub__svc li { display: flex; align-items: baseline; gap: 8px; font-size: 0.84rem; }
+.gm-pub__svc li span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-pub__svc li i { flex: 1; min-width: 12px; border-bottom: 1px dotted var(--gm-color-border-strong); transform: translateY(-3px); }
+.gm-pub__svc li b { flex: none; font-weight: 700; color: var(--gm-color-text-muted); white-space: nowrap; }
+
+/* Xizmat narxlari bo‘limi */
+.gm-pub__select { display: block; }
+.gm-pub__select select { width: 100%; min-height: 46px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--gm-color-border); background: var(--gm-color-surface); color: var(--gm-color-text); font: inherit; }
+.gm-pub__pricegrid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+.gm-pub__pricecard { display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 20px; border: 1px solid var(--gm-color-border); background: var(--gm-color-surface); }
+.gm-pub__pricecard header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.gm-pub__pricecard h3 { margin: 0; font-size: 1.15rem; }
+.gm-pub__badge { padding: 3px 10px; border-radius: 999px; background: var(--gm-color-surface-muted); font-size: 0.76rem; font-weight: 700; color: var(--gm-color-text-muted); white-space: nowrap; }
+.gm-pub__pricecard ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
+.gm-pub__pricecard li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; border-radius: 10px; background: var(--gm-color-surface-muted); font-size: 0.9rem; }
+.gm-pub__pricecard li b { flex: none; color: var(--gm-color-success); white-space: nowrap; }
+.gm-pub__pricecard-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
+.gm-pub__btn { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--gm-color-border-strong); background: var(--gm-color-surface); color: var(--gm-color-text); font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+.gm-pub__btn:hover { border-color: var(--gm-color-primary); }
+@media (max-width: 720px) { .gm-pub__pricegrid { grid-template-columns: 1fr; } .gm-pub__tabs { justify-content: flex-start; } .gm-pub__tabs button { min-width: 84px; padding-inline: 12px; } }
+
+/* Bosh sahifa teaser sarlavhasi (kicker ustida, sarlavha markazda) */
+.gm-show__block > header.gm-show__head { display: grid; justify-content: stretch; align-items: start; justify-items: center; text-align: center; gap: 8px; }
+@media (max-width: 480px) { .gm-pub__pricecard-actions { grid-template-columns: 1fr; } }
+.gm-pub__place { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--gm-color-text-muted); }

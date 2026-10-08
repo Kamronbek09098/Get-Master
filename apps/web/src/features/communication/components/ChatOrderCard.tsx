@@ -43,6 +43,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
 
   const order = query.data;
   const master = order.viewerRole === 'MASTER';
+  const atMaster = order.request?.serviceMode === 'AT_MASTER';
   const status = order.status;
   const index = stepIndex(status);
   const percent = status === 'COMPLETED' ? 100 : index >= 0 ? Math.round(((index + 1) / FLOW_STEPS.length) * 100) : 0;
@@ -59,6 +60,9 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
       hint = t('Mijoz sizga buyurtma yubordi. Qabul qilasizmi?');
       if (paused) hint = t('Pauza rejimida buyurtmani qabul qila olmaysiz. Avval pauzani o‘chiring.');
       actions.push({ label: t('Qabul qilish'), icon: <CheckCircle2 size={15} />, run: () => confirm.mutate(), primary: true, disabled: paused });
+    } else if (status === 'CONFIRMED' && atMaster) {
+      hint = t('Buyurtma qabul qilindi. Mijoz kelganda belgilang.');
+      actions.push({ label: t('Mijoz keldi'), icon: <MapPinned size={15} />, run: () => arrive.mutate(), primary: true });
     } else if (status === 'CONFIRMED') {
       hint = t('Buyurtma qabul qilindi. Tayyor bo‘lgach, yo‘lga chiqing.');
       actions.push({ label: t('Yo‘lga chiqdim'), icon: <Navigation size={15} />, run: () => travel.mutate(), primary: true });
@@ -78,7 +82,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
       actions.push({ label: t('Naqd pulni qabul qildim'), icon: <Banknote size={15} />, run: () => cash.mutate(payment.id), primary: true });
     } else if (status === 'COMPLETED') hint = t('Buyurtma yakunlandi.');
   } else if (status === 'BOOKED') hint = t('Usta buyurtmani qabul qilishini kuting.');
-  else if (status === 'CONFIRMED') hint = t('Usta buyurtmani qabul qildi.');
+  else if (status === 'CONFIRMED') hint = atMaster ? t('Usta buyurtmani qabul qildi. Belgilangan vaqtda ustaning joyiga boring.') : t('Usta buyurtmani qabul qildi.');
   else if (status === 'ON_THE_WAY') hint = t('Usta yo‘lda.');
   else if (status === 'ARRIVED') hint = t('Usta yetib keldi.');
   else if (status === 'IN_PROGRESS') hint = t('Ish jarayonida');

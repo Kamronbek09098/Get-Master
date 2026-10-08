@@ -21,6 +21,7 @@ const MAX_WAVES = 3;
 const WAVE_DELAY_MS = 5 * 60_000;
 const EARTH_RADIUS_KM = 6371;
 const NEUTRAL_RATE = 0.5;
+const AT_MASTER_FAR_KM = 30;
 
 const OFFER_ELIGIBLE_STATUSES = ['SUBMITTED', 'MATCHING', 'OFFERS_RECEIVED'];
 
@@ -76,10 +77,10 @@ export class MatchingService {
     if (!run) return;
 
     try {
-      const candidates = await this.findEligibleMasters(request.serviceId, request.customerId);
+      const candidates = await this.findEligibleMasters(request.serviceId, request.customerId, request.serviceMode);
       const relevance = await this.resolveRelevance(requestId, request.serviceId);
       const history = await this.loadHistory(candidates.map((c) => c.id));
-      const scored = this.score(candidates, request, relevance, history);
+      const scored = this.score(candidates, request, relevance, history, request.serviceMode);
 
       if (scored.length > 0) {
         await this.db.matchingResult.createMany({
@@ -185,13 +186,14 @@ export class MatchingService {
     return history;
   }
 
-  private async findEligibleMasters(serviceId: string, customerId: string): Promise<Array<MasterProfile & { availability: AvailabilityWindow[] }>> {
+  private async findEligibleMasters(serviceId: string, customerId: string, serviceMode: 'AT_CUSTOMER' | 'AT_MASTER'): Promise<Array<MasterProfile & { availability: AvailabilityWindow[] }>> {
     return this.db.masterProfile.findMany({
       where: {
         status: 'ACTIVE',
         isPaused: false,
         verification: 'VERIFIED',
         userId: { not: customerId },
+        serviceModes: { has: serviceMode },
         services: { some: { serviceId, isActive: true, service: { isActive: true } } },
       },
       include: { availability: true },
@@ -211,6 +213,7 @@ export class MatchingService {
     request: { latitude: Prisma.Decimal | null; longitude: Prisma.Decimal | null },
     relevance: number,
     history: Map<string, { finishedOrders: number; notified: number }>,
+    serviceMode: 'AT_CUSTOMER' | 'AT_MASTER' = 'AT_CUSTOMER',
   ): ScoredCandidate[] {
     const now = new Date();
     const results: ScoredCandidate[] = [];
@@ -225,7 +228,10 @@ export class MatchingService {
           Number(master.latitude),
           Number(master.longitude),
         );
-        if (master.workRadiusKm != null && Number(master.workRadiusKm) > 0) {
+        if (serviceMode === 'AT_MASTER') {
+          // Mijoz ustaning oldiga boradi: usta radiusi hisobga olinmaydi, yaqinroq joy afzal (30 km dan keyin eng past ball).
+          distanceRatio = Math.min(1, distanceKm / AT_MASTER_FAR_KM);
+        } else if (master.workRadiusKm != null && Number(master.workRadiusKm) > 0) {
           const dmax = Number(master.workRadiusKm);
           if (distanceKm > dmax) continue;
           distanceRatio = distanceKm / dmax;

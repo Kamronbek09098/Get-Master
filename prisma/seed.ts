@@ -39,6 +39,8 @@ interface SeedCategory {
   name: string;
   slug: string;
   sortOrder: number;
+  /** Xizmat rejimlari: mijoz manzilida / ustaning joyida. */
+  modes?: Array<'AT_CUSTOMER' | 'AT_MASTER'>;
   services: SeedService[];
 }
 
@@ -95,6 +97,131 @@ const CATEGORIES: SeedCategory[] = [
       { id: '00000000-0003-4000-8000-00000000000c', name: 'Ta’mirdan keyingi tozalash', slug: 'tamirdan-keyingi-tozalash' },
     ],
   },
+  {
+    id: '00000000-0002-4000-8000-000000000011',
+    name: 'Sartaroshxona va go‘zallik',
+    slug: 'sartaroshxona-gozallik',
+    sortOrder: 10,
+    modes: ['AT_CUSTOMER', 'AT_MASTER'],
+    services: [
+      { id: '00000000-0003-4000-8000-000000000021', name: 'Erkaklar soch turmagi', slug: 'sartaroshxona-gozallik-erkaklar-soch-turmagi' },
+      { id: '00000000-0003-4000-8000-000000000022', name: 'Ayollar soch turmagi', slug: 'sartaroshxona-gozallik-ayollar-soch-turmagi' },
+      { id: '00000000-0003-4000-8000-000000000023', name: 'Soqol va mo‘ylov', slug: 'sartaroshxona-gozallik-soqol-va-moylov' },
+      { id: '00000000-0003-4000-8000-000000000024', name: 'Manikyur va pedikyur', slug: 'sartaroshxona-gozallik-manikyur-va-pedikyur' },
+      { id: '00000000-0003-4000-8000-000000000025', name: 'Makiyaj', slug: 'sartaroshxona-gozallik-makiyaj' },
+      { id: '00000000-0003-4000-8000-000000000026', name: 'Qosh va kiprik', slug: 'sartaroshxona-gozallik-qosh-va-kiprik' },
+      { id: '00000000-0003-4000-8000-000000000027', name: 'Massaj', slug: 'sartaroshxona-gozallik-massaj' },
+    ],
+  },
+  {
+    id: '00000000-0002-4000-8000-000000000012',
+    name: 'Avtoservis',
+    slug: 'avtoservis',
+    sortOrder: 11,
+    modes: ['AT_MASTER', 'AT_CUSTOMER'],
+    services: [
+      { id: '00000000-0003-4000-8000-000000000028', name: 'Avto diagnostika', slug: 'avtoservis-avto-diagnostika' },
+      { id: '00000000-0003-4000-8000-000000000029', name: 'Dvigatel ta’miri', slug: 'avtoservis-dvigatel-tamiri' },
+      { id: '00000000-0003-4000-8000-00000000002a', name: 'Yurish qismi ta’miri', slug: 'avtoservis-yurish-qismi-tamiri' },
+      { id: '00000000-0003-4000-8000-00000000002b', name: 'Avto elektrika', slug: 'avtoservis-avto-elektrika' },
+      { id: '00000000-0003-4000-8000-00000000002c', name: 'Shina almashtirish', slug: 'avtoservis-shina-almashtirish' },
+      { id: '00000000-0003-4000-8000-00000000002d', name: 'Avtomobil yuvish', slug: 'avtoservis-avtomobil-yuvish' },
+      { id: '00000000-0003-4000-8000-00000000002e', name: 'Yo‘lda yordam (evakuator)', slug: 'avtoservis-yolda-yordam-evakuator' },
+    ],
+  },
+  {
+    id: '00000000-0002-4000-8000-000000000013',
+    name: 'Maishiy texnika ta’miri',
+    slug: 'maishiy-texnika-tamiri',
+    sortOrder: 12,
+    modes: ['AT_CUSTOMER', 'AT_MASTER'],
+    services: [
+      { id: '00000000-0003-4000-8000-00000000002f', name: 'Kir yuvish mashinasi', slug: 'maishiy-texnika-tamiri-kir-yuvish-mashinasi' },
+      { id: '00000000-0003-4000-8000-000000000030', name: 'Muzlatgich', slug: 'maishiy-texnika-tamiri-muzlatgich' },
+      { id: '00000000-0003-4000-8000-000000000031', name: 'Televizor', slug: 'maishiy-texnika-tamiri-televizor' },
+      { id: '00000000-0003-4000-8000-000000000032', name: 'Gaz plita va duxovka', slug: 'maishiy-texnika-tamiri-gaz-plita-va-duxovka' },
+      { id: '00000000-0003-4000-8000-000000000033', name: 'Changyutgich', slug: 'maishiy-texnika-tamiri-changyutgich' },
+    ],
+  },
+  {
+    id: '00000000-0002-4000-8000-000000000014',
+    name: 'Telefon va kompyuter ta’miri',
+    slug: 'telefon-kompyuter-tamiri',
+    sortOrder: 13,
+    modes: ['AT_MASTER', 'AT_CUSTOMER'],
+    services: [
+      { id: '00000000-0003-4000-8000-000000000034', name: 'Telefon ekrani va batareyasi', slug: 'telefon-kompyuter-tamiri-telefon-ekrani-va-batareyasi' },
+      { id: '00000000-0003-4000-8000-000000000035', name: 'Noutbuk ta’miri', slug: 'telefon-kompyuter-tamiri-noutbuk-tamiri' },
+      { id: '00000000-0003-4000-8000-000000000036', name: 'Kompyuter yig‘ish', slug: 'telefon-kompyuter-tamiri-kompyuter-yigish' },
+      { id: '00000000-0003-4000-8000-000000000037', name: 'Dastur o‘rnatish', slug: 'telefon-kompyuter-tamiri-dastur-ornatish' },
+    ],
+  },
+  {
+    id: '00000000-0002-4000-8000-000000000015',
+    name: 'Kiyim ta’miri va ximchistka',
+    slug: 'kiyim-tamiri-ximchistka',
+    sortOrder: 14,
+    modes: ['AT_MASTER'],
+    services: [
+      { id: '00000000-0003-4000-8000-000000000038', name: 'Kiyim tikish va ta’mirlash', slug: 'kiyim-tamiri-ximchistka-kiyim-tikish-va-tamirlash' },
+      { id: '00000000-0003-4000-8000-000000000039', name: 'Ximchistka', slug: 'kiyim-tamiri-ximchistka-ximchistka' },
+      { id: '00000000-0003-4000-8000-00000000003a', name: 'Poyabzal ta’miri', slug: 'kiyim-tamiri-ximchistka-poyabzal-tamiri' },
+    ],
+  },
+  {
+    id: '00000000-0002-4000-8000-000000000016',
+    name: 'Qurilish va ta’mirlash',
+    slug: 'qurilish-tamirlash',
+    sortOrder: 15,
+    modes: ['AT_CUSTOMER'],
+    services: [
+      { id: '00000000-0003-4000-8000-00000000003b', name: 'Kafel yotqizish', slug: 'qurilish-tamirlash-kafel-yotqizish' },
+      { id: '00000000-0003-4000-8000-00000000003c', name: 'Bo‘yoq va suvoq', slug: 'qurilish-tamirlash-boyoq-va-suvoq' },
+      { id: '00000000-0003-4000-8000-00000000003d', name: 'Gipsokarton', slug: 'qurilish-tamirlash-gipsokarton' },
+      { id: '00000000-0003-4000-8000-00000000003e', name: 'Pol va laminat', slug: 'qurilish-tamirlash-pol-va-laminat' },
+      { id: '00000000-0003-4000-8000-00000000003f', name: 'Eshik va deraza o‘rnatish', slug: 'qurilish-tamirlash-eshik-va-deraza-ornatish' },
+      { id: '00000000-0003-4000-8000-000000000040', name: 'Tom ta’miri', slug: 'qurilish-tamirlash-tom-tamiri' },
+    ],
+  },
+  {
+    id: '00000000-0002-4000-8000-000000000017',
+    name: 'Bola qarash va repetitorlik',
+    slug: 'bola-qarash-repetitorlik',
+    sortOrder: 16,
+    modes: ['AT_CUSTOMER', 'AT_MASTER'],
+    services: [
+      { id: '00000000-0003-4000-8000-000000000041', name: 'Enaga', slug: 'bola-qarash-repetitorlik-enaga' },
+      { id: '00000000-0003-4000-8000-000000000042', name: 'Repetitor', slug: 'bola-qarash-repetitorlik-repetitor' },
+      { id: '00000000-0003-4000-8000-000000000043', name: 'Til o‘rgatish', slug: 'bola-qarash-repetitorlik-til-orgatish' },
+      { id: '00000000-0003-4000-8000-000000000044', name: 'Maktabgacha tayyorlash', slug: 'bola-qarash-repetitorlik-maktabgacha-tayyorlash' },
+    ],
+  },
+  {
+    id: '00000000-0002-4000-8000-000000000018',
+    name: 'Ko‘chirish va yuk tashish',
+    slug: 'kochirish-yuk-tashish',
+    sortOrder: 17,
+    modes: ['AT_CUSTOMER'],
+    services: [
+      { id: '00000000-0003-4000-8000-000000000045', name: 'Uy ko‘chirish', slug: 'kochirish-yuk-tashish-uy-kochirish' },
+      { id: '00000000-0003-4000-8000-000000000046', name: 'Yuk tashish', slug: 'kochirish-yuk-tashish-yuk-tashish' },
+      { id: '00000000-0003-4000-8000-000000000047', name: 'Yuklovchilar (hashar)', slug: 'kochirish-yuk-tashish-yuklovchilar-hashar' },
+      { id: '00000000-0003-4000-8000-000000000048', name: 'Mebel tashish', slug: 'kochirish-yuk-tashish-mebel-tashish' },
+    ],
+  },
+  {
+    id: '00000000-0002-4000-8000-000000000019',
+    name: 'Bog‘ va hovli',
+    slug: 'bogh-hovli',
+    sortOrder: 18,
+    modes: ['AT_CUSTOMER'],
+    services: [
+      { id: '00000000-0003-4000-8000-000000000049', name: 'Bog‘ parvarishi', slug: 'bogh-hovli-bog-parvarishi' },
+      { id: '00000000-0003-4000-8000-00000000004a', name: 'Maysa o‘rish', slug: 'bogh-hovli-maysa-orish' },
+      { id: '00000000-0003-4000-8000-00000000004b', name: 'Daraxt kesish', slug: 'bogh-hovli-daraxt-kesish' },
+      { id: '00000000-0003-4000-8000-00000000004c', name: 'Sug‘orish tizimi', slug: 'bogh-hovli-sugorish-tizimi' },
+    ],
+  },
 ];
 
 async function seedPolicies(): Promise<void> {
@@ -112,7 +239,7 @@ async function seedCatalog(): Promise<void> {
     await prisma.serviceCategory.upsert({
       where: { slug: category.slug },
       update: { name: category.name, sortOrder: category.sortOrder },
-      create: { id: category.id, name: category.name, slug: category.slug, sortOrder: category.sortOrder },
+      create: { id: category.id, name: category.name, slug: category.slug, sortOrder: category.sortOrder, modes: category.modes ?? ['AT_CUSTOMER'] },
     });
 
     for (const [index, service] of category.services.entries()) {

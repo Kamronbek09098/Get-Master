@@ -10,6 +10,8 @@ import { useMe } from '@/features/session/hooks/useMe';
 import { useMyMasterProfile } from '@/features/master/hooks/useMaster';
 import { MasterForm } from '@/features/master/components/MasterForm';
 import { WorkAreaEditor } from '@/features/master/components/WorkAreaEditor';
+import { ServiceModeEditor } from '@/features/master/components/ServiceModeEditor';
+import '@/features/master/components/ServiceModeEditor.css';
 import { MasterStatusPanel } from '@/features/master/components/MasterStatusPanel';
 import { ServiceList } from '@/features/service/components/ServiceList';
 import { ServiceForm } from '@/features/service/components/ServiceForm';
@@ -129,6 +131,10 @@ export function MasterProfilePage() {
         <ProfileCard icon={MapPin} title={t('Ish hududi')} hint={t('Ish markazi, radius va hududlaringiz — mijozlar shu bo‘yicha sizni topadi.')}>
           <WorkAreaEditor profile={data} />
         </ProfileCard>
+        <div className="gm-pmerge__divider" />
+        <h3 className="gm-pmerge__title">{t('Ish rejimi')}</h3>
+        <p className="gm-modeedit__lead">{t('Mijozning manzilida, o‘z joyingizda yoki ikkalasida ham ishlashingizni belgilang.')}</p>
+        <ServiceModeEditor profile={data} />
       </ProfileSubPage>
     );
   }

@@ -1,3 +1,4 @@
+import type { ServiceMode } from '@/features/service/types';
 import type { OrderStatus, RequestStatus } from '@/types/common';
 
 export interface ProblemRequest {
@@ -17,6 +18,7 @@ export interface ProblemRequest {
   submittedAt: string | null;
   cancelledAt: string | null;
   expiresAt: string | null;
+  serviceMode?: ServiceMode;
   createdAt: string;
   updatedAt: string;
   /** Tanlangan xizmat, toifa va manzil (faqat bitta so‘rovni olishda keladi). */
@@ -40,6 +42,7 @@ export interface ProblemRequestSummary extends ProblemRequest {
 }
 
 export interface CreateRequestInput {
+  serviceMode?: ServiceMode;
   title: string;
   description: string;
   serviceId?: string;

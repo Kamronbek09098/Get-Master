@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { ServiceMode } from '@prisma/client';
+import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 
 export class PublicMasterQueryDto {
   @IsOptional()
@@ -23,4 +24,8 @@ export class PublicMasterQueryDto {
   @Min(1)
   @Max(24)
   limit?: number;
+
+  @IsOptional()
+  @IsEnum(ServiceMode)
+  mode?: ServiceMode;
 }

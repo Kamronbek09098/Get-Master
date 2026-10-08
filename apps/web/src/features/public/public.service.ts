@@ -11,7 +11,9 @@ export interface PublicMaster {
   completedOrders: number;
   works: number;
   isPro: boolean;
-  services: string[];
+  services: Array<{ name: string; price: number | null }>;
+  serviceModes?: Array<'AT_CUSTOMER' | 'AT_MASTER'>;
+  placeAddress?: string | null;
 }
 
 export interface PublicMasterPage {
@@ -29,15 +31,26 @@ export interface PublicStats {
   avgRating: number | null;
 }
 
+export interface PriceCategory {
+  id: string;
+  name: string;
+  masters: number;
+  services: Array<{ id: string; name: string; minPrice: number | null; masters: number }>;
+}
+
 export const publicService = {
-  masters(params: { categoryId?: string; q?: string; page: number }) {
+  masters(params: { categoryId?: string; q?: string; mode?: string; page: number }) {
     const search = new URLSearchParams({ page: String(params.page), limit: '12' });
     if (params.categoryId) search.set('categoryId', params.categoryId);
+    if (params.mode) search.set('mode', params.mode);
     if (params.q?.trim()) search.set('q', params.q.trim());
     return apiGet<PublicMasterPage>(`/public/masters?${search.toString()}`);
   },
   stats() {
     return apiGet<PublicStats>('/public/stats');
+  },
+  prices() {
+    return apiGet<PriceCategory[]>('/public/prices');
   },
   plans() {
     return apiGet<PlansResponse>('/public/plans');

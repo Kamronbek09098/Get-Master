@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsDateString, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { ServiceMode } from '@prisma/client';
+import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 
 export class UpdateRequestDto {
   @IsOptional()
@@ -44,4 +45,8 @@ export class UpdateRequestDto {
   @IsOptional()
   @IsDateString()
   preferredEndAt?: string;
+
+  @IsOptional()
+  @IsEnum(ServiceMode)
+  serviceMode?: ServiceMode;
 }

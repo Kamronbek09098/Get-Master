@@ -2,7 +2,7 @@ import { usePaused } from '@/features/master/components/PausedNotice';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { CheckCircle2, Clock, Flag, Hammer, MapPinned, Navigation, ShieldAlert, Star, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Flag, Hammer, MapPinned, Navigation, ShieldAlert, Star, Store, XCircle } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { Alert } from '@/components/ui/Alert';
@@ -85,6 +85,9 @@ export function OrderDetailsPage() {
 
   const data = order.data;
   const isMaster = data.viewerRole === 'MASTER';
+  // Mijoz ustaning oldiga boradi (sartaroshxona, avtoservis…): «yo‘lda» bosqichi yo‘q.
+  const atMaster = data.request?.serviceMode === 'AT_MASTER';
+  const placeLine = data.location?.addressLine ?? null;
   const status = data.status;
   const counts = { BEFORE: 0, DURING: 0, AFTER: 0 };
   for (const proof of proofs.data ?? []) if (proof.mediaAssetId) counts[proof.stage] += 1;
@@ -107,6 +110,14 @@ export function OrderDetailsPage() {
         <StepCard tone="next" icon={<CheckCircle2 size={22} />} title={t('Buyurtmani tasdiqlang')} lead={paused ? t('Pauza rejimida buyurtmani qabul qila olmaysiz. Avval pauzani o‘chiring.') : t('Mijoz sizni tanladi. Buyurtmani tasdiqlasangiz, mijoz sizning kelishingizni kutadi.')}>
           <div className="gm-oactions">
             <Button loading={confirmOrder.isPending} disabled={paused} onClick={() => confirmOrder.mutate()}>{t('Buyurtmani tasdiqlash')}</Button>
+          </div>
+        </StepCard>
+      );
+    else if (status === 'CONFIRMED' && atMaster)
+      step = (
+        <StepCard tone="next" icon={<MapPinned size={22} />} title={t('Mijozni kutib oling')} lead={t('Mijoz sizning joyingizga keladi. Mijoz kelganda quyidagi tugmani bosing.')}>
+          <div className="gm-oactions">
+            <Button loading={arrive.isPending} onClick={() => arrive.mutate()}>{t('Mijoz keldi')}</Button>
           </div>
         </StepCard>
       );
@@ -158,11 +169,11 @@ export function OrderDetailsPage() {
     if (status === 'BOOKED')
       step = <StepCard tone="wait" icon={<Clock size={22} />} title={t('Usta tasdiqlashini kutmoqda')} lead={t('Usta buyurtmani tasdiqlagach, sizga xabar keladi.')} />;
     else if (status === 'CONFIRMED')
-      step = <StepCard tone="wait" icon={<Clock size={22} />} title={t('Usta tasdiqladi')} lead={t('Usta yo‘lga chiqqanda xabar olasiz. Chat orqali kelishuv qilishingiz mumkin.')} />;
+      step = <StepCard tone="wait" icon={<Clock size={22} />} title={t('Usta tasdiqladi')} lead={atMaster ? t('Belgilangan vaqtda ustaning joyiga boring. Chat orqali kelishuv qilishingiz mumkin.') : t('Usta yo‘lga chiqqanda xabar olasiz. Chat orqali kelishuv qilishingiz mumkin.')} />;
     else if (status === 'ON_THE_WAY')
       step = <StepCard tone="wait" icon={<Navigation size={22} />} title={t('Usta yo‘lda')} lead={t('Usta manzilingizga qarab yo‘lga chiqdi.')} />;
     else if (status === 'ARRIVED')
-      step = <StepCard tone="wait" icon={<MapPinned size={22} />} title={t('Usta yetib keldi')} lead={t('Usta ishni boshlashga tayyorlanmoqda.')}>
+      step = <StepCard tone="wait" icon={<MapPinned size={22} />} title={atMaster ? t('Siz yetib keldingiz') : t('Usta yetib keldi')} lead={atMaster ? t('Usta ishni boshlashga tayyorlanmoqda.') : t('Usta ishni boshlashga tayyorlanmoqda.')}>
         <WorkProofPanel orderId={id} stage="BEFORE" />
       </StepCard>;
     else if (status === 'IN_PROGRESS')
@@ -215,7 +226,7 @@ export function OrderDetailsPage() {
         <OrderStatus status={status} />
       </div>
 
-      <OrderProgress status={status} orderId={id} />
+      <OrderProgress status={status} orderId={id} atMaster={atMaster} />
       {actionError && <Alert tone="danger">{getErrorMessage(actionError.error)}</Alert>}
 
       <OrderStory data={data} proofs={proofs.data} loading={proofs.isLoading} />
@@ -223,6 +234,14 @@ export function OrderDetailsPage() {
       <div className="gm-olayout">
         <div className="gm-ocol">
           {step}
+
+          {atMaster && placeLine && status !== 'CANCELLED' && status !== 'EXPIRED' && (
+            <section className="gm-ocard">
+              <h2 className="gm-ocard__title" style={{ display: 'flex', alignItems: 'center', gap: 10 }}><Store size={20} /> {t('Uchrashuv joyi')}</h2>
+              <p className="gm-ocard__lead">{isMaster ? t('Mijoz sizning joyingizga keladi:') : t('Ustaning manzili:')}</p>
+              <p><strong>{data.location?.title ? `${data.location.title}, ` : ''}{placeLine}</strong></p>
+            </section>
+          )}
 
           <ScheduleCard order={data} />
 

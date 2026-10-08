@@ -80,6 +80,8 @@ export class OfferService {
       throw new RequestNotOpenForOffersException();
     }
 
+    if (!masterProfile.serviceModes.includes(request.serviceMode)) throw new ForbiddenException(ERRORS.CATEGORY_MODE_UNSUPPORTED);
+
     try {
       const offer = await this.db.offer.create({
         data: {
@@ -207,8 +209,8 @@ export class OfferService {
       if (offerMaster?.userId === customerId) throw new ForbiddenException(ERRORS.SELF_DEALING);
       if (offerMaster?.isPaused) throw new DomainException(HttpStatus.CONFLICT, 'MASTER_TIME_UNAVAILABLE', ERRORS.MASTER_PAUSED_BOOK);
 
-      const lockedRows = await tx.$queryRaw<Array<{ id: string; status: string; customerId: string; serviceId: string | null; latitude: Prisma.Decimal | null; longitude: Prisma.Decimal | null }>>`
-        SELECT id, status, "customerId", "serviceId", latitude, longitude
+      const lockedRows = await tx.$queryRaw<Array<{ id: string; status: string; customerId: string; serviceId: string | null; latitude: Prisma.Decimal | null; longitude: Prisma.Decimal | null; serviceMode: 'AT_CUSTOMER' | 'AT_MASTER' }>>`
+        SELECT id, status, "customerId", "serviceId", latitude, longitude, service_mode AS "serviceMode"
         FROM problem_requests
         WHERE id = ${offer.requestId}::uuid
         FOR UPDATE
@@ -238,6 +240,8 @@ export class OfferService {
 
       await tx.problemRequest.update({ where: { id: offer.requestId }, data: { status: 'BOOKED' } });
 
+      // Mijoz ustaning oldiga borsa — joylashuv sifatida ustaning joyi saqlanadi.
+      const place = request.serviceMode === 'AT_MASTER' ? await tx.masterProfile.findUnique({ where: { id: offer.masterId }, select: { latitude: true, longitude: true, placeAddress: true, workPlace: true } }) : null;
       const booking = await tx.booking.create({
         data: {
           requestId: offer.requestId,
@@ -248,7 +252,9 @@ export class OfferService {
           scheduledStartAt: offer.availableAt,
           agreedPrice: offer.price,
           currency: offer.currency,
-          locationSnapshot: { latitude: request.latitude, longitude: request.longitude },
+          locationSnapshot: place
+            ? { atMaster: true, latitude: place.latitude, longitude: place.longitude, addressLine: place.placeAddress, title: place.workPlace }
+            : { latitude: request.latitude, longitude: request.longitude },
         },
       });
 

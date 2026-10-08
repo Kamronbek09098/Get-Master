@@ -1,6 +1,10 @@
 import { Type } from 'class-transformer';
+import { ServiceMode } from '@prisma/client';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
+  ArrayUnique,
+  IsEnum,
   IsArray,
   IsInt,
   IsLatitude,
@@ -72,4 +76,18 @@ export class CreateMasterDto {
   @IsString({ each: true })
   @MaxLength(100, { each: true })
   serviceAreas?: string[];
+
+  /** Ish rejimlari: AT_CUSTOMER — mijoz manzilida, AT_MASTER — o‘z joyida (sartaroshxona, ustaxona). */
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayUnique()
+  @IsEnum(ServiceMode, { each: true })
+  serviceModes?: ServiceMode[];
+
+  /** O‘z joyida qabul qilsa — joy manzili (matn). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  placeAddress?: string;
 }

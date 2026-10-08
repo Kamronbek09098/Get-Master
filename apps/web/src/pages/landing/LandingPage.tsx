@@ -111,9 +111,9 @@ function Landing({ content }: { content: LandingContent }) {
             <a href="#qanday">{t('Qanday ishlaydi')}</a>
             {content.showCategories && <a href="#xizmatlar">{t('Xizmatlar')}</a>}
             <a href="#ishonch">{t('Ishonch')}</a>
-            <a href="#ustalar">{t('Ustalar')}</a>
-            <a href="#narxlar">{t('Narxlar')}</a>
-            <a href="#savollar">{t('Savollar')}</a>
+            <a href="/katalog#ustalar">{t('Ustalar')}</a>
+            <a href="/katalog#narxlar">{t('Narxlar')}</a>
+            <a href="/katalog#savollar">{t('Savollar')}</a>
           </nav>
           <div className="gm-landing__nav-actions">
             <ThemeToggle />
@@ -202,9 +202,9 @@ function Landing({ content }: { content: LandingContent }) {
         <LogoLink />
         <p>{t('© {getFullYear} GetMaster. Barcha huquqlar himoyalangan.', { getFullYear: new Date().getFullYear() })}</p>
         <nav className="gm-landing__footer-links" aria-label={t('Havolalar')}>
-          <a href="#ustalar">{t('Ustalar katalogi')}</a>
-          <a href="#narxlar">{t('Narxlar')}</a>
-          <a href="#savollar">{t('Savollar')}</a>
+          <a href="/katalog#ustalar">{t('Ustalar katalogi')}</a>
+          <a href="/katalog#narxlar">{t('Narxlar')}</a>
+          <a href="/katalog#savollar">{t('Savollar')}</a>
           <Link to="/shartlar">{t('Foydalanish shartlari')}</Link>
         </nav>
       </footer>

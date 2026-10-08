@@ -6,6 +6,7 @@ import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { ProBadge } from '@/features/subscription/meta';
+import { ModeBadges } from '@/features/service/ModeBadges';
 import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDate, formatMoney, initials } from '@/lib/utils';
@@ -53,6 +54,12 @@ export function MasterDetailsPage() {
             {data.isPro && <ProBadge />}
             {data.isPaused && <Badge tone="warning">{t('Pauzada')}</Badge>}
             <FavoriteButton masterId={data.id} />
+            <ModeBadges modes={data.serviceModes} />
+            {data.serviceModes?.includes('AT_MASTER') && data.placeAddress && (
+              <span className="gm-mp-hero__place">
+                <MapPin size={14} aria-hidden="true" /> {data.placeAddress}
+              </span>
+            )}
             {data.workPlace && (
               <span className="gm-mp-hero__place">
                 <Briefcase size={14} aria-hidden="true" /> {data.workPlace}

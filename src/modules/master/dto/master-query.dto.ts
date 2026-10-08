@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { ServiceMode } from '@prisma/client';
+import { IsEnum, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import { CursorQueryDto } from '../../../common/dto/cursor-query.dto';
 
 export class MasterQueryDto extends CursorQueryDto {
@@ -22,4 +23,9 @@ export class MasterQueryDto extends CursorQueryDto {
   @Min(0)
   @Max(5)
   minRating?: number;
+
+  /** Faqat shu rejimda ishlaydigan ustalar (mijoz manzilida / o‘z joyida). */
+  @IsOptional()
+  @IsEnum(ServiceMode)
+  mode?: ServiceMode;
 }

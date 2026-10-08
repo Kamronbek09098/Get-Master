@@ -1,6 +1,8 @@
 import { Type } from 'class-transformer';
+import { ServiceMode } from '@prisma/client';
 import {
   IsDateString,
+  IsEnum,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -54,4 +56,9 @@ export class CreateRequestDto {
   @IsOptional()
   @IsDateString()
   preferredEndAt?: string;
+
+  /** AT_CUSTOMER — usta manzilga keladi (standart); AT_MASTER — mijoz ustaning joyiga boradi (sartaroshxona, avtoservis). */
+  @IsOptional()
+  @IsEnum(ServiceMode)
+  serviceMode?: ServiceMode;
 }

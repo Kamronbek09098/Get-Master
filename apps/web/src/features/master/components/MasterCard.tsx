@@ -5,6 +5,7 @@ import { MediaThumbnail } from '@/features/media/components/MediaThumbnail';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { formatMoney } from '@/lib/utils';
 import { ProBadge } from '@/features/subscription/meta';
+import { ModeBadges } from '@/features/service/ModeBadges';
 import type { PublicMaster } from '../types';
 import { t } from '@/i18n';
 
@@ -82,6 +83,8 @@ export function MasterCard({ master }: { master: PublicMaster }) {
           <small>{t('javob berish')}</small>
         </span>
       </div>
+
+      <ModeBadges modes={master.serviceModes} size="sm" />
 
       {(services.length > 0 || master.profession) && (
         <ul className="gm-master__tags" aria-label={t('Xizmatlar')}>

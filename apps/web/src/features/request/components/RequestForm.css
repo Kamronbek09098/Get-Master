@@ -283,3 +283,13 @@
 @media (max-width: 640px) {
   .gm-reqform__add-address { align-self: stretch; }
 }
+
+.gm-reqform__modes { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.gm-reqform__mode { position: relative; display: flex; align-items: center; gap: 14px; padding: 16px 18px; border: 1.5px solid var(--gm-color-border); border-radius: 16px; background: var(--gm-color-surface); cursor: pointer; transition: border-color 0.2s ease, background-color 0.2s ease; }
+.gm-reqform__mode:hover { border-color: var(--gm-color-border-strong); }
+.gm-reqform__mode--checked { border-color: var(--gm-color-primary); background: var(--gm-color-primary-soft); }
+.gm-reqform__mode > svg:first-child { flex: none; color: var(--gm-color-primary); }
+.gm-reqform__mode span { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.gm-reqform__mode strong { font-size: 0.98rem; }
+.gm-reqform__mode small { color: var(--gm-color-text-muted); font-size: 0.82rem; }
+.gm-reqform__mode input:focus-visible ~ span { outline: 2px solid var(--gm-color-primary); outline-offset: 4px; border-radius: 8px; }

@@ -3,7 +3,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Link } from 'react-router-dom';
-import { Camera, Check, ListChecks, MapPin, Plus } from 'lucide-react';
+import { Camera, Check, Home, ListChecks, MapPin, Plus, Store } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { ServiceChooser } from '@/features/service/components/ServiceChooser';
@@ -14,6 +14,7 @@ import { Alert } from '@/components/ui/Alert';
 import { getErrorMessage } from '@/lib/error-messages';
 import { cx } from '@/lib/utils';
 import { useCreateRequest } from '../hooks/useRequests';
+import type { ServiceMode } from '@/features/service/types';
 import type { ProblemRequest } from '../types';
 import './RequestForm.css';
 import { t } from '@/i18n';
@@ -21,12 +22,16 @@ import { t } from '@/i18n';
 const TITLE_MAX = 255;
 const DESCRIPTION_MIN_GOOD = 40;
 
-const schema = z.object({
-  serviceId: z.string().uuid(t('Xizmat turini tanlang')),
-  addressId: z.string().min(1, t('Manzilni tanlang yoki qo‘shing')),
-  title: z.string().trim().min(1, t('Sarlavhani kiriting')).max(TITLE_MAX),
-  description: z.string().trim().min(1, t('Muammoni tavsiflab bering')),
-});
+const schema = z
+  .object({
+    serviceId: z.string().uuid(t('Xizmat turini tanlang')),
+    serviceMode: z.enum(['AT_CUSTOMER', 'AT_MASTER']),
+    addressId: z.string(),
+    title: z.string().trim().min(1, t('Sarlavhani kiriting')).max(TITLE_MAX),
+    description: z.string().trim().min(1, t('Muammoni tavsiflab bering')),
+  })
+  // Usta mijozga kelsa — manzil majburiy; mijoz ustaning oldiga borsa — shart emas.
+  .refine((values) => values.serviceMode === 'AT_MASTER' || values.addressId.length > 0, { path: ['addressId'], message: t('Manzilni tanlang yoki qo‘shing') });
 type FormValues = z.infer<typeof schema>;
 
 function Section({ step, title, hint, children }: { step: number; title: string; hint?: string; children: React.ReactNode }) {
@@ -55,9 +60,9 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
     watch,
     setValue,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { serviceId: '', addressId: '', title: '', description: '' } });
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { serviceId: '', serviceMode: 'AT_CUSTOMER', addressId: '', title: '', description: '' } });
 
-  const [serviceId, title, description, addressId] = watch(['serviceId', 'title', 'description', 'addressId']);
+  const [serviceId, title, description, addressId, serviceMode] = watch(['serviceId', 'title', 'description', 'addressId', 'serviceMode']);
   const addressList = useMemo(() => addresses.data ?? [], [addresses.data]);
 
   useEffect(() => {
@@ -65,6 +70,16 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
     const preferred = addressList.find((address) => address.isDefault) ?? addressList[0];
     if (preferred) setValue('addressId', preferred.id);
   }, [addressList, addressId, setValue]);
+
+  // Tanlangan xizmat kategoriyasi qaysi rejimlarni qo‘llab-quvvatlaydi (mijoz manzilida / ustaning joyida).
+  const modes = useMemo<ServiceMode[]>(() => {
+    const category = (categories.data ?? []).find((item) => (item.services ?? []).some((service) => service.id === serviceId));
+    return category?.modes && category.modes.length > 0 ? category.modes : ['AT_CUSTOMER'];
+  }, [categories.data, serviceId]);
+  useEffect(() => {
+    if (!modes.includes(serviceMode)) setValue('serviceMode', modes[0]!);
+  }, [modes, serviceMode, setValue]);
+  const atMaster = serviceMode === 'AT_MASTER';
 
   const serviceName = useMemo(
     () => (categories.data ?? []).flatMap((category) => category.services ?? []).find((service) => service.id === serviceId)?.name,
@@ -75,13 +90,13 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
     { label: t('Xizmat turi tanlandi'), done: !!serviceId },
     { label: t('Sarlavha yozildi'), done: title.trim().length > 0 },
     { label: t('Muammo tavsiflandi'), done: description.trim().length > 0 },
-    { label: t('Manzil tanlandi'), done: !!addressId },
+    ...(atMaster ? [] : [{ label: t('Manzil tanlandi'), done: !!addressId }]),
   ];
   const remaining = checklist.filter((item) => !item.done).length;
   const descriptionLength = description.trim().length;
 
   function onSubmit(values: FormValues) {
-    createRequest.mutate(values, { onSuccess: onCreated });
+    createRequest.mutate({ ...values, addressId: values.addressId || undefined }, { onSuccess: onCreated });
   }
 
   return (
@@ -99,7 +114,25 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
           />
         </Section>
 
-        <Section step={2} title={t('Muammoni tushuntiring')} hint={t('Qancha aniq yozsangiz, ustalar shuncha aniq narx taklif qiladi.')}>
+        {serviceId && (
+          <Section step={2} title={t('Xizmat qayerda bo‘ladi?')} hint={modes.length > 1 ? t('Ustani uyingizga chaqirishingiz yoki o‘zingiz ustaning oldiga borishingiz mumkin.') : atMaster ? t('Bu xizmat ustaning o‘z joyida ko‘rsatiladi: tanlangan usta manzilini ko‘rasiz.') : t('Usta siz ko‘rsatgan manzilga keladi.')}>
+            <div className="gm-reqform__modes" role="radiogroup" aria-label={t('Xizmat qayerda bo‘ladi?')}>
+              {modes.map((mode) => (
+                <label key={mode} className={cx('gm-reqform__mode', serviceMode === mode && 'gm-reqform__mode--checked')}>
+                  <input type="radio" className="gm-visually-hidden" checked={serviceMode === mode} disabled={modes.length === 1} onChange={() => setValue('serviceMode', mode)} />
+                  {mode === 'AT_MASTER' ? <Store size={22} aria-hidden="true" /> : <Home size={22} aria-hidden="true" />}
+                  <span>
+                    <strong>{mode === 'AT_MASTER' ? t('Men ustaning oldiga boraman') : t('Usta menga keladi')}</strong>
+                    <small>{mode === 'AT_MASTER' ? t('Sartaroshxona, ustaxona, avtoservis kabi joylarda') : t('Usta sizning manzilingizga keladi')}</small>
+                  </span>
+                  {serviceMode === mode && <Check size={16} className="gm-reqform__address-check" aria-hidden="true" />}
+                </label>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        <Section step={serviceId ? 3 : 2} title={t('Muammoni tushuntiring')} hint={t('Qancha aniq yozsangiz, ustalar shuncha aniq narx taklif qiladi.')}>
           <Input
             label={t('Muammo sarlavhasi')}
             required
@@ -125,7 +158,7 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
           </p>
         </Section>
 
-        <Section step={3} title={t('Usta qayerga borsin?')} hint={t('Majburiy — usta aniq shu manzilga keladi va yo‘l vaqtini hisoblab narx aytadi.')}>
+        <Section step={serviceId ? 4 : 3} title={atMaster ? t('Sizning joylashuvingiz') : t('Usta qayerga borsin?')} hint={atMaster ? t('Ixtiyoriy — sizga yaqin ustalar birinchi ko‘rsatiladi.') : t('Majburiy — usta aniq shu manzilga keladi va yo‘l vaqtini hisoblab narx aytadi.')}>
           {addressList.length > 0 ? (
             <>
               <div className="gm-reqform__addresses" role="radiogroup" aria-label={t('Manzil')} aria-required="true" aria-invalid={!!errors.addressId}>
@@ -154,7 +187,7 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
             <Link to="/mijoz/manzillar" className="gm-reqform__add-address">
               <Plus size={16} aria-hidden="true" />{' '}{t('Manzil qo‘shish')}</Link>
           )}
-          {errors.addressId && (
+          {errors.addressId && !atMaster && (
             <p className="gm-reqform__error" role="alert">
               {addressList.length > 0 ? errors.addressId.message : t('So‘rov yuborish uchun avval manzil qo‘shing.')}
             </p>

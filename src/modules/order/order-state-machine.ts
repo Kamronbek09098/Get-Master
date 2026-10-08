@@ -14,6 +14,8 @@ const TRANSITIONS: Transition[] = [
   { from: 'CONFIRMED', to: 'ON_THE_WAY', actorTypes: ['MASTER'] },
   { from: 'CONFIRMED', to: 'CANCELLED', actorTypes: ['CUSTOMER', 'MASTER', 'ADMIN'] },
   { from: 'ON_THE_WAY', to: 'ARRIVED', actorTypes: ['MASTER'] },
+  // Mijoz ustaning oldiga borganda «yo‘lda» bosqichi bo‘lmaydi: usta mijoz kelganini bevosita belgilaydi.
+  { from: 'CONFIRMED', to: 'ARRIVED', actorTypes: ['MASTER'] },
   { from: 'ARRIVED', to: 'IN_PROGRESS', actorTypes: ['MASTER'] },
   { from: 'IN_PROGRESS', to: 'WAITING_CONFIRMATION', actorTypes: ['MASTER'] },
   { from: 'IN_PROGRESS', to: 'DISPUTED', actorTypes: ['CUSTOMER', 'MASTER'] },

@@ -9,6 +9,7 @@ import { ProtectedRoute, RedirectIfAuthed } from './ProtectedRoute';
 import { OrdersRedirect } from './OrdersRedirect';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { RoleGuard } from './RoleGuard';
+import { CatalogPage } from '@/pages/public/CatalogPage';
 import { env } from '@/lib/env';
 import { useAuthStore } from '@/store/auth.store';
 import type { ReactNode } from 'react';
@@ -100,6 +101,7 @@ const panelRouter = createBrowserRouter([
       { path: '/mijoz', element: <PanelHome role="CUSTOMER" /> },
       { path: '/usta', element: <PanelHome role="MASTER" /> },
       { path: '/shartlar', element: <TermsPage /> },
+      { path: '/katalog', element: <CatalogPage /> },
       {
         element: <AuthLayout />,
         children: [
@@ -208,6 +210,7 @@ const portalRouter = createBrowserRouter([
     children: [
       { path: '/', element: <RoleSelectPage /> },
       { path: '/shartlar', element: <TermsPage /> },
+      { path: '/katalog', element: <CatalogPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

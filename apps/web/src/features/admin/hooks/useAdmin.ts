@@ -159,7 +159,7 @@ export function useCatalogMutations() {
   return {
     createCategory: useMutation({ mutationFn: adminService.createCategory, onSuccess }),
     updateCategory: useMutation({
-      mutationFn: (v: { id: string; input: { name?: string; description?: string; isActive?: boolean } }) =>
+      mutationFn: (v: { id: string; input: { name?: string; description?: string; isActive?: boolean; modes?: string[] } }) =>
         adminService.updateCategory(v.id, v.input),
       onSuccess,
     }),

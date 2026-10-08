@@ -74,8 +74,9 @@ export class OrderService {
             scheduledStartAt: true,
             proposedStartAt: true,
             proposedById: true,
+            locationSnapshot: true,
             service: { select: { id: true, name: true } },
-            request: { select: { id: true, title: true, description: true } },
+            request: { select: { id: true, title: true, description: true, serviceMode: true } },
           },
         },
         customer: { select: { id: true, accountNumber: true, firstName: true, lastName: true } },
@@ -107,6 +108,7 @@ export class OrderService {
       viewerRole,
       service: booking.service,
       request: booking.request,
+      location: booking.locationSnapshot,
       scheduledStartAt: booking.scheduledStartAt,
       reschedule: booking.proposedStartAt
         ? { proposedStartAt: booking.proposedStartAt, proposedByMe: booking.proposedById === userId }

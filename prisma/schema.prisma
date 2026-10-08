@@ -589,6 +589,12 @@ model MasterProfile {
   pauseReason      String?                  @map("pause_reason") @db.VarChar(255)
   pausedUntil      DateTime?                @map("paused_until")
   serviceAreas     Json?
+  /// Usta qaysi rejimlarda ishlaydi: mijoz manzilida va/yoki o‘z joyida (sartaroshxona, ustaxona).
+  serviceModes     ServiceMode[]            @default([AT_CUSTOMER]) @map("service_modes")
+  /// O‘z joyida qabul qilsa — manzil (matn); joylashuv koordinatalari `latitude/longitude` da.
+  placeAddress     String?                  @map("place_address") @db.VarChar(255)
+  /// Ustaning markazi qaysi hududda (14 hudud kaliti, `regions.ts`); koordinata o‘zgarganda hisoblanadi.
+  region           String?                  @db.VarChar(32)
   createdAt        DateTime                 @default(now())
   updatedAt        DateTime                 @updatedAt
   user             User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -606,6 +612,7 @@ model MasterProfile {
 
   @@index([status, verification])
   @@index([latitude, longitude])
+  @@index([region])
   @@map("master_profiles")
 }
 
@@ -701,6 +708,12 @@ model MasterVerification {
   @@map("master_verifications")
 }
 
+/// Xizmat qayerda ko‘rsatiladi: mijozning manzilida (usta boradi) yoki ustaning joyida (mijoz boradi: sartaroshxona, avtoservis va h.k.).
+enum ServiceMode {
+  AT_CUSTOMER
+  AT_MASTER
+}
+
 model ServiceCategory {
   id                String             @id @default(uuid()) @db.Uuid
   name              String             @db.VarChar(150)
@@ -708,6 +721,8 @@ model ServiceCategory {
   description       String?
   isActive          Boolean            @default(true) @map("is_active")
   sortOrder         Int                @default(0) @map("sort_order")
+  /// Shu kategoriyada qaysi rejimlar mumkin (mijoz so‘rovida va usta profilida shulardan tanlanadi).
+  modes             ServiceMode[]      @default([AT_CUSTOMER])
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   services          Service[]
@@ -757,6 +772,8 @@ model ProblemRequest {
   expiresAt          DateTime?           @map("expires_at")
   /// «Plus» obunali mijozning tezkor so‘rovi (ustalarga ajratib ko‘rsatiladi).
   isPriority         Boolean             @default(false) @map("is_priority")
+  /// Mijoz ustaning oldiga boradimi (AT_MASTER) yoki usta mijozga keladimi (AT_CUSTOMER).
+  serviceMode        ServiceMode         @default(AT_CUSTOMER) @map("service_mode")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   customer           User                @relation("CustomerRequests", fields: [customerId], references: [id], onDelete: Restrict)

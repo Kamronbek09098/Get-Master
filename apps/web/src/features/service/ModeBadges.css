@@ -1,0 +1,4 @@
+.gm-modes { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.gm-modes__item { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: var(--gm-color-primary-soft); color: var(--gm-color-primary); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.gm-modes__item--place { background: color-mix(in srgb, var(--gm-color-success) 14%, var(--gm-color-surface)); color: var(--gm-color-success); }
+.gm-modes--sm .gm-modes__item { padding: 3px 8px; font-size: 0.72rem; }

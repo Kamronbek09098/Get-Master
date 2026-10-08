@@ -13,8 +13,9 @@ export const masterService = {
   updateMine(input: Partial<MasterInput>) {
     return apiPatch<MasterProfile>('/masters/me', input);
   },
-  list(params: { q?: string; categoryId?: string; cursor?: string } = {}) {
+  list(params: { q?: string; categoryId?: string; mode?: string; cursor?: string } = {}) {
     const search = new URLSearchParams();
+    if (params.mode) search.set('mode', params.mode);
     if (params.q) search.set('q', params.q);
     if (params.categoryId) search.set('categoryId', params.categoryId);
     if (params.cursor) search.set('cursor', params.cursor);

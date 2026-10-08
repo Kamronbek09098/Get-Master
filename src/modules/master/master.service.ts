@@ -46,6 +46,8 @@ const PUBLIC_MASTER_SELECT = {
   proUntil: true,
   isPaused: true,
   pausedUntil: true,
+  serviceModes: true,
+  placeAddress: true,
   user: { select: { accountNumber: true, firstName: true, lastName: true } },
   services: {
     where: { isActive: true, service: { isActive: true } },
@@ -98,6 +100,7 @@ export class MasterService {
     if (dto.workRadiusKm != null && (dto.latitude == null || dto.longitude == null)) {
       throw new BadRequestException(ERRORS.MASTER_RADIUS_NEEDS_CENTER);
     }
+    this.assertModes(dto.serviceModes, dto.placeAddress, dto.latitude, dto.longitude);
 
     try {
       const profile = await this.db.$transaction(async (tx) => {
@@ -113,6 +116,8 @@ export class MasterService {
             latitude: dto.latitude,
             longitude: dto.longitude,
             serviceAreas: dto.serviceAreas as Prisma.InputJsonValue | undefined,
+            serviceModes: dto.serviceModes,
+            placeAddress: dto.placeAddress?.trim() || undefined,
           },
         });
         await tx.userRole.createMany({ data: [{ userId, role: 'MASTER' }], skipDuplicates: true });
@@ -143,6 +148,9 @@ export class MasterService {
     const profile = await this.requireOwn(userId);
     const hasCenter = (dto.latitude ?? profile.latitude) != null && (dto.longitude ?? profile.longitude) != null;
     if (dto.workRadiusKm != null && !hasCenter) throw new BadRequestException(ERRORS.MASTER_RADIUS_NEEDS_CENTER);
+    const modes = dto.serviceModes ?? profile.serviceModes;
+    const place = dto.placeAddress === undefined ? profile.placeAddress : dto.placeAddress.trim() || null;
+    this.assertModes(modes, place, dto.latitude ?? (profile.latitude != null ? Number(profile.latitude) : undefined), dto.longitude ?? (profile.longitude != null ? Number(profile.longitude) : undefined));
     await this.db.user.update({ where: { id: userId }, data: this.nameData(dto) });
     const updated = await this.db.masterProfile.update({
       where: { id: profile.id },
@@ -155,12 +163,22 @@ export class MasterService {
         latitude: dto.latitude,
         longitude: dto.longitude,
         serviceAreas: dto.serviceAreas as Prisma.InputJsonValue | undefined,
+        serviceModes: dto.serviceModes,
+        placeAddress: dto.placeAddress === undefined ? undefined : dto.placeAddress.trim() || null,
       },
     });
     await this.db.auditLog.create({
       data: { actorId: userId, action: 'MASTER_PROFILE_UPDATED', targetType: 'MasterProfile', targetId: profile.id },
     });
     return updated;
+  }
+
+  /** Ish rejimi tekshiruvi: kamida bittasi; o‘z joyida qabul qilsa — manzil matni va xaritadagi nuqta shart. */
+  private assertModes(modes: string[] | undefined, placeAddress: string | null | undefined, latitude: number | null | undefined, longitude: number | null | undefined): void {
+    if (modes && modes.length === 0) throw new BadRequestException(ERRORS.MASTER_MODE_REQUIRED);
+    if (modes?.includes('AT_MASTER') && (!placeAddress?.trim() || latitude == null || longitude == null)) {
+      throw new BadRequestException(ERRORS.MASTER_PLACE_NEEDS_ADDRESS);
+    }
   }
 
   private nameData(dto: { firstName?: string; lastName?: string }) {
@@ -242,6 +260,7 @@ export class MasterService {
       verification: 'VERIFIED',
       isPaused: false,
       ...(query.minRating !== undefined ? { ratingAvg: { gte: query.minRating } } : {}),
+      ...(query.mode ? { serviceModes: { has: query.mode } } : {}),
       ...(query.serviceId || query.categoryId
         ? {
             services: {
@@ -397,7 +416,7 @@ export class MasterService {
     const suggestions = new Map(services.map((item) => [item.serviceId, item]));
     const now = new Date();
 
-    const filters: Prisma.ProblemRequestWhereInput[] = [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }];
+    const filters: Prisma.ProblemRequestWhereInput[] = [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }, { serviceMode: { in: profile.serviceModes } }];
     if (query.scope === 'mine') {
       filters.push({
         OR: [
@@ -426,6 +445,7 @@ export class MasterService {
         latitude: true,
         longitude: true,
         isPriority: true,
+        serviceMode: true,
         customer: { select: { firstName: true, lastName: true } },
         address: { select: { city: true, district: true } },
         service: { select: { id: true, name: true } },

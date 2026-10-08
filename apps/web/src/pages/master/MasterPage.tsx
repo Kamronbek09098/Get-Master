@@ -10,17 +10,19 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { useMasters } from '@/features/master/hooks/useMaster';
 import { MasterCard } from '@/features/master/components/MasterCard';
 import { useServiceCategories } from '@/features/service/hooks/useServices';
+import type { ServiceMode } from '@/features/service/types';
 import '@/features/master/components/MasterCatalog.css';
 import { t } from '@/i18n';
 
 export function MasterPage() {
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<string | undefined>();
+  const [mode, setMode] = useState<ServiceMode | undefined>();
   const debouncedSearch = useDebounce(search, 400);
   const categories = useServiceCategories();
-  const masters = useMasters(debouncedSearch, categoryId);
+  const masters = useMasters(debouncedSearch, categoryId, mode);
   const items = masters.data?.pages.flatMap((page) => page.items) ?? [];
-  const filtered = !!debouncedSearch || !!categoryId;
+  const filtered = !!debouncedSearch || !!categoryId || !!mode;
 
   return (
     <div>
@@ -40,6 +42,12 @@ export function MasterPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
+      </div>
+
+      <div className="gm-masters-chips" role="group" aria-label={t('Qayerda xizmat ko‘rsatadi')}>
+        <button type="button" className="gm-masters-chip" aria-pressed={!mode} onClick={() => setMode(undefined)}>{t('Hammasi')}</button>
+        <button type="button" className="gm-masters-chip" aria-pressed={mode === 'AT_CUSTOMER'} onClick={() => setMode(mode === 'AT_CUSTOMER' ? undefined : 'AT_CUSTOMER')}>{t('Uyga boradi')}</button>
+        <button type="button" className="gm-masters-chip" aria-pressed={mode === 'AT_MASTER'} onClick={() => setMode(mode === 'AT_MASTER' ? undefined : 'AT_MASTER')}>{t('O‘z joyida qabul qiladi')}</button>
       </div>
 
       {(categories.data?.length ?? 0) > 0 && (
@@ -77,6 +85,7 @@ export function MasterPage() {
                 onClick={() => {
                   setSearch('');
                   setCategoryId(undefined);
+                  setMode(undefined);
                 }}
               >{t('Filtrni tozalash')}</Button>
             ) : undefined

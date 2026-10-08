@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
-import { IsDateString, IsNotEmpty, IsOptional, IsPositive, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { ServiceMode } from '@prisma/client';
+import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsPositive, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
 
 /** Mijoz suhbat ichidan ustaga to‘g‘ridan-to‘g‘ri buyurtma yuboradi. */
 export class CreateDirectOrderDto {
@@ -30,4 +31,8 @@ export class CreateDirectOrderDto {
   @IsOptional()
   @IsUUID('4')
   addressId?: string;
+
+  @IsOptional()
+  @IsEnum(ServiceMode)
+  serviceMode?: ServiceMode;
 }

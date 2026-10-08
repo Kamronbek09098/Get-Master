@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, Mail, MessageCircle, Phone } from 'lucide-react';
+import { Mail, MessageCircle, Phone, Plus } from 'lucide-react';
 import { env } from '@/lib/env';
 import { cx } from '@/lib/utils';
 import { t } from '@/i18n';
@@ -32,21 +32,23 @@ const GENERAL: Qa[] = [
   { q: () => t('Shaxsiy ma’lumotlarim himoyalanganmi?'), a: () => t('Telefon raqamingiz katalogda ko‘rsatilmaydi. Ma’lumotlar maxfiylik siyosatiga muvofiq saqlanadi.') },
 ];
 
-function Group({ title, items }: { title: string; items: Qa[] }) {
-  const [open, setOpen] = useState<number | null>(0);
+export const FAQ_PREVIEW: Qa[] = [CUSTOMER[0]!, CUSTOMER[2]!, CUSTOMER[3]!, MASTER[0]!];
+const ALL: Qa[] = [...CUSTOMER, ...MASTER, ...GENERAL];
+
+export function Column({ items, offset }: { items: Qa[]; offset: number }) {
+  const [open, setOpen] = useState<number | null>(offset === 0 ? 0 : null);
   return (
-    <section className="gm-pub__faq-group">
-      <h2>{title}</h2>
+    <div className="gm-faq__col">
       {items.map((item, index) => (
-        <div key={index} className={cx('gm-pub__qa', open === index && 'is-open')}>
+        <div key={index} className={cx('gm-faq__item', open === index && 'is-open')}>
           <button type="button" aria-expanded={open === index} onClick={() => setOpen(open === index ? null : index)}>
-            <span>{item.q()}</span>
-            <ChevronDown size={18} aria-hidden="true" />
+            <span className="gm-faq__q">{item.q()}</span>
+            <span className="gm-faq__plus" aria-hidden="true"><Plus size={16} strokeWidth={2.6} /></span>
           </button>
           {open === index && <p>{item.a()}</p>}
         </div>
       ))}
-    </section>
+    </div>
   );
 }
 
@@ -55,17 +57,14 @@ export function FaqSection() {
   const hasContact = !!(telegram || phone || email);
   return (
     <section className="gm-show__block" id="savollar">
-      <header>
-        <div>
-          <h2>{t('Ko‘p beriladigan savollar')}</h2>
-          <p>{t('Mijoz va ustalar uchun eng kerakli javoblar bir joyda.')}</p>
-        </div>
+      <header className="gm-show__head gm-show__head--faq">
+        <span className="gm-faq__pill">FAQ</span>
+        <h2>{t('Ko‘p beriladigan savollar')}</h2>
+        <p className="gm-show__lead">{t('Mijoz va ustalar uchun eng kerakli javoblar bir joyda.')}</p>
       </header>
-      <div className="gm-show__faq-groups">
-        <Group title={t('Mijozlar uchun')} items={CUSTOMER} />
-        <Group title={t('Ustalar uchun')} items={MASTER} />
+      <div className="gm-faq gm-faq--single">
+        <Column items={ALL} offset={0} />
       </div>
-      <Group title={t('Umumiy')} items={GENERAL} />
       {hasContact && (
         <div className="gm-pub__contact">
           <h2>{t('Savolingiz qoldimi?')}</h2>

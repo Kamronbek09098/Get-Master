@@ -148,7 +148,7 @@ export const adminService = {
   createCategory(input: { name: string; description?: string; sortOrder?: number }) {
     return apiPost<unknown>('/service-categories', input);
   },
-  updateCategory(id: string, input: { name?: string; description?: string; isActive?: boolean }) {
+  updateCategory(id: string, input: { name?: string; description?: string; isActive?: boolean; modes?: string[] }) {
     return apiPatch<unknown>(`/service-categories/${id}`, input);
   },
   removeCategory(id: string) {

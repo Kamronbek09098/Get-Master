@@ -5,11 +5,15 @@ export interface ServiceItem {
   description: string | null;
 }
 
+/** Xizmat qayerda ko‘rsatiladi: mijoz manzilida (usta boradi) yoki ustaning joyida (mijoz boradi). */
+export type ServiceMode = 'AT_CUSTOMER' | 'AT_MASTER';
+
 export interface ServiceCategory {
   id: string;
   name: string;
   slug: string;
   description: string | null;
+  modes?: ServiceMode[];
   services: ServiceItem[];
 }
 

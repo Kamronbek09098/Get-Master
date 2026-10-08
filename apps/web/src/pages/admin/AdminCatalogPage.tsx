@@ -8,12 +8,18 @@ import { Input } from '@/components/ui/Input';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useAdminCatalog, useCatalogMutations } from '@/features/admin/hooks/useAdmin';
 import type { ServiceCategory } from '@/features/service/types';
+import '@/features/master/components/MasterCatalog.css';
 import { t } from '@/i18n';
 
 function CategoryCard({ category }: { category: ServiceCategory }) {
-  const { removeCategory, createService, removeService } = useCatalogMutations();
+  const { removeCategory, createService, removeService, updateCategory } = useCatalogMutations();
+  const modes = category.modes && category.modes.length > 0 ? category.modes : ['AT_CUSTOMER'];
+  const toggleMode = (mode: 'AT_CUSTOMER' | 'AT_MASTER') => {
+    const next = modes.includes(mode) ? modes.filter((item) => item !== mode) : [...modes, mode];
+    if (next.length > 0) updateCategory.mutate({ id: category.id, input: { modes: next } });
+  };
   const [name, setName] = useState('');
-  const error = removeCategory.error ?? createService.error ?? removeService.error;
+  const error = removeCategory.error ?? createService.error ?? removeService.error ?? updateCategory.error;
 
   function handleAdd(event: FormEvent) {
     event.preventDefault();
@@ -27,6 +33,10 @@ function CategoryCard({ category }: { category: ServiceCategory }) {
         <Button size="sm" variant="ghost" className="gm-btn-danger-text" loading={removeCategory.isPending} onClick={() => removeCategory.mutate(category.id)}>{t('Kategoriyani o‘chirish')}</Button>
       </div>
       {error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
+      <div className="gm-masters-chips" role="group" aria-label={t('Xizmat rejimlari')}>
+        <button type="button" className="gm-masters-chip" aria-pressed={modes.includes('AT_CUSTOMER')} disabled={updateCategory.isPending} onClick={() => toggleMode('AT_CUSTOMER')}>{t('Uyga boradi')}</button>
+        <button type="button" className="gm-masters-chip" aria-pressed={modes.includes('AT_MASTER')} disabled={updateCategory.isPending} onClick={() => toggleMode('AT_MASTER')}>{t('O‘z joyida qabul qiladi')}</button>
+      </div>
       <ul className="gm-service-list">
         {(category.services ?? []).map((service) => (
           <li key={service.id} className="gm-service-row">

@@ -1,6 +1,7 @@
-import { BadgeCheck, Briefcase, Images, Star } from 'lucide-react';
+import { BadgeCheck, Briefcase, Images, MapPin, Star } from 'lucide-react';
+import { ModeBadges } from '@/features/service/ModeBadges';
 import { env } from '@/lib/env';
-import { cx } from '@/lib/utils';
+import { cx, formatMoney } from '@/lib/utils';
 import { t } from '@/i18n';
 import type { PublicMaster } from './public.service';
 
@@ -26,9 +27,17 @@ export function MasterTile({ master }: { master: PublicMaster }) {
         <span><Briefcase size={14} aria-hidden="true" /> {t('{count} ta ish', { count: master.completedOrders })}</span>
         {master.works > 0 && <span><Images size={14} aria-hidden="true" /> {t('{count} ta rasm', { count: master.works })}</span>}
       </div>
+      <ModeBadges modes={master.serviceModes} size="sm" />
+      {master.serviceModes?.includes('AT_MASTER') && master.placeAddress && <p className="gm-pub__place"><MapPin size={13} aria-hidden="true" /> {master.placeAddress}</p>}
       {master.services.length > 0 && (
-        <ul className="gm-pub__chips">
-          {master.services.map((service) => <li key={service}>{service}</li>)}
+        <ul className="gm-pub__svc">
+          {master.services.map((service) => (
+            <li key={service.name}>
+              <span>{service.name}</span>
+              <i aria-hidden="true" />
+              <b>{service.price != null ? t('{price} dan', { price: formatMoney(service.price) }) : t('Kelishiladi')}</b>
+            </li>
+          ))}
         </ul>
       )}
       <a className="gm-pub__master-cta" href={env.customerUrl}>{t('Bog‘lanish uchun ro‘yxatdan o‘ting')}</a>

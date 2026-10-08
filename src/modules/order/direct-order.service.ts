@@ -34,6 +34,9 @@ export class DirectOrderService {
       throw new BadRequestException('Usta hozir buyurtma qabul qila olmaydi');
     }
 
+    // Rejim: berilmasa — usta faqat o‘z joyida ishlasa AT_MASTER, aks holda AT_CUSTOMER.
+    const serviceMode = dto.serviceMode ?? (master.serviceModes.includes('AT_CUSTOMER') ? 'AT_CUSTOMER' : 'AT_MASTER');
+    if (!master.serviceModes.includes(serviceMode)) throw new BadRequestException(ERRORS.CATEGORY_MODE_UNSUPPORTED);
     const start = dto.scheduledStartAt ? new Date(dto.scheduledStartAt) : null;
     if (start && start.getTime() <= Date.now()) throw new BadRequestException(ERRORS.AVAILABLE_AT_IN_FUTURE);
     const address = dto.addressId ? await this.db.address.findFirst({ where: { id: dto.addressId, userId: customerId } }) : null;
@@ -48,6 +51,7 @@ export class DirectOrderService {
           customerId,
           title: dto.title.trim(),
           description: dto.description.trim(),
+          serviceMode,
           addressId: address?.id,
           latitude: address?.latitude,
           longitude: address?.longitude,
@@ -68,7 +72,7 @@ export class DirectOrderService {
           scheduledStartAt: start,
           agreedPrice: price,
           currency: offer.currency,
-          locationSnapshot: address ? { latitude: address.latitude, longitude: address.longitude, addressLine: address.addressLine, city: address.city, district: address.district } : undefined,
+          locationSnapshot: serviceMode === 'AT_MASTER' ? { atMaster: true, latitude: master.latitude, longitude: master.longitude, addressLine: master.placeAddress, title: master.workPlace } : address ? { latitude: address.latitude, longitude: address.longitude, addressLine: address.addressLine, city: address.city, district: address.district } : undefined,
         },
       });
       const order = await tx.order.create({

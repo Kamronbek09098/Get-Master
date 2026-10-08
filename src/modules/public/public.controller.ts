@@ -27,6 +27,13 @@ export class PublicController {
     return this.publicService.stats();
   }
 
+  @Public()
+  @RateLimit({ scope: 'ip', limit: 30, windowSeconds: 60 })
+  @Get('prices')
+  prices() {
+    return this.publicService.prices();
+  }
+
   /** Obuna rejalari va narxlari (narxlar sahifasi uchun). */
   @Public()
   @RateLimit({ scope: 'ip', limit: 30, windowSeconds: 60 })

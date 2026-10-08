@@ -34,9 +34,12 @@ export class RequestService {
 
   async create(customerId: string, dto: CreateRequestDto) {
     await assertPhoneVerified(this.db, customerId);
-    // Manzil majburiy: saqlangan manzil yoki aniq koordinatalar.
-    if (!dto.addressId && (dto.latitude == null || dto.longitude == null)) throw new BadRequestException(ERRORS.REQUEST_ADDRESS_REQUIRED);
+    const serviceMode = dto.serviceMode ?? 'AT_CUSTOMER';
+    // Usta mijozga kelsa — manzil majburiy (saqlangan manzil yoki koordinatalar). Mijoz ustaning oldiga borsa — shart emas.
+    if (serviceMode === 'AT_CUSTOMER' && !dto.addressId && (dto.latitude == null || dto.longitude == null)) throw new BadRequestException(ERRORS.REQUEST_ADDRESS_REQUIRED);
     const selection = await this.validateReferences(customerId, dto);
+    await this.assertModeSupported(selection?.categoryId ?? null, serviceMode);
+    const point = await this.resolvePoint(dto);
     const duplicate = await this.db.problemRequest.findFirst({
       where: {
         customerId,
@@ -52,13 +55,14 @@ export class RequestService {
       data: {
         customerId,
         isPriority: await this.subscriptions.hasFeature(customerId, 'PRIORITY_REQUESTS'),
+        serviceMode,
         title: dto.title,
         description: dto.description,
         categoryId: selection?.categoryId ?? undefined,
         serviceId: selection?.serviceId ?? undefined,
         addressId: dto.addressId,
-        latitude: dto.latitude,
-        longitude: dto.longitude,
+        latitude: point.latitude,
+        longitude: point.longitude,
         preferredStartAt: dto.preferredStartAt ? new Date(dto.preferredStartAt) : undefined,
         preferredEndAt: dto.preferredEndAt ? new Date(dto.preferredEndAt) : undefined,
         status: 'DRAFT',
@@ -76,16 +80,20 @@ export class RequestService {
       throw new ForbiddenException(ERRORS.ONLY_DRAFT_EDITABLE);
     }
     const selection = await this.validateReferences(customerId, dto);
+    const serviceMode = dto.serviceMode ?? request.serviceMode;
+    await this.assertModeSupported(selection?.categoryId ?? request.categoryId, serviceMode);
+    const point = await this.resolvePoint(dto);
     const updated = await this.db.problemRequest.update({
       where: { id: requestId },
       data: {
+        serviceMode,
         title: dto.title,
         description: dto.description,
         categoryId: selection?.categoryId ?? undefined,
         serviceId: selection?.serviceId ?? undefined,
         addressId: dto.addressId,
-        latitude: dto.latitude,
-        longitude: dto.longitude,
+        latitude: point.latitude,
+        longitude: point.longitude,
         preferredStartAt: dto.preferredStartAt ? new Date(dto.preferredStartAt) : undefined,
         preferredEndAt: dto.preferredEndAt ? new Date(dto.preferredEndAt) : undefined,
       },
@@ -101,8 +109,8 @@ export class RequestService {
     if (request.status !== 'DRAFT') {
       throw new InvalidTransitionException(request.status, 'SUBMITTED');
     }
-    // Manzilsiz (eski) qoralama yuborilmaydi.
-    if (!request.addressId && (request.latitude == null || request.longitude == null)) throw new BadRequestException(ERRORS.REQUEST_ADDRESS_REQUIRED);
+    // Manzilsiz (eski) qoralama yuborilmaydi (mijoz ustaning oldiga borsa — manzil shart emas).
+    if (request.serviceMode === 'AT_CUSTOMER' && !request.addressId && (request.latitude == null || request.longitude == null)) throw new BadRequestException(ERRORS.REQUEST_ADDRESS_REQUIRED);
     return this.db.$transaction(async (tx) => {
       const updated = await tx.problemRequest.update({
         where: { id: requestId },
@@ -214,6 +222,21 @@ export class RequestService {
     } catch (error) {
       this.logger.error('Muddati tugagan so‘rovlarni yopib bo‘lmadi', error instanceof Error ? error.stack : undefined);
     }
+  }
+
+  /** So‘rov nuqtasi: aniq koordinata berilsa — o‘sha, aks holda saqlangan manzilning koordinatasi (masofa bo‘yicha moslashtirish ishlashi uchun). */
+  private async resolvePoint(dto: { addressId?: string; latitude?: number; longitude?: number }): Promise<{ latitude?: number; longitude?: number }> {
+    if (dto.latitude != null && dto.longitude != null) return { latitude: dto.latitude, longitude: dto.longitude };
+    if (!dto.addressId) return {};
+    const address = await this.db.address.findUnique({ where: { id: dto.addressId }, select: { latitude: true, longitude: true } });
+    return address?.latitude != null && address.longitude != null ? { latitude: Number(address.latitude), longitude: Number(address.longitude) } : {};
+  }
+
+  /** Tanlangan kategoriya shu rejimni (mijoz manzilida / ustaning joyida) qo‘llab-quvvatlashi kerak. */
+  private async assertModeSupported(categoryId: string | null, mode: 'AT_CUSTOMER' | 'AT_MASTER'): Promise<void> {
+    if (!categoryId) return;
+    const category = await this.db.serviceCategory.findUnique({ where: { id: categoryId }, select: { modes: true } });
+    if (category && !category.modes.includes(mode)) throw new BadRequestException(ERRORS.CATEGORY_MODE_UNSUPPORTED);
   }
 
   private async validateReferences(

@@ -56,4 +56,18 @@ describe('public catalog and stats', () => {
     expect(res.status).toBe(200);
     expect(res.data.plans.map((plan: { code: string }) => plan.code)).toEqual(['CUSTOMER_PLUS', 'MASTER_PRO']);
   });
+
+  it('lists service prices per category with master counts', async () => {
+    const res = await h.api('GET', '/public/prices');
+    expect(res.status).toBe(200);
+    expect(res.data.length).toBeGreaterThan(0);
+    for (const category of res.data) {
+      expect(category.services.length).toBeGreaterThan(0);
+      expect(category.masters).toBeGreaterThan(0);
+      for (const service of category.services) {
+        expect(service.minPrice === null || typeof service.minPrice === 'number').toBe(true);
+        expect(service.masters).toBeGreaterThanOrEqual(0);
+      }
+    }
+  });
 });

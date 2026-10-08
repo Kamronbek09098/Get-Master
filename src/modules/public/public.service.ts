@@ -5,9 +5,18 @@ import { PublicMasterQueryDto } from './dto/public-master-query.dto';
 
 const STATS_TTL_MS = 5 * 60_000;
 
+export interface PriceCategory {
+  id: string;
+  name: string;
+  modes: Array<'AT_CUSTOMER' | 'AT_MASTER'>;
+  masters: number;
+  services: Array<{ id: string; name: string; minPrice: number | null; masters: number }>;
+}
+
 @Injectable()
 export class PublicService {
   private statsCache: { at: number; value: unknown } | null = null;
+  private pricesCache: { at: number; value: PriceCategory[] } | null = null;
 
   constructor(private readonly db: PrismaService) {}
 
@@ -22,6 +31,7 @@ export class PublicService {
     const q = query.q?.trim();
     const where: Prisma.MasterProfileWhereInput = {
       ...this.listed(),
+      ...(query.mode ? { serviceModes: { has: query.mode } } : {}),
       ...(query.categoryId ? { services: { some: { isActive: true, service: { isActive: true, categoryId: query.categoryId } } } } : {}),
       ...(q
         ? {
@@ -49,8 +59,10 @@ export class PublicService {
           completedOrders: true,
           isPro: true,
           proUntil: true,
+          serviceModes: true,
+          placeAddress: true,
           user: { select: { accountNumber: true, firstName: true, lastName: true } },
-          services: { where: { isActive: true, service: { isActive: true } }, take: 4, select: { service: { select: { name: true } } } },
+          services: { where: { isActive: true, service: { isActive: true } }, take: 3, orderBy: { basePrice: 'asc' }, select: { basePrice: true, service: { select: { name: true } } } },
           _count: { select: { portfolio: { where: { status: 'APPROVED' } } } },
         },
       }),
@@ -70,7 +82,9 @@ export class PublicService {
         completedOrders: row.completedOrders,
         works: row._count.portfolio,
         isPro: row.isPro && (!row.proUntil || row.proUntil > now),
-        services: row.services.map((item) => item.service.name),
+        serviceModes: row.serviceModes,
+        placeAddress: row.serviceModes.includes('AT_MASTER') ? row.placeAddress : null,
+        services: row.services.map((item) => ({ name: item.service.name, price: item.basePrice == null ? null : Number(item.basePrice) })),
       })),
     };
   }
@@ -87,6 +101,37 @@ export class PublicService {
     ]);
     const value = { masters, completedOrders: completed, categories, services, avgRating: rating._avg.ratingAvg ? Math.round(Number(rating._avg.ratingAvg) * 10) / 10 : null };
     this.statsCache = { at: Date.now(), value };
+    return value;
+  }
+
+  /** Xizmat narxlari: kategoriya bo‘yicha «dan …» (ustalar belgilagan eng past narx) va xizmat ko‘rsatuvchi ustalar soni. 5 daqiqa keshlanadi. */
+  async prices(): Promise<PriceCategory[]> {
+    if (this.pricesCache && Date.now() - this.pricesCache.at < STATS_TTL_MS) return this.pricesCache.value;
+    const [categories, grouped] = await Promise.all([
+      this.db.serviceCategory.findMany({
+        where: { isActive: true },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+        select: { id: true, name: true, modes: true, services: { where: { isActive: true }, orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }], select: { id: true, name: true } } },
+      }),
+      this.db.masterService.groupBy({
+        by: ['serviceId'],
+        where: { isActive: true, master: this.listed() },
+        _min: { basePrice: true },
+        _count: { _all: true },
+      }),
+    ]);
+    const stat = new Map(grouped.map((row) => [row.serviceId, row]));
+    const value: PriceCategory[] = [];
+    for (const category of categories) {
+      const services = category.services.map((service) => {
+        const row = stat.get(service.id);
+        return { id: service.id, name: service.name, minPrice: row?._min.basePrice == null ? null : Number(row._min.basePrice), masters: row?._count._all ?? 0 };
+      });
+      const masters = await this.db.masterProfile.count({ where: { ...this.listed(), services: { some: { isActive: true, service: { isActive: true, categoryId: category.id } } } } });
+      if (services.length === 0 || masters === 0) continue;
+      value.push({ id: category.id, name: category.name, modes: category.modes, masters, services });
+    }
+    this.pricesCache = { at: Date.now(), value };
     return value;
   }
 }

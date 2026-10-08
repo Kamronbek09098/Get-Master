@@ -1,3 +1,5 @@
+import type { ServiceMode } from '@/features/service/types';
+
 export type MasterStatus = 'ACTIVE' | 'INACTIVE' | 'BUSY' | 'RESTRICTED' | 'SUSPENDED';
 export type MasterVerificationStatus =
   | 'PENDING'
@@ -27,6 +29,8 @@ export interface MasterProfile {
   latitude?: string | number | null;
   longitude?: string | number | null;
   serviceAreas?: string[] | null;
+  serviceModes?: ServiceMode[];
+  placeAddress?: string | null;
   completionRate?: string | number;
   responseRate?: string | number;
   reliabilityScore?: string | number;
@@ -53,6 +57,9 @@ export interface PublicMaster {
   /** Eng yaqin bo‘sh vaqt (ish jadvali bo‘lsa): dayOffset 0 — bugun, 1 — ertaga. */
   nextAvailable?: { dayOffset: number; time: string; now: boolean } | null;
   user: { accountNumber?: number; firstName: string | null; lastName: string | null };
+  /** Ish rejimlari: mijoz manzilida va/yoki o‘z joyida (o‘z joyida bo‘lsa — `placeAddress`). */
+  serviceModes?: ServiceMode[];
+  placeAddress?: string | null;
   workRadiusKm?: string | number | null;
   serviceAreas?: string[] | null;
   /** Ish hududi: yaxlitlangan markaz (~1 km) va radius. */
@@ -89,6 +96,8 @@ export interface MasterInput {
   workPlace?: string;
   bio?: string;
   experienceYears?: number;
+  serviceModes?: ServiceMode[];
+  placeAddress?: string;
 }
 
 /** Mijoz manziliga kela oladigan usta. */

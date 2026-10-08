@@ -99,7 +99,7 @@ export class ServiceService {
   async createCategory(actorId: string, dto: CreateCategoryDto) {
     const slug = await this.uniqueSlug('category', dto.name);
     const category = await this.db.serviceCategory.create({
-      data: { name: dto.name.trim(), slug, description: dto.description, sortOrder: dto.sortOrder, isActive: dto.isActive },
+      data: { name: dto.name.trim(), slug, description: dto.description, sortOrder: dto.sortOrder, isActive: dto.isActive, modes: dto.modes },
     });
     await this.audit(actorId, 'SERVICE_CATEGORY_CREATED', 'ServiceCategory', category.id);
     return category;
@@ -109,7 +109,7 @@ export class ServiceService {
     await this.requireCategory(id);
     const category = await this.db.serviceCategory.update({
       where: { id },
-      data: { name: dto.name?.trim(), description: dto.description, sortOrder: dto.sortOrder, isActive: dto.isActive },
+      data: { name: dto.name?.trim(), description: dto.description, sortOrder: dto.sortOrder, isActive: dto.isActive, modes: dto.modes },
     });
     await this.audit(actorId, 'SERVICE_CATEGORY_UPDATED', 'ServiceCategory', id);
     return category;

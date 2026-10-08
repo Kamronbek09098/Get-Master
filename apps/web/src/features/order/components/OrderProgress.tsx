@@ -25,15 +25,17 @@ const shortTime = (value: string) => formatDateTime(value).replace(/ \d{4},/, ',
  * Buyurtma bosqichlari: har bir o‘tilgan bosqich ostida qachon va kim tomonidan bajarilgani ko‘rsatiladi
  * (alohida «tarix» kartasi shu yerga birlashtirilgan). Bekor qilish/nizo kabi bosqichdan tashqari holatlar — pastda.
  */
-export function OrderProgress({ status, orderId }: { status: OrderStatus; orderId?: string }) {
+export function OrderProgress({ status, orderId, atMaster = false }: { status: OrderStatus; orderId?: string; atMaster?: boolean }) {
   const timeline = useOrderTimeline(orderId ?? '');
   const terminal = status === 'CANCELLED' || status === 'EXPIRED' || status === 'DISPUTED';
-  const current = terminal ? -1 : stepIndex(status);
+  // Mijoz ustaning oldiga borganda «usta yo‘lda» bosqichi bo‘lmaydi.
+  const flow = atMaster ? FLOW_STEPS.filter((step) => step.status !== 'ON_THE_WAY') : FLOW_STEPS;
+  const current = terminal ? -1 : flow.findIndex((step) => step.status === status) >= 0 ? flow.findIndex((step) => step.status === status) : stepIndex(status);
   const entries = orderId ? (timeline.data ?? []) : [];
   const stepEntry = (step: OrderStatus) => [...entries].reverse().find((entry) => entry.newStatus === step);
   const stop = terminal ? [...entries].reverse().find((entry) => entry.newStatus === status) : undefined;
   // Bekor qilingan/nizoli buyurtmada: faqat haqiqatan o‘tilgan bosqichlar + oxirgi «to‘xtatildi» bosqichi (kulrang bo‘sh qadamlar ko‘rsatilmaydi).
-  const steps = terminal ? FLOW_STEPS.filter((step) => stepEntry(step.status)) : FLOW_STEPS;
+  const steps = terminal ? flow.filter((step) => stepEntry(step.status)) : flow;
   const extra = entries.filter((entry) => !FLOW.has(entry.newStatus) && !(terminal && entry.id === stop?.id));
 
   return (
@@ -45,7 +47,7 @@ export function OrderProgress({ status, orderId }: { status: OrderStatus; orderI
           return (
             <li key={step.status} className={cx('gm-oprogress__step', `gm-oprogress__step--${state}`)} aria-current={state === 'current' ? 'step' : undefined}>
               <span className="gm-oprogress__dot">{state === 'done' ? <Check size={14} strokeWidth={3} /> : index + 1}</span>
-              <span className="gm-oprogress__label">{STEP_LABEL[step.status] ?? step.label}</span>
+              <span className="gm-oprogress__label">{atMaster && step.status === 'ARRIVED' ? t('Mijoz keldi') : (STEP_LABEL[step.status] ?? step.label)}</span>
               {entry && (
                 <small className="gm-oprogress__time">{shortTime(entry.createdAt)}</small>
               )}

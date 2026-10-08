@@ -34,7 +34,9 @@ export interface OrderParty {
 export interface OrderDetailsData extends Order {
   viewerRole: 'CUSTOMER' | 'MASTER';
   service: { id: string; name: string } | null;
-  request: { id: string; title: string; description: string } | null;
+  request: { id: string; title: string; description: string; serviceMode?: 'AT_CUSTOMER' | 'AT_MASTER' } | null;
+  /** Uchrashuv joyi: `atMaster` — ustaning joyi (mijoz boradi). */
+  location?: { atMaster?: boolean; latitude?: string | number | null; longitude?: string | number | null; addressLine?: string | null; title?: string | null; city?: string | null; district?: string | null } | null;
   scheduledStartAt: string | null;
   /** Ikkinchi tomon tasdiqlashini kutayotgan yangi vaqt taklifi (bo'lsa). */
   reschedule: { proposedStartAt: string; proposedByMe: boolean } | null;
