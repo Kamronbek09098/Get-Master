@@ -1,6 +1,6 @@
 import { apiGet, apiPost } from '@/services/api.client';
 import type { CursorPage } from '@/types/api';
-import type { AcceptOfferResult, CreateOfferInput, IncomingRequest, Offer, OpenRequest, OpenRequestScope } from '../types';
+import type { AcceptOfferResult, CreateOfferInput, Offer, OpenRequest, OpenRequestScope } from '../types';
 
 export const offerService = {
   listForRequest(requestId: string) {
@@ -13,9 +13,6 @@ export const offerService = {
     const search = new URLSearchParams({ scope, limit: '20' });
     if (cursor) search.set('cursor', cursor);
     return apiGet<CursorPage<OpenRequest>>(`/masters/me/open-requests?${search.toString()}`);
-  },
-  listIncomingRequests(cursor?: string) {
-    return apiGet<CursorPage<IncomingRequest>>(`/masters/me/incoming-requests${cursor ? `?cursor=${cursor}` : ''}`);
   },
   create(input: CreateOfferInput) {
     return apiPost<Offer>('/offers', input);

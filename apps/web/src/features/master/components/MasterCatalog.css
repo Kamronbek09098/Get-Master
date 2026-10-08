@@ -342,3 +342,6 @@
 .gm-master__go { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--gm-color-primary-soft); color: var(--gm-color-primary); transition: background 0.15s, color 0.15s, transform 0.15s; }
 .gm-master:hover .gm-master__go { background: var(--gm-color-primary); color: var(--gm-color-primary-contrast); transform: translateX(2px); }
 @media (max-width: 380px) { .gm-master { padding: 14px; } .gm-master__stat { padding: 10px; } .gm-master__stat strong { font-size: 1.1rem; } .gm-master__top { gap: 10px; } }
+
+.gm-masters-region { margin: 0 0 12px; }
+.gm-master__region { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--gm-color-text-muted); }

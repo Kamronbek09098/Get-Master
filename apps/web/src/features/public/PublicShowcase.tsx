@@ -4,6 +4,7 @@ import { formatMoney } from '@/lib/utils';
 import { Column, FAQ_PREVIEW } from './FaqSection';
 import { usePublicMasters, usePublicPlans, usePublicStats } from './hooks';
 import { MasterTile } from './MasterTile';
+import { SupportContacts } from './SupportContacts';
 import { t } from '@/i18n';
 import './public.css';
 
@@ -64,6 +65,7 @@ export function PublicShowcase() {
           <Column items={FAQ_PREVIEW} offset={0} />
         </div>
         <Link to="/katalog#savollar" className="gm-show__all">{t('Barcha savollar')} <ArrowRight size={17} aria-hidden="true" /></Link>
+        <SupportContacts title={t('Savolingiz qoldimi?')} />
       </section>
 
     </div>

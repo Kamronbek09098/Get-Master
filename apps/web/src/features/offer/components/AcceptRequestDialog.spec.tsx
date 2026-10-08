@@ -34,8 +34,9 @@ describe('AcceptRequestDialog', () => {
     render(<AcceptRequestDialog request={request} onClose={() => undefined} />);
     expect(screen.getByText('So‘rovni qabul qilish')).toBeInTheDocument();
     expect(screen.getByText(/Taklifingiz mijozga yuboriladi/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Narx/)).toHaveValue(100000);
-    expect(screen.getByLabelText(/davomiylik/i)).toHaveValue(60);
+    expect(screen.getByLabelText(/Narx/)).toHaveValue('100 000');
+    expect(screen.getByLabelText(/davomiylik/i)).toHaveValue('60');
+    expect(screen.getByText('≈ 1 soat')).toBeInTheDocument();
   });
 
   it('sends the offer for this request with the (edited) price', async () => {
@@ -53,7 +54,7 @@ describe('AcceptRequestDialog', () => {
 
   it('leaves the price empty (and the button disabled) when the master has no price for the service', () => {
     render(<AcceptRequestDialog request={{ ...request, suggested: null }} onClose={() => undefined} />);
-    expect(screen.getByLabelText(/Narx/)).toHaveValue(null);
+    expect(screen.getByLabelText(/Narx/)).toHaveValue('');
     expect(screen.getByRole('button', { name: 'Qabul qilish va taklif yuborish' })).toBeDisabled();
   });
 });

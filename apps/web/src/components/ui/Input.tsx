@@ -11,12 +11,14 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   hint?: string;
   /** Input ichida chapda ko‘rsatiladigan doimiy qism, masalan telefon kodi «+998». */
   prefix?: string;
+  /** Input ichida o‘ngda ko‘rsatiladigan birlik, masalan «so‘m». */
+  suffix?: string;
   /** Qiymatni kiritish paytida formatlaydi (masalan, telefon: «95 959 49 44»). */
   formatValue?: (value: string) => string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, hint, id, required, className, type, prefix, formatValue, onChange, onKeyDown, ...rest }, ref) => {
+  ({ label, error, hint, id, required, className, type, prefix, suffix, formatValue, onChange, onKeyDown, ...rest }, ref) => {
     const generatedId = useId();
     const [revealed, setRevealed] = useState(false);
     const isPassword = type === 'password';
@@ -30,7 +32,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <label htmlFor={inputId} className="gm-field__label">
           {label}
         </label>
-        <div className={cx('gm-field__wrap', isPassword && 'gm-field__wrap--password', prefix && 'gm-field__wrap--prefixed')}>
+        <div className={cx('gm-field__wrap', isPassword && 'gm-field__wrap--password', prefix && 'gm-field__wrap--prefixed', suffix && 'gm-field__wrap--suffixed')}>
           {prefix && (
             <span className="gm-field__prefix" aria-hidden="true">
               {prefix}
@@ -79,6 +81,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             autoComplete={isPassword ? undefined : 'off'}
             {...rest}
           />
+          {suffix && (
+            <span className="gm-field__suffix" aria-hidden="true">
+              {suffix}
+            </span>
+          )}
           {isPassword && (
             <button
               type="button"

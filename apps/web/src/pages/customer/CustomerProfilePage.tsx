@@ -117,7 +117,7 @@ export function CustomerProfilePage() {
         rows={[
           { key: 'edit', icon: UserRound, label: t('Profilni tahrirlash'), to: `${BASE}/tahrirlash` },
           { key: 'addr', icon: MapPin, label: t('Manzillarim'), value: addressCount || undefined, to: '/mijoz/manzillar' },
-          { key: 'masters', icon: Users, label: t('Birga ishlagan ustalar'), to: `${BASE}/usta` },
+          { key: 'masters', icon: Users, label: t('Birga ishlagan ustalar'), to: `${BASE}/ustalar` },
           { key: 'saved', icon: Heart, label: t('Saqlangan ustalar'), value: favorites.data?.length || undefined, to: `${BASE}/saqlangan` },
           { key: 'pay', icon: Wallet, label: t('To‘lov usuli'), value: providerLabel(preferences.data?.paymentMethod ?? 'CASH'), to: `${BASE}/tolov` },
           { key: 'settings', icon: Settings, label: t('Sozlamalar'), to: '/sozlamalar' },

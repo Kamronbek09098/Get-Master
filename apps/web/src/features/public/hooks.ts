@@ -1,10 +1,10 @@
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { publicService } from './public.service';
 
-export function usePublicMasters(categoryId: string, q: string, mode = '') {
+export function usePublicMasters(categoryId: string, q: string, mode = '', region = '') {
   return useInfiniteQuery({
-    queryKey: ['public', 'masters', categoryId, q, mode],
-    queryFn: ({ pageParam }) => publicService.masters({ categoryId: categoryId || undefined, q, mode: mode || undefined, page: pageParam }),
+    queryKey: ['public', 'masters', categoryId, q, mode, region],
+    queryFn: ({ pageParam }) => publicService.masters({ categoryId: categoryId || undefined, q, mode: mode || undefined, region: region || undefined, page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
     placeholderData: keepPreviousData,
@@ -22,4 +22,8 @@ export function usePublicPlans() {
 
 export function usePublicPrices() {
   return useQuery({ queryKey: ['public', 'prices'], queryFn: () => publicService.prices(), staleTime: 5 * 60_000 });
+}
+
+export function usePublicRegions() {
+  return useQuery({ queryKey: ['public', 'regions'], queryFn: () => publicService.regions(), staleTime: 5 * 60_000 });
 }

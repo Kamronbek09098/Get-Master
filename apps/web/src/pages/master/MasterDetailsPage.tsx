@@ -55,6 +55,11 @@ export function MasterDetailsPage() {
             {data.isPaused && <Badge tone="warning">{t('Pauzada')}</Badge>}
             <FavoriteButton masterId={data.id} />
             <ModeBadges modes={data.serviceModes} />
+            {data.regionName && (
+              <span className="gm-mp-hero__place">
+                <MapPin size={14} aria-hidden="true" /> {data.regionName}
+              </span>
+            )}
             {data.serviceModes?.includes('AT_MASTER') && data.placeAddress && (
               <span className="gm-mp-hero__place">
                 <MapPin size={14} aria-hidden="true" /> {data.placeAddress}

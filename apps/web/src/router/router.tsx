@@ -23,7 +23,6 @@ import { CreateRequestPage } from '@/pages/requests/CreateRequestPage';
 import { RequestDetailsPage } from '@/pages/requests/RequestDetailsPage';
 import { OrdersPage } from '@/pages/orders/OrdersPage';
 import { OrderDetailsPage } from '@/pages/orders/OrderDetailsPage';
-import { CreateOfferPage } from '@/pages/offers/CreateOfferPage';
 import { PaymentPage } from '@/pages/payments/PaymentPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { CustomerPage } from '@/pages/customer/CustomerPage';
@@ -39,7 +38,6 @@ import { NotificationsPage } from '@/pages/notifications/NotificationsPage';
 import { ChatPage } from '@/pages/chat/ChatPage';
 import { WarrantyPage } from '@/pages/warranty/WarrantyPage';
 import { ActiveOffersPage } from '@/pages/offers/ActiveOffersPage';
-import { MyOffersPage } from '@/pages/offers/MyOffersPage';
 import { MasterSchedulePage } from '@/pages/master/MasterSchedulePage';
 import { MasterPortfolioPage } from '@/pages/master/MasterPortfolioPage';
 import { EarningsPage } from '@/pages/payments/EarningsPage';
@@ -139,7 +137,7 @@ const panelRouter = createBrowserRouter([
           { path: '/mijoz/buyurtmalar/:orderId/tolov', element: customer(<PaymentPage />) },
           { path: '/usta/buyurtmalar', element: master(<OrdersPage />) },
           { path: '/usta/buyurtmalar/:id', element: master(<OrderDetailsPage />) },
-          { path: '/usta/takliflar', element: master(<CreateOfferPage />) },
+          { path: '/usta/takliflar', element: master(<ActiveOffersPage />) },
           { path: '/mijoz/profil', element: customer(<CustomerProfilePage />) },
           { path: '/mijoz/profil/:section', element: customer(<CustomerProfilePage />) },
           { path: '/mijoz/manzillar', element: customer(<CustomerPage />) },
@@ -160,8 +158,8 @@ const panelRouter = createBrowserRouter([
           { path: '/bronlar', element: shared(<OrdersRedirect />) },
           { path: '/bronlar/:id', element: shared(<OrdersRedirect />) },
           { path: '/mijoz/tolovlar', element: customer(<PaymentHistoryPage />) },
-          { path: '/usta/faol-takliflar', element: master(<ActiveOffersPage />) },
-          { path: '/usta/mening-takliflarim', element: master(<MyOffersPage />) },
+          { path: '/usta/faol-takliflar', element: <Navigate to="/usta/takliflar" replace /> },
+          { path: '/usta/mening-takliflarim', element: <Navigate to="/usta/takliflar?korinish=sent" replace /> },
           { path: '/usta/jadval', element: master(<MasterSchedulePage />) },
           { path: '/usta/portfolio', element: master(<MasterPortfolioPage />) },
           { path: '/usta/daromad', element: master(<EarningsPage />) },

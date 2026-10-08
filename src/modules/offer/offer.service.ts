@@ -160,7 +160,8 @@ export class OfferService {
     if (!masterProfile) throw new ForbiddenException(ERRORS.MASTER_PROFILE_REQUIRED);
     const rows = await this.db.offer.findMany({
       where: { masterId: masterProfile.id, status: query.status, request: { customerId: { not: userId } } },
-      select: OFFER_SELECT,
+      // Ro‘yxatda har bir taklif qaysi so‘rovga tegishli ekani ko‘rinishi uchun.
+      select: { ...OFFER_SELECT, request: { select: { title: true, service: { select: { name: true } } } } },
       orderBy: { createdAt: 'desc' },
       ...cursorArgs(query),
     });

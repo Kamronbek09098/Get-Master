@@ -17,10 +17,10 @@ export function useSaveMasterProfile(isNew: boolean) {
   });
 }
 
-export function useMasters(q: string, categoryId?: string, mode?: string) {
+export function useMasters(q: string, categoryId?: string, mode?: string, region?: string) {
   return useInfiniteQuery({
-    queryKey: ['masters', q, categoryId ?? null, mode ?? null],
-    queryFn: ({ pageParam }: { pageParam?: string }) => masterService.list({ q, categoryId, mode, cursor: pageParam }),
+    queryKey: ['masters', q, categoryId ?? null, mode ?? null, region ?? null],
+    queryFn: ({ pageParam }: { pageParam?: string }) => masterService.list({ q, categoryId, mode, region, cursor: pageParam }),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });

@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { env } from '@/lib/env';
 import { cx } from '@/lib/utils';
 import { FaqSection } from '@/features/public/FaqSection';
+import { SupportContacts } from '@/features/public/SupportContacts';
 import { usePublicStats } from '@/features/public/hooks';
 import { CatalogSection, PlansSection, ServicePricesSection } from '@/features/public/Sections';
 import { t } from '@/i18n';
@@ -71,6 +72,7 @@ export function CatalogPage() {
           <Link to="/">{t('Bosh sahifa')}</Link>
           <Link to="/shartlar">{t('Foydalanish shartlari')}</Link>
         </nav>
+        {tab !== 'savollar' && <SupportContacts compact />}
         <p>{t('© {getFullYear} GetMaster. Barcha huquqlar himoyalangan.', { getFullYear: new Date().getFullYear() })}</p>
       </footer>
     </div>

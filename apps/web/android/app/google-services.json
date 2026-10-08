@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "357026118597",
-    "project_id": "getmaster-eac7b",
-    "storage_bucket": "getmaster-eac7b.firebasestorage.app"
+    "project_number": "741822922738",
+    "project_id": "getmaster-b8f26",
+    "storage_bucket": "getmaster-b8f26.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:357026118597:android:e8c53b70ab03cedba129ac",
+        "mobilesdk_app_id": "1:741822922738:android:b7345534e1ac523e8cb56b",
         "android_client_info": {
           "package_name": "uz.getmaster.admin"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDbS2qPnZVjxhKiiEMMO4EaUz8aWuQotwI"
+          "current_key": "AIzaSyDpCcyNNwU071KYF79HDTr71BzGXE2Rxr0"
         }
       ],
       "services": {
@@ -26,7 +26,7 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:357026118597:android:9c9db58ba8836e4aa129ac",
+        "mobilesdk_app_id": "1:741822922738:android:4595684faae30d9c8cb56b",
         "android_client_info": {
           "package_name": "uz.getmaster.customer"
         }
@@ -34,7 +34,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDbS2qPnZVjxhKiiEMMO4EaUz8aWuQotwI"
+          "current_key": "AIzaSyDpCcyNNwU071KYF79HDTr71BzGXE2Rxr0"
         }
       ],
       "services": {
@@ -45,7 +45,7 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:357026118597:android:b29fb3db43e5b3aea129ac",
+        "mobilesdk_app_id": "1:741822922738:android:864f5d6b251c85968cb56b",
         "android_client_info": {
           "package_name": "uz.getmaster.master"
         }
@@ -53,7 +53,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDbS2qPnZVjxhKiiEMMO4EaUz8aWuQotwI"
+          "current_key": "AIzaSyDpCcyNNwU071KYF79HDTr71BzGXE2Rxr0"
         }
       ],
       "services": {

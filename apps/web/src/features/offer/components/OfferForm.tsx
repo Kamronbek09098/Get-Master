@@ -1,4 +1,4 @@
-import { sanitizeMoney } from '@/lib/utils';
+import { cx, formatMinutes, groupDigits, sanitizeMoney } from '@/lib/utils';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Alert } from '@/components/ui/Alert';
@@ -8,6 +8,11 @@ import { Textarea } from '@/components/ui/Textarea';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useCreateOffer } from '../hooks/useOffers';
 import { t } from '@/i18n';
+import './OfferForm.css';
+
+const MIN_MINUTES = 5;
+const MAX_MINUTES = 10080;
+const QUICK_MINUTES = [30, 60, 120, 180, 240];
 
 export function OfferForm({
   requestId,
@@ -27,13 +32,17 @@ export function OfferForm({
   const [minutes, setMinutes] = useState(initialMinutes ? String(initialMinutes) : '');
   const [message, setMessage] = useState('');
 
+  const minutesValue = Number(minutes) || 0;
+  const minutesInvalid = minutesValue > 0 && minutesValue < MIN_MINUTES;
+
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (minutesInvalid) return;
     create.mutate(
       {
         requestId,
         price: Number(price),
-        estimatedMinutes: minutes ? Number(minutes) : undefined,
+        estimatedMinutes: minutesValue || undefined,
         message: message.trim() || undefined,
       },
       { onSuccess: () => onDone?.() },
@@ -41,22 +50,50 @@ export function OfferForm({
   }
 
   return (
-    <form className="gm-form" onSubmit={handleSubmit}>
+    <form className="gm-form gm-offer-form" onSubmit={handleSubmit}>
       {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
-      <Input label={t('Narx (so‘m)')} type="number" required min={1} value={price} onChange={(e) => setPrice(sanitizeMoney(e.target.value))} />
       <Input
-        label={t('Taxminiy davomiylik (daqiqa, ixtiyoriy)')}
-        type="number"
-        min={5}
-        value={minutes}
-        onChange={(e) => setMinutes(e.target.value)}
+        label={t('Narx (so‘m)')}
+        type="text"
+        inputMode="numeric"
+        required
+        placeholder="0"
+        suffix={t('so‘m')}
+        value={groupDigits(price)}
+        formatValue={groupDigits}
+        onChange={(e) => setPrice(sanitizeMoney(e.target.value))}
       />
-      <Textarea label={t('Xabar (ixtiyoriy)')} rows={3} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} />
-      <div>
-        <Button type="submit" loading={create.isPending} disabled={!price}>
-          {submitLabel}
-        </Button>
+      <div className="gm-offer-form__duration">
+        <Input
+          label={t('Taxminiy davomiylik (daqiqa, ixtiyoriy)')}
+          type="text"
+          inputMode="numeric"
+          placeholder="60"
+          suffix={t('daq')}
+          value={groupDigits(minutes)}
+          formatValue={groupDigits}
+          error={minutesInvalid ? t('Kamida {n} daqiqa bo‘lishi kerak', { n: MIN_MINUTES }) : undefined}
+          hint={minutesValue >= MIN_MINUTES ? `≈ ${formatMinutes(minutesValue)}` : undefined}
+          onChange={(e) => setMinutes(String(Math.min(Number(e.target.value.replace(/\D/g, '')) || 0, MAX_MINUTES) || ''))}
+        />
+        <div className="gm-offer-form__chips" role="group" aria-label={t('Tezkor tanlash')}>
+          {QUICK_MINUTES.map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={cx('gm-offer-form__chip', minutesValue === value && 'is-active')}
+              aria-pressed={minutesValue === value}
+              onClick={() => setMinutes(String(value))}
+            >
+              {formatMinutes(value)}
+            </button>
+          ))}
+        </div>
       </div>
+      <Textarea label={t('Xabar (ixtiyoriy)')} rows={3} maxLength={1000} value={message} onChange={(e) => setMessage(e.target.value)} />
+      <Button type="submit" size="lg" fullWidth loading={create.isPending} disabled={!price || minutesInvalid}>
+        {submitLabel}
+      </Button>
     </form>
   );
 }

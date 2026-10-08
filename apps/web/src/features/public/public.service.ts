@@ -14,6 +14,14 @@ export interface PublicMaster {
   services: Array<{ name: string; price: number | null }>;
   serviceModes?: Array<'AT_CUSTOMER' | 'AT_MASTER'>;
   placeAddress?: string | null;
+  region?: string | null;
+  regionName?: string | null;
+}
+
+export interface PublicRegion {
+  key: string;
+  name: string;
+  masters: number;
 }
 
 export interface PublicMasterPage {
@@ -39,15 +47,19 @@ export interface PriceCategory {
 }
 
 export const publicService = {
-  masters(params: { categoryId?: string; q?: string; mode?: string; page: number }) {
+  masters(params: { categoryId?: string; q?: string; mode?: string; region?: string; page: number }) {
     const search = new URLSearchParams({ page: String(params.page), limit: '12' });
     if (params.categoryId) search.set('categoryId', params.categoryId);
     if (params.mode) search.set('mode', params.mode);
+    if (params.region) search.set('region', params.region);
     if (params.q?.trim()) search.set('q', params.q.trim());
     return apiGet<PublicMasterPage>(`/public/masters?${search.toString()}`);
   },
   stats() {
     return apiGet<PublicStats>('/public/stats');
+  },
+  regions() {
+    return apiGet<PublicRegion[]>('/public/regions');
   },
   prices() {
     return apiGet<PriceCategory[]>('/public/prices');

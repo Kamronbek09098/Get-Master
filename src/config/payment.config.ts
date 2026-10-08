@@ -1,3 +1,4 @@
+import { commissionRate } from '../common/utils/commission';
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('payment', () => ({
@@ -5,7 +6,7 @@ export default registerAs('payment', () => ({
   apiKey: process.env.PAYMENT_PROVIDER_API_KEY ?? '',
   returnUrl: process.env.PAYMENT_RETURN_URL || (process.env.CORS_ORIGINS ?? '').split(',')[0]?.trim() || '',
   /** Platforma komissiyasi ulushi (0.03 = 3%) — sof tushumdan ilova foydasini hisoblash uchun. */
-  platformCommissionRate: Number(process.env.PLATFORM_COMMISSION_RATE ?? 0.03),
+  platformCommissionRate: commissionRate(),
   click: {
     merchantId: process.env.CLICK_MERCHANT_ID ?? '',
     serviceId: process.env.CLICK_SERVICE_ID ?? '',

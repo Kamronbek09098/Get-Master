@@ -29,6 +29,8 @@ export interface OrderParty {
   firstName: string | null;
   lastName: string | null;
   profession?: string | null;
+  /** Usta profili hozir ochiq (faol va tasdiqlangan) — faqat buyurtmalar ro‘yxatida keladi. */
+  available?: boolean;
 }
 
 export interface OrderDetailsData extends Order {

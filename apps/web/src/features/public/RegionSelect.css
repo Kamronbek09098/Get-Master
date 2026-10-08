@@ -1,0 +1,4 @@
+.gm-region { display: flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 14px; border-radius: 14px; border: 1px solid var(--gm-color-border); background: var(--gm-color-surface); color: var(--gm-color-text-muted); }
+.gm-region:focus-within { border-color: var(--gm-color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gm-color-primary) 18%, transparent); }
+.gm-region select { flex: 1; min-width: 0; height: 44px; border: 0; outline: 0; background: transparent; color: var(--gm-color-text); font: inherit; cursor: pointer; }
+.gm-region select option { color: #0c1730; background: #ffffff; }

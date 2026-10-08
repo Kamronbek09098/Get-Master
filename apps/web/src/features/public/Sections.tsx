@@ -12,6 +12,7 @@ import { useServiceCategories } from '@/features/service/hooks/useServices';
 import { FEATURE_META } from '@/features/subscription/meta';
 import { usePublicMasters, usePublicPlans, usePublicPrices } from './hooks';
 import { MasterTile } from './MasterTile';
+import { RegionSelect } from './RegionSelect';
 import { t } from '@/i18n';
 import './public.css';
 
@@ -24,7 +25,8 @@ export function CatalogSection({ initialCategory = '' }: { initialCategory?: str
   const q = useDebounce(text, 300);
   const categories = useServiceCategories();
   const [mode, setMode] = useState('');
-  const masters = usePublicMasters(category, q.trim(), mode);
+  const [region, setRegion] = useState('');
+  const masters = usePublicMasters(category, q.trim(), mode, region);
   const items = masters.data?.pages.flatMap((page) => page.items) ?? [];
   const total = masters.data?.pages[0]?.total ?? 0;
   return (
@@ -40,6 +42,7 @@ export function CatalogSection({ initialCategory = '' }: { initialCategory?: str
           <Search size={17} aria-hidden="true" />
           <input value={text} onChange={(event) => setText(event.target.value)} maxLength={80} placeholder={t('Kasb, xizmat yoki ism bo‘yicha qidirish')} aria-label={t('Qidirish')} />
         </label>
+        <RegionSelect value={region} onChange={setRegion} />
         <div className="gm-pub__cats" role="group" aria-label={t('Qayerda xizmat ko‘rsatadi')}>
           {[['', t('Hammasi')], ['AT_CUSTOMER', t('Uyga boradi')], ['AT_MASTER', t('O‘z joyida qabul qiladi')]].map(([value, label]) => (
             <button key={value} type="button" aria-pressed={mode === value} className={cx(mode === value && 'is-active')} onClick={() => setMode(value!)}>{label}</button>

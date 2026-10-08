@@ -8,6 +8,7 @@ import { t } from '@/i18n';
 import { useSmoothScroll } from '../fx/useSmoothScroll';
 import { ServiceBelt } from '../fx/ServiceBelt';
 import { PublicShowcase } from '@/features/public/PublicShowcase';
+import { SupportContacts } from '@/features/public/SupportContacts';
 import './portal.css';
 
 
@@ -405,6 +406,7 @@ function Finale() {
       <footer className="gm-portal__footer">
         <LogoLink />
         <p>{t('© {getFullYear} GetMaster. Barcha huquqlar himoyalangan.', { getFullYear: new Date().getFullYear() })}</p>
+        <SupportContacts compact />
         <nav className="gm-portal__footer-links" aria-label={t('Havolalar')}>
           <a href="/katalog#ustalar">{t('Ustalar katalogi')}</a>
           <a href="/katalog#narxlar">{t('Narxlar')}</a>

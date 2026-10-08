@@ -25,14 +25,6 @@ export function useMyOffers() {
   return useQuery({ queryKey: ['offers', 'mine'], queryFn: () => offerService.listMine() });
 }
 
-export function useIncomingRequests() {
-  return useQuery({
-    queryKey: ['offers', 'incoming'],
-    queryFn: () => offerService.listIncomingRequests(),
-    refetchInterval: 30_000,
-  });
-}
-
 export function useCreateOffer() {
   const queryClient = useQueryClient();
   return useMutation({

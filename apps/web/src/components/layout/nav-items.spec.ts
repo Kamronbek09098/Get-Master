@@ -12,7 +12,7 @@ describe('getNavItems', () => {
 
   it('gives masters their working tools', () => {
     const paths = getNavItems('MASTER').map((item) => item.to);
-    expect(paths).toEqual(expect.arrayContaining(['/usta/jadval', '/usta/portfolio', '/usta/daromad', '/usta/mening-takliflarim']));
+    expect(paths).toEqual(expect.arrayContaining(['/usta/jadval', '/usta/portfolio', '/usta/daromad', '/usta/takliflar']));
     expect(getNavItems('MASTER').filter((item) => item.primary).length).toBeLessThanOrEqual(4);
     expect(paths.some((path) => path.startsWith('/admin'))).toBe(false);
   });

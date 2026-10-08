@@ -5,6 +5,7 @@ import { MasterStatsService } from '../master/master-stats.service';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { OutboxService } from '../../infrastructure/outbox/outbox.service';
 import { assertTransition } from './order-state-machine';
+import { splitCommission } from '../../common/utils/commission';
 import { CreateWorkProofDto } from './dto/create-work-proof.dto';
 import { OrderHistoryQueryDto } from './dto/order-history-query.dto';
 import { ProposeRescheduleDto } from './dto/propose-reschedule.dto';
@@ -188,7 +189,7 @@ export class OrderService {
       include: {
         booking: { select: { scheduledStartAt: true, service: { select: { id: true, name: true } }, request: { select: { title: true } } } },
         customer: { select: { id: true, accountNumber: true, firstName: true, lastName: true } },
-        master: { select: { user: { select: { id: true, accountNumber: true, firstName: true, lastName: true } } } },
+        master: { select: { profession: true, status: true, verification: true, user: { select: { id: true, accountNumber: true, firstName: true, lastName: true } } } },
       },
     });
     const [customerSeq, masterSeq] = await Promise.all([
@@ -209,7 +210,11 @@ export class OrderService {
         service: booking.service,
         title: booking.request.title,
         scheduledStartAt: booking.scheduledStartAt,
-        counterpart: viewerRole === 'MASTER' ? customer : master.user,
+        // Mijoz uchun: usta kasbi va hozir ochiq profilga ega ekani (profil sahifasi faqat faol, tasdiqlangan ustalar uchun ochiladi).
+        counterpart:
+          viewerRole === 'MASTER'
+            ? customer
+            : { ...master.user, profession: master.profession, available: master.status === 'ACTIVE' && master.verification === 'VERIFIED' },
       };
     });
   }
@@ -568,6 +573,14 @@ export class OrderService {
         where: { id: orderId },
         data: { status: to, ...extraData },
       });
+
+      // Buyurtma yakunlanganda platforma komissiyasi (usta ulushidan) qayd etiladi.
+      if (to === 'COMPLETED') {
+        const { platformFee, masterAmount } = splitCommission(Number(updated.finalAmount));
+        updated.platformFee = new Prisma.Decimal(platformFee);
+        updated.masterAmount = new Prisma.Decimal(masterAmount);
+        await tx.order.update({ where: { id: orderId }, data: { platformFee, masterAmount } });
+      }
 
       await tx.orderStatusHistory.create({
         data: {

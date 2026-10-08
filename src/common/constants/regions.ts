@@ -38,3 +38,5 @@ export function regionOf(lat: number | null | undefined, lon: number | null | un
   }
   return best && best.distance <= MAX_DISTANCE_KM ? best.key : null;
 }
+
+export const regionName = (key: string | null | undefined): string | null => REGIONS.find((region) => region.key === key)?.name ?? null;

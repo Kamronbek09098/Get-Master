@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Clock } from 'lucide-react';
 import { LogoLink } from '@/components/common/Logo';
 import { PublicShowcase } from '@/features/public/PublicShowcase';
+import { SupportContacts } from '@/features/public/SupportContacts';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { env } from '@/lib/env';
 import { CATEGORIES, CUSTOMER_CONTENT, MASTER_CONTENT } from './landing-content';
@@ -201,6 +202,7 @@ function Landing({ content }: { content: LandingContent }) {
       <footer className="gm-landing__footer">
         <LogoLink />
         <p>{t('© {getFullYear} GetMaster. Barcha huquqlar himoyalangan.', { getFullYear: new Date().getFullYear() })}</p>
+        <SupportContacts compact />
         <nav className="gm-landing__footer-links" aria-label={t('Havolalar')}>
           <a href="/katalog#ustalar">{t('Ustalar katalogi')}</a>
           <a href="/katalog#narxlar">{t('Narxlar')}</a>

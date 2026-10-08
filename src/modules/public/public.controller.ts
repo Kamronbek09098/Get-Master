@@ -21,6 +21,13 @@ export class PublicController {
   }
 
   @Public()
+  @RateLimit({ scope: 'ip', limit: 60, windowSeconds: 60 })
+  @Get('regions')
+  regions() {
+    return this.publicService.regions();
+  }
+
+  @Public()
   @RateLimit({ scope: 'ip', limit: 30, windowSeconds: 60 })
   @Get('stats')
   stats() {

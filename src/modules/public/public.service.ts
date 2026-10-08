@@ -1,3 +1,4 @@
+import { REGIONS, regionName } from '../../common/constants/regions';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
@@ -32,6 +33,7 @@ export class PublicService {
     const where: Prisma.MasterProfileWhereInput = {
       ...this.listed(),
       ...(query.mode ? { serviceModes: { has: query.mode } } : {}),
+      ...(query.region ? { region: query.region } : {}),
       ...(query.categoryId ? { services: { some: { isActive: true, service: { isActive: true, categoryId: query.categoryId } } } } : {}),
       ...(q
         ? {
@@ -61,6 +63,7 @@ export class PublicService {
           proUntil: true,
           serviceModes: true,
           placeAddress: true,
+          region: true,
           user: { select: { accountNumber: true, firstName: true, lastName: true } },
           services: { where: { isActive: true, service: { isActive: true } }, take: 3, orderBy: { basePrice: 'asc' }, select: { basePrice: true, service: { select: { name: true } } } },
           _count: { select: { portfolio: { where: { status: 'APPROVED' } } } },
@@ -82,11 +85,20 @@ export class PublicService {
         completedOrders: row.completedOrders,
         works: row._count.portfolio,
         isPro: row.isPro && (!row.proUntil || row.proUntil > now),
+        region: row.region,
+        regionName: regionName(row.region),
         serviceModes: row.serviceModes,
         placeAddress: row.serviceModes.includes('AT_MASTER') ? row.placeAddress : null,
         services: row.services.map((item) => ({ name: item.service.name, price: item.basePrice == null ? null : Number(item.basePrice) })),
       })),
     };
+  }
+
+  /** 14 hudud va ularda nechta faol, tasdiqlangan usta borligi (hududlar filtri uchun). */
+  async regions() {
+    const grouped = await this.db.masterProfile.groupBy({ by: ['region'], where: { ...this.listed(), region: { not: null } }, _count: { _all: true } });
+    const counts = new Map(grouped.map((row) => [row.region, row._count._all]));
+    return REGIONS.map((region) => ({ key: region.key, name: region.name, masters: counts.get(region.key) ?? 0 }));
   }
 
   /** Bosh sahifa raqamlari. Faqat haqiqiy hisob; 5 daqiqa keshlanadi. */

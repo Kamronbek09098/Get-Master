@@ -97,7 +97,7 @@ export function notificationMeta(item: AppNotification, base: '/mijoz' | '/usta'
     case 'payment.failed':
       return { icon: CreditCard, tone: 'danger', to: base === '/mijoz' ? (typeof data.orderId === 'string' ? `/mijoz/buyurtmalar/${data.orderId}/tolov` : '/mijoz/tolovlar') : undefined };
     case 'matching.wave':
-      return { icon: Search, tone: 'warning', to: base === '/usta' ? '/usta/faol-takliflar' : undefined };
+      return { icon: Search, tone: 'warning', to: base === '/usta' ? '/usta/takliflar' : undefined };
     case 'trust.review':
       return { icon: BadgeCheck, tone: data.decision === 'APPROVE' ? 'success' : 'warning', to: '/usta/profil' };
     case 'portfolio.reviewed':

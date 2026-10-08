@@ -28,6 +28,7 @@ export function MasterTile({ master }: { master: PublicMaster }) {
         {master.works > 0 && <span><Images size={14} aria-hidden="true" /> {t('{count} ta rasm', { count: master.works })}</span>}
       </div>
       <ModeBadges modes={master.serviceModes} size="sm" />
+      {master.regionName && <p className="gm-pub__place"><MapPin size={13} aria-hidden="true" /> {master.regionName}</p>}
       {master.serviceModes?.includes('AT_MASTER') && master.placeAddress && <p className="gm-pub__place"><MapPin size={13} aria-hidden="true" /> {master.placeAddress}</p>}
       {master.services.length > 0 && (
         <ul className="gm-pub__svc">

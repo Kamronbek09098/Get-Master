@@ -13,28 +13,13 @@ export interface Offer {
   status: OfferStatus;
   expiresAt: string;
   createdAt: string;
+  /** Faqat ustaning «Yuborgan takliflarim» ro‘yxatida keladi. */
+  request?: { title: string; service: { name: string } | null };
   master?: {
     id: string;
     ratingAvg: string;
     ratingCount: number;
     user: { accountNumber?: number; firstName: string | null; lastName: string | null };
-  };
-}
-
-export interface IncomingRequest {
-  id: string;
-  score: string | null;
-  createdAt: string;
-  request: {
-    id: string;
-    title: string;
-    description: string;
-    status: string;
-    preferredStartAt: string | null;
-    preferredEndAt: string | null;
-    expiresAt: string | null;
-    createdAt: string;
-    offers: Array<{ id: string; status: OfferStatus }>;
   };
 }
 
@@ -64,7 +49,7 @@ export interface OpenRequest {
   photosCount?: number;
 }
 
-export type OpenRequestScope = 'mine' | 'all';
+export type OpenRequestScope = 'mine' | 'all' | 'notified';
 
 export interface CreateOfferInput {
   requestId: string;

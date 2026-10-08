@@ -60,6 +60,8 @@ export interface PublicMaster {
   /** Ish rejimlari: mijoz manzilida va/yoki o‘z joyida (o‘z joyida bo‘lsa — `placeAddress`). */
   serviceModes?: ServiceMode[];
   placeAddress?: string | null;
+  region?: string | null;
+  regionName?: string | null;
   workRadiusKm?: string | number | null;
   serviceAreas?: string[] | null;
   /** Ish hududi: yaxlitlangan markaz (~1 km) va radius. */

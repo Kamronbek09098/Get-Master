@@ -3,6 +3,6 @@ import { CursorQueryDto } from '../../../common/dto/cursor-query.dto';
 
 export class OpenRequestsQueryDto extends CursorQueryDto {
   @IsOptional()
-  @IsIn(['mine', 'all'])
-  scope?: 'mine' | 'all';
+  @IsIn(['mine', 'all', 'notified'])
+  scope?: 'mine' | 'all' | 'notified';
 }

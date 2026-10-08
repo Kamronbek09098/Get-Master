@@ -1,3 +1,4 @@
+import { regionName, regionOf } from '../../common/constants/regions';
 import { nextAvailability } from '../../common/utils/schedule';
 import {
   BadRequestException,
@@ -5,6 +6,7 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  OnApplicationBootstrap,
   NotFoundException,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -48,6 +50,7 @@ const PUBLIC_MASTER_SELECT = {
   pausedUntil: true,
   serviceModes: true,
   placeAddress: true,
+  region: true,
   user: { select: { accountNumber: true, firstName: true, lastName: true } },
   services: {
     where: { isActive: true, service: { isActive: true } },
@@ -78,17 +81,31 @@ function toPublic(row: PublicRow) {
       ? { lat: approxCoordinate(Number(latitude)), lon: approxCoordinate(Number(longitude)), radiusKm: radius }
       : null;
   // «Pro» belgisi faqat obuna muddati tugamagan bo‘lsa (tozalash jarayoni kechiksa ham noto‘g‘ri ko‘rinmasin).
-  return { ...rest, isPro: row.isPro && (!proUntil || proUntil > new Date()), coverage };
+  return { ...rest, regionName: regionName(row.region), isPro: row.isPro && (!proUntil || proUntil > new Date()), coverage };
 }
 
 @Injectable()
-export class MasterService {
+export class MasterService implements OnApplicationBootstrap {
   private readonly logger = new Logger(MasterService.name);
 
   constructor(
     private readonly db: PrismaService,
     private readonly storage: StorageService,
   ) {}
+
+  /** Eski profillar uchun hududni bir marta hisoblaydi (koordinatasi bor, hududi yo‘q). */
+  async onApplicationBootstrap(): Promise<void> {
+    try {
+      const rows = await this.db.masterProfile.findMany({ where: { region: null, latitude: { not: null }, longitude: { not: null } }, select: { id: true, latitude: true, longitude: true } });
+      for (const row of rows) {
+        const region = regionOf(Number(row.latitude), Number(row.longitude));
+        if (region) await this.db.masterProfile.update({ where: { id: row.id }, data: { region } });
+      }
+      if (rows.length > 0) this.logger.log(`${rows.length} ta usta uchun hudud hisoblandi`);
+    } catch (error) {
+      this.logger.warn(`Hududlarni to‘ldirib bo‘lmadi: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
 
   async create(userId: string, dto: CreateMasterDto) {
     const user = await this.db.user.findFirst({
@@ -115,6 +132,7 @@ export class MasterService {
             workRadiusKm: dto.workRadiusKm,
             latitude: dto.latitude,
             longitude: dto.longitude,
+            region: regionOf(dto.latitude, dto.longitude),
             serviceAreas: dto.serviceAreas as Prisma.InputJsonValue | undefined,
             serviceModes: dto.serviceModes,
             placeAddress: dto.placeAddress?.trim() || undefined,
@@ -162,6 +180,10 @@ export class MasterService {
         workRadiusKm: dto.workRadiusKm,
         latitude: dto.latitude,
         longitude: dto.longitude,
+        // Koordinata o‘zgarsa, hudud qayta hisoblanadi.
+        ...(dto.latitude !== undefined || dto.longitude !== undefined
+          ? { region: regionOf(dto.latitude ?? (profile.latitude != null ? Number(profile.latitude) : null), dto.longitude ?? (profile.longitude != null ? Number(profile.longitude) : null)) }
+          : {}),
         serviceAreas: dto.serviceAreas as Prisma.InputJsonValue | undefined,
         serviceModes: dto.serviceModes,
         placeAddress: dto.placeAddress === undefined ? undefined : dto.placeAddress.trim() || null,
@@ -261,6 +283,7 @@ export class MasterService {
       isPaused: false,
       ...(query.minRating !== undefined ? { ratingAvg: { gte: query.minRating } } : {}),
       ...(query.mode ? { serviceModes: { has: query.mode } } : {}),
+      ...(query.region ? { region: query.region } : {}),
       ...(query.serviceId || query.categoryId
         ? {
             services: {
@@ -417,7 +440,10 @@ export class MasterService {
     const now = new Date();
 
     const filters: Prisma.ProblemRequestWhereInput[] = [{ OR: [{ expiresAt: null }, { expiresAt: { gt: now } }] }, { serviceMode: { in: profile.serviceModes } }];
-    if (query.scope === 'mine') {
+    if (query.scope === 'notified') {
+      // Tizim aynan shu ustaga moslab yuborgan so‘rovlar.
+      filters.push({ matchingRuns: { some: { results: { some: { masterId: profile.id, status: 'NOTIFIED' } } } } });
+    } else if (query.scope === 'mine') {
       filters.push({
         OR: [
           { serviceId: { in: [...suggestions.keys()] } },

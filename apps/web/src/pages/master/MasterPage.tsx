@@ -11,6 +11,7 @@ import { useMasters } from '@/features/master/hooks/useMaster';
 import { MasterCard } from '@/features/master/components/MasterCard';
 import { useServiceCategories } from '@/features/service/hooks/useServices';
 import type { ServiceMode } from '@/features/service/types';
+import { RegionSelect } from '@/features/public/RegionSelect';
 import '@/features/master/components/MasterCatalog.css';
 import { t } from '@/i18n';
 
@@ -18,11 +19,12 @@ export function MasterPage() {
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState<string | undefined>();
   const [mode, setMode] = useState<ServiceMode | undefined>();
+  const [region, setRegion] = useState('');
   const debouncedSearch = useDebounce(search, 400);
   const categories = useServiceCategories();
-  const masters = useMasters(debouncedSearch, categoryId, mode);
+  const masters = useMasters(debouncedSearch, categoryId, mode, region || undefined);
   const items = masters.data?.pages.flatMap((page) => page.items) ?? [];
-  const filtered = !!debouncedSearch || !!categoryId || !!mode;
+  const filtered = !!debouncedSearch || !!categoryId || !!mode || !!region;
 
   return (
     <div>
@@ -43,6 +45,8 @@ export function MasterPage() {
           onChange={(event) => setSearch(event.target.value)}
         />
       </div>
+
+      <RegionSelect value={region} onChange={setRegion} className="gm-masters-region" />
 
       <div className="gm-masters-chips" role="group" aria-label={t('Qayerda xizmat ko‘rsatadi')}>
         <button type="button" className="gm-masters-chip" aria-pressed={!mode} onClick={() => setMode(undefined)}>{t('Hammasi')}</button>
@@ -86,6 +90,7 @@ export function MasterPage() {
                   setSearch('');
                   setCategoryId(undefined);
                   setMode(undefined);
+                  setRegion('');
                 }}
               >{t('Filtrni tozalash')}</Button>
             ) : undefined

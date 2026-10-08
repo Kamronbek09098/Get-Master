@@ -36,7 +36,7 @@ export function AppLayout() {
           {role === 'MASTER' && !needsMasterOnboarding && <VerificationBanner />}
           {role === 'MASTER' && needsMasterOnboarding && (
             <Alert tone="info" title={t('Avval usta profilini yarating')}>
-              {t('Faol takliflar, buyurtmalar, portfolio va boshqa bo‘limlar profil yaratilgach ochiladi. Quyidagi shaklda kasbingizni kiriting va «Usta profilini yaratish» tugmasini bosing.')}
+              {t('Takliflar, buyurtmalar, portfolio va boshqa bo‘limlar profil yaratilgach ochiladi. Quyidagi shaklda kasbingizni kiriting va «Usta profilini yaratish» tugmasini bosing.')}
             </Alert>
           )}
           {role === 'CUSTOMER' && <PhoneRequiredBanner />}

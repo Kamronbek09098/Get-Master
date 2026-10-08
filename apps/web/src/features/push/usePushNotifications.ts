@@ -19,7 +19,7 @@ function usePushTarget(): (data: Record<string, unknown>, title?: string, body?:
         return;
       }
       if (!isAdmin && type === 'matching.wave') {
-        navigate(base === '/usta' ? '/usta/faol-takliflar' : `${base}/buyurtmalar`);
+        navigate(base === '/usta' ? '/usta/takliflar' : `${base}/buyurtmalar`);
         return;
       }
       const to = notificationMeta({ id: '', title, body, template: type ?? null, data, status: 'SENT', readAt: null, createdAt: new Date().toISOString() }, base, isAdmin).to;

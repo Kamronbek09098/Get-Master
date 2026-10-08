@@ -161,3 +161,20 @@ select.gm-field__control {
   background: var(--gm-color-surface-muted);
   color: var(--gm-color-text);
 }
+
+.gm-field__suffix {
+  position: absolute;
+  top: 50%;
+  right: var(--gm-space-4);
+  transform: translateY(-50%);
+  color: var(--gm-color-text-muted);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.gm-field__wrap--suffixed .gm-field__control {
+  padding-right: 64px;
+  font-variant-numeric: tabular-nums;
+}

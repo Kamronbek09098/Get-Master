@@ -126,3 +126,23 @@ export function initials(name: string | null | undefined): string {
     .map((word) => word[0]!.toUpperCase())
     .join('');
 }
+
+/** Raqamlarni minglik guruhlaydi: «200000» → «200 000» (kiritish maydoni uchun). */
+export function groupDigits(value: string): string {
+  return value.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+/** Daqiqani o‘qiladigan ko‘rinishga keltiradi: 90 → «1 soat 30 daqiqa», 45 → «45 daqiqa». */
+export function formatMinutes(total: number): string {
+  if (!Number.isFinite(total) || total <= 0) return '';
+  const days = Math.floor(total / 1440);
+  const hours = Math.floor((total % 1440) / 60);
+  const minutes = total % 60;
+  return [
+    days && t('{n} kun', { n: days }),
+    hours && t('{n} soat', { n: hours }),
+    minutes && t('{n} daqiqa', { n: minutes }),
+  ]
+    .filter(Boolean)
+    .join(' ');
+}

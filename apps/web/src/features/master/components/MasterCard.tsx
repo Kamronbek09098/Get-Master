@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BadgeCheck, ChevronRight, Clock, Star } from 'lucide-react';
+import { BadgeCheck, ChevronRight, Clock, MapPin, Star } from 'lucide-react';
 import { accountName } from '@/lib/account-name';
 import { MediaThumbnail } from '@/features/media/components/MediaThumbnail';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
@@ -85,6 +85,9 @@ export function MasterCard({ master }: { master: PublicMaster }) {
       </div>
 
       <ModeBadges modes={master.serviceModes} size="sm" />
+      {master.regionName && (
+        <p className="gm-master__region"><MapPin size={13} aria-hidden="true" /> {master.regionName}</p>
+      )}
 
       {(services.length > 0 || master.profession) && (
         <ul className="gm-master__tags" aria-label={t('Xizmatlar')}>

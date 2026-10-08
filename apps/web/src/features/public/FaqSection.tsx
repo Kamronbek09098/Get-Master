@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Mail, MessageCircle, Phone, Plus } from 'lucide-react';
-import { env } from '@/lib/env';
+import { Plus } from 'lucide-react';
+import { SupportContacts } from './SupportContacts';
 import { cx } from '@/lib/utils';
 import { t } from '@/i18n';
 
@@ -36,7 +36,7 @@ export const FAQ_PREVIEW: Qa[] = [CUSTOMER[0]!, CUSTOMER[2]!, CUSTOMER[3]!, MAST
 const ALL: Qa[] = [...CUSTOMER, ...MASTER, ...GENERAL];
 
 export function Column({ items, offset }: { items: Qa[]; offset: number }) {
-  const [open, setOpen] = useState<number | null>(offset === 0 ? 0 : null);
+  const [open, setOpen] = useState<number | null>(null);
   return (
     <div className="gm-faq__col">
       {items.map((item, index) => (
@@ -53,8 +53,6 @@ export function Column({ items, offset }: { items: Qa[]; offset: number }) {
 }
 
 export function FaqSection() {
-  const { telegram, phone, email } = env.support;
-  const hasContact = !!(telegram || phone || email);
   return (
     <section className="gm-show__block" id="savollar">
       <header className="gm-show__head gm-show__head--faq">
@@ -65,16 +63,7 @@ export function FaqSection() {
       <div className="gm-faq gm-faq--single">
         <Column items={ALL} offset={0} />
       </div>
-      {hasContact && (
-        <div className="gm-pub__contact">
-          <h2>{t('Savolingiz qoldimi?')}</h2>
-          <div>
-            {telegram && <a href={`https://t.me/${telegram}`} target="_blank" rel="noreferrer"><MessageCircle size={18} aria-hidden="true" /> Telegram</a>}
-            {phone && <a href={`tel:${phone.replace(/\s+/g, '')}`}><Phone size={18} aria-hidden="true" /> {phone}</a>}
-            {email && <a href={`mailto:${email}`}><Mail size={18} aria-hidden="true" /> {email}</a>}
-          </div>
-        </div>
-      )}
+      <SupportContacts title={t('Savolingiz qoldimi?')} />
     </section>
   );
 }

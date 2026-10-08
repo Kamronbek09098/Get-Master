@@ -10,7 +10,6 @@ import {
   CalendarClock,
   ClipboardList,
   CreditCard,
-  FileCheck2,
   FileText,
   Images,
   LayoutDashboard,
@@ -19,7 +18,6 @@ import {
   PlusCircle,
   Scale,
   ScrollText,
-  Send,
   Settings,
   ShieldAlert,
   ShieldCheck,
@@ -77,9 +75,7 @@ function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permiss
   }
   if (role === 'MASTER') {
     return [
-      { to: '/usta/faol-takliflar', label: t('Faol takliflar'), short: t('Takliflar'), icon: BriefcaseBusiness, group: 'Ish', primary: true },
-      { to: '/usta/takliflar', label: t('Kelgan so‘rovlar'), icon: Send, group: 'Ish' },
-      { to: '/usta/mening-takliflarim', label: t('Takliflarim'), icon: FileCheck2, group: 'Ish' },
+      { to: '/usta/takliflar', label: t('Takliflar'), icon: BriefcaseBusiness, group: 'Ish', primary: true },
       { to: '/usta/buyurtmalar', label: t('Buyurtmalar'), icon: ClipboardList, group: 'Ish', primary: true },
       { to: '/usta/jadval', label: t('Ish jadvali'), icon: CalendarClock, group: 'Ish' },
       { to: '/usta/portfolio', label: t('Portfolio'), icon: Images, group: 'Ish' },
