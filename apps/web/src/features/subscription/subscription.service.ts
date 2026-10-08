@@ -1,5 +1,5 @@
 import { apiGet, apiPatch, apiPost } from '@/services/api.client';
-import type { AdminSubscriptionList, AdminSummary, MySubscriptions, PayMethod, PlanCode, PlansResponse, SubscriptionRow, SubscriptionStatus } from './types';
+import type { AdminSubscriptionList, AdminSummary, MySubscriptions, PayMethod, PlanCode, PlansResponse, SubscriptionRow, SubscriptionStatus, SubscriptionUserPage } from './types';
 
 export const subscriptionService = {
   plans() {
@@ -36,6 +36,11 @@ export const subscriptionService = {
   },
   revoke(id: string, reason: string) {
     return apiPatch<SubscriptionRow>(`/admin/subscriptions/${id}/revoke`, { reason });
+  },
+  searchUsers(q: string, audience: 'CUSTOMER' | 'MASTER', page: number) {
+    const search = new URLSearchParams({ audience, page: String(page) });
+    if (q.trim()) search.set('q', q.trim());
+    return apiGet<SubscriptionUserPage>(`/admin/subscriptions/users?${search.toString()}`);
   },
   grant(input: { user: string; planCode: PlanCode; months: number; note?: string }) {
     return apiPost<SubscriptionRow>('/admin/subscriptions/grant', input);

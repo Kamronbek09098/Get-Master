@@ -98,11 +98,11 @@ function PendingCard({ row, instructions, plan }: { row: SubscriptionRow; instru
       ) : (
         <>
           <div className="gm-sub__copies">
-            <CopyField label={t('Izoh kodi')} value={row.reference} />
             {instructions.card && <CopyField label={t('Karta raqami')} value={instructions.card} />}
             {instructions.holder && <CopyField label={t('Qabul qiluvchi')} value={instructions.holder} />}
           </div>
-          <p className="gm-sub__note">{instructions.note || t('To‘lov izohiga yuqoridagi kodni yozing, shunda to‘lovingizni tezroq topamiz.')}</p>
+          {instructions.note && <p className="gm-sub__note">{instructions.note}</p>}
+          <p className="gm-sub__pid">{t('To‘lov ID')}: <code>{row.reference}</code></p>
           {!row.hasReceipt ? (
             <div className="gm-sub__receipt">
               <MediaUploadField label={t('To‘lov cheki')} accept="image/*" kind="SUBSCRIPTION_RECEIPT" linkType="Subscription" linkId={row.id} onReady={attachReceipt} />
@@ -260,6 +260,7 @@ export function SubscriptionView({ audience }: { audience: SubscriptionAudience 
                       {row.source === 'GRANT' ? ` · ${t('Sovg‘a')}` : ''}
                       {row.rejectReason ? ` · ${row.rejectReason}` : ''}
                     </small>
+                    <small className="gm-sub__pid">{t('To‘lov ID')}: <code>{row.reference}</code></small>
                   </div>
                   <Badge tone={badge.tone}>{badge.label()}</Badge>
                 </li>

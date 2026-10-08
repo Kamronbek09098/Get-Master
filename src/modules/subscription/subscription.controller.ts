@@ -4,7 +4,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RateLimit } from '../../common/decorators/rate-limit.decorator';
 import { RequiresPermission } from '../../common/decorators/permission.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { AdminSubscriptionQueryDto, AttachReceiptDto, GrantSubscriptionDto, RejectSubscriptionDto, RequestSubscriptionDto } from './dto/subscription.dto';
+import { AdminSubscriptionQueryDto, AttachReceiptDto, SubscriptionUserQueryDto, GrantSubscriptionDto, RejectSubscriptionDto, RequestSubscriptionDto } from './dto/subscription.dto';
 import { SubscriptionService } from './subscription.service';
 
 @Controller('subscriptions')
@@ -48,6 +48,11 @@ export class AdminSubscriptionController {
   @Get()
   list(@Query() query: AdminSubscriptionQueryDto) {
     return this.subscriptions.adminList(query);
+  }
+
+  @Get('users')
+  users(@Query() query: SubscriptionUserQueryDto) {
+    return this.subscriptions.searchUsers(query);
   }
 
   @Get('summary')

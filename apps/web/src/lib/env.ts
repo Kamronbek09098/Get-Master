@@ -24,5 +24,11 @@ export const env = {
   /** Google profilidan telefonni ham so‘rash (Google Cloud'da People API va user.phonenumbers.read ruxsati sozlangan bo‘lsa). */
   googlePhone: import.meta.env.VITE_GOOGLE_PHONE === '1',
   googleClientId: (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) ?? '',
+  /** Aloqa ma’lumotlari (ixtiyoriy): faqat berilganlari «Savollar» sahifasida ko‘rsatiladi. */
+  support: {
+    telegram: (import.meta.env.VITE_SUPPORT_TELEGRAM as string | undefined)?.replace(/^@/, '') ?? '',
+    phone: (import.meta.env.VITE_SUPPORT_PHONE as string | undefined) ?? '',
+    email: (import.meta.env.VITE_SUPPORT_EMAIL as string | undefined) ?? '',
+  },
   appRole: ROLES.find((role) => role === configuredRole) ?? null,
 } as const;

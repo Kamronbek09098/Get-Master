@@ -12,8 +12,9 @@ import { Select } from '@/components/ui/Select';
 import { getErrorMessage } from '@/lib/error-messages';
 import { cx, formatDate, formatDateTime, formatMoney } from '@/lib/utils';
 import { MediaViewer } from '@/features/media/components/MediaViewer';
-import { useAdminSubscriptionActions, useAdminSubscriptionSummary, useAdminSubscriptions } from '@/features/subscription/hooks';
-import type { AdminSubscriptionRow, PlanCode, SubscriptionStatus } from '@/features/subscription/types';
+import { useDebounce } from '@/hooks/useDebounce';
+import { useAdminSubscriptionActions, useAdminSubscriptionSummary, useAdminSubscriptions, useSubscriptionUserSearch } from '@/features/subscription/hooks';
+import type { AdminSubscriptionRow, PlanCode, SubscriptionStatus, SubscriptionUserHit } from '@/features/subscription/types';
 import './AdminSubscriptionsPage.css';
 import { t } from '@/i18n';
 
@@ -59,12 +60,85 @@ function ReasonDialog({ title, confirm, busy, error, onSubmit, onClose }: { titl
   );
 }
 
+function initials(name: string): string {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]!.toUpperCase()).join('');
+}
+
+function UserPicker({ audience, value, onChange }: { audience: 'CUSTOMER' | 'MASTER'; value: SubscriptionUserHit | null; onChange: (user: SubscriptionUserHit | null) => void }) {
+  const [text, setText] = useState('');
+  const [open, setOpen] = useState(false);
+  const query = useDebounce(text, 250);
+  const search = useSubscriptionUserSearch(query.trim(), audience, open && !value);
+  const items = search.data?.pages.flatMap((page) => page.items) ?? [];
+  const pick = (user: SubscriptionUserHit) => {
+    onChange(user);
+    setOpen(false);
+    setText('');
+  };
+  if (value) {
+    return (
+      <div className="gm-asub__field">
+        <span className="gm-asub__label">{t('Foydalanuvchi')}</span>
+        <div className="gm-asub__picked">
+          <span className="gm-asub__avatar" aria-hidden="true">{initials(value.name)}</span>
+          <span className="gm-asub__hit-text"><strong>{value.name}</strong><small>ID {value.accountNumber}{value.phone ? ` · ${value.phone}` : ''}</small></span>
+          <Button variant="secondary" size="sm" onClick={() => onChange(null)}>{t('O‘zgartirish')}</Button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="gm-asub__field">
+      <label className="gm-asub__label" htmlFor="gm-asub-user">{t('Foydalanuvchi')}</label>
+      <div className="gm-asub__search">
+        <Search size={16} aria-hidden="true" />
+        <input
+          id="gm-asub-user"
+          autoComplete="off"
+          autoFocus
+          value={text}
+          maxLength={80}
+          placeholder={t('Ism, familiya, telefon yoki ID')}
+          onFocus={() => setOpen(true)}
+          onChange={(event) => { setText(event.target.value); setOpen(true); }}
+        />
+      </div>
+      {open && (
+        <div className="gm-asub__results" role="listbox">
+          {search.isLoading && <p className="gm-asub__hint">{t('Qidirilmoqda')}</p>}
+          {search.isError && <p className="gm-asub__hint">{getErrorMessage(search.error)}</p>}
+          {!search.isLoading && !search.isError && items.length === 0 && <p className="gm-asub__hint">{t('Hech kim topilmadi')}</p>}
+          {!query.trim() && items.length > 0 && <p className="gm-asub__hint">{t('Yangi ro‘yxatdan o‘tganlar tepada')}</p>}
+          {items.map((user) => (
+            <button key={user.id} type="button" role="option" aria-selected={false} className="gm-asub__hit" onClick={() => pick(user)}>
+              <span className="gm-asub__avatar" aria-hidden="true">{initials(user.name)}</span>
+              <span className="gm-asub__hit-text">
+                <strong>{user.name}</strong>
+                <small>ID {user.accountNumber}{user.phone ? ` · ${user.phone}` : ''} · {formatDate(user.createdAt)}</small>
+              </span>
+              <span className="gm-asub__chips">
+                {user.isMaster && <Badge tone="neutral">{t('Usta')}</Badge>}
+                {user.plus && <Badge tone="primary">Plus</Badge>}
+                {user.pro && <Badge tone="warning">Pro</Badge>}
+              </span>
+            </button>
+          ))}
+          {search.hasNextPage && (
+            <Button variant="ghost" size="sm" loading={search.isFetchingNextPage} onClick={() => void search.fetchNextPage()}>{t('Yana ko‘rsatish')}</Button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function GrantDialog({ onClose }: { onClose: () => void }) {
   const { grant } = useAdminSubscriptionActions();
-  const [user, setUser] = useState('');
+  const [user, setUser] = useState<SubscriptionUserHit | null>(null);
   const [planCode, setPlanCode] = useState<PlanCode>('CUSTOMER_PLUS');
   const [months, setMonths] = useState('1');
   const [note, setNote] = useState('');
+  const audience = planCode === 'MASTER_PRO' ? 'MASTER' : 'CUSTOMER';
   return (
     <Modal
       open
@@ -73,7 +147,7 @@ function GrantDialog({ onClose }: { onClose: () => void }) {
       footer={
         <>
           <Button variant="secondary" onClick={onClose} disabled={grant.isPending}>{t('Bekor qilish')}</Button>
-          <Button loading={grant.isPending} disabled={!user.trim()} onClick={() => grant.mutate({ user: user.trim(), planCode, months: Number(months), note: note.trim() || undefined }, { onSuccess: onClose })}>
+          <Button loading={grant.isPending} disabled={!user} onClick={() => user && grant.mutate({ user: user.id, planCode, months: Number(months), note: note.trim() || undefined }, { onSuccess: onClose })}>
             <Gift size={16} aria-hidden="true" /> {t('Sovg‘a qilish')}
           </Button>
         </>
@@ -81,11 +155,11 @@ function GrantDialog({ onClose }: { onClose: () => void }) {
     >
       <div className="gm-asub__dialog">
         {grant.isError && <Alert tone="danger">{getErrorMessage(grant.error)}</Alert>}
-        <Input label={t('Foydalanuvchi ID raqami')} inputMode="numeric" value={user} onChange={(event) => setUser(event.target.value)} maxLength={40} autoFocus />
         <div className="gm-asub__two">
-          <Select label={t('Reja')} value={planCode} onChange={(event) => setPlanCode(event.target.value as PlanCode)} options={[{ value: 'CUSTOMER_PLUS', label: t('Mijoz · Plus') }, { value: 'MASTER_PRO', label: t('Usta · Pro') }]} />
+          <Select label={t('Reja')} value={planCode} onChange={(event) => { setPlanCode(event.target.value as PlanCode); setUser(null); }} options={[{ value: 'CUSTOMER_PLUS', label: t('Mijoz · Plus') }, { value: 'MASTER_PRO', label: t('Usta · Pro') }]} />
           <Select label={t('Muddat')} value={months} onChange={(event) => setMonths(event.target.value)} options={[1, 2, 3, 6, 12].map((value) => ({ value: String(value), label: value === 12 ? t('1 yil') : t('{months} oy', { months: value }) }))} />
         </div>
+        <UserPicker audience={audience} value={user} onChange={setUser} />
         <Input label={t('Izoh (ixtiyoriy)')} value={note} onChange={(event) => setNote(event.target.value)} maxLength={300} />
       </div>
     </Modal>
@@ -116,7 +190,7 @@ function Row({ row }: { row: AdminSubscriptionRow }) {
         <div className="gm-asub__meta">
           {row.method && <span>{METHOD[row.method] ?? row.method}</span>}
           {row.providerTxId && <span>Tx: <code>{row.providerTxId}</code></span>}
-          <code>{row.reference}</code>
+          <span>{t('To‘lov ID')}: <code>{row.reference}</code></span>
           <span>{formatDateTime(row.createdAt)}</span>
           {row.endsAt && <span>{t('{date} gacha', { date: formatDate(row.endsAt) })}</span>}
           {row.rejectReason && <span className="gm-asub__reason">{row.rejectReason}</span>}

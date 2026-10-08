@@ -7,6 +7,7 @@ import { env } from '@/lib/env';
 import { t } from '@/i18n';
 import { useSmoothScroll } from '../fx/useSmoothScroll';
 import { ServiceBelt } from '../fx/ServiceBelt';
+import { PublicShowcase } from '@/features/public/PublicShowcase';
 import './portal.css';
 
 
@@ -180,6 +181,9 @@ function Hero() {
             <a href="#qanday">{t('Qanday ishlaydi')}</a>
             <a href="#ikki-tomon">{t('Mijoz va usta')}</a>
             <a href="#ishonch-bolim">{t('Ishonch')}</a>
+            <a href="#ustalar">{t('Ustalar')}</a>
+            <a href="#narxlar">{t('Narxlar')}</a>
+            <a href="#savollar">{t('Savollar')}</a>
           </div>
           <ThemeToggle />
         </div>
@@ -401,7 +405,12 @@ function Finale() {
       <footer className="gm-portal__footer">
         <LogoLink />
         <p>{t('© {getFullYear} GetMaster. Barcha huquqlar himoyalangan.', { getFullYear: new Date().getFullYear() })}</p>
-        <a href="/shartlar">{t('Foydalanish shartlari')}</a>
+        <nav className="gm-portal__footer-links" aria-label={t('Havolalar')}>
+          <a href="#ustalar">{t('Ustalar katalogi')}</a>
+          <a href="#narxlar">{t('Narxlar')}</a>
+          <a href="#savollar">{t('Savollar')}</a>
+          <a href="/shartlar">{t('Foydalanish shartlari')}</a>
+        </nav>
       </footer>
     </section>
   );
@@ -420,6 +429,7 @@ export function PortalPage() {
       <HowItWorks />
       <Sides />
       <Trust />
+      <PublicShowcase />
       <Finale />
     </div>
   );

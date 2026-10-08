@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth.store';
 import { subscriptionService } from './subscription.service';
 import type { PayMethod, PlanCode, SubscriptionStatus } from './types';
@@ -66,4 +66,17 @@ export function useAdminSubscriptionActions() {
     revoke: useMutation({ mutationFn: ({ id, reason }: { id: string; reason: string }) => subscriptionService.revoke(id, reason), onSuccess: done }),
     grant: useMutation({ mutationFn: (input: Parameters<typeof subscriptionService.grant>[0]) => subscriptionService.grant(input), onSuccess: done }),
   };
+}
+
+/** Sovg‘a uchun foydalanuvchi qidiruvi: bo‘sh so‘rovda — ro‘yxatdan o‘tgan sana bo‘yicha yangilari tepada. */
+export function useSubscriptionUserSearch(q: string, audience: 'CUSTOMER' | 'MASTER', enabled: boolean) {
+  return useInfiniteQuery({
+    queryKey: ['admin', 'subscription-users', q, audience],
+    queryFn: ({ pageParam }) => subscriptionService.searchUsers(q, audience, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (last) => (last.hasMore ? last.page + 1 : undefined),
+    enabled,
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
+  });
 }

@@ -73,3 +73,20 @@ export class SubscriptionIdParam {
   @IsUUID('4')
   id!: string;
 }
+
+export class SubscriptionUserQueryDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  q?: string;
+
+  @IsOptional()
+  @IsIn(['CUSTOMER', 'MASTER'])
+  audience?: 'CUSTOMER' | 'MASTER';
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+}

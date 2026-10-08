@@ -371,3 +371,5 @@ img.gm-portal__hero-media { animation: gm-pt-push 36s ease-in-out infinite alter
 .gm-portal__door { justify-content: center; gap: 20px; padding-inline: clamp(22px, 3vw, 36px); }
 .gm-portal__door-body { flex: 0 1 auto; }
 .gm-portal__door-go { margin-left: 6px; }
+
+.gm-portal__footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; }

@@ -48,3 +48,20 @@
 .gm-asub__wait { color: var(--gm-color-text-muted); font-size: 0.86rem; font-weight: 600; }
 .gm-asub__actions { align-items: center; }
 @media (max-width: 640px) { .gm-asub__filters { grid-template-columns: 1fr; } }
+
+.gm-asub__field { display: grid; gap: 6px; }
+.gm-asub__label { font-size: 0.9rem; font-weight: 600; color: var(--gm-color-text); }
+.gm-asub__search { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 12px; border: 1px solid var(--gm-color-border); border-radius: 12px; background: var(--gm-color-surface); color: var(--gm-color-text-muted); }
+.gm-asub__search:focus-within { border-color: var(--gm-color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gm-color-primary) 18%, transparent); }
+.gm-asub__search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--gm-color-text); font: inherit; }
+.gm-asub__results { display: grid; gap: 4px; max-height: 280px; overflow-y: auto; padding: 6px; border: 1px solid var(--gm-color-border); border-radius: 12px; background: var(--gm-color-surface); }
+.gm-asub__hint { margin: 0; padding: 6px 8px; font-size: 0.8rem; color: var(--gm-color-text-muted); }
+.gm-asub__hit, .gm-asub__picked { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 10px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.gm-asub__hit:hover, .gm-asub__hit:focus-visible { background: color-mix(in srgb, var(--gm-color-primary) 10%, transparent); outline: 0; }
+.gm-asub__picked { cursor: default; border: 1px solid var(--gm-color-border); background: var(--gm-color-surface); }
+.gm-asub__avatar { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: color-mix(in srgb, var(--gm-color-primary) 16%, transparent); color: var(--gm-color-primary); font-size: 0.8rem; font-weight: 700; }
+.gm-asub__hit-text { flex: 1; min-width: 0; display: grid; }
+.gm-asub__hit-text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.92rem; }
+.gm-asub__hit-text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gm-color-text-muted); font-size: 0.76rem; }
+.gm-asub__chips { flex: none; display: flex; gap: 4px; }
+@media (max-width: 520px) { .gm-asub__chips { display: none; } }

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Clock } from 'lucide-react';
 import { LogoLink } from '@/components/common/Logo';
+import { PublicShowcase } from '@/features/public/PublicShowcase';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 import { env } from '@/lib/env';
 import { CATEGORIES, CUSTOMER_CONTENT, MASTER_CONTENT } from './landing-content';
@@ -110,6 +111,9 @@ function Landing({ content }: { content: LandingContent }) {
             <a href="#qanday">{t('Qanday ishlaydi')}</a>
             {content.showCategories && <a href="#xizmatlar">{t('Xizmatlar')}</a>}
             <a href="#ishonch">{t('Ishonch')}</a>
+            <a href="#ustalar">{t('Ustalar')}</a>
+            <a href="#narxlar">{t('Narxlar')}</a>
+            <a href="#savollar">{t('Savollar')}</a>
           </nav>
           <div className="gm-landing__nav-actions">
             <ThemeToggle />
@@ -192,9 +196,17 @@ function Landing({ content }: { content: LandingContent }) {
         </Link>
       </section>
 
+      <PublicShowcase />
+
       <footer className="gm-landing__footer">
         <LogoLink />
         <p>{t('© {getFullYear} GetMaster. Barcha huquqlar himoyalangan.', { getFullYear: new Date().getFullYear() })}</p>
+        <nav className="gm-landing__footer-links" aria-label={t('Havolalar')}>
+          <a href="#ustalar">{t('Ustalar katalogi')}</a>
+          <a href="#narxlar">{t('Narxlar')}</a>
+          <a href="#savollar">{t('Savollar')}</a>
+          <Link to="/shartlar">{t('Foydalanish shartlari')}</Link>
+        </nav>
       </footer>
     </div>
   );

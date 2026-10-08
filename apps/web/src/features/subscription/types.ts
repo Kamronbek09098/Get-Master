@@ -88,3 +88,20 @@ export interface AdminSubscriptionList {
   limit: number;
   counts: Partial<Record<SubscriptionStatus, number>>;
 }
+
+export interface SubscriptionUserHit {
+  id: string;
+  accountNumber: number;
+  name: string;
+  phone: string | null;
+  createdAt: string;
+  isMaster: boolean;
+  plus: string | null;
+  pro: string | null;
+}
+
+export interface SubscriptionUserPage {
+  items: SubscriptionUserHit[];
+  page: number;
+  hasMore: boolean;
+}

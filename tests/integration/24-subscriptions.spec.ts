@@ -230,4 +230,28 @@ describe('subscriptions: plans, requests and admin decisions', () => {
     const normal = await h.post('/problem-requests', customer.token, { title: 'Oddiy', description: 'Oddiy so‘rov uchun yetarlicha uzun tavsif matni.', serviceId: (await firstService(h)).id, latitude: 41.3, longitude: 69.2 });
     expect((await h.db.problemRequest.findUniqueOrThrow({ where: { id: normal.data.id }, select: { isPriority: true } })).isPriority).toBe(false);
   });
+
+  it('user search for gifting: full-name tokens in any order, phone/ID, newest registered first when empty, masters filter, admins excluded', async () => {
+    const stamp = `Qidiruv${Date.now() % 100000}`;
+    const older = await createUser(h, ['CUSTOMER'], { firstName: stamp });
+    await h.db.user.update({ where: { id: older.id }, data: { lastName: 'Karimov', createdAt: new Date(Date.now() - 5 * 86_400_000) } });
+    const newer = await createUser(h, ['CUSTOMER'], { firstName: stamp });
+    await h.db.user.update({ where: { id: newer.id }, data: { lastName: 'Aliyev' } });
+    const byName = await h.get(`/admin/subscriptions/users?q=${stamp}`, admin.token);
+    expect(byName.status).toBe(200);
+    expect(byName.data.items.map((item: { id: string }) => item.id)).toEqual([newer.id, older.id]); // yangi tepada
+    const reversed = await h.get(`/admin/subscriptions/users?q=${encodeURIComponent('karimov ' + stamp.toLowerCase())}`, admin.token);
+    expect(reversed.data.items.map((item: { id: string }) => item.id)).toEqual([older.id]); // ism-familiya tartibi muhim emas
+    const byPhone = await h.get(`/admin/subscriptions/users?q=${encodeURIComponent(older.phone)}`, admin.token);
+    expect(byPhone.data.items[0].id).toBe(older.id);
+    const empty = await h.get('/admin/subscriptions/users', admin.token);
+    const dates = empty.data.items.map((item: { createdAt: string }) => new Date(item.createdAt).getTime());
+    expect(dates).toEqual([...dates].sort((a, b) => b - a));
+    expect(empty.data.items.some((item: { id: string }) => item.id === admin.id)).toBe(false); // adminlar chiqmaydi
+    const masters = await h.get('/admin/subscriptions/users?audience=MASTER', admin.token);
+    expect(masters.data.items.length).toBeGreaterThan(0);
+    expect(masters.data.items.every((item: { isMaster: boolean }) => item.isMaster)).toBe(true);
+    expect((await h.get('/admin/subscriptions/users', customer.token)).status).toBe(403);
+    expect((await h.get('/admin/subscriptions/users?audience=ROBOT', admin.token)).status).toBe(400);
+  });
 });

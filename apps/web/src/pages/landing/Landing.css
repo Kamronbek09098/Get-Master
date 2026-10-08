@@ -1639,3 +1639,7 @@
 .gm-landing__stats { transform: none; margin-top: clamp(28px, 4vw, 48px); }
 
 .gm-film-placeholder { height: 100vh; height: 100svh; background: #060d2b; }
+
+.gm-landing__footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; }
+.gm-landing__footer-links a { color: var(--gm-color-text-muted); font-size: 0.9rem; font-weight: 600; text-decoration: none; }
+.gm-landing__footer-links a:hover { color: var(--gm-color-text); }

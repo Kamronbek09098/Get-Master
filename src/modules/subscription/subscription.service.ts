@@ -39,6 +39,11 @@ const view = (row: Subscription) => ({
 });
 
 /** Obunalar: tarif rejalari, to‘lov so‘rovi, admin tasdig‘i/sovg‘asi, muddat tugashi va imkoniyatlarni tekshirish. */
+/** Har bir to‘lov uchun noyob ID (To‘lov ID). */
+function paymentId(): string {
+  return `GM-${randomBytes(6).toString('hex').toUpperCase()}`;
+}
+
 @Injectable()
 export class SubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
@@ -196,7 +201,7 @@ export class SubscriptionService {
         status: 'PENDING',
         source: 'PURCHASE',
         method: dto.method,
-        reference: `GM-${randomBytes(4).toString('hex').toUpperCase()}`,
+        reference: paymentId(),
       },
     });
     if (dto.method === 'CARD') {
@@ -300,6 +305,67 @@ export class SubscriptionService {
     };
   }
 
+  /**
+   * Obuna sovg‘a qilish uchun foydalanuvchi qidirish: ism-familiya (qismi bilan, so‘zlar tartibidan qat’i nazar), telefon yoki ID bo‘yicha.
+   * Qidiruv bo‘sh bo‘lsa — barcha foydalanuvchilar ro‘yxatdan o‘tgan sana bo‘yicha: yangilari tepada.
+   */
+  async searchUsers(query: { q?: string; audience?: SubscriptionAudience; page?: number }) {
+    const limit = 20;
+    const page = Math.max(query.page ?? 1, 1);
+    const q = query.q?.trim() ?? '';
+    const tokens = q.split(/\s+/).filter(Boolean).slice(0, 4);
+    const and: Prisma.UserWhereInput[] = tokens.map((token) => {
+      const numeric = /^\d{1,9}$/.test(token) ? Number(token) : null;
+      return {
+        OR: [
+          { firstName: { contains: token, mode: 'insensitive' } },
+          { lastName: { contains: token, mode: 'insensitive' } },
+          { phone: { contains: token.replace(/\s/g, '') } },
+          ...(numeric !== null ? [{ accountNumber: numeric }] : []),
+        ],
+      };
+    });
+    const where: Prisma.UserWhereInput = {
+      deletedAt: null,
+      status: 'ACTIVE',
+      userRoles: { none: { role: Role.ADMIN }, ...(query.audience === 'MASTER' ? { some: { role: Role.MASTER } } : {}) },
+      ...(and.length ? { AND: and } : {}),
+    };
+    const [total, rows] = await Promise.all([
+      this.db.user.count({ where }),
+      this.db.user.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: (page - 1) * limit,
+        take: limit,
+        select: { id: true, accountNumber: true, firstName: true, lastName: true, phone: true, createdAt: true, userRoles: { select: { role: true } } },
+      }),
+    ]);
+    const now = new Date();
+    const active = rows.length
+      ? await this.db.subscription.findMany({
+          where: { userId: { in: rows.map((row) => row.id) }, status: 'ACTIVE', startsAt: { lte: now }, endsAt: { gt: now } },
+          select: { userId: true, audience: true, endsAt: true },
+        })
+      : [];
+    return {
+      items: rows.map((row) => ({
+        id: row.id,
+        accountNumber: row.accountNumber,
+        name: fullName(row),
+        phone: row.phone,
+        createdAt: row.createdAt,
+        isMaster: row.userRoles.some((item) => item.role === Role.MASTER),
+        plus: active.filter((sub) => sub.userId === row.id && sub.audience === 'CUSTOMER').map((sub) => sub.endsAt)[0] ?? null,
+        pro: active.filter((sub) => sub.userId === row.id && sub.audience === 'MASTER').map((sub) => sub.endsAt)[0] ?? null,
+      })),
+      total,
+      page,
+      limit,
+      hasMore: page * limit < total,
+    };
+  }
+
   async approve(adminId: string, id: string) {
     const row = await this.db.subscription.findUnique({ where: { id } });
     if (!row) throw new NotFoundException(ERRORS.SUBSCRIPTION_NOT_FOUND);
@@ -343,7 +409,7 @@ export class SubscriptionService {
     if (plan.audience === 'MASTER' && !user.userRoles.some((item) => item.role === Role.MASTER)) throw new BadRequestException(ERRORS.SUBSCRIPTION_MASTER_ONLY);
     const created = await this.db.$transaction(async (tx) => {
       const row = await tx.subscription.create({
-        data: { userId: user.id, audience: plan.audience, planCode: plan.code, months: dto.months, amount: 0, status: 'PENDING', source: 'GRANT', reference: `GM-${randomBytes(4).toString('hex').toUpperCase()}`, note: dto.note?.trim() || null, decidedById: adminId, decidedAt: new Date() },
+        data: { userId: user.id, audience: plan.audience, planCode: plan.code, months: dto.months, amount: 0, status: 'PENDING', source: 'GRANT', reference: paymentId(), note: dto.note?.trim() || null, decidedById: adminId, decidedAt: new Date() },
       });
       const active = await this.activate(tx, row);
       await tx.auditLog.create({ data: { actorId: adminId, action: 'SUBSCRIPTION_GRANTED', targetType: 'Subscription', targetId: row.id, after: { userId: user.id, plan: plan.code, months: dto.months, note: dto.note ?? null } } });

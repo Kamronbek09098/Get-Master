@@ -179,3 +179,6 @@
   .gm-sub__save { position: absolute; top: -10px; right: 14px; left: auto; padding: 2px 9px; background: var(--gm-color-success-bg); border: 1px solid color-mix(in srgb, var(--gm-color-success) 25%, transparent); }
   .gm-sub__period em { left: 14px; top: -10px; transform: none; }
 }
+
+.gm-sub__pid { margin: 0; font-size: 0.8rem; color: var(--gm-color-text-muted); }
+.gm-sub__pid code { font-family: ui-monospace, monospace; font-weight: 600; color: var(--gm-color-text); user-select: all; }

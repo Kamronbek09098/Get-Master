@@ -4,3 +4,5 @@ Disallow: /admin
 Disallow: /mijoz
 Disallow: /usta
 Disallow: /sozlamalar
+
+Sitemap: https://getmaster.uz/sitemap.xml

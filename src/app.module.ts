@@ -52,6 +52,7 @@ import { PaymentModule } from './modules/payment/payment.module';
 import { RequestModule } from './modules/request/request.module';
 import { ReviewModule } from './modules/review/review.module';
 import { ServiceModule } from './modules/service/service.module';
+import { PublicModule } from './modules/public/public.module';
 import { TrustModule } from './modules/trust/trust.module';
 import { MailModule } from './modules/mail/mail.module';
 import { MediaModule } from './modules/media/media.module';
@@ -69,7 +70,7 @@ import { ErrorLogModule } from './modules/error-log/error-log.module';
     ScheduleModule.forRoot(), RedisModule, QueueModule, OutboxModule, PaymentProviderModule,
     MetricsModule, TelegramModule, SmsModule, CallModule, SubscriptionModule, PrismaModule, AuthModule, OtpModule, AdminModule, BookingModule, ClassificationModule, CommunicationModule,
     ComplaintModule, CustomerModule, GeoModule, DisputeModule, MailModule, MasterModule, MatchingModule, MediaModule, NotificationModule,
-    OfferModule, OrderModule, PaymentModule, RequestModule, ReviewModule, ServiceModule, TrustModule,
+    OfferModule, OrderModule, PaymentModule, RequestModule, ReviewModule, ServiceModule, PublicModule, TrustModule,
     WorkModule, WarrantyModule, LegalModule, TrustSafetyModule, AuditModule, UsersModule, ErrorLogModule,
   ],
   controllers: [AppController],

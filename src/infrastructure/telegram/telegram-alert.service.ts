@@ -112,7 +112,7 @@ export class TelegramAlertService implements OnModuleInit {
       '💳 <b>Yangi obuna so‘rovi</b>',
       `Foydalanuvchi: <b>${escapeHtml(input.name)}</b> · ID ${input.account}${input.phone ? ` (${escapeHtml(input.phone)})` : ''}`,
       `Reja: <b>${escapeHtml(input.plan)}</b> · ${input.amount.toLocaleString('ru-RU')} so‘m`,
-      `Usul: ${escapeHtml(input.method)} · Izoh kodi: <code>${escapeHtml(input.reference)}</code>`,
+      `Usul: ${escapeHtml(input.method)} · To‘lov ID: <code>${escapeHtml(input.reference)}</code>`,
       'Admin panel → Obunalar bo‘limida tasdiqlang.',
     ].join('\n');
     void this.post(this.credentialsChatId, text, 'obuna so‘rovi', this.securityThreadId ?? this.credentialsThreadId);
