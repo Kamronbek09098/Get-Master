@@ -1,16 +1,12 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight, Heart, Wallet } from 'lucide-react';
+import { ChevronRight, Heart } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
 import { ProfileCard } from '@/features/profile/ProfileCard';
-import { PROVIDER_OPTIONS } from '@/features/payment/labels';
 import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
 import { t } from '@/i18n';
-import { useCustomerPreferences, useUpdatePreferences } from '../hooks/useCustomer';
 import { useFavorites, useToggleFavorite } from '../hooks/useFavorites';
 import './CustomerActivity.css';
-
-const SELECTABLE = PROVIDER_OPTIONS.filter((option) => option.value !== 'OTHER');
 
 /** Saqlangan ustalar. */
 export function SavedMastersCard() {
@@ -47,34 +43,6 @@ export function SavedMastersCard() {
           ))}
         </ul>
       )}
-    </ProfileCard>
-  );
-}
-
-/** Afzal ko‘rilgan to‘lov usuli: to‘lov oynasida oldindan tanlanadi. */
-export function PaymentPreferenceCard() {
-  const preferences = useCustomerPreferences();
-  const update = useUpdatePreferences();
-  const current = preferences.data?.paymentMethod ?? 'CASH';
-  return (
-    <ProfileCard icon={Wallet} title={t('To‘lov usuli')} hint={t('To‘lov oynasida shu usul oldindan tanlanadi.')}>
-      <div className="gm-paypref" role="radiogroup" aria-label={t('To‘lov usuli')}>
-        {SELECTABLE.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={current === option.value}
-            className={current === option.value ? 'gm-paypref__item is-on' : 'gm-paypref__item'}
-            disabled={preferences.isLoading || update.isPending}
-            onClick={() => update.mutate({ paymentMethod: option.value as 'CASH' | 'CLICK' | 'PAYME' | 'UZUM' })}
-          >
-            <strong>{option.label}</strong>
-            <small>{option.hint}</small>
-          </button>
-        ))}
-      </div>
-      {update.isError && <Alert tone="danger">{getErrorMessage(update.error)}</Alert>}
     </ProfileCard>
   );
 }

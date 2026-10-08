@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import { CalendarDays, ClipboardList, Heart, LogOut, MapPin, Package, Settings, UserRound, Users, Wallet } from 'lucide-react';
+import { CalendarDays, ClipboardList, Heart, LogOut, MapPin, Package, Settings, UserRound, Users } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -8,13 +8,12 @@ import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDate } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
-import { useAddresses, useCustomerPreferences, useCustomerProfile } from '@/features/customer/hooks/useCustomer';
+import { useAddresses, useCustomerProfile } from '@/features/customer/hooks/useCustomer';
 import { useFavorites } from '@/features/customer/hooks/useFavorites';
-import { PaymentPreferenceCard, SavedMastersCard } from '@/features/customer/components/CustomerSaved';
+import { SavedMastersCard } from '@/features/customer/components/CustomerSaved';
 import { CustomerActivity } from '@/features/customer/components/CustomerActivity';
 import { CustomerForm } from '@/features/customer/components/CustomerForm';
 import { LogoutDialog } from '@/features/auth/components/LogoutDialog';
-import { providerLabel } from '@/features/payment/labels';
 import { useMyOrders } from '@/features/order/hooks/useOrders';
 import { useMyRequests } from '@/features/request/hooks/useRequests';
 import { ProfileHero } from '@/features/profile/ProfileHero';
@@ -34,7 +33,6 @@ export function CustomerProfilePage() {
   const orders = useMyOrders();
   const requests = useMyRequests();
   const favorites = useFavorites();
-  const preferences = useCustomerPreferences();
   const [logoutOpen, setLogoutOpen] = useState(false);
 
   if (profile.isLoading) return <PageLoader label={t('Profil yuklanmoqda…')} />;
@@ -80,13 +78,6 @@ export function CustomerProfilePage() {
       </ProfileSubPage>
     );
   }
-  if (section === 'tolov') {
-    return (
-      <ProfileSubPage title={t('To‘lov usuli')} backTo={BASE}>
-        <PaymentPreferenceCard />
-      </ProfileSubPage>
-    );
-  }
   if (section) return <Navigate to={BASE} replace />;
 
   return (
@@ -119,7 +110,6 @@ export function CustomerProfilePage() {
           { key: 'addr', icon: MapPin, label: t('Manzillarim'), value: addressCount || undefined, to: '/mijoz/manzillar' },
           { key: 'masters', icon: Users, label: t('Birga ishlagan ustalar'), to: `${BASE}/ustalar` },
           { key: 'saved', icon: Heart, label: t('Saqlangan ustalar'), value: favorites.data?.length || undefined, to: `${BASE}/saqlangan` },
-          { key: 'pay', icon: Wallet, label: t('To‘lov usuli'), value: providerLabel(preferences.data?.paymentMethod ?? 'CASH'), to: `${BASE}/tolov` },
           { key: 'settings', icon: Settings, label: t('Sozlamalar'), to: '/sozlamalar' },
           { key: 'logout', icon: LogOut, label: t('Tizimdan chiqish'), danger: true, onClick: () => setLogoutOpen(true) },
         ]}

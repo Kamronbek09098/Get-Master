@@ -28,7 +28,7 @@ export const PLANS: PlanDef[] = [
     audience: 'CUSTOMER',
     name: 'Plus',
     tagline: 'Muloqot va buyurtmalar ustidan to‘liq nazorat',
-    prices: { 1: 29_000, 3: 79_000, 12: 249_000 },
+    prices: { 1: 5_000, 3: 13_500, 12: 43_000 },
     features: ['SEE_DELETED_MESSAGES', 'SEE_EDIT_HISTORY', 'PRIORITY_REQUESTS', 'PLUS_BADGE'],
   },
   {
@@ -36,7 +36,7 @@ export const PLANS: PlanDef[] = [
     audience: 'MASTER',
     name: 'Pro',
     tagline: 'Ko‘proq mijoz, ko‘proq ishonch',
-    prices: { 1: 59_000, 3: 159_000, 12: 499_000 },
+    prices: { 1: 10_000, 3: 27_000, 12: 84_000 },
     features: ['PRO_BADGE', 'CATALOG_BOOST', 'EXTRA_PORTFOLIO'],
   },
 ];

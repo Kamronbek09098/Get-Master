@@ -1,25 +1,34 @@
 /* ---------- Xizmatlar lentasi: 3 qator oq kartochka ---------- */
-.gm-belt { pointer-events: none; user-select: none; cursor: default; --cw: clamp(176px, 15vw, 216px); --ch: clamp(116px, 9vw, 128px); --gap: 22px; display: grid; gap: var(--gap); margin-top: clamp(36px, 5vw, 64px); padding: 26px 0 30px; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent); }
+.gm-belt { pointer-events: none; user-select: none; cursor: default; --cw: clamp(230px, 19vw, 290px); --ch: clamp(150px, 12vw, 185px); --gap: 20px; display: grid; gap: var(--gap); margin-top: clamp(20px, 3vw, 36px); padding: 18px 0 26px; overflow: hidden; }
 .gm-belt-row { overflow: hidden; padding-block: 18px; margin-block: -18px; }
 .gm-belt-track { display: flex; width: max-content; animation: gm-belt-left var(--dur, 55s) linear infinite; }
 .gm-belt-row--right .gm-belt-track { animation-name: gm-belt-right; }
 .gm-belt-list { display: flex; gap: var(--gap); margin: 0; padding: 0 var(--gap) 0 0; list-style: none; }
 /* O‘rtadagi qator yarim kartochkaga surilgan: 1-chi va 3-chi qator kartochkalari aynan bir xil joyda */
 .gm-belt-row--right .gm-belt-track { margin-left: calc((var(--cw) + var(--gap)) / -2); }
-.gm-belt-list li { display: flex; flex: none; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: var(--cw); height: var(--ch); padding: 12px; border-radius: 20px; background: #ffffff; color: #0a1230; box-shadow: 0 6px 18px -10px rgba(10, 18, 48, 0.22), 0 0 0 1px rgba(30, 58, 138, 0.08); }
-/* Haqiqiy buyum tasviri uchun yumshoq rangli «plitka» */
-.gm-belt-icon { display: grid; place-items: center; width: 58px; height: 58px; border-radius: 19px; background: var(--tint, #e8f0ff); color: #1d4ed8; }
-.gm-belt-list strong { max-width: 100%; overflow: hidden; font-family: var(--gm-font-display, inherit); font-size: 15.5px; font-weight: 700; letter-spacing: -0.015em; text-overflow: ellipsis; white-space: nowrap; }
+/* Rasmli kartochka: pastdan qorong‘i gradient va tur belgisi */
+.gm-belt-list li { position: relative; display: block; flex: none; width: var(--cw); height: var(--ch); overflow: hidden; border-radius: 22px; background: #dbe4f5; box-shadow: 0 10px 26px -14px rgba(10, 18, 48, 0.4), 0 0 0 1px rgba(30, 58, 138, 0.1); }
+.gm-belt-list li img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.gm-belt-list li::after { content: ''; position: absolute; inset: auto 0 0 0; height: 55%; background: linear-gradient(180deg, transparent, rgba(6, 13, 43, 0.62)); pointer-events: none; }
+.gm-belt-tag { position: absolute; left: 12px; bottom: 12px; z-index: 1; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.94); color: #0a1230; font-size: 13px; font-weight: 700; letter-spacing: -0.01em; box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.35); }
+.gm-belt-tag svg { color: #1d4ed8; }
 /* Lenta 4 nusxadan iborat: bitta nusxa kengligicha siljiydi, shuning uchun qatorda hech qachon bo‘sh joy qolmaydi */
 @keyframes gm-belt-left { to { transform: translateX(-25%); } }
 @keyframes gm-belt-right { from { transform: translateX(-25%); } to { transform: translateX(0); } }
 @media (max-width: 720px) {
-  .gm-belt { --cw: 156px; --ch: 108px; --gap: 16px; }
+  .gm-belt { --cw: 200px; --ch: 132px; --gap: 14px; }
   .gm-belt-list li { border-radius: 18px; }
-  .gm-belt-list strong { font-size: 14px; }
+  .gm-belt-tag { left: 10px; bottom: 10px; padding: 5px 10px; font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .gm-belt-track { animation: none; } }
 
 
 /* Mijoz va usta bosh sahifalarida: atrofidagi bo‘limlardan yetarli masofada */
-.gm-landing .gm-belt { margin-block: clamp(44px, 6vw, 84px); }
+.gm-landing .gm-works { margin-block: clamp(44px, 6vw, 84px); }
+
+/* Sarlavha: kartochkalar ustida, markazda */
+.gm-works { display: grid; gap: 0; }
+.gm-works__head { display: grid; justify-items: center; gap: 8px; padding-inline: 20px; text-align: center; }
+.gm-works__kicker { padding: 5px 14px; border-radius: 999px; background: color-mix(in srgb, var(--gm-color-primary, #2563eb) 12%, transparent); color: var(--gm-color-primary, #2563eb); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.gm-works__head h2 { margin: 0; font-family: var(--gm-font-display, inherit); font-size: clamp(1.7rem, 4vw, 2.7rem); line-height: 1.12; letter-spacing: -0.03em; text-wrap: balance; }
+.gm-works__head p { margin: 0; max-width: 52ch; color: var(--gm-color-text-muted, #5b6785); font-size: clamp(0.95rem, 1.6vw, 1.08rem); line-height: 1.55; text-wrap: balance; }

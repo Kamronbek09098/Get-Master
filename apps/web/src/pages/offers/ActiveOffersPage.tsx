@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Check, CheckCircle2, Inbox, Send, Users } from 'lucide-react';
+import { CheckCircle2, Inbox, Send, Users } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
@@ -61,12 +61,12 @@ function OpenRequestsView({ scope, onShowAll, onToggleMine }: { scope: OpenReque
   return (
     <>
       {onToggleMine && (
-        <div className="gm-chips gm-offers-filter">
-          <button type="button" className={cx('gm-chip', scope === 'mine' && 'gm-chip--on')} aria-pressed={scope === 'mine'} onClick={onToggleMine}>
-            {scope === 'mine' && <Check size={15} aria-hidden="true" />}
-            {t('Menga mos')}
+        <div className="gm-offers-filter">
+          <span className="gm-offers-filter__count" aria-live="polite">{requests.data ? t('{count} ta so‘rov', { count: visible.length }) : ''}</span>
+          <button type="button" role="switch" aria-checked={scope === 'mine'} className={cx('gm-offers-switch', scope === 'mine' && 'is-on')} onClick={onToggleMine}>
+            <span className="gm-offers-switch__track" aria-hidden="true"><i /></span>
+            <span className="gm-offers-switch__label">{t('Menga mos')}</span>
           </button>
-          {requests.data && <span className="gm-offers-filter__count">{t('{count} ta so‘rov', { count: visible.length })}</span>}
         </div>
       )}
       {requests.isLoading && <PageLoader label={t('Takliflar yuklanmoqda…')} />}

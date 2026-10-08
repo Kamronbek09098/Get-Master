@@ -8,7 +8,6 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatMoney, newIdempotencyKey } from '@/lib/utils';
 import type { OrderDetailsData } from '@/features/order/types';
 import type { PaymentProvider } from '@/types/common';
-import { useCustomerPreferences } from '@/features/customer/hooks/useCustomer';
 import { useCreatePayment } from '../hooks/usePayment';
 import { PAYMENT_STATUS_LABEL, PROVIDER_LABEL, providerLabel } from '../labels';
 import { PaymentMethodCards } from './PaymentMethodCards';
@@ -35,11 +34,10 @@ export function PaymentForm({ order }: { order: OrderDetailsData }) {
   const queryClient = useQueryClient();
   const createPayment = useCreatePayment();
   const current = order.payment;
-  const preferred = useCustomerPreferences().data?.paymentMethod;
   const hasPending = !!current && current.status === 'PENDING';
   const [picked, setMethod] = useState<PaymentProvider | null>(null);
-  // Tanlov: foydalanuvchi bosgani > kutilayotgan to‘lov usuli > profildagi afzal usul > naqd.
-  const method: PaymentProvider = picked ?? (hasPending ? current.provider : (preferred ?? 'CASH'));
+  // Tanlov: foydalanuvchi bosgani > kutilayotgan to‘lov usuli > naqd.
+  const method: PaymentProvider = picked ?? (hasPending ? current.provider : 'CASH');
   const back = `/mijoz/buyurtmalar/${order.id}`;
   const amount = formatMoney(order.finalAmount, order.currency);
 

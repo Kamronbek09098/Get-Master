@@ -25,9 +25,11 @@ export interface StoryDef {
 const AT = [0, 0.15, 0.3, 0.5, 0.7, 0.85, 0.95, 1] as const;
 const LABELS = () => [t('Muammo'), t('Usta keladi'), t('Tekshiruv'), t('Ta’mir boshlanadi'), t('Ish davom etadi'), t('Sinov'), t('Natija'), t('Mijoz')];
 
-function story(id: string, label: string, icon: LucideIcon, copy: Array<[string, string]>): StoryDef {
-  const labels = LABELS();
-  return { id, label, icon, chapters: copy.map(([title, text], i) => ({ at: AT[i]!, label: `${String(i + 1).padStart(2, '0')} — ${labels[i]}`, title, text })) };
+/** `custom` — hikoya videosining haqiqiy sahnalariga moslangan bosqich vaqtlari (`at`) va yorliqlari. */
+function story(id: string, label: string, icon: LucideIcon, copy: Array<[string, string]>, custom?: { at: readonly number[]; labels: string[] }): StoryDef {
+  const labels = custom?.labels ?? LABELS();
+  const at = custom?.at ?? AT;
+  return { id, label, icon, chapters: copy.map(([title, text], i) => ({ at: at[i]!, label: `${String(i + 1).padStart(2, '0')} — ${labels[i]}`, title, text })) };
 }
 
 export function buildStories(): StoryDef[] {
@@ -42,16 +44,23 @@ export function buildStories(): StoryDef[] {
       [t('Sovuq havo'), t('Muammo yo‘qoldi. Konditsioner yana ishlayapti.')],
       [t('Yengillik'), t('Mijoz tabassum qiladi, ustaga rahmat aytadi.')],
     ]),
-    story('santexnika', t('Santexnika'), Droplets, [
-      [t('Quvur oqyapti.'), t('Suv polga tomyapti. Har daqiqa zarar o‘sadi.')],
-      [t('Usta yetib keldi.'), t('Eshik ochiladi, qisqa salomlashuv va ish joyiga yo‘l.')],
-      [t('Oqish joyi topiladi.'), t('Usta tekshiradi, mijoz vaziyatni tushuntiradi.')],
-      [t('Ta’mir boshlanadi.'), t('Suv o‘chiriladi, shikastlangan qism olib tashlanadi.')],
-      [t('Quvur almashtiriladi.'), t('Yangi qism joyiga o‘rnatilib mahkamlanadi.')],
-      [t('Suv sinovi.'), t('Suv ochiladi — hamma ulanish quruq.')],
-      [t('Muammo hal bo‘ldi.'), t('Oqish to‘xtadi, joy tozalandi.')],
-      [t('Yengil nafas'), t('Mijoz tinchlanadi va minnatdorchilik bildiradi.')],
-    ]),
+    // Video: 1-qism (muammo va ilovada so‘rov, 0–43%) + 2-qism (usta keladi va kranni tuzatadi, 43–100%).
+    story(
+      'santexnika',
+      t('Santexnika'),
+      Droplets,
+      [
+        [t('Quvur oqyapti.'), t('Suv polga tomyapti. Har daqiqa zarar o‘sadi.')],
+        [t('Ilovada so‘rov.'), t('Mijoz telefondan muammoni yuboradi va takliflarni kutadi.')],
+        [t('Usta qabul qildi.'), t('Bildirishnoma keladi: usta so‘rovni qabul qilib, yo‘lga chiqdi.')],
+        [t('Usta yetib keldi.'), t('Eshik ochiladi, qisqa salomlashuv va ish joyiga yo‘l.')],
+        [t('Oqish joyi topiladi.'), t('Usta tekshiradi, mijoz vaziyatni tushuntiradi.')],
+        [t('Ta’mir boshlanadi.'), t('Suv o‘chiriladi, shikastlangan qism olib tashlanadi.')],
+        [t('Quvur almashtiriladi.'), t('Yangi qism joyiga o‘rnatilib mahkamlanadi.')],
+        [t('Muammo hal bo‘ldi.'), t('Oqish to‘xtadi, mijoz minnatdorchilik bildiradi.')],
+      ],
+      { at: [0, 0.17, 0.3, 0.43, 0.58, 0.7, 0.79, 0.92], labels: [t('Muammo'), t('So‘rov'), t('Usta topildi'), t('Usta keladi'), t('Tekshiruv'), t('Ta’mir boshlanadi'), t('Ish davom etadi'), t('Natija')] },
+    ),
     story('elektrik', t('Elektrik'), Lightbulb, [
       [t('Chiroq yonmaydi.'), t('Bir zumda yorug‘lik o‘chdi. Uy qorong‘i.')],
       [t('Elektrik keladi.'), t('Asbob-uskunalari bilan kirib keladi.')],

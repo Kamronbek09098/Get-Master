@@ -77,7 +77,8 @@ export class PublicService {
       hasMore: page * limit < total,
       items: rows.map((row) => ({
         id: row.user.accountNumber,
-        name: `${row.user.firstName}${row.user.lastName ? ` ${row.user.lastName.charAt(0)}.` : ''}`,
+        // Ism kiritilmagan bo‘lsa «null» emas, hisob raqami ko‘rsatiladi.
+        name: [row.user.firstName, row.user.lastName ? `${row.user.lastName.charAt(0)}.` : null].filter(Boolean).join(' ') || `Usta #${row.user.accountNumber}`,
         profession: row.profession,
         experienceYears: row.experienceYears,
         rating: Number(row.ratingAvg),

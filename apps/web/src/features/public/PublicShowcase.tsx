@@ -62,7 +62,7 @@ export function PublicShowcase() {
           <h2>{t('Ko‘p beriladigan savollar')}</h2>
         </header>
         <div className="gm-faq gm-faq--single">
-          <Column items={FAQ_PREVIEW} offset={0} />
+          <Column items={FAQ_PREVIEW} />
         </div>
         <Link to="/katalog#savollar" className="gm-show__all">{t('Barcha savollar')} <ArrowRight size={17} aria-hidden="true" /></Link>
         <SupportContacts title={t('Savolingiz qoldimi?')} />

@@ -6,7 +6,8 @@ import { t } from '@/i18n';
 import type { PublicMaster } from './public.service';
 
 function initials(name: string): string {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]!.toUpperCase()).join('');
+  const letters = name.split(/\s+/).filter((part) => /^\p{L}/u.test(part)).slice(0, 2).map((part) => part[0]!.toUpperCase()).join('');
+  return letters || '#';
 }
 
 export function MasterTile({ master }: { master: PublicMaster }) {

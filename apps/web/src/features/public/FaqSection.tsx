@@ -35,7 +35,7 @@ const GENERAL: Qa[] = [
 export const FAQ_PREVIEW: Qa[] = [CUSTOMER[0]!, CUSTOMER[2]!, CUSTOMER[3]!, MASTER[0]!];
 const ALL: Qa[] = [...CUSTOMER, ...MASTER, ...GENERAL];
 
-export function Column({ items, offset }: { items: Qa[]; offset: number }) {
+export function Column({ items }: { items: Qa[] }) {
   const [open, setOpen] = useState<number | null>(null);
   return (
     <div className="gm-faq__col">
@@ -61,7 +61,7 @@ export function FaqSection() {
         <p className="gm-show__lead">{t('Mijoz va ustalar uchun eng kerakli javoblar bir joyda.')}</p>
       </header>
       <div className="gm-faq gm-faq--single">
-        <Column items={ALL} offset={0} />
+        <Column items={ALL} />
       </div>
       <SupportContacts title={t('Savolingiz qoldimi?')} />
     </section>

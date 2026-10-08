@@ -314,14 +314,27 @@ export class SubscriptionService {
     const page = Math.max(query.page ?? 1, 1);
     const q = query.q?.trim() ?? '';
     const tokens = q.split(/\s+/).filter(Boolean).slice(0, 4);
+    // accountNumber — Int ustun: Prisma uni qisman (contains) solishtira olmaydi, shuning uchun raqamli so‘zlar bo‘yicha
+    // mos ID larni raw so‘rov bilan topamiz («5» → 5, 57, 574, 1250 …). Tez-tez uchraydigan raqamlar uchun ham natija cheklangan.
+    const idMatches = new Map<string, number[]>();
+    await Promise.all(
+      tokens
+        .filter((token) => /^\d{1,9}$/.test(token))
+        .map(async (token) => {
+          const rows = await this.db.$queryRaw<Array<{ accountNumber: number }>>`
+            SELECT "account_number" AS "accountNumber" FROM users WHERE "account_number"::text LIKE ${`%${token}%`} ORDER BY "account_number" LIMIT 1000
+          `;
+          idMatches.set(token, rows.map((row) => row.accountNumber));
+        }),
+    );
     const and: Prisma.UserWhereInput[] = tokens.map((token) => {
-      const numeric = /^\d{1,9}$/.test(token) ? Number(token) : null;
+      const ids = idMatches.get(token) ?? [];
       return {
         OR: [
           { firstName: { contains: token, mode: 'insensitive' } },
           { lastName: { contains: token, mode: 'insensitive' } },
           { phone: { contains: token.replace(/\s/g, '') } },
-          ...(numeric !== null ? [{ accountNumber: numeric }] : []),
+          ...(ids.length ? [{ accountNumber: { in: ids } }] : []),
         ],
       };
     });

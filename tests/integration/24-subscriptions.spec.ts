@@ -85,7 +85,7 @@ describe('subscriptions: plans, requests and admin decisions', () => {
     const buyer = await createUser(h);
     const made = await req(buyer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CLICK' });
     const id: string = made.data.id;
-    const amount = '29000.00';
+    const amount = '5000.00';
     const transId = `77${Math.floor(Math.random() * 100000)}`;
     const call = (body: Record<string, unknown>) => h.api('POST', '/payments/click/callback', { body });
     const wrong = await call({ click_trans_id: transId, service_id: 's1', merchant_trans_id: id, amount: '1000.00', action: '0', sign_time: 't1', sign_string: md5([transId, 's1', 'test-only-click-webhook-secret', id, '1000.00', '0', 't1']) });
@@ -142,7 +142,7 @@ describe('subscriptions: plans, requests and admin decisions', () => {
     const base = { paymentId: made.data.id, currency: 'UZS', providerPaymentId: `uz-${randomUUID().slice(0, 8)}` };
     expect((await send({ ...base, eventId: `e-${randomUUID()}`, status: 'SUCCEEDED', amount: 1 })).status).toBeGreaterThanOrEqual(400);
     expect((await h.db.subscription.findUniqueOrThrow({ where: { id: made.data.id } })).status).toBe('PENDING');
-    expect((await send({ ...base, eventId: `e-${randomUUID()}`, status: 'SUCCEEDED', amount: 29000 })).status).toBeLessThan(300);
+    expect((await send({ ...base, eventId: `e-${randomUUID()}`, status: 'SUCCEEDED', amount: 5000 })).status).toBeLessThan(300);
     expect((await h.db.subscription.findUniqueOrThrow({ where: { id: made.data.id } })).status).toBe('ACTIVE');
   });
 
@@ -244,6 +244,14 @@ describe('subscriptions: plans, requests and admin decisions', () => {
     expect(reversed.data.items.map((item: { id: string }) => item.id)).toEqual([older.id]); // ism-familiya tartibi muhim emas
     const byPhone = await h.get(`/admin/subscriptions/users?q=${encodeURIComponent(older.phone)}`, admin.token);
     expect(byPhone.data.items[0].id).toBe(older.id);
+    // ID bo‘yicha qisman moslik: raqamning bir qismi yozilsa, shu raqam qatnashgan barcha foydalanuvchilar chiqadi.
+    const olderNumber = (await h.db.user.findUniqueOrThrow({ where: { id: older.id }, select: { accountNumber: true } })).accountNumber;
+    const idPart = String(olderNumber).slice(-2);
+    const byIdPart = await h.get(`/admin/subscriptions/users?q=${idPart}`, admin.token);
+    expect(byIdPart.status).toBe(200);
+    expect(byIdPart.data.items.some((item: { id: string }) => item.id === older.id)).toBe(true);
+    const byFullId = await h.get(`/admin/subscriptions/users?q=${olderNumber}`, admin.token);
+    expect(byFullId.data.items.some((item: { id: string }) => item.id === older.id)).toBe(true);
     const empty = await h.get('/admin/subscriptions/users', admin.token);
     const dates = empty.data.items.map((item: { createdAt: string }) => new Date(item.createdAt).getTime());
     expect(dates).toEqual([...dates].sort((a, b) => b - a));

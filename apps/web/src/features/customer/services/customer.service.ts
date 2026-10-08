@@ -1,6 +1,6 @@
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '@/services/api.client';
 import type { PublicMaster } from '@/features/master/types';
-import type { Address, AddressInput, CustomerPreferences, CustomerProfile, UpdateProfileInput } from '../types';
+import type { Address, AddressInput, CustomerProfile, UpdateProfileInput } from '../types';
 
 export const customerService = {
   badges(offersSince?: string) {
@@ -11,12 +11,6 @@ export const customerService = {
   },
   updateProfile(input: UpdateProfileInput) {
     return apiPatch<CustomerProfile>('/customers/me', input);
-  },
-  getPreferences() {
-    return apiGet<CustomerPreferences>('/customers/me/preferences');
-  },
-  updatePreferences(input: Partial<CustomerPreferences>) {
-    return apiPatch<CustomerPreferences>('/customers/me/preferences', input);
   },
   listFavorites() {
     return apiGet<PublicMaster[]>('/customers/me/favorites');

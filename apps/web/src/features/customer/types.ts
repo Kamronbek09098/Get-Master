@@ -18,14 +18,6 @@ export interface UpdateProfileInput {
   lastName?: string;
 }
 
-export interface CustomerPreferences {
-  language: 'UZ' | 'RU' | 'EN';
-  currency: 'UZS' | 'USD';
-  notificationsEnabled: boolean;
-  /** Afzal ko‘rilgan to‘lov usuli (to‘lov oynasida oldindan tanlanadi). */
-  paymentMethod?: 'CASH' | 'CLICK' | 'PAYME' | 'UZUM';
-}
-
 export interface Address {
   id: string;
   title: string | null;

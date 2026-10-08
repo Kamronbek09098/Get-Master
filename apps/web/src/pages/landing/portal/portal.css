@@ -295,7 +295,7 @@
 /* Logotip: yorug‘ fonda «Master» yozuvi aniq ko‘rinsin */
 :root:not([data-theme='dark']) .gm-portal .gm-logo__word b { color: #0b4fd0; }
 
-.gm-portal .gm-belt { margin-top: clamp(36px, 5vw, 64px); }
+.gm-portal .gm-works { margin-top: clamp(36px, 5vw, 64px); }
 
 /* Ko‘rsatkichlar: yozuvlar har bir katakning o‘rtasida */
 .gm-portal__facts > div { justify-items: center; align-content: center; text-align: center; }
