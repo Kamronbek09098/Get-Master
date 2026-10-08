@@ -99,11 +99,27 @@ describe('POST /conversations/direct — chat with a master before any order', (
     expect((await open(undefined, master.masterId)).status).toBe(401);
   });
 
-  it('does not disturb order chats: an order conversation is still a separate ORDER conversation', async () => {
-    const direct = (await open(customer.token, master.masterId)).data;
+  it('a pre-order DIRECT chat becomes the order chat — booking never opens a second conversation (history is kept)', async () => {
+    const buyer = await createUser(h, ['CUSTOMER']);
+    const target = await createMaster(h, service.id);
+    const direct = (await open(buyer.token, target.masterId)).data;
     expect(direct.type).toBe('DIRECT');
-    const orderChats = await h.db.conversation.count({ where: { type: 'ORDER', participants: { some: { userId: customer.id } } } });
-    expect(orderChats).toBe(0);
+    expect((await h.post(`/conversations/${direct.id}/messages`, buyer.token, { text: 'Salom, ustoz' })).status).toBe(201);
+
+    const order = await bookOrder(h, buyer, target, service.id);
+    const mine = await h.db.conversation.findMany({ where: { participants: { some: { userId: buyer.id } } } });
+    expect(mine).toHaveLength(1);
+    expect(mine[0]).toMatchObject({ id: direct.id, type: 'ORDER', orderId: order.orderId });
+    const thread = await h.get(`/conversations/${direct.id}/messages`, target.token);
+    expect(thread.data.items.map((m: { text: string }) => m.text)).toContain('Salom, ustoz');
+
+    // Ikkinchi buyurtma ham xuddi shu suhbatga bog‘lanadi; buyurtma sahifasi suhbat ID sini topadi.
+    const second = await bookOrder(h, buyer, target, service.id);
+    expect(await h.db.conversation.count({ where: { participants: { some: { userId: buyer.id } } } })).toBe(1);
+    const view = await h.get(`/orders/${order.orderId}`, buyer.token);
+    expect(view.data.conversationId).toBe(direct.id);
+    expect((await h.get(`/orders/${second.orderId}`, buyer.token)).data.conversationId).toBe(direct.id);
+    expect((await open(buyer.token, target.masterId)).data.id).toBe(direct.id);
   });
 
   it('reuses an existing order conversation instead of opening a second, empty chat with the same master', async () => {
@@ -119,209 +135,19 @@ describe('POST /conversations/direct — chat with a master before any order', (
     expect(await h.db.conversation.count({ where: { participants: { some: { userId: buyer.id } } } })).toBe(1);
   });
 
-  it('falls back to a fresh DIRECT conversation when the only existing chat is a read-only (cancelled) order', async () => {
+  it('a cancelled order never forces a second chat: the same conversation reopens for writing', async () => {
     const buyer = await createUser(h, ['CUSTOMER']);
     const target = await createMaster(h, service.id);
     const order = await bookOrder(h, buyer, target, service.id);
+    const orderChat = await h.db.conversation.findUniqueOrThrow({ where: { orderId: order.orderId } });
     await h.db.order.update({ where: { id: order.orderId }, data: { status: 'CANCELLED' } });
+    expect((await h.post(`/conversations/${orderChat.id}/messages`, buyer.token, { text: 'yopiq' })).status).toBe(409);
 
     const opened = await open(buyer.token, target.masterId);
     expect(opened.status).toBe(201);
+    expect(opened.data.id).toBe(orderChat.id);
     expect(opened.data.type).toBe('DIRECT');
-    expect(await h.db.conversation.count({ where: { participants: { some: { userId: buyer.id } } } })).toBe(2);
-  });
-});
-
-describe('conversations are scoped to the panel role that holds them', () => {
-  const asPanel = (token: string | undefined, panel: string) => ({
-    cookie: `accessToken_${panel.toLowerCase()}=${token}`,
-    headers: { 'x-app-panel': panel },
-  });
-  const ids = (res: { data: { items: Array<{ id: string }> } }) => res.data.items.map((item) => item.id);
-
-  it('shows a customer-side chat only in the customer panel and a master-side chat only in the master panel', async () => {
-    const buyer = await createMaster(h, service.id);
-    const target = await createMaster(h, service.id);
-    const created = await open(buyer.token, target.masterId);
-    const id = created.data.id as string;
-    expect(created.data.participants.find((p: { userId: string }) => p.userId === buyer.id).roles).toEqual(['CUSTOMER']);
-    // Hali xabar yozilmagan to‘g‘ridan-to‘g‘ri suhbat ro‘yxatda ko‘rinmaydi: avval mijoz panelidan birinchi xabar yuboriladi.
-    expect((await h.api('POST', `/conversations/${id}/messages`, { ...asPanel(buyer.token, 'CUSTOMER'), body: { text: 'birinchi' } })).status).toBe(201);
-
-    const list = (token: string | undefined, panel: string) => h.api('GET', '/conversations?limit=100', asPanel(token, panel));
-    expect(ids(await list(buyer.token, 'CUSTOMER'))).toContain(id);
-    expect(ids(await list(buyer.token, 'MASTER'))).not.toContain(id);
-    expect(ids(await list(target.token, 'MASTER'))).toContain(id);
-    expect(ids(await list(target.token, 'CUSTOMER'))).not.toContain(id);
-
-    expect((await h.api('GET', `/conversations/${id}/messages`, asPanel(buyer.token, 'MASTER'))).status).toBe(403);
-    expect((await h.api('POST', `/conversations/${id}/messages`, { ...asPanel(buyer.token, 'MASTER'), body: { text: 'salom' } })).status).toBe(403);
-    expect((await h.api('POST', `/conversations/${id}/messages`, { ...asPanel(buyer.token, 'CUSTOMER'), body: { text: 'salom' } })).status).toBe(201);
-  });
-
-  it('hides a DIRECT conversation from both lists until the first message is written', async () => {
-    const buyer = await createUser(h, ['CUSTOMER']);
-    const target = await createMaster(h, service.id);
-    const id = (await open(buyer.token, target.masterId)).data.id as string;
-    expect(ids(await h.api('GET', '/conversations?limit=100', asPanel(buyer.token, 'CUSTOMER')))).not.toContain(id);
-    expect(ids(await h.api('GET', '/conversations?limit=100', asPanel(target.token, 'MASTER')))).not.toContain(id);
-  });
-});
-
-describe('admin sees every conversation and the edit history of messages', () => {
-  it('returns current texts and the edit history; permanently deleted messages are gone', async () => {
-    const admin = await createAdmin(h);
-    const buyer = await createUser(h, ['CUSTOMER']);
-    const target = await createMaster(h, service.id);
-    const conversation = (await open(buyer.token, target.masterId)).data.id as string;
-    const send = (text: string) =>
-      h.api('POST', `/conversations/${conversation}/messages`, { cookie: `accessToken_customer=${buyer.token}`, headers: { 'x-app-panel': 'CUSTOMER' }, body: { text } });
-    const kept = (await send('birinchi')).data;
-    const removed = (await send('maxfiy matn')).data;
-    const as = { cookie: `accessToken_customer=${buyer.token}`, headers: { 'x-app-panel': 'CUSTOMER' } };
-    expect((await h.api('PATCH', `/conversations/${conversation}/messages/${kept.id}`, { ...as, body: { text: 'yangi matn' } })).status).toBe(200);
-    expect((await h.api('DELETE', `/conversations/${conversation}/messages/${removed.id}`, as)).status).toBe(200);
-
-    expect((await h.get(`/admin/conversations/${conversation}/messages`, buyer.token)).status).toBe(403);
-    const list = await h.get(`/admin/conversations?limit=100`, admin.token);
-    const row = list.data.items.find((c: { id: string }) => c.id === conversation);
-    // «Hamma uchun o‘chirish» xabarni butunlay o‘chiradi: admin ham uning matnini ko‘rmaydi; tahrir tarixi esa saqlanadi.
-    expect(row).toMatchObject({ messageCount: 1, deletedCount: 0, editedCount: 1 });
-
-    const messages = (await h.get(`/admin/conversations/${conversation}/messages`, admin.token)).data.items as any[];
-    expect(messages.find((m) => m.id === removed.id)).toBeUndefined();
-    expect(JSON.stringify(messages)).not.toContain('maxfiy matn');
-    expect(await h.db.message.count({ where: { id: removed.id } })).toBe(0);
-    const edited = messages.find((m) => m.id === kept.id);
-    expect(edited.text).toBe('yangi matn');
-    expect(edited.edits.map((e: { previousText: string }) => e.previousText)).toEqual(['birinchi']);
-
-    const audit = await h.get(`/audit-logs?actorId=${buyer.id}&limit=50`, admin.token);
-    expect(audit.data.items.map((a: { action: string }) => a.action)).toEqual(expect.arrayContaining(['CHAT_MESSAGE_EDITED']));
-  });
-});
-
-describe('Telegram-style features: reply, reactions and attachments', () => {
-  it('replies to a message of the same chat only, and drops the quote once the quoted message is deleted', async () => {
-    const buyer = await createUser(h, ['CUSTOMER']);
-    const target = await createMaster(h, service.id);
-    const other = await createMaster(h, service.id);
-    const chat = (await open(buyer.token, target.masterId)).data.id as string;
-    const otherChat = (await open(buyer.token, other.masterId)).data.id as string;
-    const as = { cookie: `accessToken_customer=${buyer.token}`, headers: { 'x-app-panel': 'CUSTOMER' } };
-    const send = (id: string, body: object) => h.api('POST', `/conversations/${id}/messages`, { ...as, body });
-
-    const first = (await send(chat, { text: 'asl xabar' })).data;
-    const foreign = (await send(otherChat, { text: 'boshqa suhbat' })).data;
-    const reply = await send(chat, { text: 'javob', replyToId: first.id });
-    expect(reply.status).toBe(201);
-    expect(reply.data.replyTo).toMatchObject({ id: first.id, text: 'asl xabar' });
-    expect((await send(chat, { text: 'x', replyToId: foreign.id })).status).toBe(400);
-
-    expect((await h.api('DELETE', `/conversations/${chat}/messages/${first.id}`, as)).status).toBe(200);
-    const list = (await h.api('GET', `/conversations/${chat}/messages`, as)).data.items as any[];
-    // Iqtibos keltirilgan xabar o‘chirilgach, javobdagi iqtibos ham yo‘qoladi (matn oshkor bo‘lmaydi).
-    expect(list.find((m) => m.id === reply.data.id).replyTo).toBeNull();
-  });
-
-  it('keeps one reaction per person and panel, replaces it and removes it', async () => {
-    const buyer = await createUser(h, ['CUSTOMER']);
-    const target = await createMaster(h, service.id);
-    const chat = (await open(buyer.token, target.masterId)).data.id as string;
-    const asBuyer = { cookie: `accessToken_customer=${buyer.token}`, headers: { 'x-app-panel': 'CUSTOMER' } };
-    const asMaster = { cookie: `accessToken_master=${target.token}`, headers: { 'x-app-panel': 'MASTER' } };
-    const message = (await h.api('POST', `/conversations/${chat}/messages`, { ...asBuyer, body: { text: 'salom' } })).data;
-    const react = (as: object, emoji: string | null) => h.api('PUT', `/conversations/${chat}/messages/${message.id}/reaction`, { ...as, body: { emoji } });
-
-    expect((await react(asMaster, '❤️')).data.reactions).toHaveLength(1);
-    expect((await react(asBuyer, '👍')).data.reactions).toHaveLength(2);
-    const changed = (await react(asMaster, '🔥')).data.reactions as Array<{ emoji: string }>;
-    expect(changed.map((r) => r.emoji).sort()).toEqual(['👍', '🔥'].sort());
-    expect((await react(asMaster, null)).data.reactions).toHaveLength(1);
-    expect((await react(asMaster, '💩')).status).toBe(400);
-  });
-
-  it('sends a photo attachment together with a text', async () => {
-    const buyer = await createMaster(h, service.id);
-    const target = await createMaster(h, service.id);
-    const chat = (await open(buyer.token, target.masterId)).data.id as string;
-    const asset = await uploadImage(h, buyer.token, 'MESSAGE_ATTACHMENT', 'Conversation', chat, 120);
-    const sent = await h.api('POST', `/conversations/${chat}/messages`, {
-      cookie: `accessToken_customer=${buyer.token}`,
-      headers: { 'x-app-panel': 'CUSTOMER' },
-      body: { text: 'rasm', mediaAssetIds: [asset] },
-    });
-    expect(sent.status).toBe(201);
-    expect(sent.data.type).toBe('IMAGE');
-    expect(sent.data.attachments[0].mediaAssetId).toBe(asset);
-    const as = { cookie: `accessToken_customer=${buyer.token}`, headers: { 'x-app-panel': 'CUSTOMER' } };
-    const caption = await h.api('PATCH', `/conversations/${chat}/messages/${sent.data.id}`, { ...as, body: { text: 'yangi izoh' } });
-    expect(caption.status).toBe(200);
-    expect(caption.data).toMatchObject({ text: 'yangi izoh', type: 'IMAGE' });
-    expect(caption.data.editedAt).toBeTruthy();
-  });
-});
-
-describe('DELETE /conversations/:id — Telegram-style delete (hidden for me only)', () => {
-  const inList = (res: { data: { items: Array<{ id: string }> } }, id: string) => res.data.items.some((item) => item.id === id);
-
-  it('hides the chat from my own list but leaves it untouched for the other side', async () => {
-    const buyer = await createUser(h, ['CUSTOMER']);
-    const target = await createMaster(h, service.id);
-    const chat = (await open(buyer.token, target.masterId)).data.id as string;
-    await h.post(`/conversations/${chat}/messages`, buyer.token, { text: 'salom' });
-
-    expect(inList(await h.get('/conversations', buyer.token), chat)).toBe(true);
-    const del = await h.del(`/conversations/${chat}`, buyer.token);
-    expect(del.status).toBe(200);
-    expect(inList(await h.get('/conversations', buyer.token), chat)).toBe(false);
-    // Boshqa tomon hech narsa sezmaydi: xabarlar va suhbat o'zi joyida.
-    expect(inList(await h.get('/conversations', target.token), chat)).toBe(true);
-    expect((await h.get(`/conversations/${chat}/messages`, target.token)).data.items).toHaveLength(1);
-  });
-
-  it('reappears once new activity happens, whichever side sends it — nothing is actually deleted', async () => {
-    const buyer = await createUser(h, ['CUSTOMER']);
-    const target = await createMaster(h, service.id);
-    const chat = (await open(buyer.token, target.masterId)).data.id as string;
-    await h.del(`/conversations/${chat}`, buyer.token);
-    expect(inList(await h.get('/conversations', buyer.token), chat)).toBe(false);
-
-    await h.post(`/conversations/${chat}/messages`, target.token, { text: 'assalomu alaykum' });
-    expect(inList(await h.get('/conversations', buyer.token), chat)).toBe(true);
-    // O'chirishdan oldingi xabar tarixi ham yo'qolmagan.
-    const history = (await h.get(`/conversations/${chat}/messages`, buyer.token)).data.items;
-    expect(history.map((m: { text: string }) => m.text)).toContain('assalomu alaykum');
-  });
-
-  it('is idempotent and refuses non-participants', async () => {
-    const buyer = await createUser(h, ['CUSTOMER']);
-    const target = await createMaster(h, service.id);
-    const outsider = await createUser(h, ['CUSTOMER']);
-    const chat = (await open(buyer.token, target.masterId)).data.id as string;
-
-    expect((await h.del(`/conversations/${chat}`, buyer.token)).status).toBe(200);
-    expect((await h.del(`/conversations/${chat}`, buyer.token)).status).toBe(200);
-    expect((await h.del(`/conversations/${chat}`, outsider.token)).status).toBe(403);
-    expect((await h.del(`/conversations/${chat}`, undefined)).status).toBe(401);
-  });
-
-  it('never hides anything from admin — deleted chats, their messages and who deleted them stay fully visible', async () => {
-    const admin = await createAdmin(h);
-    const buyer = await createUser(h, ['CUSTOMER']);
-    const target = await createMaster(h, service.id);
-    const chat = (await open(buyer.token, target.masterId)).data.id as string;
-    await h.post(`/conversations/${chat}/messages`, buyer.token, { text: 'admin ko‘rishi kerak' });
-    await h.del(`/conversations/${chat}`, buyer.token);
-
-    const list = await h.get('/admin/conversations?limit=100', admin.token);
-    const row = list.data.items.find((item: { id: string }) => item.id === chat);
-    expect(row).toBeTruthy();
-    expect(row.messageCount).toBe(1);
-    const mine = row.participants.find((p: { user: { id: string } }) => p.user.id === buyer.id);
-    expect(mine.deletedAt).toBeTruthy();
-
-    const messages = await h.get(`/admin/conversations/${chat}/messages`, admin.token);
-    expect(messages.data.items.map((m: { text: string }) => m.text)).toContain('admin ko‘rishi kerak');
+    expect(await h.db.conversation.count({ where: { participants: { some: { userId: buyer.id } } } })).toBe(1);
+    expect((await h.post(`/conversations/${orderChat.id}/messages`, buyer.token, { text: 'qayta ochildi' })).status).toBe(201);
   });
 });

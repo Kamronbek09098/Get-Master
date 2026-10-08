@@ -200,7 +200,10 @@ function Hero() {
             </span>
           ))}
         </h1>
-        <p className="gm-portal__lead">{t('Tasdiqlangan ustalar, aniq narx va kafolat — hammasi bir joyda. Davom etish uchun rolingizni tanlang.')}</p>
+        <p className="gm-portal__lead">
+          <span>{t('Tasdiqlangan ustalar, aniq narx va kafolat — hammasi bir joyda')}</span>
+          <span>{t('Davom etish uchun rolingizni tanlang.')}</span>
+        </p>
         <div className="gm-portal__doors">
           {AUDIENCES.map((audience, index) => (
             <AudienceCard key={audience.key} audience={audience} index={index} />

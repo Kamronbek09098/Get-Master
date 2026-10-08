@@ -69,7 +69,7 @@ export function DirectOrderDialog({ conversationId, masterName, onClose }: { con
           type="datetime-local"
           min={nowLocal()}
           value={when}
-          error={inPast ? t('O‘tgan vaqtni tanlab bo‘lmaydi. Hozirgi yoki kelajakdagi vaqtni kiriting') : undefined}
+          error={inPast ? t('O‘tgan vaqtni tanlab bo‘lmaydi. Hozirgi yoki kelajakdagi vaqtni kiriting.') : undefined}
           onChange={(event) => setWhen(event.target.value)}
         />
         {(addresses.data?.length ?? 0) > 0 && (

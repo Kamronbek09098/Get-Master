@@ -7,7 +7,7 @@ export function NotificationsPage() {
       <div className="gm-page-header">
         <div>
           <h1>{t('Bildirishnomalar')}</h1>
-          <p className="gm-page-lead">{t('Buyurtma, chat va tasdiqlash bo‘yicha yangiliklar.')}</p>
+          <p className="gm-page-lead">{t('Buyurtma, chat va tasdiqlash bo‘yicha yangiliklar')}</p>
         </div>
       </div>
       <NotificationList />

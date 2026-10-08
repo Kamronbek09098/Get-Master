@@ -1,9 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
-import { AlertCircle, Check, CornerUpLeft, FileText, Loader2, Mic, Package, Paperclip, Pencil, Send, Smile, Trash2, X } from 'lucide-react';
+import { AlertCircle, Check, CornerUpLeft, FileText, Loader2, Mic, Package, Paperclip, Pencil, Send, Smile, Trash2, Video, X } from 'lucide-react';
 import { cx } from '@/lib/utils';
 import { uploadAttachment, useAttachments } from '../hooks/useAttachments';
 import { useVoiceRecorder, voiceSupported } from '../hooks/useVoiceRecorder';
+import { roundVideoSupported } from '../hooks/useRoundVideoRecorder';
+import { RoundVideoRecorder } from './RoundVideoRecorder';
 import { replySnippet } from '../format';
 import type { ChatAttachment, ChatMessage } from '../types';
 import { t } from '@/i18n';
@@ -38,6 +40,7 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
   const voice = useVoiceRecorder();
   const [voiceBusy, setVoiceBusy] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [roundOpen, setRoundOpen] = useState(false);
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const emojiRef = useRef<HTMLDivElement>(null);
 
@@ -102,6 +105,15 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
       setVoiceError(error instanceof Error ? error.message : t('Ovozli xabarni yuborib bo‘lmadi'));
     } finally {
       setVoiceBusy(false);
+    }
+  }
+
+  async function sendRound(result: { file: File }) {
+    try {
+      const attachment = await uploadAttachment(result.file, conversationId);
+      onSend('', [attachment]);
+    } catch (error) {
+      setVoiceError(error instanceof Error ? error.message : t('Video xabarni yuborib bo‘lmadi'));
     }
   }
 
@@ -220,7 +232,7 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
             ref={areaRef}
             className="gm-composer__input"
             aria-label={t('Xabar')}
-            placeholder={editing ? t('Xabarni tahrirlang…') : t('Xabar')}
+            placeholder={editing ? t('Xabarni tahrirlang') : t('Xabar')}
             rows={1}
             value={text}
             maxLength={MAX_LENGTH}
@@ -261,6 +273,11 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
         </div>
         )}
 
+        {showMic && !recording && !voiceBusy && roundVideoSupported() && (
+          <button type="button" className="gm-composer__send gm-composer__send--ready gm-composer__send--round" aria-label={t('Dumaloq video yozish')} title={t('Dumaloq video yozish')} onClick={() => setRoundOpen(true)}>
+            <Video size={20} />
+          </button>
+        )}
         {showMic || recording || voiceBusy ? (
           <button
             type="button"
@@ -283,6 +300,7 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
         </button>
         )}
       </div>
+      {roundOpen && <RoundVideoRecorder onSend={sendRound} onClose={() => setRoundOpen(false)} />}
       {text.length > MAX_LENGTH - 200 && (
         <span className="gm-composer__count" aria-live="polite">
           {text.length}/{MAX_LENGTH}

@@ -1,3 +1,4 @@
+import { findPairConversation } from '../communication/pair-conversation';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { OrderStatus, Prisma } from '@prisma/client';
 import { ERRORS } from '../../common/constants/error-messages';
@@ -124,7 +125,7 @@ export class AdminOrdersService {
       masterOrderIndex,
       workProofs: order.workProofs.map((proof) => ({ ...proof, asset: proof.mediaAssetId ? (assetById.get(proof.mediaAssetId) ?? null) : null })),
       requestAssets,
-      conversationId: order.conversation?.id ?? null,
+      conversationId: order.conversation?.id ?? (await findPairConversation(this.db, order.customerId, order.master.user.id))?.id ?? null,
       allowedActions: this.allowedActions(order.status),
     };
   }

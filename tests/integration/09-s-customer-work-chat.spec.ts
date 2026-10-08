@@ -155,7 +155,9 @@ describe('S08 — chat', () => {
   });
 
   it('a legacy order without a chat gets exactly one, even when opened concurrently', async () => {
-    const legacy = await bookOrder(h, c, master, service.id);
+    // Yangi juftlik (mijoz + boshqa usta): yagona-suhbat qoidasi tufayli mavjud juftlik suhbati qayta ishlatilmasligi uchun.
+    const otherMaster = await createMaster(h, service.id, { firstName: 'Legacy' });
+    const legacy = await bookOrder(h, c, otherMaster, service.id);
     await h.db.conversation.delete({ where: { orderId: legacy.orderId } });
     const results = await Promise.all(Array.from({ length: 5 }, () => h.post('/conversations', c.token, { orderId: legacy.orderId })));
     expect(results.every((r) => r.status === 201)).toBe(true);

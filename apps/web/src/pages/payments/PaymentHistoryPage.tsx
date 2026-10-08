@@ -38,7 +38,7 @@ export function PaymentHistoryPage() {
       <div className="gm-page-header">
         <div>
           <h1>{t('To‘lovlar tarixi')}</h1>
-          <p className="gm-page-lead">{t('Barcha to‘lovlaringiz va ularning holati.')}</p>
+          <p className="gm-page-lead">{t('Barcha to‘lovlaringiz va ularning holati')}</p>
         </div>
       </div>
       {empty && (

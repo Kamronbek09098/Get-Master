@@ -81,7 +81,7 @@ export class DirectOrderService {
         data: { conversationId: dto.conversationId, senderId: customerId, senderPanel: 'CUSTOMER', type: 'ORDER', orderId: order.id, text: `Buyurtma: ${request.title} — ${amount} ${offer.currency}` },
         select: { id: true },
       });
-      await tx.conversation.update({ where: { id: dto.conversationId }, data: { updatedAt: new Date() } });
+      await tx.conversation.update({ where: { id: dto.conversationId }, data: { updatedAt: new Date(), orderId: order.id, type: 'ORDER' } });
       await tx.conversationParticipant.update({ where: { conversationId_userId: { conversationId: dto.conversationId, userId: customerId } }, data: { lastReadAt: new Date() } });
 
       await this.outbox.emit(tx, {

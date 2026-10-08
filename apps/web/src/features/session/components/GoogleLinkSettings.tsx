@@ -145,7 +145,7 @@ export function GoogleLinkSettings() {
           }}
           noValidate
         >
-          <Alert tone="warning" title={t('Google akkauntni uzish uchun avval parol o‘rnating')}>
+          <Alert tone="warning" title={t('Google akkauntni uzish uchun avval parol o‘rnating.')}>
             {t('Akkauntingiz Google orqali ochilgan va unda parol yo‘q. Google uzilsa, akkauntga kirishning boshqa yo‘li qolmaydi va akkauntingizni yo‘qotasiz. Shuning uchun avval parol o‘rnating, shundan keyingina Google akkauntni uzish mumkin bo‘ladi.')}
           </Alert>
           <Input label={t('Yangi parol')} type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} />

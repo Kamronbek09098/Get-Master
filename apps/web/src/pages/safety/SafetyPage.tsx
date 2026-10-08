@@ -36,7 +36,7 @@ export function SafetyPage() {
       <div className="gm-page-header">
         <div>
           <h1>{t('Choralar va apellyatsiya')}</h1>
-          <p className="gm-page-lead">{t('Akkauntingizga qo‘llangan choralar va apellyatsiya holati.')}</p>
+          <p className="gm-page-lead">{t('Akkauntingizga qo‘llangan choralar va apellyatsiya holati')}</p>
         </div>
       </div>
 

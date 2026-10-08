@@ -10,7 +10,7 @@ export const PROVIDER_LABEL: Record<PaymentProvider, string> = {
 };
 
 export const PROVIDER_OPTIONS: Array<{ value: PaymentProvider; label: string; hint: string }> = [
-  { value: 'CASH', label: t('Naqd pul'), hint: t('Ish tugagach ustaga qo‘lda to‘laysiz; usta olganini tasdiqlaydi') },
+  { value: 'CASH', label: t('Naqd pul'), hint: t('Ish tugagach ustaga qo‘lda to‘laysiz; usta olganini tasdiqlaydi.') },
   { value: 'CLICK', label: t('Click'), hint: t('Onlayn to‘lov') },
   { value: 'PAYME', label: t('Payme'), hint: t('Onlayn to‘lov') },
   { value: 'UZUM', label: t('Uzum'), hint: t('Onlayn to‘lov') },

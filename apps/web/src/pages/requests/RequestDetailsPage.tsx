@@ -47,7 +47,7 @@ export function RequestDetailsPage() {
   const confirmCancel = () => {
     const value = reason.trim();
     if (value.length < MIN_REASON) {
-      setReasonError(value.length === 0 ? t('Bekor qilish sababini yozing') : t('Sabab juda qisqa — kamida {min} ta belgi yozing', { min: MIN_REASON }));
+      setReasonError(value.length === 0 ? t('Bekor qilish sababini yozing') : t('Sabab juda qisqa — kamida {min} ta belgi yozing.', { min: MIN_REASON }));
       setShake((n) => n + 1);
       return;
     }

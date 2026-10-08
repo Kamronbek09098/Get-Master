@@ -14,7 +14,7 @@ export function filmScenes(master: boolean): FilmScene[] {
       { label: t('03 — Taklif'), title: t('Narxni o‘zingiz belgilaysiz.'), text: t('Mijoz reyting, tajriba va narxingizni solishtirib, sizni tanlaydi.') },
       { label: t('04 — Ish'), title: t('Ishni bajarasiz.'), text: t('Yo‘lga chiqing, yetib keling, ish oldidan va keyin surat bilan hujjatlang.') },
       { label: t('05 — Natija'), title: t('Natija sizning obro‘ingiz.'), text: t('Tasdiqlangan ish reyting, sharh va portfolioga aylanadi; to‘lov hisobingizga tushadi.') },
-      { label: t('06 — GetMaster'), title: t('GetMaster'), text: t('Mijoz qidirmang — ish sizni topsin.') },
+      { label: t('06 — GetMaster'), title: t('GetMaster'), text: t('Mijoz qidirmang — ish sizni topsin') },
     ];
   }
   return [
@@ -22,7 +22,7 @@ export function filmScenes(master: boolean): FilmScene[] {
     { label: t('03 — Moslik'), title: t('To‘g‘ri usta topiladi.'), text: t('Hudud, tajriba, reyting va bo‘sh vaqt hisobga olinadi. Takliflarni siz solishtirasiz.') },
     { label: t('04 — Ish'), title: t('Ish boshlanadi.'), text: t('Usta yo‘lga chiqadi, ish oldidan va keyin surat bilan hujjatlaydi.') },
     { label: t('05 — Natija'), title: t('Natija o‘zi gapiradi.'), text: t('Siz tasdiqlaysiz, to‘lov o‘tadi, kafolat boshlanadi.') },
-    { label: t('06 — GetMaster'), title: t('GetMaster'), text: t('Muammodan natijagacha — bitta oqim.') },
+    { label: t('06 — GetMaster'), title: t('GetMaster'), text: t('Muammodan natijagacha — bitta oqim') },
   ];
 }
 

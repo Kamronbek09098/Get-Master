@@ -102,7 +102,7 @@ export function CoverageMap({ latitude, longitude, radiusKm, point, zones, heigh
   return (
     <div className="gm-coverage" style={{ height }}>
       <div ref={holder} className="gm-coverage__map" />
-      {empty && <div className="gm-coverage__empty">{t('Manzilni tanlang — ish hududi shu yerda ko‘rinadi')}</div>}
+      {empty && <div className="gm-coverage__empty">{t('Manzilni tanlang — ish hududi shu yerda ko‘rinadi.')}</div>}
     </div>
   );
 }

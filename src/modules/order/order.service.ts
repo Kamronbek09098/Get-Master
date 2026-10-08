@@ -1,3 +1,4 @@
+import { findPairConversation } from '../communication/pair-conversation';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { OrderActor, OrderStatus, PaymentProvider, Prisma, WorkStage } from '@prisma/client';
 import { MasterStatsService } from '../master/master-stats.service';
@@ -110,7 +111,8 @@ export class OrderService {
       reschedule: booking.proposedStartAt
         ? { proposedStartAt: booking.proposedStartAt, proposedByMe: booking.proposedById === userId }
         : null,
-      conversationId: conversation?.id ?? null,
+      // Buyurtmaning o‘z suhbati bo‘lmasa (bir juftlik uchun yagona suhbat boshqa buyurtmaga bog‘langan) — juftlikning umumiy suhbati.
+      conversationId: conversation?.id ?? (await findPairConversation(this.db, order.customerId, order.master.user.id))?.id ?? null,
       counterpart: viewerRole === 'MASTER' ? customer : { ...master.user, profession: master.profession },
     };
   }

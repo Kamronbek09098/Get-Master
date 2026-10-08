@@ -59,7 +59,7 @@ export function AdminReportsPage() {
       <div className="gm-page-header">
         <div>
           <h1>{t('Hisobotlar')}</h1>
-          <p className="gm-page-lead">{t('Daromad va faoliyat hisobotlari.')}</p>
+          <p className="gm-page-lead">{t('Daromad va faoliyat hisobotlari')}</p>
         </div>
       </div>
       <DateRangeFilter value={range} onChange={setRange} />

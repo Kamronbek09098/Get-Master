@@ -18,7 +18,7 @@ export function SavedMastersCard() {
   const toggle = useToggleFavorite();
   const list = favorites.data ?? [];
   return (
-    <ProfileCard icon={Heart} title={t('Saqlangan ustalar')} hint={t('Yoqqan ustalaringizni tez topish uchun.')}>
+    <ProfileCard icon={Heart} title={t('Saqlangan ustalar')} hint={t('Yoqqan ustalaringizni tez topish uchun')}>
       {favorites.isError && <Alert tone="danger">{getErrorMessage(favorites.error)}</Alert>}
       {!favorites.isError && list.length === 0 && <p className="gm-pempty">{t('Hali usta saqlanmagan. Usta profilidagi «Saqlash» tugmasini bosing.')}</p>}
       {list.length > 0 && (

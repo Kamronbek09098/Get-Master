@@ -140,8 +140,8 @@ export function OrderDetailsPage() {
     else if (status === 'IN_PROGRESS')
       step = (
         <StepCard tone="next" icon={<Hammer size={22} />} title={t('Ish jarayonida')} lead={t('Ish tugagach, natijani suratga olib, mijozga tasdiqlash uchun yuboring.')}>
-          <WorkProofPanel orderId={id} stage="DURING" canEdit hint={t('Ixtiyoriy: jarayonni ko‘rsatuvchi rasmlar.')} />
-          <WorkProofPanel orderId={id} stage="AFTER" canEdit required hint={t('Tayyor natijaning rasmi.')} />
+          <WorkProofPanel orderId={id} stage="DURING" canEdit hint={t('Ixtiyoriy: jarayonni ko‘rsatuvchi rasmlar')} />
+          <WorkProofPanel orderId={id} stage="AFTER" canEdit required hint={t('Tayyor natijaning rasmi')} />
           <div className="gm-oactions">
             <Button disabled={counts.AFTER === 0} loading={submitCompletion.isPending} onClick={() => submitCompletion.mutate()}>{t('Ish tugadi, mijozga yuborish')}</Button>
           </div>

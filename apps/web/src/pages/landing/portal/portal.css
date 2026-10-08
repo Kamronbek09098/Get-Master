@@ -355,5 +355,19 @@ img.gm-portal__hero-media { animation: gm-pt-push 36s ease-in-out infinite alter
 
 /* Sarlavha: ikkinchi qator yuqoriga (qatorlar zich), izoh matni sarlavha kengligiga moslashgan va o‘rtada */
 .gm-portal__line + .gm-portal__line { margin-top: -0.1em; }
-.gm-portal__lead { width: 100%; max-width: min(100%, calc(clamp(48px, 9.2vw, 148px) * 5.9)); }
-@media (max-width: 720px) { .gm-portal__lead { max-width: min(100%, calc(clamp(42px, 13vw, 64px) * 5.9)); } }
+.gm-portal__lead { width: 100%; max-width: 100%; text-align: center; }
+.gm-portal__lead > span { display: block; }
+.gm-portal__lead > span + span { margin-top: 10px; }
+@media (min-width: 900px) { .gm-portal__lead > span:first-child { white-space: nowrap; } }
+
+/* «Men mijozman / Men ustaman» kartalari: matn bir tekis, so‘z yetim qolmaydi, ikkala karta bir xil balandlik va tekislikda */
+.gm-portal__doors { align-items: stretch; }
+.gm-portal__door { text-align: left; align-items: center; }
+.gm-portal__door-body { align-content: center; gap: 4px; }
+.gm-portal__door-body strong { white-space: nowrap; }
+.gm-portal__door-body > span { text-wrap: balance; max-width: 26ch; }
+
+/* Kartadagi icon + matn + strelka bitta guruh bo‘lib kartaning o‘rtasida turadi; matn chetga yopishib qolmaydi */
+.gm-portal__door { justify-content: center; gap: 20px; padding-inline: clamp(22px, 3vw, 36px); }
+.gm-portal__door-body { flex: 0 1 auto; }
+.gm-portal__door-go { margin-left: 6px; }

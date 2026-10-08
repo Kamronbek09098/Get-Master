@@ -182,7 +182,7 @@ export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPick
             value={text}
             autoComplete="off"
             required
-            placeholder={t('Ko‘cha, uy raqami yoki mo‘ljal…')}
+            placeholder={t('Ko‘cha, uy raqami yoki mo‘ljal')}
             role="combobox"
             aria-expanded={open}
             aria-autocomplete="list"

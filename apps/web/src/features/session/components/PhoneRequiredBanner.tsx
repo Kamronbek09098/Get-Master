@@ -14,7 +14,7 @@ export function PhoneRequiredBanner() {
   return (
     <>
       <div className="gm-phone-banner">
-      <Alert tone="warning" title={t('Buyurtma berish uchun telefon raqamingizni tasdiqlang')}>
+      <Alert tone="warning" title={t('Buyurtma berish uchun telefon raqamingizni tasdiqlang.')}>
         <p style={{ margin: '0 0 10px' }}>
           {user.phone ? t('Raqamingiz hali tasdiqlanmagan.') : t('Akkauntingizda telefon raqami yo‘q.')} {t('Tasdiqlamaguncha buyurtma yaratib bo‘lmaydi.')}
         </p>

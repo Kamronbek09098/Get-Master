@@ -7,7 +7,7 @@ export function MasterSchedulePage() {
       <div className="gm-page-header">
         <div>
           <h1>{t('Ish jadvali')}</h1>
-          <p className="gm-page-lead">{t('Mijozlar band qila oladigan ish vaqtlaringiz.')}</p>
+          <p className="gm-page-lead">{t('Mijozlar band qila oladigan ish vaqtlaringiz')}</p>
         </div>
       </div>
       <AvailabilityEditor />

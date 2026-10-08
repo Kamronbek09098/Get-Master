@@ -51,7 +51,7 @@ export function useAttachments(conversationId: string) {
         const key = crypto.randomUUID();
         const entry: PendingAttachment = { key, name: file.name, mimeType: file.type || 'application/octet-stream', status: 'uploading' };
         if (file.size > MAX_BYTES) {
-          setItems((current) => [...current, { ...entry, status: 'error', error: t('Fayl 25 MB dan katta') }]);
+          setItems((current) => [...current, { ...entry, status: 'error', error: t('Fayl 25 MB dan katta.') }]);
           continue;
         }
         setItems((current) => [...current, entry]);

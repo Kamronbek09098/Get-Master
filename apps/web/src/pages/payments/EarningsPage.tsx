@@ -111,7 +111,7 @@ function Chart({ daily, currency }: { daily: EarningsDay[]; currency: string }) 
           </div>
         </div>
       </div>
-      <p className="gm-chart__hint">{t('Kunni ko‘rish uchun ustuniga bosing yoki ustiga boring')}</p>
+      <p className="gm-chart__hint">{t('Kunni ko‘rish uchun ustuniga bosing yoki ustiga boring.')}</p>
     </div>
   );
 }
@@ -164,7 +164,7 @@ export function EarningsPage() {
                 <CalendarDays size={16} aria-hidden="true" />{' '}{t('Bugungi daromad · {shortDate}', { shortDate: shortDate(data.today.date) })}</span>
               <strong className="gm-earn__hero-value">{formatMoney(data.today.net, data.currency)}</strong>
               <span className="gm-earn__hero-sub">
-                {data.today.count > 0 ? t('{count} ta to‘lov qabul qilindi', { count: data.today.count }) : t('Bugun hali to‘lov qabul qilinmagan')}
+                {data.today.count > 0 ? t('{count} ta to‘lov qabul qilindi', { count: data.today.count }) : t('Bugun hali to‘lov qabul qilinmagan.')}
               </span>
               {delta && (
                 <span className={cx('gm-earn__delta', `gm-earn__delta--${delta.tone}`)}>

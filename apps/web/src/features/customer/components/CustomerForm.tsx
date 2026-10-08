@@ -25,7 +25,7 @@ export function CustomerForm({ profile }: { profile: CustomerProfile }) {
     <form className="gm-form" onSubmit={handleSubmit}>
       {updateProfile.isError && <Alert tone="danger">{getErrorMessage(updateProfile.error)}</Alert>}
       {updateProfile.isSuccess && <Alert tone="success">{t('Profil muvaffaqiyatli yangilandi')}</Alert>}
-      <Input label={t('To‘liq ism')} placeholder={t('Masalan: Kamronbek Ziyovuddinov')} autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} maxLength={200} hint={fullName.trim() && !parts ? t('Ism va familiyani birga yozing') : undefined} />
+      <Input label={t('To‘liq ism')} placeholder={t('Masalan: Kamronbek Ziyovuddinov')} autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} maxLength={200} hint={fullName.trim() && !parts ? t('Ism va familiyani birga yozing.') : undefined} />
       <Button type="submit" size="lg" fullWidth className="gm-psave" loading={updateProfile.isPending} disabled={!dirty}>{t('Saqlash')}</Button>
     </form>
   );

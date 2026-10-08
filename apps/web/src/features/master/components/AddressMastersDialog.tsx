@@ -30,7 +30,7 @@ export function CoverageSummary({ lat, lon, onOpen }: { lat: number | null; lon:
         {total > 0 ? (
           <>{t('Bu manzilga')}{' '}<strong>{total}{' '}{t('ta usta')}</strong>{' '}{t('kela oladi')}</>
         ) : (
-          t('Hozircha bu manzilga kela oladigan usta topilmadi')
+          t('Hozircha bu manzilga kela oladigan usta topilmadi.')
         )}
       </span>
       <span className="gm-covsum__cta">{t('Xaritada ko‘rish')}{' '}<ChevronRight size={16} aria-hidden="true" />

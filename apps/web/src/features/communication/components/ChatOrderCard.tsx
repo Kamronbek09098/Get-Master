@@ -78,7 +78,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
   else if (status === 'CONFIRMED') hint = t('Usta buyurtmani qabul qildi.');
   else if (status === 'ON_THE_WAY') hint = t('Usta yo‘lda.');
   else if (status === 'ARRIVED') hint = t('Usta yetib keldi.');
-  else if (status === 'IN_PROGRESS') hint = t('Ish jarayonida.');
+  else if (status === 'IN_PROGRESS') hint = t('Ish jarayonida');
   else if (status === 'WAITING_CONFIRMATION') hint = t('Usta ishni tugatdi. To‘lov usulini tanlab, ishni tasdiqlang.');
   else if (status === 'COMPLETED') hint = payment ? t('Yakunlandi. To‘lov: {providerLabel}.', { providerLabel: providerLabel(payment.provider) }) : t('Yakunlandi. To‘lov usulini buyurtma sahifasida tanlang.');
 

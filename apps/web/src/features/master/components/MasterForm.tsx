@@ -35,7 +35,7 @@ export function MasterForm({ profile }: { profile: MasterProfile | null }) {
       {saveProfile.isError && <Alert tone="danger">{getErrorMessage(saveProfile.error)}</Alert>}
       {saveProfile.isSuccess && <Alert tone="success">{t('Profil saqlandi')}</Alert>}
       <div style={{ gridColumn: '1 / -1' }}>
-        <Input label={t('To‘liq ism')} placeholder={t('Masalan: Kamronbek Ziyovuddinov')} autoComplete="name" required maxLength={200} value={fullName} onChange={(event) => setFullName(event.target.value)} hint={fullName.trim() && !names ? t('Ism va familiyani birga yozing') : undefined} />
+        <Input label={t('To‘liq ism')} placeholder={t('Masalan: Kamronbek Ziyovuddinov')} autoComplete="name" required maxLength={200} value={fullName} onChange={(event) => setFullName(event.target.value)} hint={fullName.trim() && !names ? t('Ism va familiyani birga yozing.') : undefined} />
       </div>
       <Input label={t('Kasb')} required maxLength={150} value={profession} onChange={(event) => setProfession(event.target.value)} />
       <Input

@@ -13,6 +13,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
 import { CursorQueryDto } from '../../common/dto/cursor-query.dto';
 import { NotificationService } from '../notification/notification.service';
+import { attachOrderToPairConversation, findPairConversation, pairKey } from './pair-conversation';
 import { OrderService } from '../order/order.service';
 import { EditMessageDto, SendMessageDto } from './dto/message.dto';
 import { ERRORS } from '../../common/constants/error-messages';
@@ -60,26 +61,15 @@ export class CommunicationService {
     }
     const existing = await this.db.conversation.findUnique({ where: { orderId } });
     if (existing) return this.findOne(userId, existing.id, panel);
-    try {
-      const created = await this.db.conversation.create({
-        data: {
-          type: 'ORDER',
-          orderId,
-          participants: {
-            create: [...new Set([order.customerId, order.masterUserId])].map((id) => ({
-              userId: id,
-              roles: [...(id === order.customerId ? ['CUSTOMER'] : []), ...(id === order.masterUserId ? ['MASTER'] : [])],
-            })),
-          },
-        },
-      });
-      return this.findOne(userId, created.id, panel);
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        const raced = await this.db.conversation.findUniqueOrThrow({ where: { orderId } });
-        return this.findOne(userId, raced.id, panel);
+    // Bir vaqtda ochilsa, birinchisi yaratadi, qolganlari (kalit to‘qnashuvi) shu suhbatni topib unga bog‘laydi.
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        const conversationId = await attachOrderToPairConversation(this.db, { orderId, customerId: order.customerId, masterUserId: order.masterUserId });
+        return this.findOne(userId, conversationId, panel);
+      } catch (error) {
+        const conflict = error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+        if (!conflict || attempt >= 4) throw error;
       }
-      throw error;
     }
   }
 
@@ -92,20 +82,18 @@ export class CommunicationService {
     if (!master) throw new NotFoundException(ERRORS.MASTER_NOT_FOUND);
     if (master.userId === userId) throw new ForbiddenException(ERRORS.CHAT_WITH_SELF);
 
-    // Ikkovi o‘rtasida allaqachon suhbat bo‘lsa (buyurtma suhbati yoki oldingi to‘g‘ridan-to‘g‘ri suhbat),
-    // yangisini yaratmasdan o‘shanga qaytariladi — bitta juftlik uchun bir nechta parallel suhbat bo‘lmasin.
-    const candidates = await this.db.conversation.findMany({
-      where: { AND: [{ participants: { some: { userId } } }, { participants: { some: { userId: master.userId } } }] },
-      include: { order: { select: { status: true } } },
-      orderBy: { updatedAt: 'desc' },
-      take: 10,
-    });
-    const writable = candidates.find((c) => !(c.order && CLOSED_ORDER_STATUSES.includes(c.order.status)));
-    if (writable) return this.findOne(userId, writable.id, panel);
-
-    const directKey = [userId, master.userId].sort().join(':');
-    const existing = await this.db.conversation.findUnique({ where: { directKey } });
-    if (existing) return this.findOne(userId, existing.id, panel);
+    // Ikkovi o‘rtasida allaqachon suhbat bo‘lsa (buyurtma suhbati yoki oldingi to‘g‘ridan-to‘g‘ri suhbat), yangisi HECH QACHON ochilmaydi.
+    const existing = await findPairConversation(this.db, userId, master.userId);
+    if (existing) {
+      // Bekor qilingan/muddati o‘tgan buyurtmaga bog‘langan suhbat yana yozishga ochiladi (buyurtmadan ajratiladi).
+      if (existing.order && CLOSED_ORDER_STATUSES.includes(existing.order.status)) {
+        await this.db.conversation.update({ where: { id: existing.id }, data: { orderId: null, type: 'DIRECT' } });
+      }
+      if (!existing.directKey) await this.db.conversation.update({ where: { id: existing.id }, data: { directKey: pairKey(userId, master.userId) } }).catch(() => undefined);
+      await this.db.conversationParticipant.updateMany({ where: { conversationId: existing.id, userId }, data: { deletedAt: null } });
+      return this.findOne(userId, existing.id, panel);
+    }
+    const directKey = pairKey(userId, master.userId);
     try {
       const created = await this.db.conversation.create({
         data: {

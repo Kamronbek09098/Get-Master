@@ -116,7 +116,7 @@ export function OtpForm({ phone, loading, error, onSubmit, onResend, delivery, o
 
       {delivery && delivery.channel !== 'NONE' ? (
         <p className="gm-otp__lead">
-          <span>{delivery.channel === 'EMAIL' ? t('Tasdiqlash kodi emailingizga yuborildi') : t('Tasdiqlash kodi SMS orqali yuborildi')}</span>
+          <span>{delivery.channel === 'EMAIL' ? t('Tasdiqlash kodi emailingizga yuborildi.') : t('Tasdiqlash kodi SMS orqali yuborildi.')}</span>
           <strong>{delivery.destination}</strong>
         </p>
       ) : (

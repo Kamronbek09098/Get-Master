@@ -19,7 +19,7 @@ export function WarrantyPage() {
       <div className="gm-page-header">
         <div>
           <h1>{t('Kafolatlar')}</h1>
-          <p className="gm-page-lead">{t('Bajarilgan ishlar bo‘yicha kafolat murojaatlari.')}</p>
+          <p className="gm-page-lead">{t('Bajarilgan ishlar bo‘yicha kafolat murojaatlari')}</p>
         </div>
       </div>
       {warranties.isLoading && <PageLoader label={t('Kafolatlar yuklanmoqda…')} />}

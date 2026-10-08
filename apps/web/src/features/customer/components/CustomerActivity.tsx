@@ -21,7 +21,7 @@ export function CustomerActivity({ orders }: { orders: OrderListItem[] }) {
 
   return (
     <>
-      <ProfileCard icon={Users} title={t('Birga ishlagan ustalar')} hint={t('Yakunlangan buyurtmalar asosida.')}>
+      <ProfileCard icon={Users} title={t('Birga ishlagan ustalar')} hint={t('Yakunlangan buyurtmalar asosida')}>
         {masters.size === 0 ? (
           <p className="gm-pempty">{t('Hali yakunlangan buyurtma yo‘q.')}</p>
         ) : (

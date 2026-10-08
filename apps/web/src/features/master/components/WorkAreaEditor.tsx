@@ -102,7 +102,7 @@ export function WorkAreaEditor({ profile }: { profile: MasterProfile }) {
             max={500}
             step="0.5"
             hint={t('Shu manzildan qancha masofagacha buyurtma olasiz.')}
-            error={radiusInvalid ? t('Radius 0,5 dan 500 km gacha bo‘lishi kerak') : centerMissing ? t('Avval ish hududi manzilini tanlang') : undefined}
+            error={radiusInvalid ? t('Radius 0,5 dan 500 km gacha bo‘lishi kerak.') : centerMissing ? t('Avval ish hududi manzilini tanlang.') : undefined}
             value={radius}
             onChange={(event) => setRadius(event.target.value)}
           />

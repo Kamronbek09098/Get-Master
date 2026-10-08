@@ -67,7 +67,7 @@ export function ServiceChooser({ label, value, onChange, required, error, hint }
         <input
           type="search"
           aria-label={t('Xizmat qidirish')}
-          placeholder={t('Xizmatni qidiring: masalan, kran, rozetka…')}
+          placeholder={t('Xizmatni qidiring: masalan, kran, rozetka')}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           autoComplete="off"

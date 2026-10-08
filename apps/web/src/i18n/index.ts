@@ -62,6 +62,16 @@ function interpolate(text: string, params?: Record<string, string | number | nul
   return text.replace(/\{([A-Za-z0-9_]+)\}/g, (match, name: string) => (name in params ? String(params[name] ?? '') : match));
 }
 
+/** Tarjimaning oxirgi nuqtasi asl (o‘zbekcha) matnnikiga moslashadi: nuqtasiz sarlavhaning tarjimasi ham nuqtasiz, to‘liq gapniki nuqtali. */
+function matchTrailingPeriod(source: string, translated: string): string {
+  const src = source.trimEnd();
+  const out = translated.trimEnd();
+  if (src.endsWith('.')) return src.endsWith('..') || out.endsWith('.') || /[?!…:]$/.test(out) ? translated : `${out}.`;
+  // Qisqartmalar (mln., т.д.) va ko‘p nuqtali matnlar o‘zgarmaydi.
+  if (out.endsWith('.') && !out.endsWith('..') && /[\p{L}]{4,}\.$/u.test(out)) return out.slice(0, -1);
+  return translated;
+}
+
 /** Matnni joriy tilga tarjima qiladi. Tarjima topilmasa — o‘zbekcha asl matn (kirill uchun avtomatik o‘giriladi). */
 export function t(key: string, params?: Record<string, string | number | null | undefined>): string {
   if (lang === 'uz') return interpolate(key, params);
@@ -70,7 +80,10 @@ export function t(key: string, params?: Record<string, string | number | null | 
   const core = norm(key);
   let text = dict.get(core);
   if (text === undefined) text = matchPattern(dict, core, key);
+  // Oxirgi nuqta bo‘lgan/bo‘lmagan shakl ham topiladi (sarlavha/yorliqlarda nuqta yo‘q, to‘liq gaplarda bor).
+  if (text === undefined) text = dict.get(core.endsWith('.') ? core.slice(0, -1) : `${core}.`);
   if (text === undefined) return interpolate(key, params);
+  text = matchTrailingPeriod(key, text);
   // Asl matn boshi/oxiridagi bo‘shliqlar saqlanadi (tarjima tinish belgisidan boshlansa — bo‘shliqsiz).
   const lead = /^\s*/.exec(key)?.[0] ?? '';
   const trail = /\s*$/.exec(key)?.[0] ?? '';

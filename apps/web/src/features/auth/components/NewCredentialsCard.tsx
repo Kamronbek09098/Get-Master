@@ -31,7 +31,7 @@ function CopyButton({ text, label, target, onCopied }: { text: string; label: st
 
   async function handleClick() {
     const ok = await copyText(text, target.current);
-    onCopied(ok ? t('{label}: nusxalandi', { label }) : t('Nusxalab bo‘lmadi, matnni qo‘lda belgilab nusxalang'));
+    onCopied(ok ? t('{label}: nusxalandi', { label }) : t('Nusxalab bo‘lmadi, matnni qo‘lda belgilab nusxalang.'));
     if (!ok) return;
     setDone(true);
     window.clearTimeout(timer.current);

@@ -18,7 +18,7 @@ import { t } from '@/i18n';
 function ReplyAccessSwitch({ conversationId, allowed }: { conversationId: string; allowed: boolean }) {
   const setAccess = useSetReplyAccess(conversationId);
   return (
-    <div className="gm-messenger__access" title={t('Yoqilsa, foydalanuvchi shu suhbatga javob yoza oladi')}>
+    <div className="gm-messenger__access" title={t('Yoqilsa, foydalanuvchi shu suhbatga javob yoza oladi.')}>
       <Switch label={t('Foydalanuvchi yoza oladi')} checked={allowed} disabled={setAccess.isPending} onChange={(checked) => setAccess.mutate(checked)} />
     </div>
   );

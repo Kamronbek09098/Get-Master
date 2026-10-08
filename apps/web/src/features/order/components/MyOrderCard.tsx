@@ -39,11 +39,11 @@ export function MyOrderCard({ item }: { item: MyOrderItem }) {
           )}
           {draft && (
             <p className="gm-mo__alert">
-              <AlertCircle size={14} aria-hidden="true" />{' '}{t('So‘rov hali yuborilmagan. Yuborish uchun oching')}</p>
+              <AlertCircle size={14} aria-hidden="true" />{' '}{t('So‘rov hali yuborilmagan. Yuborish uchun oching.')}</p>
           )}
           {waiting && offers === 0 && (
             <p className="gm-mo__hint">
-              <Clock size={14} aria-hidden="true" />{' '}{t('Mos ustalar qidirilmoqda, takliflar shu yerda ko‘rinadi')}</p>
+              <Clock size={14} aria-hidden="true" />{' '}{t('Mos ustalar qidirilmoqda, takliflar shu yerda ko‘rinadi.')}</p>
           )}
           <div className="gm-mo__foot">
             <span className="gm-mo__stage">{t('So‘rov bosqichi')}</span>
@@ -77,7 +77,7 @@ export function MyOrderCard({ item }: { item: MyOrderItem }) {
         </p>
         {needsConfirm && (
           <p className="gm-mo__alert">
-            <AlertCircle size={14} aria-hidden="true" />{' '}{t('Usta ishni tugatdi. Natijani ko‘rib, tasdiqlang')}</p>
+            <AlertCircle size={14} aria-hidden="true" />{' '}{t('Usta ishni tugatdi. Natijani ko‘rib, tasdiqlang.')}</p>
         )}
         {index >= 0 && order.status !== 'COMPLETED' && (
           <div className="gm-mo__bar" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100} aria-label={t('Bajarilish darajasi')}>

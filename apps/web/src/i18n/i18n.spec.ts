@@ -44,4 +44,11 @@ describe('t()', () => {
     expect(MONTHS.en[9]).toBe('Oct');
     expect(MONTHS.ru[9]).toBe('окт');
   });
+
+  it('keeps the trailing period in step with the Uzbek source text', async () => {
+    const ru = await load('ru');
+    // «Yuklanmoqda» kabi nuqtasiz kalit — tarjimada ham nuqta yo‘q; nuqtali kalit — nuqtali tarjima.
+    expect(ru.t('Hujjat o‘chiriladi. Bu amalni qaytarib bo‘lmaydi.')).toBe('Документ будет удалён. Это действие нельзя отменить.');
+    expect(ru.t('Hujjat o‘chiriladi. Bu amalni qaytarib bo‘lmaydi')).toBe('Документ будет удалён. Это действие нельзя отменить');
+  });
 });

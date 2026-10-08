@@ -47,7 +47,7 @@ export function useVoiceRecorder() {
     setError(null);
     const format = pickMimeType();
     if (!format || !navigator.mediaDevices?.getUserMedia) {
-      setError(t('Bu qurilmada ovoz yozib bo‘lmaydi'));
+      setError(t('Bu qurilmada ovoz yozib bo‘lmaydi.'));
       return;
     }
     try {

@@ -2031,3 +2031,54 @@ body:has(.gm-messenger) .gm-footer {
 .gm-calllog.is-failed > svg { background: var(--gm-color-danger-bg); color: var(--gm-color-danger); }
 .gm-calllog > span { display: flex; flex-direction: column; line-height: 1.25; }
 .gm-calllog small { opacity: 0.7; font-size: 0.78rem; }
+
+/* ===== Dumaloq video xabar (Telegram uslubi) ===== */
+.gm-composer__send--round { background: var(--gm-color-primary-soft); color: var(--gm-color-primary); box-shadow: none; margin-right: 8px; }
+.gm-composer__row:has(.gm-composer__send--round) { gap: 0; }
+
+.gm-round { position: static; }
+.gm-round__stage { position: absolute; left: 50%; bottom: calc(100% + 18px); z-index: 20; width: min(300px, 76vw); aspect-ratio: 1; transform: translateX(-50%); filter: drop-shadow(0 18px 36px rgba(7, 12, 26, 0.45)); animation: gm-round-pop 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+@keyframes gm-round-pop { from { opacity: 0; transform: translateX(-50%) scale(0.6); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
+.gm-round__ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; z-index: 2; }
+.gm-round__ring-fg { fill: none; stroke: #fff; stroke-width: 4; stroke-linecap: round; filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.45)); transition: stroke-dashoffset 0.12s linear; }
+.gm-round__circle { position: absolute; inset: 10px; border-radius: 50%; overflow: hidden; background: #0a1226; display: grid; place-items: center; }
+.gm-round__circle video { width: 100%; height: 100%; object-fit: cover; }
+.gm-round__circle video.is-mirrored { transform: scaleX(-1); }
+.gm-round__wait { position: absolute; color: rgba(255, 255, 255, 0.85); }
+.gm-round__error { margin: 0; padding: 0 28px; color: #fecaca; font-size: 0.9rem; text-align: center; }
+.gm-round__paused { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(7, 12, 26, 0.45); color: #fff; }
+
+/* Xabar maydoni o‘rnida: vaqt · Bekor qilish · kamera · pauza · katta yuborish tugmasi */
+.gm-round__bar { position: absolute; inset: 0; z-index: 21; display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px 16px; background: var(--gm-color-surface); }
+.gm-round__clock { display: inline-flex; align-items: center; gap: 9px; min-width: 76px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--gm-color-text); }
+.gm-round__clock i { width: 10px; height: 10px; flex: none; border-radius: 50%; background: #ef4444; animation: gm-rec-pulse 1s ease-in-out infinite; }
+.gm-round__clock i.is-paused { animation: none; background: var(--gm-color-text-muted); }
+.gm-round__cancel { flex: 1; min-width: 0; padding: 10px 6px; border: 0; background: transparent; color: var(--gm-color-primary); font: inherit; font-weight: 700; font-size: 1rem; text-align: center; cursor: pointer; border-radius: 12px; }
+.gm-round__cancel:hover:not(:disabled) { background: var(--gm-color-primary-soft); }
+.gm-round__small { display: grid; place-items: center; flex: none; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: var(--gm-color-surface-muted); color: var(--gm-color-text); cursor: pointer; transition: transform 0.15s; }
+.gm-round__small:active:not(:disabled) { transform: scale(0.92); }
+.gm-round__small:disabled, .gm-round__cancel:disabled { opacity: 0.45; cursor: not-allowed; }
+.gm-round__send { position: relative; display: grid; place-items: center; flex: none; width: 52px; height: 52px; padding: 0; border: 0; border-radius: 50%; background: var(--gm-color-primary); color: #fff; cursor: pointer; box-shadow: 0 6px 16px -6px color-mix(in srgb, var(--gm-color-primary) 85%, transparent); }
+.gm-round__send::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--gm-color-primary) 55%, transparent); opacity: 0; }
+.gm-round__send.is-live::after { animation: gm-round-pulse 1.6s ease-out infinite; }
+.gm-round__send:disabled { opacity: 0.6; cursor: not-allowed; }
+@keyframes gm-round-pulse { 0% { transform: scale(0.85); opacity: 0.9; } 100% { transform: scale(1.35); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .gm-round__stage, .gm-round__send.is-live::after, .gm-round__clock i { animation: none; } }
+
+.gm-roundmsg { position: relative; display: block; width: min(240px, 62vw); aspect-ratio: 1; padding: 0; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.gm-roundmsg__ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); pointer-events: none; }
+.gm-roundmsg__ring circle { fill: none; stroke-width: 4; }
+.gm-roundmsg__ring-bg { stroke: transparent; }
+.gm-roundmsg__ring-fg { stroke: var(--gm-color-primary); stroke-linecap: round; opacity: 0; transition: opacity 0.2s; }
+.gm-roundmsg.is-playing .gm-roundmsg__ring-fg { opacity: 1; }
+.gm-roundmsg__circle { position: absolute; inset: 7px; border-radius: 50%; overflow: hidden; background: #0a1226; box-shadow: 0 6px 18px -8px rgba(10, 20, 40, 0.5); display: grid; place-items: center; }
+.gm-roundmsg__circle video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gm-roundmsg__play { position: relative; z-index: 1; display: grid; place-items: center; width: 54px; height: 54px; border-radius: 50%; background: rgba(10, 20, 40, 0.5); color: #fff; padding-left: 3px; }
+.gm-roundmsg__fail { position: absolute; z-index: 2; padding: 6px 10px; border-radius: 12px; background: rgba(10, 20, 40, 0.7); color: #fff; font-size: 0.78rem; text-align: center; }
+.gm-roundmsg__time { position: absolute; left: 12px; bottom: 12px; z-index: 2; padding: 2px 8px; border-radius: 10px; background: rgba(10, 20, 40, 0.55); color: #fff; font-size: 0.75rem; font-variant-numeric: tabular-nums; }
+.gm-bubble--media:not(:has(.gm-quote)) .gm-attach:has(.gm-roundmsg) { display: block; }
+.gm-bubble.gm-bubble--media:has(.gm-roundmsg),
+.gm-bubble.gm-bubble--mine.gm-bubble--media:has(.gm-roundmsg) { background: transparent; box-shadow: none; padding: 0; border-radius: 50%; overflow: visible; }
+.gm-bubble.gm-bubble--media:has(.gm-roundmsg)::before,
+.gm-bubble.gm-bubble--media:has(.gm-roundmsg)::after { display: none; }
+.gm-bubble--media:has(.gm-roundmsg) .gm-bubble__meta { right: 10px; bottom: 10px; }

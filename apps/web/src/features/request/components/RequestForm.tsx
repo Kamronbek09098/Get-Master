@@ -156,7 +156,7 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
           )}
           {errors.addressId && (
             <p className="gm-reqform__error" role="alert">
-              {addressList.length > 0 ? errors.addressId.message : t('So‘rov yuborish uchun avval manzil qo‘shing')}
+              {addressList.length > 0 ? errors.addressId.message : t('So‘rov yuborish uchun avval manzil qo‘shing.')}
             </p>
           )}
         </Section>

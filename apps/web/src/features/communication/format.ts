@@ -157,6 +157,7 @@ export function replySnippet(message: {
   if (message.deleted || message.deletedAt) return t('Xabar o‘chirilgan');
   if (message.text) return callLogPreview(message.text) ?? message.text;
   if (message.attachments?.some((a) => /^voice-/i.test(a.name) || a.mimeType.startsWith('audio/'))) return t('🎤 Ovozli xabar');
+  if (message.attachments?.some((a) => /^round-/i.test(a.name) && a.mimeType.startsWith('video/'))) return t('⭕ Video xabar');
   if (message.type === 'IMAGE') return t('📷 Rasm');
   if (message.type === 'VIDEO') return t('🎬 Video');
   if (message.type === 'FILE') return t('📎 Fayl');

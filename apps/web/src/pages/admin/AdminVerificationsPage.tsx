@@ -227,7 +227,7 @@ function HistorySection() {
         <h2>{t('Ko‘rib chiqilganlar tarixi')}{verificationItems.length + portfolioItems.length > 0 ? ` (${verificationItems.length + portfolioItems.length})` : ''}</h2>
       </div>
       {(verifications.isLoading || portfolio.isLoading) && <PageLoader />}
-      {verifications.data && portfolio.data && verificationItems.length + portfolioItems.length === 0 && <EmptyState title={t('Hali ko‘rib chiqilgan hujjat yoki ish yo‘q')} />}
+      {verifications.data && portfolio.data && verificationItems.length + portfolioItems.length === 0 && <EmptyState title={t('Hali ko‘rib chiqilgan hujjat yoki ish yo‘q.')} />}
       <div className="gm-list">
         {verificationItems.map((item) => (
           <VerificationHistoryCard key={item.id} item={item} />
@@ -283,7 +283,7 @@ function PortfolioSection() {
       </div>
       {portfolio.isLoading && <PageLoader />}
       {portfolio.isError && <Alert tone="danger">{getErrorMessage(portfolio.error)}</Alert>}
-      {portfolio.data && items.length === 0 && <EmptyState title={t('Ko‘rib chiqiladigan portfolio ishlari yo‘q')} />}
+      {portfolio.data && items.length === 0 && <EmptyState title={t('Ko‘rib chiqiladigan portfolio ishlari yo‘q.')} />}
       <div className="gm-list">
         {items.map((item) => (
           <PortfolioCard key={item.id} item={item} />

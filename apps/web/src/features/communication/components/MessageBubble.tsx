@@ -12,8 +12,10 @@ import type { ChatAttachment, ChatMessage } from '../types';
 import { Linkified } from './Linkified';
 import { ChatOrderCard } from './ChatOrderCard';
 import { VoicePlayer } from './VoicePlayer';
+import { RoundVideoPlayer } from './RoundVideoPlayer';
 import { t } from '@/i18n';
 
+const isRoundVideo = (item: { name: string; mimeType: string }) => /^round-/i.test(item.name) && item.mimeType.startsWith('video/');
 const isVoice = (item: ChatAttachment) => /^voice-/i.test(item.name) || item.mimeType.startsWith('audio/');
 
 const SWIPE_TRIGGER = 56;
@@ -66,7 +68,9 @@ function Attachments({ items }: { items: ChatAttachment[] }) {
   return (
     <div className="gm-attach">
       {items.map((item) =>
-        isVoice(item) ? (
+        isRoundVideo(item) ? (
+          <RoundVideoPlayer key={item.mediaAssetId} assetId={item.mediaAssetId} seconds={Number(/-d(\d+)\.[a-z0-9]+$/i.exec(item.name)?.[1] ?? 0)} />
+        ) : isVoice(item) ? (
           <VoicePlayer key={item.mediaAssetId} assetId={item.mediaAssetId} seconds={Number(/-d(\d+)\.[a-z0-9]+$/i.exec(item.name)?.[1] ?? 0)} />
         ) : item.mimeType.startsWith('image/') ? (
           <MediaViewer key={item.mediaAssetId} assetId={item.mediaAssetId} alt={item.name} label={item.name} size="lg" />
@@ -97,7 +101,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
   const panel = env.appRole ?? '';
   // Faqat rasm(lar)dan iborat xabar — Telegramdagidek ramkasiz, rasm pufakchani to‘liq egallaydi.
   const mediaOnly =
-    settled && message.type !== 'ORDER' && !hasText && !!message.attachments?.length && message.attachments.every((a) => a.mimeType.startsWith('image/'));
+    settled && message.type !== 'ORDER' && !hasText && !!message.attachments?.length && message.attachments.every((a) => a.mimeType.startsWith('image/') || isRoundVideo(a));
 
   useEffect(() => {
     if (!menu) return;

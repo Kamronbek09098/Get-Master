@@ -167,7 +167,7 @@ export function OrderStory({ data, proofs, loading }: { data: OrderDetailsData; 
             ) : before[0]?.mediaAssetId && after[0]?.mediaAssetId ? (
               <>
                 <BeforeAfter before={before[0].mediaAssetId} after={after[0].mediaAssetId} />
-                <p className="gm-story__hint">{t('Chiziqni suring: oldin va keyin.')}</p>
+                <p className="gm-story__hint">{t('Chiziqni suring: oldin va keyin')}</p>
               </>
             ) : after.length ? (
               <Gallery items={after} alt={t('Ishdan keyingi natija')} />

@@ -23,7 +23,7 @@ export function MyOffersPage() {
       <div className="gm-page-header">
         <div>
           <h1>{t('Takliflarim')}</h1>
-          <p className="gm-page-lead">{t('Siz yuborgan takliflar va ularning holati.')}</p>
+          <p className="gm-page-lead">{t('Siz yuborgan takliflar va ularning holati')}</p>
         </div>
       </div>
       {withdraw.isError && <Alert tone="danger">{getErrorMessage(withdraw.error)}</Alert>}

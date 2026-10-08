@@ -75,7 +75,7 @@ export function AdminAdminsPage() {
       </div>
 
       <Alert tone="info" title={t('Huquqlar')}>
-        <strong>{t('Superadmin')}</strong>{' '}{t('— barcha amallar va adminlarni boshqarish.')}{' '}<strong>{t('Admin')}</strong>{' '}{t('— faqat siz tanlagan bo‘limlar (masalan, buyurtmalar yoki ustalarni tasdiqlash); boshqa adminlarni boshqara olmaydi.')}</Alert>
+        <strong>{t('Superadmin')}</strong>{' '}{t('— barcha amallar va adminlarni boshqarish')}{' '}<strong>{t('Admin')}</strong>{' '}{t('— faqat siz tanlagan bo‘limlar (masalan, buyurtmalar yoki ustalarni tasdiqlash); boshqa adminlarni boshqara olmaydi.')}</Alert>
 
       {admins.isLoading && <PageLoader label={t('Adminlar yuklanmoqda…')} />}
       {admins.isError && <Alert tone="danger">{getErrorMessage(admins.error)}</Alert>}

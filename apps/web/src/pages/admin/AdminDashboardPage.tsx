@@ -19,7 +19,7 @@ export function AdminDashboardPage() {
       <div className="gm-page-header">
         <div>
           <h1>{t('Boshqaruv paneli')}</h1>
-          <p className="gm-page-lead">{t('Platforma bo‘yicha umumiy ko‘rsatkichlar.')}</p>
+          <p className="gm-page-lead">{t('Platforma bo‘yicha umumiy ko‘rsatkichlar')}</p>
         </div>
       </div>
       <DateRangeFilter value={range} onChange={setRange} />

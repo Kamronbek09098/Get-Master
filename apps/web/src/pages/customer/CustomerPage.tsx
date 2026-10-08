@@ -51,7 +51,7 @@ export function CustomerPage() {
       <div className="gm-page-header">
         <div>
           <h1>{t('Manzillarim')}</h1>
-          <p className="gm-page-lead">{t('So‘rov yaratganda tez tanlash uchun manzillaringiz.')}</p>
+          <p className="gm-page-lead">{t('So‘rov yaratganda tez tanlash uchun manzillaringiz')}</p>
         </div>
       </div>
       {addresses.isLoading && <PageLoader label={t('Manzillar yuklanmoqda…')} />}

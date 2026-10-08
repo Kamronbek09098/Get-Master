@@ -1,3 +1,4 @@
+import { attachOrderToPairConversation } from '../communication/pair-conversation';
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { NotificationChannel, Prisma } from '@prisma/client';
 import { MasterStatsService } from '../master/master-stats.service';
@@ -282,18 +283,7 @@ export class OfferService {
       });
 
       const masterProfile = await tx.masterProfile.findUniqueOrThrow({ where: { id: offer.masterId } });
-      await tx.conversation.create({
-        data: {
-          type: 'ORDER',
-          orderId: order.id,
-          participants: {
-            create: [...new Set([customerId, masterProfile.userId])].map((userId) => ({
-              userId,
-              roles: [...(userId === customerId ? ['CUSTOMER'] : []), ...(userId === masterProfile.userId ? ['MASTER'] : [])],
-            })),
-          },
-        },
-      });
+      await attachOrderToPairConversation(tx, { orderId: order.id, customerId, masterUserId: masterProfile.userId });
       await this.outbox.emit(tx, {
         eventName: 'order.booked',
         aggregateType: 'Order',

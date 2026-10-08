@@ -80,7 +80,7 @@ export function DeviceList() {
                 <p className="gm-card__meta">{t('Kirilgan:')} {formatDateTime(session.createdAt)}</p>
               </div>
               {!session.isCurrent && !session.canRevoke && (
-                <span className="gm-device__locked" title={t('Yangi qurilma o‘zidan oldin ulangan qurilmalarni 24 soat chiqara olmaydi')}>
+                <span className="gm-device__locked" title={t('Yangi qurilma o‘zidan oldin ulangan qurilmalarni 24 soat chiqara olmaydi.')}>
                   <Lock size={13} aria-hidden="true" /> {t('Chiqarish mumkin:')} {t('{time} dan keyin', { time: formatDateTime(session.revokeLockedUntil) })}
                 </span>
               )}
