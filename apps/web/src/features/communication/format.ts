@@ -1,7 +1,7 @@
 import { env } from '@/lib/env';
 import type { ChatMessage, Conversation } from './types';
 import { t } from '@/i18n';
-import { describeCallLog, parseCallLog } from '@/features/call/call-log';
+import { callLogPreview, describeCallLog, parseCallLog } from '@/features/call/call-log';
 
 const MONTHS_FULL = ['yanvar', 'fevral', 'mart', 'aprel', 'may', 'iyun', 'iyul', 'avgust', 'sentabr', 'oktabr', 'noyabr', 'dekabr'];
 const MONTHS_SHORT = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
@@ -155,7 +155,7 @@ export function replySnippet(message: {
   attachments?: Array<{ name: string; mimeType: string }> | null;
 }): string {
   if (message.deleted || message.deletedAt) return t('Xabar o‘chirilgan');
-  if (message.text) return message.text;
+  if (message.text) return callLogPreview(message.text) ?? message.text;
   if (message.attachments?.some((a) => /^voice-/i.test(a.name) || a.mimeType.startsWith('audio/'))) return t('🎤 Ovozli xabar');
   if (message.type === 'IMAGE') return t('📷 Rasm');
   if (message.type === 'VIDEO') return t('🎬 Video');

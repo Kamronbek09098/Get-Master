@@ -352,3 +352,8 @@ img.gm-portal__hero-media { animation: gm-pt-push 36s ease-in-out infinite alter
   -webkit-user-select: text;
   user-select: text;
 }
+
+/* Sarlavha: ikkinchi qator yuqoriga (qatorlar zich), izoh matni sarlavha kengligiga moslashgan va o‘rtada */
+.gm-portal__line + .gm-portal__line { margin-top: -0.1em; }
+.gm-portal__lead { width: 100%; max-width: min(100%, calc(clamp(48px, 9.2vw, 148px) * 5.9)); }
+@media (max-width: 720px) { .gm-portal__lead { max-width: min(100%, calc(clamp(42px, 13vw, 64px) * 5.9)); } }

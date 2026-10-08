@@ -1958,4 +1958,11 @@ export const ruExtra: Record<string, string> = {
   "O‘tkazib yuborilgan": "Пропущен",
   "Javob berilmadi": "Нет ответа",
   "Qo‘ng‘iroq xavfsizlik uchun yozib olinadi": "Звонок записывается в целях безопасности",
+  "{name} qo‘ng‘iroq qildi": "{name} позвонил(а)",
+  "Qo‘ng‘iroq qilindi": "Звонок совершён",
+  "Suhbat bo‘ldi · davomiyligi {time}": "Разговор состоялся · длительность {time}",
+  "Javob berildi, suhbat bir zumda tugadi": "Ответили, разговор сразу завершился",
+  "Qabul qiluvchi rad etdi": "Получатель отклонил",
+  "Qo‘ng‘iroq qiluvchi javob bermasdan bekor qildi": "Звонящий отменил до ответа",
+  "Javob berilmadi (o‘tkazib yuborilgan)": "Без ответа (пропущен)",
 };

@@ -1958,4 +1958,11 @@ export const enExtra: Record<string, string> = {
   "O‘tkazib yuborilgan": "Missed",
   "Javob berilmadi": "No answer",
   "Qo‘ng‘iroq xavfsizlik uchun yozib olinadi": "Calls are recorded for safety",
+  "{name} qo‘ng‘iroq qildi": "{name} made a call",
+  "Qo‘ng‘iroq qilindi": "A call was made",
+  "Suhbat bo‘ldi · davomiyligi {time}": "Call took place · duration {time}",
+  "Javob berildi, suhbat bir zumda tugadi": "Answered, ended immediately",
+  "Qabul qiluvchi rad etdi": "Declined by the recipient",
+  "Qo‘ng‘iroq qiluvchi javob bermasdan bekor qildi": "Canceled by the caller before answer",
+  "Javob berilmadi (o‘tkazib yuborilgan)": "No answer (missed)",
 };

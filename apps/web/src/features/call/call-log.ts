@@ -37,3 +37,29 @@ export function describeCallLog(entry: CallLogEntry, meId: string | undefined): 
   if (entry.status === 'MISSED') return { title: kind, detail: mine ? t('Javob berilmadi') : t('O‘tkazib yuborilgan'), failed: true };
   return { title: kind, detail: t('Aloqa uzildi'), failed: true };
 }
+
+/** Admin ko‘rinishi: kim qo‘ng‘iroq qilgani va natijasi aniq yoziladi. */
+export function describeCallLogAdmin(entry: CallLogEntry, callerName: string | null): { title: string; detail: string; failed: boolean } {
+  const kind = entry.mode === 'VIDEO' ? t('Video qo‘ng‘iroq') : t('Audio qo‘ng‘iroq');
+  const who = callerName ? t('{name} qo‘ng‘iroq qildi', { name: callerName }) : t('Qo‘ng‘iroq qilindi');
+  const duration = entry.seconds > 0 ? formatDuration(entry.seconds) : null;
+  switch (entry.status) {
+    case 'ENDED':
+    case 'ACTIVE':
+      return { title: `${kind} · ${who}`, detail: duration ? t('Suhbat bo‘ldi · davomiyligi {time}', { time: duration }) : t('Javob berildi, suhbat bir zumda tugadi'), failed: false };
+    case 'DECLINED':
+      return { title: `${kind} · ${who}`, detail: t('Qabul qiluvchi rad etdi'), failed: true };
+    case 'CANCELED':
+      return { title: `${kind} · ${who}`, detail: t('Qo‘ng‘iroq qiluvchi javob bermasdan bekor qildi'), failed: true };
+    case 'MISSED':
+      return { title: `${kind} · ${who}`, detail: t('Javob berilmadi (o‘tkazib yuborilgan)'), failed: true };
+    default:
+      return { title: `${kind} · ${who}`, detail: t('Aloqa uzildi'), failed: true };
+  }
+}
+
+/** Ro‘yxat va javob ko‘rinishlari uchun qisqa matn; qo‘ng‘iroq yozuvi bo‘lmasa null. */
+export function callLogPreview(text: string | null | undefined): string | null {
+  const entry = parseCallLog(text);
+  return entry ? (entry.mode === 'VIDEO' ? `📹 ${t('Video qo‘ng‘iroq')}` : `📞 ${t('Audio qo‘ng‘iroq')}`) : null;
+}

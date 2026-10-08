@@ -1,12 +1,13 @@
 import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, MessagesSquare, Pencil, Search, Trash2 } from 'lucide-react';
+import { ArrowLeft, MessagesSquare, Pencil, Phone, Search, Trash2, Video } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { accountName } from '@/lib/account-name';
+import { callLogPreview, describeCallLogAdmin, parseCallLog } from '@/features/call/call-log';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useDebounce } from '@/hooks/useDebounce';
 import { cx, formatDate, formatDateTime, formatRelativeTime, initials } from '@/lib/utils';
@@ -41,7 +42,7 @@ type MsgFilter = (typeof MSG_FILTERS)[number]['value'];
 function ConversationRow({ item, active, onSelect }: { item: AdminConversation; active: boolean; onSelect: () => void }) {
   const names = item.participants.map((p) => accountName(p.user)).join(' ↔ ');
   const last = item.lastMessage;
-  const preview = !last ? t('Xabar yo‘q') : last.deletedAt ? t('🗑 O‘chirilgan xabar') : (last.text ?? t('📎 Fayl'));
+  const preview = !last ? t('Xabar yo‘q') : last.deletedAt ? t('🗑 O‘chirilgan xabar') : (callLogPreview(last.text) ?? last.text ?? t('📎 Fayl'));
   const deletedBy = item.participants.filter((p) => p.deletedAt);
   return (
     <button type="button" className={cx('gm-achat__row', active && 'gm-achat__row--active')} onClick={onSelect} aria-current={active ? 'true' : undefined}>
@@ -128,6 +129,9 @@ function MessageBubble({ message, side, first, last, people }: { message: AdminC
   const [open, setOpen] = useState(false);
   const deleted = !!message.deletedAt;
   const edited = message.edits.length > 0;
+  const callEntry = message.type === 'SYSTEM' ? parseCallLog(message.text) : null;
+  const caller = callEntry ? people.get(callEntry.callerId) : undefined;
+  const callInfo = callEntry ? describeCallLogAdmin(callEntry, caller ? accountName(caller) : null) : null;
   const role = message.senderPanel ? (PANEL_LABEL[message.senderPanel] ?? message.senderPanel) : null;
   return (
     <li className={cx('gm-tg__row', `gm-tg__row--${side}`, first && 'gm-tg__row--first', last && 'gm-tg__row--last')}>
@@ -148,7 +152,7 @@ function MessageBubble({ message, side, first, last, people }: { message: AdminC
         {message.replyTo && (
           <blockquote className="gm-tg__reply">
             <strong>{t('Javob')}</strong>
-            <span>{message.replyTo.deletedAt ? t('O‘chirilgan xabar') : (message.replyTo.text ?? t('Fayl'))}</span>
+            <span>{message.replyTo.deletedAt ? t('O‘chirilgan xabar') : (callLogPreview(message.replyTo.text) ?? message.replyTo.text ?? t('Fayl'))}</span>
           </blockquote>
         )}
         {message.attachments && message.attachments.length > 0 && (
@@ -158,7 +162,17 @@ function MessageBubble({ message, side, first, last, people }: { message: AdminC
             ))}
           </div>
         )}
-        {(message.text || !message.attachments?.length) && <p className="gm-tg__text">{message.text ?? '—'}</p>}
+        {callEntry && callInfo ? (
+          <div className={cx('gm-tg__call', callInfo.failed && 'gm-tg__call--failed')}>
+            <span className="gm-tg__call-icon" aria-hidden="true">{callEntry.mode === 'VIDEO' ? <Video size={18} /> : <Phone size={18} />}</span>
+            <span className="gm-tg__call-body">
+              <strong>{callInfo.title}</strong>
+              <small>{callInfo.detail}</small>
+            </span>
+          </div>
+        ) : (
+          (message.text || !message.attachments?.length) && <p className="gm-tg__text">{message.text ?? '—'}</p>
+        )}
         <span className="gm-tg__meta">
           {edited && (
             <button type="button" className="gm-tg__edited" aria-expanded={open} onClick={() => setOpen((value) => !value)} title={t('Tahrirlash tarixini ko‘rish')}>

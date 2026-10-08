@@ -168,7 +168,7 @@ function HeroMedia() {
 
 function Hero() {
   const ref = useScrollProgress<HTMLElement>('leave');
-  const words = [t('Uy xizmatlari.'), t('Bir joyda.')];
+  const words = [t('Uy xizmatlari'), t('Bir joyda')];
   return (
     <header className="gm-portal__hero" ref={ref}>
       <HeroMedia />

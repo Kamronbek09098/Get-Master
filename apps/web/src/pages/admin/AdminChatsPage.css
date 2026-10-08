@@ -625,3 +625,11 @@ a.gm-achat__sender:hover strong {
     max-width: 90%;
   }
 }
+
+/* Qo‘ng‘iroq yozuvi (SYSTEM xabari) */
+.gm-tg__call { display: flex; align-items: center; gap: 12px; min-width: 220px; padding: 2px 0; }
+.gm-tg__call-icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--gm-color-success-bg); color: var(--gm-color-success); }
+.gm-tg__call--failed .gm-tg__call-icon { background: var(--gm-color-danger-bg); color: var(--gm-color-danger); }
+.gm-tg__call-body { display: flex; flex-direction: column; gap: 2px; line-height: 1.3; min-width: 0; }
+.gm-tg__call-body strong { font-size: 0.92rem; overflow-wrap: anywhere; }
+.gm-tg__call-body small { font-size: 0.8rem; color: var(--gm-color-text-muted); }
