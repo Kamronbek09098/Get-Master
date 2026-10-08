@@ -22,5 +22,8 @@ export interface Me {
   isSuperAdmin?: boolean;
   /** Oddiy adminning ruxsat berilgan bo‘limlari. */
   adminPermissions?: string[];
+  /** Admin yangi adminlar yarata oladimi (superadmin belgilaydi) va qaysi huquqlarni bera oladi. */
+  canCreateAdmins?: boolean;
+  grantablePermissions?: string[];
   masterProfile: { id: string; status: string; verification: string } | null;
 }

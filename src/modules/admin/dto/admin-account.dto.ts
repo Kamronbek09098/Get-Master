@@ -32,6 +32,29 @@ export class CreateAdminDto {
   @ArrayUnique()
   @IsIn(ADMIN_PERMISSIONS, { each: true })
   permissions?: string[];
+
+  /** Superadmin tanlaydi: yangi admin boshqa adminlar yarata oladimi. */
+  @IsOptional()
+  @IsBoolean()
+  canCreateAdmins?: boolean;
+
+  /** Yangi admin boshqa adminlarga qaysi huquqlarni bera olishi (faqat canCreateAdmins bo‘lsa). */
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsIn(ADMIN_PERMISSIONS, { each: true })
+  grantablePermissions?: string[];
+}
+
+export class SetAdminDelegationDto {
+  @IsBoolean()
+  canCreateAdmins!: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsIn(ADMIN_PERMISSIONS, { each: true })
+  grantablePermissions?: string[];
 }
 
 export class SetAdminPermissionsDto {

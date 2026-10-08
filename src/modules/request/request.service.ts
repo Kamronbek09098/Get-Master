@@ -12,6 +12,7 @@ import { CancelRequestDto } from './dto/cancel-request.dto';
 import { UpdateRequestDto } from './dto/update-request.dto';
 import { RequestQueryDto } from './dto/request-query.dto';
 import { ERRORS } from '../../common/constants/error-messages';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { assertPhoneVerified } from '../../common/utils/phone-gate';
 
 const REQUEST_DEFAULT_TTL_HOURS = 24;
@@ -28,6 +29,7 @@ export class RequestService {
     private readonly outbox: OutboxService,
     private readonly catalog: ServiceService,
     private readonly customers: CustomerService,
+    private readonly subscriptions: SubscriptionService,
   ) {}
 
   async create(customerId: string, dto: CreateRequestDto) {
@@ -49,6 +51,7 @@ export class RequestService {
     const created = await this.db.problemRequest.create({
       data: {
         customerId,
+        isPriority: await this.subscriptions.hasFeature(customerId, 'PRIORITY_REQUESTS'),
         title: dto.title,
         description: dto.description,
         categoryId: selection?.categoryId ?? undefined,

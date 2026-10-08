@@ -1,6 +1,6 @@
 import { t } from '@/i18n';
 /** Admin huquqlari (bo‘limlar) — backend `ADMIN_PERMISSIONS` bilan bir xil kalitlar. */
-export type AdminPermission = 'USERS' | 'ORDERS' | 'CHATS' | 'VERIFICATIONS' | 'CASES' | 'SAFETY' | 'CATALOG' | 'POLICIES' | 'REPORTS' | 'AUDIT' | 'DEVOPS';
+export type AdminPermission = 'USERS' | 'ORDERS' | 'CHATS' | 'VERIFICATIONS' | 'CASES' | 'SAFETY' | 'CATALOG' | 'POLICIES' | 'REPORTS' | 'AUDIT' | 'DEVOPS' | 'SUBSCRIPTIONS';
 
 export const ADMIN_PERMISSION_OPTIONS: Array<{ value: AdminPermission; label: string; hint: string; group: 'Boshqaruv' | 'Kontent' | 'Tizim' }> = [
   { value: 'REPORTS', label: t('Boshqaruv paneli va hisobotlar'), hint: t('Statistika, daromad hisobotlari'), group: 'Tizim' },
@@ -13,6 +13,7 @@ export const ADMIN_PERMISSION_OPTIONS: Array<{ value: AdminPermission; label: st
   { value: 'CATALOG', label: t('Xizmatlar katalogi'), hint: t('Kategoriya va xizmatlarni tahrirlash'), group: 'Kontent' },
   { value: 'POLICIES', label: t('Siyosatlar'), hint: t('Shartlar va siyosatlarni boshqarish'), group: 'Kontent' },
   { value: 'AUDIT', label: t('Audit jurnali'), hint: t('Barcha harakatlar tarixi'), group: 'Tizim' },
+  { value: 'SUBSCRIPTIONS', label: t('Obunalar'), hint: t('To‘lov so‘rovlarini tasdiqlash, obuna sovg‘a qilish'), group: 'Boshqaruv' },
   { value: 'DEVOPS', label: 'DevOps', hint: t('Tizim holati va ko‘rsatkichlari'), group: 'Tizim' },
 ];
 

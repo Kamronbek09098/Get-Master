@@ -7,7 +7,8 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { hashSecret, verifySecret } from '../../common/security/hash';
 import { TelegramAlertService } from '../../infrastructure/telegram/telegram-alert.service';
 import { DeleteUserDto, RegistrationBlockDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
-import { CreateAdminDto, SetAdminPermissionsDto } from './dto/admin-account.dto';
+import { CreateAdminDto, SetAdminDelegationDto, SetAdminPermissionsDto } from './dto/admin-account.dto';
+import { ADMIN_PERMISSIONS } from '../../common/constants/admin-permissions';
 import { UserQueryDto } from './dto/user-query.dto';
 
 const USER_SELECT = {
@@ -378,19 +379,42 @@ export class AdminUsersService {
     return { twoFactorEnabled: enabled };
   }
 
-  async listAdmins(actorId: string) {
-    await this.assertSuperAdmin(actorId);
-    const rows = await this.db.user.findMany({
-      where: { userRoles: { some: { role: Role.ADMIN } }, deletedAt: null },
-      orderBy: [{ isSuperAdmin: 'desc' }, { createdAt: 'asc' }],
-      select: { id: true, accountNumber: true, phone: true, firstName: true, lastName: true, status: true, isSuperAdmin: true, twoFactorEnabled: true, adminPermissions: true, createdAt: true, lastLoginAt: true },
+  /**
+   * Admin hisobini boshqarish doirasi: superadmin — hammasi; «yangi admin yarata oladi» deb belgilangan admin — faqat o‘zi yaratgan
+   * adminlar va superadmin ruxsat bergan huquqlar doirasida. Boshqalar — ruxsat yo‘q.
+   */
+  private async adminScope(actorId: string) {
+    const actor = await this.db.user.findUnique({
+      where: { id: actorId },
+      select: { isSuperAdmin: true, canCreateAdmins: true, grantablePermissions: true, deletedAt: true, status: true, userRoles: { select: { role: true } } },
     });
-    return { items: rows.map((row) => ({ ...row, isSelf: row.id === actorId })) };
+    if (!actor || actor.deletedAt || actor.status !== UserStatus.ACTIVE || !actor.userRoles.some((item) => item.role === Role.ADMIN)) throw new ForbiddenException(ERRORS.FORBIDDEN);
+    if (actor.isSuperAdmin) return { superAdmin: true as const, grantable: [...ADMIN_PERMISSIONS] as string[] };
+    if (!actor.canCreateAdmins) throw new ForbiddenException(ERRORS.ADMIN_CREATE_NOT_ALLOWED);
+    return { superAdmin: false as const, grantable: actor.grantablePermissions };
+  }
+
+  async listAdmins(actorId: string) {
+    const scope = await this.adminScope(actorId);
+    const rows = await this.db.user.findMany({
+      where: { userRoles: { some: { role: Role.ADMIN } }, deletedAt: null, ...(scope.superAdmin ? {} : { createdByAdminId: actorId }) },
+      orderBy: [{ isSuperAdmin: 'desc' }, { createdAt: 'asc' }],
+      select: {
+        id: true, accountNumber: true, phone: true, firstName: true, lastName: true, status: true, isSuperAdmin: true, twoFactorEnabled: true,
+        adminPermissions: true, canCreateAdmins: true, grantablePermissions: true, createdByAdminId: true, createdAt: true, lastLoginAt: true,
+      },
+    });
+    return { items: rows.map((row) => ({ ...row, isSelf: row.id === actorId })), scope: { superAdmin: scope.superAdmin, grantable: scope.grantable } };
   }
 
   /** Yangi admin yaratish (faqat superadmin). Akkaunt darhol faol; parol bcrypt xesh sifatida saqlanadi. */
   async createAdmin(actorId: string, dto: CreateAdminDto, req: Request) {
-    await this.assertSuperAdmin(actorId);
+    const scope = await this.adminScope(actorId);
+    if (!scope.superAdmin) {
+      // Vakolat berilgan admin: superadmin va «admin yarata oladi» huquqini bera olmaydi, faqat o‘ziga ruxsat etilgan huquqlarni beradi.
+      if (dto.isSuperAdmin || dto.canCreateAdmins) throw new ForbiddenException(ERRORS.SUPER_ADMIN_ONLY);
+      if ((dto.permissions ?? []).some((item) => !scope.grantable.includes(item))) throw new ForbiddenException(ERRORS.ADMIN_PERMISSION_NOT_GRANTABLE);
+    }
     const digits = dto.phone.replace(/\D/g, '');
     if (!/^998\d{9}$/.test(digits)) throw new BadRequestException(ERRORS.INVALID_PHONE);
     const phone = `+${digits}`;
@@ -399,10 +423,17 @@ export class AdminUsersService {
     const permissions = dto.isSuperAdmin ? [] : (dto.permissions ?? []);
     if (!dto.isSuperAdmin && permissions.length === 0) throw new BadRequestException(ERRORS.ADMIN_PERMISSIONS_EMPTY);
 
+    const canCreateAdmins = scope.superAdmin && !dto.isSuperAdmin && !!dto.canCreateAdmins;
+    const grantablePermissions = canCreateAdmins ? (dto.grantablePermissions ?? []) : [];
+    if (canCreateAdmins && grantablePermissions.length === 0) throw new BadRequestException(ERRORS.ADMIN_GRANTABLE_EMPTY);
+
     const passwordHash = await hashSecret(dto.password, 12);
     const created = await this.db.$transaction(async (tx) => {
       const user = await tx.user.create({
         data: {
+          createdByAdminId: actorId,
+          canCreateAdmins,
+          grantablePermissions,
           phone,
           passwordHash,
           firstName: dto.firstName.trim(),
@@ -413,7 +444,7 @@ export class AdminUsersService {
           adminPermissions: permissions,
           userRoles: { create: { role: Role.ADMIN } },
         },
-        select: { id: true, accountNumber: true, phone: true, firstName: true, lastName: true, status: true, isSuperAdmin: true, adminPermissions: true, createdAt: true },
+        select: { id: true, accountNumber: true, phone: true, firstName: true, lastName: true, status: true, isSuperAdmin: true, adminPermissions: true, canCreateAdmins: true, grantablePermissions: true, createdAt: true },
       });
       await tx.auditLog.create({
         data: {
@@ -421,7 +452,7 @@ export class AdminUsersService {
           action: 'ADMIN_ADMIN_CREATED',
           targetType: 'User',
           targetId: user.id,
-          after: { phone, isSuperAdmin: user.isSuperAdmin, permissions: user.adminPermissions },
+          after: { phone, isSuperAdmin: user.isSuperAdmin, permissions: user.adminPermissions, canCreateAdmins: user.canCreateAdmins, grantablePermissions: user.grantablePermissions, delegated: !scope.superAdmin },
           ipAddress: req.ip?.slice(0, 64) ?? null,
           requestId: (req as { id?: string }).id ?? null,
         },
@@ -446,10 +477,14 @@ export class AdminUsersService {
 
   /** Oddiy adminning huquqlarini (bo‘limlarini) o‘zgartirish (faqat superadmin). */
   async setAdminPermissions(actorId: string, userId: string, dto: SetAdminPermissionsDto, req: Request) {
-    await this.assertSuperAdmin(actorId);
-    const target = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, isSuperAdmin: true, adminPermissions: true, deletedAt: true, userRoles: { select: { role: true } } } });
+    const scope = await this.adminScope(actorId);
+    const target = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, isSuperAdmin: true, adminPermissions: true, createdByAdminId: true, deletedAt: true, userRoles: { select: { role: true } } } });
     if (!target || target.deletedAt || !target.userRoles.some((item) => item.role === Role.ADMIN)) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
     if (target.isSuperAdmin) throw new ConflictException(ERRORS.SUPER_ADMIN_ONLY);
+    if (!scope.superAdmin) {
+      if (target.createdByAdminId !== actorId || userId === actorId) throw new ForbiddenException(ERRORS.ADMIN_ONLY_OWN_CREATED);
+      if (dto.permissions.some((item) => !scope.grantable.includes(item))) throw new ForbiddenException(ERRORS.ADMIN_PERMISSION_NOT_GRANTABLE);
+    }
     if (dto.permissions.length === 0) throw new BadRequestException(ERRORS.ADMIN_PERMISSIONS_EMPTY);
     await this.db.$transaction([
       this.db.user.update({ where: { id: userId }, data: { adminPermissions: dto.permissions } }),
@@ -470,6 +505,32 @@ export class AdminUsersService {
   }
 
   /** Adminga superadmin huquqini berish yoki olish (faqat superadmin; o‘zini va oxirgi superadminni o‘zgartirib bo‘lmaydi). */
+  /** Superadmin: adminga yangi adminlar yaratish huquqini berish/olish va unga qaysi huquqlarni bera olishini belgilash. */
+  async setAdminDelegation(actorId: string, userId: string, dto: SetAdminDelegationDto, req: Request) {
+    await this.assertSuperAdmin(actorId);
+    const target = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, isSuperAdmin: true, canCreateAdmins: true, grantablePermissions: true, deletedAt: true, userRoles: { select: { role: true } } } });
+    if (!target || target.deletedAt || !target.userRoles.some((item) => item.role === Role.ADMIN)) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    if (target.isSuperAdmin) throw new ConflictException(ERRORS.SUPER_ADMIN_ONLY);
+    const grantablePermissions = dto.canCreateAdmins ? (dto.grantablePermissions ?? []) : [];
+    if (dto.canCreateAdmins && grantablePermissions.length === 0) throw new BadRequestException(ERRORS.ADMIN_GRANTABLE_EMPTY);
+    await this.db.$transaction([
+      this.db.user.update({ where: { id: userId }, data: { canCreateAdmins: dto.canCreateAdmins, grantablePermissions } }),
+      this.db.auditLog.create({
+        data: {
+          actorId,
+          action: 'ADMIN_DELEGATION_CHANGED',
+          targetType: 'User',
+          targetId: userId,
+          before: { canCreateAdmins: target.canCreateAdmins, grantablePermissions: target.grantablePermissions },
+          after: { canCreateAdmins: dto.canCreateAdmins, grantablePermissions },
+          ipAddress: req.ip?.slice(0, 64) ?? null,
+          requestId: (req as { id?: string }).id ?? null,
+        },
+      }),
+    ]);
+    return { canCreateAdmins: dto.canCreateAdmins, grantablePermissions };
+  }
+
   async setSuperAdmin(actorId: string, userId: string, value: boolean, req: Request) {
     await this.assertSuperAdmin(actorId);
     if (userId === actorId) throw new ForbiddenException(ERRORS.CANNOT_MODERATE_ADMIN);

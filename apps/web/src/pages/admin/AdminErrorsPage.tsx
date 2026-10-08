@@ -14,7 +14,7 @@ import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
 import { cx, formatDateTime, formatRelativeTime } from '@/lib/utils';
 import { useAppStore } from '@/store/app.store';
-import { t } from '@/i18n';
+import { lang, NUMBER_LOCALE, t } from '@/i18n';
 import './AdminErrorsPage.css';
 
 const KIND_LABEL: Record<ErrorKind, string> = {
@@ -122,6 +122,15 @@ function Stat({ icon: Icon, label, value, hint, tone }: { icon: LucideIcon; labe
   );
 }
 
+/** Hafta kuni qisqa nomi tanlangan til bo‘yicha (brauzer tiliga emas). */
+const WEEKDAYS: Record<typeof lang, string[]> = {
+  uz: ['Yak', 'Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan'],
+  'uz-Cyrl': ['Якш', 'Душ', 'Сеш', 'Чор', 'Пай', 'Жум', 'Шан'],
+  ru: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+  en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+};
+const weekdayFormat = { format: (date: Date) => WEEKDAYS[lang][date.getDay()] ?? '' };
+
 const dayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
 /** Oxirgi 7 kun: ma’lumot bo‘lmagan kunlar ham 0 bilan ko‘rsatiladi. */
@@ -131,7 +140,7 @@ function Daily({ rows }: { rows: ErrorSummary['daily'] }) {
     const date = new Date();
     date.setDate(date.getDate() - (6 - index));
     const row = byDay.get(dayKey(date));
-    return { date, total: row?.total ?? 0, errors: row?.errors ?? 0 };
+    return { date, total: row?.total ?? 0, errors: row?.errors ?? 0, today: index === 6 };
   });
   const max = Math.max(1, ...days.map((day) => day.total));
   const total = days.reduce((sum, day) => sum + day.total, 0);
@@ -148,13 +157,16 @@ function Daily({ rows }: { rows: ErrorSummary['daily'] }) {
         {days.map((day) => {
           const warn = day.total - day.errors;
           return (
-            <div key={day.date.toISOString()} className="gm-errs__bar" title={`${day.date.toLocaleDateString()}: ${day.total} (${day.errors} ${t('jiddiy')})`}>
-              <em>{day.total || ''}</em>
+            <div key={day.date.toISOString()} className={cx('gm-errs__bar', day.today && 'is-today', day.total === 0 && 'is-empty')} title={`${day.date.toLocaleDateString(NUMBER_LOCALE[lang])}: ${day.total} (${day.errors} ${t('jiddiy')})`}>
+              <em>{day.total}</em>
               <span className="gm-errs__bar-col">
                 <i className="gm-errs__seg gm-errs__seg--warn" style={{ height: `${(warn / max) * 100}%` }} />
                 <i className="gm-errs__seg gm-errs__seg--error" style={{ height: `${(day.errors / max) * 100}%` }} />
               </span>
-              <small>{day.date.toLocaleDateString(undefined, { weekday: 'short' })}<br />{day.date.getDate()}</small>
+              <small>
+                <b>{weekdayFormat.format(day.date)}</b>
+                <span>{day.date.getDate()}</span>
+              </small>
             </div>
           );
         })}

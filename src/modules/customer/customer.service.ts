@@ -4,6 +4,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { UpdateProfileDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { CreateAddressDto, UpdateAddressDto } from './dto/address.dto';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { ERRORS } from '../../common/constants/error-messages';
 
 const DEFAULT_PREFERENCES = { language: 'UZ', currency: 'UZS', notificationsEnabled: true } as const;
@@ -26,7 +27,10 @@ const PROFILE_SELECT = {
 
 @Injectable()
 export class CustomerService {
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly subscriptions: SubscriptionService,
+  ) {}
 
   /** Menyu belgisi: oxirgi kirishdan keyin so‘rovlarga kelgan yangi takliflar soni. */
   async getBadges(userId: string, offersSince?: string) {
@@ -183,6 +187,7 @@ export class CustomerService {
       firstName: customer.firstName,
       lastName: customer.lastName,
       memberSince: customer.createdAt,
+      isPlus: !!(await this.subscriptions.activeFor(customer.id, 'CUSTOMER')),
       completedOrders,
       ordersWithMe,
       conversationId: shared.id,

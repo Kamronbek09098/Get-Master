@@ -29,6 +29,7 @@ import { CustomerPage } from '@/pages/customer/CustomerPage';
 import { CustomerProfilePage } from '@/pages/customer/CustomerProfilePage';
 import { MasterPage } from '@/pages/master/MasterPage';
 import { MasterProfilePage } from '@/pages/master/MasterProfilePage';
+import { SubscriptionPage } from '@/pages/subscription/SubscriptionPage';
 import { MasterDetailsPage } from '@/pages/master/MasterDetailsPage';
 import { CustomerPublicPage } from '@/pages/customer/CustomerPublicPage';
 import { DisputesPage } from '@/pages/disputes/DisputesPage';
@@ -58,6 +59,7 @@ const AdminSafetyPage = lazy(() => import('@/pages/admin/AdminSafetyPage').then(
 const AdminCatalogPage = lazy(() => import('@/pages/admin/AdminCatalogPage').then((m) => ({ default: m.AdminCatalogPage })));
 const AdminPoliciesPage = lazy(() => import('@/pages/admin/AdminPoliciesPage').then((m) => ({ default: m.AdminPoliciesPage })));
 const AdminAuditPage = lazy(() => import('@/pages/admin/AdminAuditPage').then((m) => ({ default: m.AdminAuditPage })));
+const AdminSubscriptionsPage = lazy(() => import('@/pages/admin/AdminSubscriptionsPage').then((m) => ({ default: m.AdminSubscriptionsPage })));
 const AdminErrorsPage = lazy(() => import('@/pages/admin/AdminErrorsPage').then((m) => ({ default: m.AdminErrorsPage })));
 const AdminDevOpsPage = lazy(() => import('@/pages/admin/AdminDevOpsPage').then((m) => ({ default: m.AdminDevOpsPage })));
 const AdminChatsPage = lazy(() => import('@/pages/admin/AdminChatsPage').then((m) => ({ default: m.AdminChatsPage })));
@@ -146,6 +148,8 @@ const panelRouter = createBrowserRouter([
           { path: '/usta/profil', element: master(<MasterProfilePage />) },
           { path: '/usta/profil/:section', element: master(<MasterProfilePage />) },
           { path: '/usta/chat', element: master(<ChatPage />) },
+          { path: '/usta/obuna', element: master(<SubscriptionPage />) },
+          { path: '/mijoz/obuna', element: customer(<SubscriptionPage />) },
           { path: '/usta/mijozlar/:id', element: master(<CustomerPublicPage />) },
           { path: '/usta/kafolat', element: master(<WarrantyPage />) },
           { path: '/usta/nizolar', element: master(<DisputesPage />) },
@@ -176,6 +180,7 @@ const panelRouter = createBrowserRouter([
           { path: '/admin/siyosatlar', element: admin(<AdminPoliciesPage />) },
           { path: '/admin/audit', element: admin(<AdminAuditPage />) },
           { path: '/admin/errorlar', element: admin(<AdminErrorsPage />) },
+          { path: '/admin/obunalar', element: admin(<AdminSubscriptionsPage />) },
           { path: '/admin/devops', element: admin(<AdminDevOpsPage />) },
           { path: '/admin/suhbatlar', element: admin(<AdminChatsPage />) },
           { path: '/admin/xabarlar', element: admin(<ChatPage />) },

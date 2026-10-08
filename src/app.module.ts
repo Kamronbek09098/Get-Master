@@ -4,6 +4,7 @@ import telegramConfig from './config/telegram.config';
 import limitsConfig from './config/limits.config';
 import webrtcConfig from './config/webrtc.config';
 import { CallModule } from './modules/call/call.module';
+import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { MetricsModule } from './infrastructure/metrics/metrics.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
@@ -66,7 +67,7 @@ import { ErrorLogModule } from './modules/error-log/error-log.module';
   imports: [
     ConfigModule.forRoot({ isGlobal: true, cache: true, expandVariables: true, load: [appConfig, authConfig, databaseConfig, paymentConfig, redisConfig, storageConfig, scannerConfig, aiConfig, mailConfig, telegramConfig, limitsConfig, webrtcConfig], validate }),
     ScheduleModule.forRoot(), RedisModule, QueueModule, OutboxModule, PaymentProviderModule,
-    MetricsModule, TelegramModule, SmsModule, CallModule, PrismaModule, AuthModule, OtpModule, AdminModule, BookingModule, ClassificationModule, CommunicationModule,
+    MetricsModule, TelegramModule, SmsModule, CallModule, SubscriptionModule, PrismaModule, AuthModule, OtpModule, AdminModule, BookingModule, ClassificationModule, CommunicationModule,
     ComplaintModule, CustomerModule, GeoModule, DisputeModule, MailModule, MasterModule, MatchingModule, MediaModule, NotificationModule,
     OfferModule, OrderModule, PaymentModule, RequestModule, ReviewModule, ServiceModule, TrustModule,
     WorkModule, WarrantyModule, LegalModule, TrustSafetyModule, AuditModule, UsersModule, ErrorLogModule,

@@ -8,7 +8,7 @@ import type {
   AdminOrderFilters,
   AdminOrderRow,
   AdminOrdersSummary,
-  AdminAccount,
+  AdminAccount, AdminScope,
   AdminUserDetail,
   AdminUser,
   CreateAdminInput,
@@ -67,13 +67,16 @@ export const adminService = {
   },
 
   admins() {
-    return apiGet<{ items: AdminAccount[] }>('/admin/admins');
+    return apiGet<{ items: AdminAccount[]; scope: AdminScope }>('/admin/admins');
   },
   createAdmin(input: CreateAdminInput) {
     return apiPost<AdminAccount>('/admin/admins', input);
   },
   setAdminPermissions(id: string, permissions: string[]) {
     return apiPatch<{ permissions: string[] }>(`/admin/admins/${id}/permissions`, { permissions });
+  },
+  setAdminDelegation(id: string, canCreateAdmins: boolean, grantablePermissions: string[]) {
+    return apiPatch<{ canCreateAdmins: boolean; grantablePermissions: string[] }>(`/admin/admins/${id}/delegation`, { canCreateAdmins, grantablePermissions });
   },
   setSuperAdmin(id: string, value: boolean) {
     return apiPatch<{ isSuperAdmin: boolean }>(`/admin/admins/${id}/super`, { value });

@@ -4,15 +4,17 @@
   gap: 8px;
   min-height: 40px;
   padding: 0 14px;
-  border: 1px solid color-mix(in srgb, #fff 28%, transparent);
+  border: 1px solid var(--fav-border, color-mix(in srgb, var(--gm-color-primary) 28%, var(--gm-color-border-strong)));
   border-radius: 999px;
-  background: transparent;
-  color: #fff;
+  background: var(--fav-bg, color-mix(in srgb, var(--gm-color-surface) 70%, transparent));
+  color: var(--fav-fg, var(--gm-color-text));
   font: 700 13.5px/1 var(--gm-font-sans);
   cursor: pointer;
   transition: background-color 160ms var(--gm-ease), transform 160ms var(--gm-ease);
 }
-.gm-fav:hover:not(:disabled) { background: color-mix(in srgb, #fff 12%, transparent); }
+.gm-fav:hover:not(:disabled) { background: var(--fav-hover, var(--gm-color-primary-soft)); }
 .gm-fav:active:not(:disabled) { transform: scale(0.96); }
 .gm-fav:disabled { opacity: 0.6; cursor: default; }
-.gm-fav.is-saved { background: #fff; color: #d94352; border-color: #fff; }
+.gm-fav.is-saved { background: var(--fav-saved-bg, #fdecef); color: #d94352; border-color: color-mix(in srgb, #d94352 40%, transparent); }
+:root[data-theme='dark'] .gm-fav { --fav-border: color-mix(in srgb, #fff 28%, transparent); --fav-bg: transparent; --fav-fg: #fff; --fav-hover: color-mix(in srgb, #fff 12%, transparent); --fav-saved-bg: #fff; }
+:root[data-theme='dark'] .gm-fav.is-saved { border-color: #fff; }

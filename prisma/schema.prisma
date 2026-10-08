@@ -377,6 +377,16 @@ model User {
   isSuperAdmin             Boolean                   @default(false) @map("is_super_admin")
   /// Oddiy adminning huquqlari (bo‘limlar); superadmin uchun e’tiborga olinmaydi.
   adminPermissions         String[]                  @default([]) @map("admin_permissions")
+  /// Superadmin tanlaydi: bu admin yangi adminlar yarata oladimi (faqat oddiy admin uchun).
+  canCreateAdmins          Boolean                   @default(false) @map("can_create_admins")
+  /// Bu admin yangi adminga qaysi huquqlarni bera olishi (superadmin belgilaydi).
+  grantablePermissions     String[]                  @default([]) @map("grantable_permissions")
+  /// Bu adminni yaratgan admin (superadmin yaratgan bo‘lsa ham yoziladi).
+  createdByAdminId         String?                   @map("created_by_admin_id") @db.Uuid
+  createdByAdmin           User?                     @relation("AdminCreator", fields: [createdByAdminId], references: [id], onDelete: SetNull)
+  createdAdmins            User[]                    @relation("AdminCreator")
+  subscriptions            Subscription[]            @relation("UserSubscriptions")
+  decidedSubscriptions     Subscription[]            @relation("SubscriptionDecider")
   deletedAt                DateTime?                 @map("deleted_at")
   masterProfile            MasterProfile?
   favoriteMasters          FavoriteMaster[]          @relation("CustomerFavorites")
@@ -551,6 +561,9 @@ model Address {
 
 model MasterProfile {
   id               String                   @id @default(uuid()) @db.Uuid
+  /// «Pro» obunasi faolmi (katalogda yuqori o‘rin va Pro belgisi); obuna tugaganda o‘chadi.
+  isPro            Boolean                  @default(false) @map("is_pro")
+  proUntil         DateTime?                @map("pro_until")
   userId           String                   @unique @db.Uuid
   bio              String?
   profession       String?                  @db.VarChar(150)
@@ -741,6 +754,8 @@ model ProblemRequest {
   submittedAt        DateTime?           @map("submitted_at")
   cancelledAt        DateTime?           @map("cancelled_at")
   expiresAt          DateTime?           @map("expires_at")
+  /// «Plus» obunali mijozning tezkor so‘rovi (ustalarga ajratib ko‘rsatiladi).
+  isPriority         Boolean             @default(false) @map("is_priority")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
   customer           User                @relation("CustomerRequests", fields: [customerId], references: [id], onDelete: Restrict)
@@ -1487,4 +1502,49 @@ model ErrorLog {
   @@index([source, severity, createdAt])
   @@index([resolvedAt])
   @@map("error_logs")
+}
+
+enum SubscriptionAudience {
+  CUSTOMER
+  MASTER
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELED
+  REJECTED
+}
+
+/// Obuna: mijoz uchun «Plus», usta uchun «Pro». To‘lov so‘rovi (PENDING) admin tasdiqlagach yoki sovg‘a sifatida beriladi (ACTIVE).
+model Subscription {
+  id            String               @id @default(uuid()) @db.Uuid
+  userId        String               @db.Uuid
+  audience      SubscriptionAudience
+  planCode      String               @map("plan_code") @db.VarChar(32)
+  months        Int
+  amount        Decimal              @db.Decimal(14, 2)
+  currency      String               @default("UZS") @db.VarChar(3)
+  status        SubscriptionStatus   @default(PENDING)
+  /// PURCHASE (to‘lov so‘rovi) yoki GRANT (admin sovg‘asi).
+  source        String               @default("PURCHASE") @db.VarChar(16)
+  method        String?              @db.VarChar(24)
+  reference     String               @unique @db.VarChar(24)
+  note          String?
+  startsAt      DateTime?            @map("starts_at")
+  endsAt        DateTime?            @map("ends_at")
+  decidedById   String?              @map("decided_by_id") @db.Uuid
+  decidedAt     DateTime?            @map("decided_at")
+  rejectReason  String?              @map("reject_reason")
+  reminderSent  Boolean              @default(false) @map("reminder_sent")
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  user          User                 @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+  decidedBy     User?                @relation("SubscriptionDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+
+  @@index([userId, audience, status, endsAt])
+  @@index([status, createdAt])
+  @@index([status, endsAt])
+  @@map("subscriptions")
 }

@@ -12,6 +12,7 @@ import {
   toLocalDigits,
 } from "@/features/auth/validation";
 import { useCreateAdmin } from "../hooks/useAdmin";
+import type { AdminScope } from "../types";
 import { ADMIN_PERMISSION_OPTIONS } from "../permissions";
 import { PermissionPicker } from "./PermissionPicker";
 import { t } from '@/i18n';
@@ -56,7 +57,9 @@ function CopyRow({ label, value }: { label: string; value: string }) {
 }
 
 /** Yangi admin yaratish (faqat superadmin). Yaratilgach login va parol bir marta ko‘rsatiladi. */
-export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
+export function CreateAdminDialog({ onClose, scope }: { onClose: () => void; scope?: AdminScope }) {
+  const superAdminActor = scope?.superAdmin ?? true;
+  const grantable = scope && !scope.superAdmin ? scope.grantable : undefined;
   const create = useCreateAdmin();
   const [phone, setPhone] = useState("");
   const [fullName, setFullName] = useState("");
@@ -64,6 +67,8 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
   const [password, setPassword] = useState(() => generatePassword());
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [permissions, setPermissions] = useState<string[]>([]);
+  const [canCreateAdmins, setCanCreateAdmins] = useState(false);
+  const [grantablePermissions, setGrantablePermissions] = useState<string[]>([]);
   const [created, setCreated] = useState<{
     phone: string;
     password: string;
@@ -77,7 +82,8 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
     digits.length === 9 &&
     !!names &&
     password.length >= 8 &&
-    (isSuperAdmin || permissions.length > 0);
+    (isSuperAdmin || permissions.length > 0) &&
+    (isSuperAdmin || !canCreateAdmins || grantablePermissions.length > 0);
 
   function submit() {
     if (!valid) return;
@@ -90,6 +96,7 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
         lastName: names!.lastName,
         isSuperAdmin,
         permissions: isSuperAdmin ? [] : permissions,
+        ...(superAdminActor && !isSuperAdmin && canCreateAdmins ? { canCreateAdmins: true, grantablePermissions } : {}),
       },
       {
         onSuccess: () =>
@@ -210,23 +217,49 @@ export function CreateAdminDialog({ onClose }: { onClose: () => void }) {
 
         <section className="gm-newadm__sec" aria-labelledby="gm-newadm-s3">
           <h3 id="gm-newadm-s3" className="gm-newadm__sec-title">{t('Huquqlar')}</h3>
-          <label className="gm-newadm__super">
-            <input
-              type="checkbox"
-              checked={isSuperAdmin}
-              onChange={(event) => setIsSuperAdmin(event.target.checked)}
-            />
-            <span>
-              <strong>{t('Superadmin huquqi')}</strong>
-              <small>{t('Boshqa adminlarni yaratish va boshqarish mumkin bo‘ladi. Odatda kerak emas.')}</small>
-            </span>
-          </label>
+          {superAdminActor && (
+            <label className="gm-newadm__super">
+              <input
+                type="checkbox"
+                checked={isSuperAdmin}
+                onChange={(event) => setIsSuperAdmin(event.target.checked)}
+              />
+              <span>
+                <strong>{t('Superadmin huquqi')}</strong>
+                <small>{t('Boshqa adminlarni yaratish va boshqarish mumkin bo‘ladi. Odatda kerak emas.')}</small>
+              </span>
+            </label>
+          )}
           {!isSuperAdmin && (
             <PermissionPicker
               value={permissions}
               onChange={setPermissions}
               disabled={create.isPending}
+              allowed={grantable}
             />
+          )}
+          {superAdminActor && !isSuperAdmin && (
+            <>
+              <label className="gm-newadm__super">
+                <input
+                  type="checkbox"
+                  checked={canCreateAdmins}
+                  onChange={(event) => setCanCreateAdmins(event.target.checked)}
+                />
+                <span>
+                  <strong>{t('Yangi adminlar yarata oladi')}</strong>
+                  <small>{t('Bu admin o‘zi yaratgan adminlarni boshqaradi. Qaysi huquqlarni bera olishini quyida o‘zingiz belgilaysiz.')}</small>
+                </span>
+              </label>
+              {canCreateAdmins && (
+                <PermissionPicker
+                  value={grantablePermissions}
+                  onChange={setGrantablePermissions}
+                  disabled={create.isPending}
+                  title={t('Yangi adminlarga bera oladigan huquqlar')}
+                />
+              )}
+            </>
           )}
         </section>
       </form>

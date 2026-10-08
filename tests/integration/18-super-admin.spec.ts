@@ -124,3 +124,55 @@ describe('superadmin: OTP at sign-in for any account', () => {
     expect(res.data.verificationRequired).toBe(false);
   });
 });
+
+describe('superadmin delegation: an admin that may create admins, with a granting limit', () => {
+  it('superadmin sets who can create admins and which permissions they may grant; the delegate stays inside that box', async () => {
+    // Vakolat berilmasa — oddiy admin yarata olmaydi.
+    expect((await create(plain.token)).status).toBe(403);
+
+    // Superadmin vakolatli admin yaratadi (kamida bitta berilishi mumkin huquq shart).
+    expect((await create(sup.token, { permissions: ['USERS', 'ORDERS'], canCreateAdmins: true, grantablePermissions: [] })).status).toBe(400);
+    const made = await create(sup.token, { permissions: ['USERS', 'ORDERS'], canCreateAdmins: true, grantablePermissions: ['USERS', 'ORDERS'] });
+    expect(made.status).toBe(201);
+    expect(made.data).toMatchObject({ canCreateAdmins: true, grantablePermissions: ['USERS', 'ORDERS'] });
+    const delegate = { id: made.data.id as string, token: await tokenFor(h, made.data.id, ['ADMIN']) };
+
+    // /users/me vakolatni ko‘rsatadi.
+    const me = await h.get('/users/me', delegate.token);
+    expect(me.data).toMatchObject({ canCreateAdmins: true, grantablePermissions: ['USERS', 'ORDERS'] });
+
+    // Vakolatli admin: ruxsat etilgan huquqlar bilan yaratadi.
+    const child = await create(delegate.token, { permissions: ['USERS'] });
+    expect(child.status).toBe(201);
+    expect(child.data).toMatchObject({ canCreateAdmins: false, isSuperAdmin: false });
+    // Ruxsat berilmagan huquq, superadmin yoki «admin yarata oladi» berish — mumkin emas.
+    expect((await create(delegate.token, { permissions: ['DEVOPS'] })).status).toBe(403);
+    expect((await create(delegate.token, { permissions: ['USERS'], isSuperAdmin: true })).status).toBe(403);
+    expect((await create(delegate.token, { permissions: ['USERS'], canCreateAdmins: true, grantablePermissions: ['USERS'] })).status).toBe(403);
+
+    // Faqat o‘zi yaratgan adminlarni ko‘radi va boshqaradi.
+    const list = await h.get('/admin/admins', delegate.token);
+    expect(list.status).toBe(200);
+    expect(list.data.items.map((item: { id: string }) => item.id)).toEqual([child.data.id]);
+    expect(list.data.scope.grantable).toEqual(['USERS', 'ORDERS']);
+    expect((await h.patch(`/admin/admins/${child.data.id}/permissions`, delegate.token, { permissions: ['ORDERS'] })).status).toBe(200);
+    expect((await h.patch(`/admin/admins/${child.data.id}/permissions`, delegate.token, { permissions: ['AUDIT'] })).status).toBe(403);
+    expect((await h.patch(`/admin/admins/${plain.id}/permissions`, delegate.token, { permissions: ['USERS'] })).status).toBe(403);
+    // Superadmin bilan bog‘liq amallar yopiq.
+    expect((await h.patch(`/admin/admins/${child.data.id}/super`, delegate.token, { value: true })).status).toBe(403);
+    expect((await h.patch(`/admin/admins/${child.data.id}/delegation`, delegate.token, { canCreateAdmins: true, grantablePermissions: ['USERS'] })).status).toBe(403);
+    // Yaratilgan admin yana admin yarata olmaydi.
+    const childToken = await tokenFor(h, child.data.id, ['ADMIN']);
+    expect((await create(childToken)).status).toBe(403);
+
+    // Superadmin vakolatni o‘zgartiradi va qaytarib oladi.
+    const changed = await h.patch(`/admin/admins/${delegate.id}/delegation`, sup.token, { canCreateAdmins: true, grantablePermissions: ['USERS'] });
+    expect(changed.status).toBe(200);
+    expect((await create(delegate.token, { permissions: ['ORDERS'] })).status).toBe(403);
+    expect((await h.patch(`/admin/admins/${delegate.id}/delegation`, sup.token, { canCreateAdmins: true, grantablePermissions: [] })).status).toBe(400);
+    expect((await h.patch(`/admin/admins/${delegate.id}/delegation`, sup.token, { canCreateAdmins: false })).status).toBe(200);
+    expect((await create(delegate.token)).status).toBe(403);
+    expect((await h.patch(`/admin/admins/${sup.id}/delegation`, sup.token, { canCreateAdmins: true, grantablePermissions: ['USERS'] })).status).toBe(409);
+    expect(await h.db.auditLog.count({ where: { action: 'ADMIN_DELEGATION_CHANGED', targetId: delegate.id } })).toBe(2);
+  });
+});

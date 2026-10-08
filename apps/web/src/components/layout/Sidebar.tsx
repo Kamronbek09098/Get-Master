@@ -18,7 +18,7 @@ export function Sidebar() {
   const preferredRole = useAuthStore((state) => state.preferredRole);
   const me = useMe();
   const { needsMasterOnboarding } = useCurrentRole();
-  const groups = groupItems(getNavItems(preferredRole, { superAdmin: !!me.data?.isSuperAdmin, permissions: me.data?.adminPermissions }));
+  const groups = groupItems(getNavItems(preferredRole, { superAdmin: !!me.data?.isSuperAdmin, permissions: me.data?.adminPermissions, canCreateAdmins: !!me.data?.canCreateAdmins }));
   const { pathname } = useLocation();
   const badges = useNavBadges(preferredRole, pathname);
 

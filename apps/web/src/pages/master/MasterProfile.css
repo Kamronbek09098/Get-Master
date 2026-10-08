@@ -12,8 +12,33 @@
   border-radius: var(--gm-card-radius-lg);
   overflow: hidden;
   isolation: isolate;
-  background: var(--gm-color-ink);
-  color: #f3f6ff;
+  /* Yorug‘ rejim: oq-ko‘k yumshoq fon; qorong‘i rejim: to‘q fon (o‘zgaruvchilar pastda). */
+  --hero-bg: radial-gradient(90% 140% at 100% 0%, color-mix(in srgb, var(--gm-color-primary) 16%, transparent), transparent 62%), linear-gradient(135deg, #ffffff, #eaf1ff);
+  --hero-border: color-mix(in srgb, var(--gm-color-primary) 18%, var(--gm-color-border));
+  --hero-shadow: 0 22px 44px -30px color-mix(in srgb, var(--gm-color-primary) 60%, transparent);
+  --hero-fg: var(--gm-color-text);
+  --hero-title: #0a1230;
+  --hero-kicker: var(--gm-color-primary);
+  --hero-muted: var(--gm-color-text-muted);
+  --hero-glow: 0.35;
+  --hero-ring: color-mix(in srgb, var(--gm-color-primary) 16%, #fff);
+  --hero-avatar-shadow: 0 10px 24px -10px color-mix(in srgb, var(--gm-color-primary) 70%, transparent);
+  background: var(--hero-bg);
+  border: 1px solid var(--hero-border);
+  box-shadow: var(--hero-shadow);
+  color: var(--hero-fg);
+}
+:root[data-theme='dark'] .gm-mp-hero {
+  --hero-bg: var(--gm-color-ink);
+  --hero-border: rgba(160, 185, 255, 0.16);
+  --hero-shadow: none;
+  --hero-fg: #f3f6ff;
+  --hero-title: #ffffff;
+  --hero-kicker: color-mix(in srgb, #fff 62%, transparent);
+  --hero-muted: color-mix(in srgb, #fff 72%, transparent);
+  --hero-glow: 0.55;
+  --hero-ring: color-mix(in srgb, #fff 10%, transparent);
+  --hero-avatar-shadow: none;
 }
 .gm-mp-hero::before {
   content: '';
@@ -24,7 +49,7 @@
   aspect-ratio: 1;
   border-radius: 50%;
   background: radial-gradient(closest-side, color-mix(in srgb, var(--gm-color-primary) 55%, transparent), transparent);
-  opacity: 0.55;
+  opacity: var(--hero-glow);
   animation: gm-mp-glow 900ms var(--gm-ease, ease-out) both;
 }
 .gm-mp-hero__avatar {
@@ -36,24 +61,24 @@
   background: var(--gm-color-primary);
   color: var(--gm-color-primary-contrast);
   font: 800 clamp(28px, 4vw, 42px) / 1 var(--gm-font-display);
-  box-shadow: 0 0 0 6px color-mix(in srgb, #fff 10%, transparent);
+  box-shadow: 0 0 0 6px var(--hero-ring), var(--hero-avatar-shadow);
 }
 .gm-mp-hero__kicker {
   margin: 0 0 6px;
   font: 600 12px/1.2 'JetBrains Mono', ui-monospace, monospace;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: color-mix(in srgb, #fff 62%, transparent);
+  color: var(--hero-kicker);
 }
 .gm-mp-hero h1 {
   margin: 0 0 12px;
   font: 800 clamp(30px, 5vw, 56px) / 1.02 var(--gm-font-display);
   letter-spacing: -0.04em;
-  color: #fff;
+  color: var(--hero-title);
   text-wrap: balance;
 }
 .gm-mp-hero__badges { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.gm-mp-hero__place { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: color-mix(in srgb, #fff 72%, transparent); }
+.gm-mp-hero__place { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: var(--hero-muted); }
 /* Asosiy amal doim qo‘l ostida: sahifa oxirigacha pastda yopishib turadi. */
 .gm-mp-cta {
   position: sticky;

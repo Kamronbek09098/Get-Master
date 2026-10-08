@@ -314,3 +314,31 @@
 @media (max-width: 380px) {
   .gm-master__stat strong { font-size: 1.05rem; }
 }
+
+/* ===== Usta kartasi (yangi ko‘rinish): ism · tasdiqlangan · reyting · 3 plitka · xizmatlar · rasmlar · bo‘sh vaqt ===== */
+.gm-master { gap: 16px; padding: 18px; border-radius: 24px; }
+.gm-master__top { align-items: center; gap: 14px; }
+.gm-master__top .gm-chat-avatar { flex: none; }
+.gm-master__name { font-size: 1.12rem; line-height: 1.2; }
+.gm-master__verify { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 3px 0 0; color: var(--gm-color-primary); font-size: 0.82rem; font-weight: 700; }
+.gm-master__verify svg { flex: none; vertical-align: -3px; }
+.gm-master__verify .is-muted { color: var(--gm-color-text-muted); font-weight: 600; }
+.gm-master__verify .gm-master__num { align-self: auto; padding: 1px 7px; font-size: 0.68rem; }
+.gm-master__rating { display: inline-flex; align-items: center; align-self: flex-start; gap: 4px; flex: none; font-weight: 800; font-size: 0.95rem; color: var(--gm-color-warning); font-variant-numeric: tabular-nums; }
+.gm-master__rating svg { color: var(--gm-color-accent); }
+.gm-master__rating--new { padding: 3px 9px; border-radius: 999px; background: var(--gm-color-primary-soft); color: var(--gm-color-primary); font-size: 0.74rem; }
+.gm-master__stats { gap: 10px; }
+.gm-master__stat { gap: 4px; padding: 12px 14px; border-radius: 16px; background: color-mix(in srgb, var(--gm-color-primary) 7%, var(--gm-color-surface-muted)); }
+.gm-master__stat strong { font-size: 1.3rem; }
+.gm-master__tags { gap: 8px; }
+.gm-master__tags li { padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--gm-color-primary) 8%, var(--gm-color-surface-muted)); color: var(--gm-color-text); font-size: 0.8rem; font-weight: 700; }
+.gm-master__tags .gm-master__more { color: var(--gm-color-text-muted); }
+.gm-master__photos { gap: 10px; }
+.gm-master__photos .gm-media-thumb { aspect-ratio: 4 / 3; border-radius: 14px; }
+.gm-master__foot { gap: 10px; padding-top: 14px; }
+.gm-master__free { display: inline-flex; align-items: center; gap: 7px; color: var(--gm-color-primary); font-size: 0.88rem; font-weight: 700; min-width: 0; }
+.gm-master__free svg { flex: none; }
+.gm-master__free--now { color: var(--gm-color-success); }
+.gm-master__go { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--gm-color-primary-soft); color: var(--gm-color-primary); transition: background 0.15s, color 0.15s, transform 0.15s; }
+.gm-master:hover .gm-master__go { background: var(--gm-color-primary); color: var(--gm-color-primary-contrast); transform: translateX(2px); }
+@media (max-width: 380px) { .gm-master { padding: 14px; } .gm-master__stat { padding: 10px; } .gm-master__stat strong { font-size: 1.1rem; } .gm-master__top { gap: 10px; } }

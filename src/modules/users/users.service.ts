@@ -35,6 +35,8 @@ export class UsersService {
         passwordHash: true,
         isSuperAdmin: true,
         adminPermissions: true,
+        canCreateAdmins: true,
+        grantablePermissions: true,
         createdAt: true,
         userRoles: { select: { role: true } },
         masterProfile: { select: { id: true, status: true, verification: true } },

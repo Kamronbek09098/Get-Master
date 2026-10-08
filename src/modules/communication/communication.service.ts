@@ -14,6 +14,7 @@ import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
 import { CursorQueryDto } from '../../common/dto/cursor-query.dto';
 import { NotificationService } from '../notification/notification.service';
 import { attachOrderToPairConversation, findPairConversation, pairKey } from './pair-conversation';
+import { SubscriptionService } from '../subscription/subscription.service';
 import { OrderService } from '../order/order.service';
 import { EditMessageDto, SendMessageDto } from './dto/message.dto';
 import { ERRORS } from '../../common/constants/error-messages';
@@ -52,6 +53,7 @@ export class CommunicationService {
     private readonly orders: OrderService,
     private readonly notifications: NotificationService,
     private readonly storage: StorageService,
+    private readonly subscriptions: SubscriptionService,
   ) {}
 
   async create(userId: string, orderId: string, panel: Panel | null = null) {
@@ -282,7 +284,21 @@ export class CommunicationService {
       ...cursorArgs(query),
     });
     const page = toCursorPage(rows, query);
-    return { items: page.items.map((row) => this.maskReplySender(this.present(row), access.adminIds, userId)), nextCursor: page.nextCursor };
+    // «Plus» obunasi: suhbatdoshning o‘chirgan xabarlari va tahrirlangan xabarlarning asl matni ko‘rinadi (o‘z xabarlari doim ko‘rinadi).
+    const plus = access.type !== 'SUPPORT' && !access.adminIds.includes(userId) && (await this.subscriptions.hasFeature(userId, 'SEE_DELETED_MESSAGES'));
+    const editedIds = plus ? page.items.filter((row) => row.editedAt && !row.deletedAt && row.senderId !== userId).map((row) => row.id) : [];
+    const edits = editedIds.length ? await this.db.messageEdit.findMany({ where: { messageId: { in: editedIds } }, orderBy: { editedAt: 'asc' }, select: { messageId: true, previousText: true, editedAt: true } }) : [];
+    return {
+      items: page.items.map((row) => {
+        const shaped = this.maskReplySender(this.present(row), access.adminIds, userId);
+        if (!plus || row.senderId === userId) return shaped;
+        if (row.deletedAt) return { ...shaped, original: { text: row.text, attachments: row.attachments } };
+        const history = edits.filter((edit) => edit.messageId === row.id).map((edit) => ({ previousText: edit.previousText, editedAt: edit.editedAt }));
+        return history.length ? { ...shaped, editHistory: history } : shaped;
+      }),
+      nextCursor: page.nextCursor,
+      perks: { seeDeleted: plus },
+    };
   }
 
   async createMessage(userId: string, conversationId: string, dto: SendMessageDto, panel: Panel | null = null) {

@@ -8,12 +8,18 @@ export function PermissionPicker({
   value,
   onChange,
   disabled,
+  allowed,
+  title,
 }: {
   value: string[];
   onChange: (next: string[]) => void;
   disabled?: boolean;
+  /** Berilsa, faqat shu huquqlar ko‘rsatiladi (vakolatli admin uchun). */
+  allowed?: string[];
+  title?: string;
 }) {
-  const total = ADMIN_PERMISSION_OPTIONS.length;
+  const options = allowed ? ADMIN_PERMISSION_OPTIONS.filter((option) => allowed.includes(option.value)) : ADMIN_PERMISSION_OPTIONS;
+  const total = options.length;
   const all = value.length === total;
   const toggle = (key: string) =>
     onChange(
@@ -25,7 +31,7 @@ export function PermissionPicker({
   return (
     <fieldset className="gm-perm" disabled={disabled}>
       <legend className="gm-perm__legend">
-        <span>{t('Ruxsat beriladigan bo‘limlar')}<small
+        <span>{title ?? t('Ruxsat beriladigan bo‘limlar')}<small
             className={
               value.length === 0
                 ? "gm-perm__count gm-perm__count--empty"
@@ -38,7 +44,7 @@ export function PermissionPicker({
           className="gm-perm__all"
           onClick={() =>
             onChange(
-              all ? [] : ADMIN_PERMISSION_OPTIONS.map((option) => option.value),
+              all ? [] : options.map((option) => option.value),
             )
           }
         >
@@ -46,11 +52,11 @@ export function PermissionPicker({
         </button>
       </legend>
       <div className="gm-perm__groups">
-        {GROUPS.map((group) => (
+        {GROUPS.filter((group) => options.some((option) => option.group === group)).map((group) => (
           <div key={group} className="gm-perm__group">
             <p className="gm-perm__group-title">{group}</p>
             <div className="gm-perm__grid">
-              {ADMIN_PERMISSION_OPTIONS.filter(
+              {options.filter(
                 (option) => option.group === group,
               ).map((option) => (
                 <label key={option.value} className="gm-perm__item">

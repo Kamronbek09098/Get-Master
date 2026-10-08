@@ -12,7 +12,7 @@ import './MobileNavigation.css';
 export function MobileNavigation() {
   const preferredRole = useAuthStore((state) => state.preferredRole);
   const me = useMe();
-  const items = getNavItems(preferredRole, { superAdmin: !!me.data?.isSuperAdmin, permissions: me.data?.adminPermissions });
+  const items = getNavItems(preferredRole, { superAdmin: !!me.data?.isSuperAdmin, permissions: me.data?.adminPermissions, canCreateAdmins: !!me.data?.canCreateAdmins });
   const primary = items.filter((item) => item.primary).slice(0, 4);
   // «Yangi buyurtma» — markazda ko‘tarilgan asosiy amal tugmasi (FAB), qolganlari ikki yonida.
   const fab = primary.find((item) => item.to.endsWith('/sorov-yaratish'));

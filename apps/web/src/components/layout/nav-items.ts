@@ -27,6 +27,7 @@ import {
   UserRound,
   Users,
   Wallet,
+  Crown,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import type { Role } from '@/types/common';
@@ -46,11 +47,11 @@ export interface NavItem {
 const ACCOUNT = 'Akkaunt';
 
 /** Menyu elementlari joriy tilda (yorliq, qisqa nom va guruh nomi tarjima qilinadi). */
-export function getNavItems(role: Role | null, options: { superAdmin?: boolean; permissions?: string[] } = {}): NavItem[] {
+export function getNavItems(role: Role | null, options: { superAdmin?: boolean; permissions?: string[]; canCreateAdmins?: boolean } = {}): NavItem[] {
   return rawNavItems(role, options).map((item) => ({ ...item, label: t(item.label), short: item.short ? t(item.short) : undefined, group: t(item.group) }));
 }
 
-function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permissions?: string[] }): NavItem[] {
+function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permissions?: string[]; canCreateAdmins?: boolean }): NavItem[] {
   if (role === 'ADMIN') {
     const allowed = (item: NavItem) => options.superAdmin || !item.permission || !!options.permissions?.includes(item.permission);
     return [
@@ -58,7 +59,7 @@ function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permiss
       { to: '/admin/hisobot', label: t('Hisobotlar'), short: t('Hisobot'), icon: BarChart3, group: 'Umumiy', primary: true, permission: 'REPORTS' },
       { to: '/admin/devops', label: 'DevOps', icon: Activity, group: 'Umumiy', permission: 'DEVOPS' },
       { to: '/admin/foydalanuvchilar', label: t('Foydalanuvchilar'), icon: Users, group: 'Boshqaruv', permission: 'USERS' },
-      ...(options.superAdmin ? [{ to: '/admin/adminlar', label: t('Adminlar'), icon: UserCog, group: 'Boshqaruv' } satisfies NavItem] : []),
+      ...(options.superAdmin || options.canCreateAdmins ? [{ to: '/admin/adminlar', label: t('Adminlar'), icon: UserCog, group: 'Boshqaruv' } satisfies NavItem] : []),
       { to: '/admin/buyurtmalar', label: t('Buyurtmalar'), icon: PackageCheck, group: 'Boshqaruv', permission: 'ORDERS' },
       { to: '/admin/suhbatlar', label: t('Suhbatlar'), icon: MessagesSquare, group: 'Boshqaruv', permission: 'CHATS' },
       { to: '/admin/xabarlar', label: t('Xabarlar'), icon: MessageCircle, group: 'Boshqaruv' },
@@ -67,6 +68,7 @@ function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permiss
       { to: '/admin/xavfsizlik', label: t('Choralar va apellyatsiya'), icon: ShieldAlert, group: 'Boshqaruv', permission: 'SAFETY' },
       { to: '/admin/katalog', label: t('Xizmatlar katalogi'), icon: Blocks, group: 'Kontent', permission: 'CATALOG' },
       { to: '/admin/siyosatlar', label: t('Siyosatlar'), icon: FileText, group: 'Kontent', permission: 'POLICIES' },
+      { to: '/admin/obunalar', label: t('Obunalar'), icon: Crown, group: 'Boshqaruv', permission: 'SUBSCRIPTIONS' },
       { to: '/admin/audit', label: t('Audit jurnali'), icon: ScrollText, group: 'Kontent', permission: 'AUDIT' },
       ...(options.superAdmin ? [{ to: '/admin/errorlar', label: t('Errorlar'), icon: Bug, group: 'Kontent' } satisfies NavItem] : []),
       { to: '/bildirishnomalar', label: t('Bildirishnomalar'), icon: Bell, group: ACCOUNT },
@@ -86,6 +88,7 @@ function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permiss
       { to: '/usta/kafolat', label: t('Kafolatlar'), icon: ShieldCheck, group: 'Muloqot' },
       { to: '/usta/nizolar', label: t('Nizolar'), icon: Scale, group: 'Muloqot' },
       { to: '/usta/profil', label: t('Profil'), icon: UserRound, group: ACCOUNT, primary: true },
+      { to: '/usta/obuna', label: t('Obuna'), icon: Crown, group: ACCOUNT },
       { to: '/xavfsizlik', label: t('Choralar va apellyatsiya'), icon: ShieldAlert, group: ACCOUNT },
       { to: '/bildirishnomalar', label: t('Bildirishnomalar'), icon: Bell, group: ACCOUNT },
       { to: '/sozlamalar', label: t('Sozlamalar'), icon: Settings, group: ACCOUNT },
@@ -101,6 +104,7 @@ function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permiss
     { to: '/mijoz/shikoyatlar', label: t('Shikoyatlar'), icon: ShieldAlert, group: 'Muloqot' },
     { to: '/mijoz/nizolar', label: t('Nizolar'), icon: Scale, group: 'Muloqot' },
     { to: '/mijoz/profil', label: t('Profil'), icon: UserRound, group: ACCOUNT, primary: true },
+    { to: '/mijoz/obuna', label: t('Obuna'), icon: Crown, group: ACCOUNT },
     { to: '/xavfsizlik', label: t('Choralar va apellyatsiya'), icon: ShieldAlert, group: ACCOUNT },
     { to: '/bildirishnomalar', label: t('Bildirishnomalar'), icon: Bell, group: ACCOUNT },
     { to: '/sozlamalar', label: t('Sozlamalar'), icon: Settings, group: ACCOUNT },

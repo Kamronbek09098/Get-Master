@@ -241,6 +241,14 @@ export function useCreateAdmin() {
   });
 }
 
+export function useSetAdminDelegation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, canCreateAdmins, grantablePermissions }: { id: string; canCreateAdmins: boolean; grantablePermissions: string[] }) => adminService.setAdminDelegation(id, canCreateAdmins, grantablePermissions),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
+  });
+}
+
 export function useSetSuperAdmin() {
   const queryClient = useQueryClient();
   return useMutation({

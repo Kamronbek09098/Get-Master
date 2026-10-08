@@ -411,6 +411,10 @@ export interface AdminAccount {
   status: ManagedStatus;
   isSuperAdmin: boolean;
   adminPermissions?: string[];
+  /** Superadmin belgilagan: bu admin yangi adminlar yarata oladimi va qaysi huquqlarni bera oladi. */
+  canCreateAdmins?: boolean;
+  grantablePermissions?: string[];
+  createdByAdminId?: string | null;
   isSelf?: boolean;
   twoFactorEnabled?: boolean;
   createdAt: string;
@@ -424,4 +428,12 @@ export interface CreateAdminInput {
   lastName: string;
   isSuperAdmin?: boolean;
   permissions?: string[];
+  canCreateAdmins?: boolean;
+  grantablePermissions?: string[];
+}
+
+/** Joriy adminning adminlarni boshqarish doirasi (server qaytaradi). */
+export interface AdminScope {
+  superAdmin: boolean;
+  grantable: string[];
 }

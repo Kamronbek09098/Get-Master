@@ -12,6 +12,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime } from '@/lib/utils';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { CreateAdminDialog } from '@/features/admin/components/CreateAdminDialog';
+import { AdminDelegationDialog } from '@/features/admin/components/AdminDelegationDialog';
 import { AdminPermissionsDialog } from '@/features/admin/components/AdminPermissionsDialog';
 import { PERMISSION_LABEL } from '@/features/admin/permissions';
 import { PasswordResetDialog } from '@/features/admin/components/PasswordResetDialog';
@@ -51,31 +52,36 @@ const asUser = (admin: AdminAccount): AdminUser => ({
 export function AdminAdminsPage() {
   const me = useMe();
   const isSuper = !!me.data?.isSuperAdmin;
-  const admins = useAdminAccounts(isSuper);
+  const canManage = isSuper || !!me.data?.canCreateAdmins;
+  const admins = useAdminAccounts(canManage);
   const setSuper = useSetSuperAdmin();
   const setTwoFactor = useSetUserTwoFactor();
   const [creating, setCreating] = useState(false);
   const [dialog, setDialog] = useState<{ admin: AdminAccount; action: UserAction } | null>(null);
   const [passwordFor, setPasswordFor] = useState<AdminAccount | null>(null);
   const [permissionsFor, setPermissionsFor] = useState<AdminAccount | null>(null);
+  const [delegationFor, setDelegationFor] = useState<AdminAccount | null>(null);
 
   if (me.isLoading) return <PageLoader />;
-  if (!isSuper) return <Navigate to="/admin" replace />;
+  if (!canManage) return <Navigate to="/admin" replace />;
   const items = admins.data?.items ?? [];
+  const scope = admins.data?.scope;
 
   return (
     <div className="gm-adm">
       <div className="gm-page-header">
         <div>
           <h1>{t('Adminlar')}</h1>
-          <p className="gm-page-lead">{t('Yangi adminlar yarating, ularning huquqlari va akkauntlarini boshqaring.')}</p>
+          <p className="gm-page-lead">{isSuper ? t('Yangi adminlar yarating, ularning huquqlari va akkauntlarini boshqaring.') : t('Siz yaratgan adminlar. Ularga faqat superadmin ruxsat bergan huquqlarni bera olasiz.')}</p>
         </div>
         <Button onClick={() => setCreating(true)}>
           <UserPlus size={17} aria-hidden="true" />{' '}{t('Yangi admin yaratish')}</Button>
       </div>
 
+      {isSuper && (
       <Alert tone="info" title={t('Huquqlar')}>
         <strong>{t('Superadmin')}</strong>{' '}{t('— barcha amallar va adminlarni boshqarish')}{' '}<strong>{t('Admin')}</strong>{' '}{t('— faqat siz tanlagan bo‘limlar (masalan, buyurtmalar yoki ustalarni tasdiqlash); boshqa adminlarni boshqara olmaydi.')}</Alert>
+      )}
 
       {admins.isLoading && <PageLoader label={t('Adminlar yuklanmoqda…')} />}
       {admins.isError && <Alert tone="danger">{getErrorMessage(admins.error)}</Alert>}
@@ -101,6 +107,7 @@ export function AdminAdminsPage() {
                 </div>
                 <div className="gm-adm__badges">
                   <Badge tone={admin.isSuperAdmin ? 'primary' : 'neutral'}>{admin.isSuperAdmin ? t('Superadmin') : t('Admin')}</Badge>
+                  {admin.canCreateAdmins && <Badge tone="warning">{t('Admin yarata oladi')}</Badge>}
                   <Badge tone={status.tone}>{status.label}</Badge>
                   {admin.isSelf && <Badge tone="success">{t('Siz')}</Badge>}
                 </div>
@@ -121,6 +128,18 @@ export function AdminAdminsPage() {
                 )}
               </div>
 
+              {admin.canCreateAdmins && (
+                <div className="gm-adm__perms">
+                  <span className="gm-adm__perms-title">{t('Bera oladigan huquqlar:')}</span>
+                  {(admin.grantablePermissions ?? []).map((key) => (
+                    <Badge key={key} tone="warning">
+                      {PERMISSION_LABEL[key] ?? key}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {isSuper && (
               <div className="gm-adm__twofa">
                 <div>
                   <strong>{t('Kirishda tasdiqlash kodi (OTP)')}</strong>
@@ -133,6 +152,7 @@ export function AdminAdminsPage() {
                   onChange={(enabled) => setTwoFactor.mutate({ id: admin.id, enabled })}
                 />
               </div>
+              )}
 
               {!admin.isSelf && (
                 <div className="gm-adm__actions">
@@ -140,6 +160,11 @@ export function AdminAdminsPage() {
                     <Button size="sm" variant="secondary" onClick={() => setPermissionsFor(admin)}>
                       <ListChecks size={15} aria-hidden="true" />{' '}{t('Huquqlar')}</Button>
                   )}
+                  {isSuper && !admin.isSuperAdmin && (
+                    <Button size="sm" variant="secondary" onClick={() => setDelegationFor(admin)}>
+                      <UserPlus size={15} aria-hidden="true" />{' '}{t('Admin yaratish vakolati')}</Button>
+                  )}
+                  {isSuper && (<>
                   <Button size="sm" variant="secondary" onClick={() => setPasswordFor(admin)}>
                     <KeyRound size={15} aria-hidden="true" />{' '}{t('Yangi parol')}</Button>
                   <Button size="sm" variant="secondary" loading={setSuper.isPending && setSuper.variables?.id === admin.id} onClick={() => setSuper.mutate({ id: admin.id, value: !admin.isSuperAdmin })}>
@@ -159,6 +184,7 @@ export function AdminAdminsPage() {
                   )}
                   <Button size="sm" variant="ghost" className="gm-btn-danger-text" onClick={() => setDialog({ admin, action: 'DELETE' })}>
                     <Trash2 size={15} aria-hidden="true" />{' '}{t('O‘chirish')}</Button>
+                  </>)}
                 </div>
               )}
             </article>
@@ -166,9 +192,10 @@ export function AdminAdminsPage() {
         })}
       </div>
 
-      {creating && <CreateAdminDialog onClose={() => setCreating(false)} />}
+      {creating && <CreateAdminDialog onClose={() => setCreating(false)} scope={scope} />}
       {dialog && <UserActionDialog user={asUser(dialog.admin)} action={dialog.action} onClose={() => setDialog(null)} />}
-      {permissionsFor && <AdminPermissionsDialog admin={permissionsFor} onClose={() => setPermissionsFor(null)} />}
+      {permissionsFor && <AdminPermissionsDialog admin={permissionsFor} onClose={() => setPermissionsFor(null)} allowed={isSuper ? undefined : scope?.grantable} />}
+      {delegationFor && <AdminDelegationDialog admin={delegationFor} onClose={() => setDelegationFor(null)} />}
       {passwordFor && <PasswordResetDialog userId={passwordFor.id} name={nameOf(passwordFor)} phone={passwordFor.phone} onClose={() => setPasswordFor(null)} />}
     </div>
   );

@@ -9,7 +9,7 @@ import { PermissionPicker } from './PermissionPicker';
 import { t } from '@/i18n';
 
 /** Oddiy adminning ruxsat berilgan bo‘limlarini o‘zgartirish (faqat superadmin). */
-export function AdminPermissionsDialog({ admin, onClose }: { admin: AdminAccount; onClose: () => void }) {
+export function AdminPermissionsDialog({ admin, onClose, allowed }: { admin: AdminAccount; onClose: () => void; allowed?: string[] }) {
   const save = useSetAdminPermissions();
   const [permissions, setPermissions] = useState<string[]>(admin.adminPermissions ?? []);
   const name = [admin.firstName, admin.lastName].filter(Boolean).join(' ') || admin.phone;
@@ -31,7 +31,7 @@ export function AdminPermissionsDialog({ admin, onClose }: { admin: AdminAccount
         <p style={{ margin: 0 }}>
           <strong>{name}</strong>{' '}{t('· ID {accountNumber}. Faqat belgilangan bo‘limlar ochiq bo‘ladi, qolganlari yashiriladi va serverda ham taqiqlanadi.', { accountNumber: admin.accountNumber })}</p>
         {save.isError && <Alert tone="danger">{getErrorMessage(save.error)}</Alert>}
-        <PermissionPicker value={permissions} onChange={setPermissions} disabled={save.isPending} />
+        <PermissionPicker value={permissions} onChange={setPermissions} disabled={save.isPending} allowed={allowed} />
         {permissions.length === 0 && <Alert tone="warning">{t('Oddiy admin uchun kamida bitta bo‘lim tanlang.')}</Alert>}
       </div>
     </Modal>

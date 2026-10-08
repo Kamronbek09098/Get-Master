@@ -1,4 +1,4 @@
-import { Banknote, BadgeCheck, Bell, CalendarCheck, CalendarClock, CheckCircle2, ClipboardCheck, ClipboardList, Handshake, Image, MapPin, MessageCircle, PhoneMissed, CreditCard, Package, Scale, ScrollText, Search, Send, Truck, Wrench, XCircle } from 'lucide-react';
+import { Banknote, BadgeCheck, Bell, CalendarCheck, CalendarClock, CheckCircle2, ClipboardCheck, ClipboardList, Handshake, Image, MapPin, MessageCircle, PhoneMissed, Crown, CreditCard, Package, Scale, ScrollText, Search, Send, Truck, Wrench, XCircle } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { STATUS_TEXT } from '@/features/order/order-flow';
 import type { AppNotification } from './types';
@@ -63,6 +63,13 @@ export function notificationMeta(item: AppNotification, base: '/mijoz' | '/usta'
       const chat = admin ? '/admin/xabarlar' : `${base}/chat`;
       return { icon: MessageCircle, tone: 'primary', to: id ? `${chat}?suhbat=${id}` : chat };
     }
+    case 'subscription.activated':
+      return { icon: Crown, tone: 'success', to: `${base}/obuna` };
+    case 'subscription.reminder':
+      return { icon: Crown, tone: 'warning', to: `${base}/obuna` };
+    case 'subscription.expired':
+    case 'subscription.rejected':
+      return { icon: Crown, tone: 'danger', to: `${base}/obuna` };
     case 'call.missed': {
       const id = typeof data.conversationId === 'string' ? data.conversationId : null;
       return { icon: PhoneMissed, tone: 'danger', to: id ? `${base}/chat?suhbat=${id}` : `${base}/chat` };

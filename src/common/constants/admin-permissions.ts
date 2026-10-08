@@ -11,6 +11,7 @@ export const ADMIN_PERMISSIONS = [
   'REPORTS', // Boshqaruv paneli va hisobotlar
   'AUDIT', // Audit jurnali
   'DEVOPS', // DevOps
+  'SUBSCRIPTIONS', // Obunalar (to‘lov so‘rovlarini tasdiqlash, sovg‘a berish)
 ] as const;
 
 export type AdminPermission = (typeof ADMIN_PERMISSIONS)[number];

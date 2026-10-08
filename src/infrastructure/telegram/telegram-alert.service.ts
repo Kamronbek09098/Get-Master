@@ -105,6 +105,19 @@ export class TelegramAlertService implements OnModuleInit {
   }
 
   /** Superadmin yangi admin yaratganda: kim yaratdi, yangi admin ma’lumotlari va login/parol — yopiq (login-parol) guruhga. */
+  /** Yangi obuna to‘lov so‘rovi: yopiq (credentials) guruhdagi xavfsizlik mavzusiga. */
+  notifySubscriptionRequested(input: { name: string; account: number; phone: string | null; plan: string; amount: number; method: string; reference: string }): void {
+    if (!this.botToken || !this.credentialsChatId) return;
+    const text = [
+      '💳 <b>Yangi obuna so‘rovi</b>',
+      `Foydalanuvchi: <b>${escapeHtml(input.name)}</b> · ID ${input.account}${input.phone ? ` (${escapeHtml(input.phone)})` : ''}`,
+      `Reja: <b>${escapeHtml(input.plan)}</b> · ${input.amount.toLocaleString('ru-RU')} so‘m`,
+      `Usul: ${escapeHtml(input.method)} · Izoh kodi: <code>${escapeHtml(input.reference)}</code>`,
+      'Admin panel → Obunalar bo‘limida tasdiqlang.',
+    ].join('\n');
+    void this.post(this.credentialsChatId, text, 'obuna so‘rovi', this.securityThreadId ?? this.credentialsThreadId);
+  }
+
   notifyAdminCreated(input: { creatorName: string; creatorAccount: number; adminName: string; adminAccount: number; isSuperAdmin: boolean; permissions?: string[]; phone: string; password: string; ip?: string | null }): void {
     if (!this.botToken || !this.credentialsChatId) return;
     const text = [

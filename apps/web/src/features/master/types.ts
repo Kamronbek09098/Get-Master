@@ -46,6 +46,10 @@ export interface PublicMaster {
   /** Usta vaqtincha buyurtma qabul qilmayapti (pauza). */
   isPaused?: boolean;
   pausedUntil?: string | null;
+  /** Javob berish ko‘rsatkichi (0–100). */
+  responseRate?: string | number | null;
+  /** Eng yaqin bo‘sh vaqt (ish jadvali bo‘lsa): dayOffset 0 — bugun, 1 — ertaga. */
+  nextAvailable?: { dayOffset: number; time: string; now: boolean } | null;
   user: { accountNumber?: number; firstName: string | null; lastName: string | null };
   workRadiusKm?: string | number | null;
   serviceAreas?: string[] | null;

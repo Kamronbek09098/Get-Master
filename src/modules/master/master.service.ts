@@ -1,3 +1,4 @@
+import { nextAvailability } from '../../common/utils/schedule';
 import {
   BadRequestException,
   ConflictException,
@@ -23,6 +24,7 @@ import { CreatePortfolioDto, UpdatePortfolioDto } from './dto/portfolio.dto';
 import { ERRORS } from '../../common/constants/error-messages';
 
 const MAX_PORTFOLIO_ITEMS = 20;
+const PRO_PORTFOLIO_MULTIPLIER = 2; // subscription/plans.config.ts bilan bir xil
 
 const PUBLIC_MASTER_SELECT = {
   id: true,
@@ -37,8 +39,11 @@ const PUBLIC_MASTER_SELECT = {
   ratingAvg: true,
   ratingCount: true,
   completionRate: true,
+  responseRate: true,
   completedOrders: true,
   verification: true,
+  isPro: true,
+  proUntil: true,
   isPaused: true,
   pausedUntil: true,
   user: { select: { accountNumber: true, firstName: true, lastName: true } },
@@ -55,7 +60,7 @@ const PUBLIC_MASTER_SELECT = {
   portfolio: {
     where: { status: 'APPROVED', mediaAsset: { status: 'READY' } },
     orderBy: { createdAt: 'desc' },
-    take: MAX_PORTFOLIO_ITEMS,
+    take: MAX_PORTFOLIO_ITEMS * PRO_PORTFOLIO_MULTIPLIER,
     select: { id: true, title: true, description: true, mediaAssetId: true, beforeMediaAssetId: true, createdAt: true },
   },
 } satisfies Prisma.MasterProfileSelect;
@@ -64,13 +69,14 @@ type PublicRow = Prisma.MasterProfileGetPayload<{ select: typeof PUBLIC_MASTER_S
 
 /** Ommaviy ko‘rinish: aniq koordinata o‘rniga yaxlitlangan ish hududi (`coverage`) beriladi. */
 function toPublic(row: PublicRow) {
-  const { latitude, longitude, ...rest } = row;
+  const { latitude, longitude, proUntil, ...rest } = row;
   const radius = row.workRadiusKm != null ? Number(row.workRadiusKm) : null;
   const coverage =
     latitude != null && longitude != null && radius
       ? { lat: approxCoordinate(Number(latitude)), lon: approxCoordinate(Number(longitude)), radiusKm: radius }
       : null;
-  return { ...rest, coverage };
+  // «Pro» belgisi faqat obuna muddati tugamagan bo‘lsa (tozalash jarayoni kechiksa ham noto‘g‘ri ko‘rinmasin).
+  return { ...rest, isPro: row.isPro && (!proUntil || proUntil > new Date()), coverage };
 }
 
 @Injectable()
@@ -261,11 +267,20 @@ export class MasterService {
     const rows = await this.db.masterProfile.findMany({
       where,
       select: PUBLIC_MASTER_SELECT,
-      orderBy: [{ ratingAvg: 'desc' }, { id: 'asc' }],
+      orderBy: [{ isPro: 'desc' }, { ratingAvg: 'desc' }, { id: 'asc' }],
       ...cursorArgs(query),
     });
     const page = toCursorPage(rows, query);
-    return { ...page, items: page.items.map(toPublic) };
+    // Karta uchun: ustaning eng yaqin bo‘sh vaqti (ish jadvali bo‘lsa).
+    const windows = page.items.length
+      ? await this.db.masterAvailability.findMany({
+          where: { masterId: { in: page.items.map((item) => item.id) }, isAvailable: true },
+          select: { masterId: true, dayOfWeek: true, startTime: true, endTime: true, isAvailable: true, effectiveFrom: true, effectiveUntil: true },
+        })
+      : [];
+    const byMaster = new Map<string, typeof windows>();
+    for (const window of windows) byMaster.set(window.masterId, [...(byMaster.get(window.masterId) ?? []), window]);
+    return { ...page, items: page.items.map((item) => ({ ...toPublic(item), nextAvailable: nextAvailability(byMaster.get(item.id) ?? []) })) };
   }
 
   /**
@@ -410,6 +425,7 @@ export class MasterService {
         createdAt: true,
         latitude: true,
         longitude: true,
+        isPriority: true,
         customer: { select: { firstName: true, lastName: true } },
         address: { select: { city: true, district: true } },
         service: { select: { id: true, name: true } },
@@ -441,7 +457,8 @@ export class MasterService {
     const myLat = profile.latitude != null ? Number(profile.latitude) : null;
     const myLon = profile.longitude != null ? Number(profile.longitude) : null;
     return {
-      items: page.items.map(({ offers, matchingRuns, _count, serviceId, customer, address, latitude, longitude, ...request }) => {
+      // «Plus» mijozning tezkor so‘rovlari sahifada birinchi ko‘rsatiladi (tartib sahifa ichida saqlanadi).
+      items: [...page.items].sort((a, b) => Number(b.isPriority) - Number(a.isPriority)).map(({ offers, matchingRuns, _count, serviceId, customer, address, latitude, longitude, ...request }) => {
         const suggestion = serviceId ? suggestions.get(serviceId) : undefined;
         const photos = photosBy.get(request.id) ?? [];
         const distanceKm =
@@ -476,8 +493,9 @@ export class MasterService {
     return this.db.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT id FROM master_profiles WHERE id = ${profile.id}::uuid FOR UPDATE`;
       const count = await tx.masterPortfolio.count({ where: { masterId: profile.id } });
-      if (count >= MAX_PORTFOLIO_ITEMS) {
-        throw new ConflictException(ERRORS.MAX_PORTFOLIO_ITEMS(MAX_PORTFOLIO_ITEMS));
+      const limit = profile.isPro && (!profile.proUntil || profile.proUntil > new Date()) ? MAX_PORTFOLIO_ITEMS * PRO_PORTFOLIO_MULTIPLIER : MAX_PORTFOLIO_ITEMS;
+      if (count >= limit) {
+        throw new ConflictException(ERRORS.MAX_PORTFOLIO_ITEMS(limit));
       }
       if (dto.beforeMediaAssetId && dto.beforeMediaAssetId === dto.mediaAssetId) {
         throw new BadRequestException(ERRORS.PORTFOLIO_BEFORE_SAME_AS_AFTER);
