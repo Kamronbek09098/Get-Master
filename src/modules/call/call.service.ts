@@ -1,3 +1,4 @@
+import { PushService } from '../push/push.service';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
@@ -53,6 +54,7 @@ export class CallService implements OnModuleDestroy {
     private readonly redis: RedisService,
     private readonly events: CallEventsService,
     private readonly notifications: NotificationService,
+    private readonly push: PushService,
   ) {}
 
   onModuleDestroy(): void {
@@ -123,7 +125,9 @@ export class CallService implements OnModuleDestroy {
     if (busy) throw new ConflictException(busy.callerId === userId || busy.calleeId === userId ? ERRORS.CALL_SELF_BUSY : ERRORS.CALL_PEER_BUSY);
 
     const caller = await this.db.user.findUniqueOrThrow({ where: { id: userId }, select: { id: true, firstName: true, lastName: true } });
-    const online = await this.events.isOnline(peer.userId, calleePanel);
+    // Ilova yopiq bo‘lsa ham (push tokeni bor) qo‘ng‘iroq jiringlaydi: telefonga push boradi, ochilganda qo‘ng‘iroq ko‘rinadi.
+    const connected = await this.events.isOnline(peer.userId, calleePanel);
+    const online = connected || (await this.push.hasTokens(peer.userId));
     const call = await this.db.call.create({
       data: {
         conversationId,
@@ -144,6 +148,14 @@ export class CallService implements OnModuleDestroy {
     }
 
     await this.events.emit(peer.userId, calleePanel, 'call.incoming', { call: toView(call), from: { id: caller.id, name: nameOf(caller) } });
+    if (!connected) {
+      void this.push.sendToUser(peer.userId, {
+        title: nameOf(caller),
+        body: mode === 'VIDEO' ? 'Video qo‘ng‘iroq qilmoqda' : 'Audio qo‘ng‘iroq qilmoqda',
+        kind: 'call',
+        data: { type: 'call.incoming', callId: call.id, conversationId },
+      });
+    }
     this.armRingTimer(call.id);
     return { call: toView(call), peer: { id: peer.userId, name: nameOf(peer.user) }, calleeOnline: true };
   }

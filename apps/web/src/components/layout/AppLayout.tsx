@@ -12,12 +12,16 @@ import { VerificationBanner } from '@/features/trust/components/VerificationBann
 import { PhoneRequiredBanner } from '@/features/session/components/PhoneRequiredBanner';
 import { NameRequiredDialog } from '@/features/session/components/NameRequiredDialog';
 import { CallProvider } from '@/features/call/CallProvider';
+import { usePushNotifications } from '@/features/push/usePushNotifications';
+import { WebPushPrompt } from '@/features/push/WebPushPrompt';
 import { t } from '@/i18n';
 import './AppLayout.css';
 
 export function AppLayout() {
   const { role, needsMasterOnboarding } = useCurrentRole();
   useAutoReadNotifications();
+  // Telefon ilovasida push yoqiladi (mijoz, usta va admin).
+  usePushNotifications(role === 'CUSTOMER' || role === 'MASTER' || role === 'ADMIN');
   return (
     <CallProvider>
     <div className="gm-app-layout">
@@ -28,6 +32,7 @@ export function AppLayout() {
       <div className="gm-app-layout__body">
         <Sidebar />
         <main id="gm-main-content" className="gm-app-layout__content">
+          <WebPushPrompt />
           {role === 'MASTER' && !needsMasterOnboarding && <VerificationBanner />}
           {role === 'MASTER' && needsMasterOnboarding && (
             <Alert tone="info" title={t('Avval usta profilini yarating')}>

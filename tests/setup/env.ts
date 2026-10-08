@@ -34,6 +34,9 @@ export const TEST_ENV = {
   CLAMAV_TIMEOUT_MS: '60000',
   ADMIN_PHONE: '',
   ADMIN_PASSWORD: '',
+  // Testlarda haqiqiy Firebase'ga hech qachon ulanilmaydi.
+  FIREBASE_SERVICE_ACCOUNT_PATH: '',
+  FIREBASE_SERVICE_ACCOUNT_JSON: '',
   TELEGRAM_BOT_TOKEN: '',
   TELEGRAM_CHAT_ID: '',
   TELEGRAM_OTP_CHAT_ID: '',

@@ -394,6 +394,7 @@ model User {
   addresses                Address[]
   refreshTokens            RefreshToken[]
   deviceSessions           DeviceSession[]
+  pushTokens               PushToken[]
   otpCodes                 OtpCode[]
   policies                 PolicyAcceptance[]
   requests                 ProblemRequest[]          @relation("CustomerRequests")
@@ -435,6 +436,22 @@ model UserRole {
 
   @@unique([userId, role])
   @@map("user_roles")
+}
+
+/// Telefon (FCM) tokeni: ilova yopiq bo‘lganda ham bildirishnoma yuborish uchun.
+model PushToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  token      String   @unique @db.VarChar(512)
+  platform   String   @default("android") @db.VarChar(16)
+  /// Qaysi panel ilovasi (customer/master): bildirishnoma mazmuni shunga moslanadi.
+  panel      String?  @db.VarChar(16)
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now()) @map("last_seen_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_tokens")
 }
 
 model DeviceSession {

@@ -10,6 +10,9 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- Push: kanal ko‘rsatilmasa «default» kanalidan foydalanadi (ilova ishga tushganda yaratiladi). -->
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="default" />
+
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
@@ -39,6 +42,8 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 13+: bildirishnoma ko‘rsatish uchun ruxsat so‘raladi (push). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />

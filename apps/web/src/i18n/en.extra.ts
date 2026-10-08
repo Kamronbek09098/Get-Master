@@ -2245,4 +2245,7 @@ export const enExtra: Record<string, string> = {
   "Ish rejimini saqlash": "Save work mode",
   "dan": "from",
   "Mutaxassislik": "Specialty",
+  "Bildirishnomalarni yoqing": "Turn on notifications",
+  "Yangi xabar, taklif va qo‘ng‘iroqlar sayt yopiq bo‘lsa ham ko‘rinadi.": "New messages, offers and calls show up even when the site is closed.",
+  "Keyinroq": "Later",
 };

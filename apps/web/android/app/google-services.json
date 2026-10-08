@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "357026118597",
+    "project_id": "getmaster-eac7b",
+    "storage_bucket": "getmaster-eac7b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:357026118597:android:e8c53b70ab03cedba129ac",
+        "android_client_info": {
+          "package_name": "uz.getmaster.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbS2qPnZVjxhKiiEMMO4EaUz8aWuQotwI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:357026118597:android:9c9db58ba8836e4aa129ac",
+        "android_client_info": {
+          "package_name": "uz.getmaster.customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbS2qPnZVjxhKiiEMMO4EaUz8aWuQotwI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:357026118597:android:b29fb3db43e5b3aea129ac",
+        "android_client_info": {
+          "package_name": "uz.getmaster.master"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDbS2qPnZVjxhKiiEMMO4EaUz8aWuQotwI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

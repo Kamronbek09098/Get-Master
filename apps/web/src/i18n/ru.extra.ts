@@ -2245,4 +2245,7 @@ export const ruExtra: Record<string, string> = {
   "Ish rejimini saqlash": "Сохранить режим работы",
   "dan": "от",
   "Mutaxassislik": "Специализация",
+  "Bildirishnomalarni yoqing": "Включите уведомления",
+  "Yangi xabar, taklif va qo‘ng‘iroqlar sayt yopiq bo‘lsa ham ko‘rinadi.": "Новые сообщения, предложения и звонки видны, даже когда сайт закрыт.",
+  "Keyinroq": "Позже",
 };

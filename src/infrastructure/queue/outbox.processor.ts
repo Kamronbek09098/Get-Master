@@ -7,6 +7,7 @@ import { toNotificationTarget } from '../outbox/outbox-notification-map';
 import { MediaProcessingService } from '../media/media-processing.service';
 import { ClassificationService } from '../../modules/classification/classification.service';
 import { MatchingService } from '../../modules/matching/matching.service';
+import { PushService, toPushData } from '../../modules/push/push.service';
 import { BULLMQ_CONNECTION, OUTBOX_QUEUE_NAME } from './queue.constants';
 
 interface OutboxJobData {
@@ -24,6 +25,7 @@ export class OutboxProcessor implements OnModuleInit, OnModuleDestroy {
     private readonly mediaProcessing: MediaProcessingService,
     private readonly classification: ClassificationService,
     private readonly matching: MatchingService,
+    private readonly push: PushService,
   ) {}
 
   onModuleInit() {
@@ -84,6 +86,7 @@ export class OutboxProcessor implements OnModuleInit, OnModuleDestroy {
 
     const target = toNotificationTarget(event);
 
+    let pushed: { userId: string; title: string; body: string; data: Record<string, string> } | null = null;
     await this.db.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${event.id}))`;
       const fresh = await tx.outboxEvent.findUnique({ where: { id: event.id }, select: { status: true } });
@@ -93,24 +96,18 @@ export class OutboxProcessor implements OnModuleInit, OnModuleDestroy {
           where: { data: { path: ['outboxEventId'], equals: event.id } },
         });
         if (!existing) {
+          const payload = event.payload as Record<string, unknown>;
+          const notificationData = {
+            outboxEventId: event.id,
+            // Bildirishnoma bosilganda kerakli sahifaga o‘tish uchun.
+            ...(typeof payload?.orderId === 'string' ? { orderId: payload.orderId } : {}),
+            // Buyurtma holati o‘zgarganda ro‘yxatda mos ikona ko‘rsatish uchun.
+            ...(typeof payload?.newStatus === 'string' ? { status: payload.newStatus } : {}),
+          };
           await tx.notification.create({
-            data: {
-              userId: target.userId,
-              channel: 'IN_APP',
-              title: target.title,
-              body: target.body,
-              template: event.eventName,
-              data: {
-                outboxEventId: event.id,
-                // Bildirishnoma bosilganda kerakli sahifaga o‘tish uchun.
-                ...(typeof (event.payload as Record<string, unknown>)?.orderId === 'string' ? { orderId: (event.payload as Record<string, unknown>).orderId as string } : {}),
-                // Buyurtma holati o‘zgarganda ro‘yxatda mos ikona ko‘rsatish uchun.
-                ...(typeof (event.payload as Record<string, unknown>)?.newStatus === 'string' ? { status: (event.payload as Record<string, unknown>).newStatus as string } : {}),
-              },
-              status: 'SENT',
-              sentAt: new Date(),
-            },
+            data: { userId: target.userId, channel: 'IN_APP', title: target.title, body: target.body, template: event.eventName, data: notificationData, status: 'SENT', sentAt: new Date() },
           });
+          pushed = { userId: target.userId, title: target.title, body: target.body, data: toPushData(event.eventName, notificationData) };
         }
       }
 
@@ -119,6 +116,9 @@ export class OutboxProcessor implements OnModuleInit, OnModuleDestroy {
         data: { status: 'PUBLISHED', publishedAt: new Date(), attempts: { increment: 1 } },
       });
     });
+    // Telefon (push) tranzaksiya yakunlangandan keyin yuboriladi.
+    const toPush = pushed as { userId: string; title: string; body: string; data: Record<string, string> } | null;
+    if (toPush) void this.push.sendToUser(toPush.userId, { title: toPush.title, body: toPush.body, data: toPush.data });
   }
 
   private async deliverNotification(event: OutboxEvent): Promise<void> {

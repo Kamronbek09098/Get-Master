@@ -1,3 +1,4 @@
+import { unregisterPushToken } from '@/features/push/push-native';
 import { useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -84,7 +85,11 @@ export function useLogout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   return useMutation({
-    mutationFn: (allDevices: boolean) => authService.logout(allDevices),
+    mutationFn: async (allDevices: boolean) => {
+      // Avval telefon tokeni o‘chiriladi (hali kirgan holatda), keyin chiqiladi.
+      await unregisterPushToken();
+      return authService.logout(allDevices);
+    },
     onSuccess: () => {
       clear();
       queryClient.clear();

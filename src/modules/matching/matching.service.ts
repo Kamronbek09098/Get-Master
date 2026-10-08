@@ -3,6 +3,7 @@ import { MasterProfile, Prisma } from '@prisma/client';
 import { MasterStatsService } from '../master/master-stats.service';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { fitsSchedule, type ScheduleWindow } from '../../common/utils/schedule';
+import { PushService } from '../push/push.service';
 
 const ALGORITHM_VERSION = 'v1.0';
 
@@ -50,6 +51,7 @@ export class MatchingService {
   constructor(
     private readonly db: PrismaService,
     private readonly masterStats: MasterStatsService,
+    private readonly push: PushService,
   ) {}
 
   async runMatching(requestId: string, opts: { notBefore?: Date } = {}): Promise<void> {
@@ -119,6 +121,7 @@ export class MatchingService {
     });
     if (nextBatch.length === 0) return;
 
+    const notifiedUserIds: string[] = [];
     await this.db.$transaction(async (tx) => {
       for (const result of nextBatch) {
         const claimed = await tx.matchingResult.updateMany({
@@ -139,9 +142,13 @@ export class MatchingService {
             sentAt: new Date(),
           },
         });
+        notifiedUserIds.push(master.userId);
         await this.masterStats.recompute(master.id, tx);
       }
     });
+    for (const userId of notifiedUserIds) {
+      void this.push.sendToUser(userId, { title: 'Yangi so‘rov mos keldi', body: 'Sizga mos keladigan yangi mijoz so‘rovi bor. Ilovada ko‘rib, taklif yuboring.', data: { type: 'matching.wave', requestId } });
+    }
 
     this.logger.log(`${requestId} so‘rovi uchun ${wave}-to‘lqinda ${nextBatch.length} ta ustaga xabar yuborildi`);
 

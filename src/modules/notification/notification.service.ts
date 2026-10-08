@@ -6,6 +6,7 @@ import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { ERRORS } from '../../common/constants/error-messages';
+import { PushService, toPushData } from '../push/push.service';
 
 const DUPLICATE_WINDOW_MS = 60_000;
 
@@ -14,6 +15,7 @@ export class NotificationService {
   constructor(
     private readonly db: PrismaService,
     private readonly outbox: OutboxService,
+    private readonly push: PushService,
   ) {}
 
   async create(dto: CreateNotificationDto) {
@@ -31,7 +33,7 @@ export class NotificationService {
     });
     if (existing) return existing;
 
-    return this.db.$transaction(async (tx) => {
+    const created = await this.db.$transaction(async (tx) => {
       const notification = await tx.notification.create({
         data: {
           userId: dto.userId,
@@ -50,6 +52,9 @@ export class NotificationService {
       });
       return notification;
     });
+    // Telefon (push): ilova yopiq bo‘lsa ham bildirishnoma ko‘rinadi. Xato bo‘lsa ham yaratish to‘xtamaydi.
+    void this.push.sendToUser(created.userId, { title: created.title, body: created.body, data: toPushData(created.template, created.data) });
+    return created;
   }
 
   async findAll(userId: string, query: NotificationQueryDto) {
