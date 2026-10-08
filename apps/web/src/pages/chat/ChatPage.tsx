@@ -37,6 +37,17 @@ export function ChatPage() {
   const select = (id: string | null) => setParams(id ? { suhbat: id } : {}, { replace: true });
   const name = selected ? counterpartName(selected, role) : '';
 
+  // Ism bosilsa: mijoz paneli — ustaning profili; usta paneli — mijozning profili (administrator suhbatida profil yo‘q).
+  const accountNumber = selected?.counterpart?.accountNumber;
+  const profileHref =
+    selected && selected.type !== 'SUPPORT' && accountNumber !== undefined
+      ? (env.appRole ?? role) === 'MASTER'
+        ? `/usta/mijozlar/${accountNumber}`
+        : (env.appRole ?? role) === 'CUSTOMER' && selected.counterpartIsMaster
+          ? `/mijoz/ustalar/${accountNumber}`
+          : null
+      : null;
+
   const noConversations = conversations.isSuccess && conversations.data.items.length === 0;
   const asMaster = (env.appRole ?? role) === 'MASTER';
   const isAdmin = (env.appRole ?? role) === 'ADMIN';
@@ -113,11 +124,23 @@ export function ChatPage() {
               <button type="button" className="gm-messenger__back" onClick={() => select(null)} aria-label={t('Suhbatlarga qaytish')}>
                 <ArrowLeft size={20} />
               </button>
-              <ChatAvatar name={name} seed={selected.counterpart?.id ?? selected.id} admin={selected.type === 'SUPPORT' && !isAdmin} />
-              <div className="gm-messenger__who">
-                <strong>{name}</strong>
-                <span>{selected.type === 'SUPPORT' ? (isAdmin ? t('Administrator xabarlari') : t('Administrator')) : selected.type === 'DIRECT' ? t('Buyurtmadan oldingi suhbat') : t('Buyurtma suhbati')}</span>
-              </div>
+              {profileHref ? (
+                <Link to={profileHref} className="gm-messenger__who-link" aria-label={t('{name} profilini ochish', { name })}>
+                  <ChatAvatar name={name} seed={selected.counterpart?.id ?? selected.id} />
+                  <div className="gm-messenger__who">
+                    <strong>{name}</strong>
+                    <span>{selected.type === 'DIRECT' ? t('Buyurtmadan oldingi suhbat') : t('Buyurtma suhbati')}</span>
+                  </div>
+                </Link>
+              ) : (
+                <>
+                  <ChatAvatar name={name} seed={selected.counterpart?.id ?? selected.id} admin={selected.type === 'SUPPORT' && !isAdmin} />
+                  <div className="gm-messenger__who">
+                    <strong>{name}</strong>
+                    <span>{selected.type === 'SUPPORT' ? (isAdmin ? t('Administrator xabarlari') : t('Administrator')) : selected.type === 'DIRECT' ? t('Buyurtmadan oldingi suhbat') : t('Buyurtma suhbati')}</span>
+                  </div>
+                </>
+              )}
               {!isAdmin && selected.type !== 'SUPPORT' && selected.counterpart && (
                 <div className="gm-messenger__calls">
                   <CallButtons conversationId={selected.id} peerName={name} />

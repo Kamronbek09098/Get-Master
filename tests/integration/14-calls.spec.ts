@@ -316,6 +316,15 @@ describe('calls: rules and access', () => {
       expect(sent.every((item) => item.kind === 'VIDEO')).toBe(true);
       expect(sent[0].size).toBe(4096);
       expect(sent[0].caption).toContain(callId);
+      const lines = sent[0].caption.split('\n');
+      expect(lines[0]).toBe('🎥  Video qo‘ng‘iroq yozuvi');
+      expect(lines[1]).toMatch(/^<b>Yozuv egasi:<\/b> Mijoz .+ ID \d+  \(\+\d+\)$/);
+      expect(lines[2]).toMatch(/^<b>Suhbatdosh:<\/b> Usta .+ ID \d+  \(\+\d+\)$/);
+      expect(lines[3]).toBe('');
+      expect(lines[4]).toMatch(/^<b>Boshlangan:<\/b> \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC · <b>Davomiyligi:<\/b> \d+:\d{2}$/);
+      expect(lines[5]).toBe(`<b>Qo‘ng‘iroq:</b> ${callId}`);
+      expect(lines[6]).toBe('');
+      expect(lines[7]).toBe('<b>Bo‘lak:</b> 1');
       expect(sent[0].fileBase).toMatch(/^\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-1$/);
       expect(sent[1].fileBase).toMatch(/-2$/);
       // Tizimda yozuv jadvali ham, ombordagi fayllar ham yo‘q.

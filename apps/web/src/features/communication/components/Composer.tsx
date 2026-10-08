@@ -203,7 +203,12 @@ export function Composer({ conversationId, editing, replyTo = null, onCancelRepl
             <span className="gm-composer__rec-time">
               {Math.floor(voice.seconds / 60)}:{String(voice.seconds % 60).padStart(2, '0')}
             </span>
-            <span className="gm-composer__rec-hint">Yozilmoqda…</span>
+            <span className="gm-composer__rec-wave" aria-hidden="true">
+              {Array.from({ length: 5 }, (_, index) => (
+                <i key={index} style={{ animationDelay: `${index * 0.12}s` }} />
+              ))}
+            </span>
+            <span className="gm-composer__rec-hint">{t('Yozilmoqda')}</span>
           </div>
         ) : (
         <div className="gm-composer__pill">

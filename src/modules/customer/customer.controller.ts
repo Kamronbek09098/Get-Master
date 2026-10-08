@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -59,5 +59,17 @@ export class CustomerController {
   @Delete('addresses/:id')
   removeAddress(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string) {
     return this.customerService.removeAddress(userId, id);
+  }
+}
+
+/** Usta o‘zi suhbatlashgan mijozning qisqa profilini ko‘radi (chat sarlavhasidagi ism bosilganda). */
+@Controller('customers/public')
+@Roles(Role.MASTER)
+export class CustomerPublicController {
+  constructor(private readonly customerService: CustomerService) {}
+
+  @Get(':accountNumber')
+  findOne(@CurrentUser('sub') masterUserId: string, @Param('accountNumber', ParseIntPipe) accountNumber: number) {
+    return this.customerService.findPublicForMaster(masterUserId, accountNumber);
   }
 }

@@ -1,6 +1,6 @@
 import { CheckCircle2, Star } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
-import { formatDate } from '@/lib/utils';
+import { formatDate, initials } from '@/lib/utils';
 import { StarsStatic } from '@/features/review/components/StarRating';
 import { useMasterCompletedJobs } from '../hooks/useMaster';
 import { t } from '@/i18n';
@@ -67,17 +67,28 @@ export function CompletedJobs({ masterId, completedOrders }: { masterId: string;
           <li key={job.id} className="gm-cj__job">
             <header>
               <span className="gm-cj__done">
-                <CheckCircle2 size={15} aria-hidden="true" /> {job.title}
+                <i aria-hidden="true">
+                  <CheckCircle2 size={16} />
+                </i>
+                <span>{job.title}</span>
               </span>
               {job.completedAt && <time dateTime={job.completedAt}>{formatDate(job.completedAt)}</time>}
             </header>
             {job.review ? (
-              <div className={job.review.comment ? 'gm-cj__review' : 'gm-cj__review gm-cj__review--plain'}>
-                <div className="gm-cj__rate">
-                  <StarsStatic value={job.review.rating} />
-                  {job.review.authorName && <small>— {job.review.authorName}</small>}
+              <div className="gm-cj__review">
+                <span className="gm-cj__avatar" aria-hidden="true">
+                  {initials(job.review.authorName ?? t('Mijoz'))}
+                </span>
+                <div className="gm-cj__body">
+                  <div className="gm-cj__who">
+                    <strong>{job.review.authorName ?? t('Mijoz')}</strong>
+                    <span className="gm-cj__stars">
+                      <StarsStatic value={job.review.rating} />
+                      <b>{job.review.rating.toFixed(1)}</b>
+                    </span>
+                  </div>
+                  {job.review.comment && <p>{job.review.comment}</p>}
                 </div>
-                {job.review.comment && <p>{job.review.comment}</p>}
               </div>
             ) : (
               <p className="gm-cj__muted">{t('Hali baholanmagan')}</p>

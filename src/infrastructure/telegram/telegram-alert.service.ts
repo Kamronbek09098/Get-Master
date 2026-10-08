@@ -440,7 +440,10 @@ export class TelegramAlertService implements OnModuleInit {
       const timer = setTimeout(() => controller.abort(), 120_000);
       try {
         const response = await fetch(`https://api.telegram.org/bot${this.botToken}/sendDocument`, { method: 'POST', body: form, signal: controller.signal });
-        if (response.ok) return true;
+        if (response.ok) {
+          this.logger.log(`Telegram’ga qo‘ng‘iroq yozuvi yuborildi: ${video ? 'video' : 'audio'}, ${Math.round(archive.length / 1024)} KB.`);
+          return true;
+        }
         if (response.status === 400 && thread !== undefined) {
           const info = (await response.json().catch(() => null)) as { description?: string } | null;
           if (/thread/i.test(info?.description ?? '')) {

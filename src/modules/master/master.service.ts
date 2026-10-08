@@ -39,6 +39,8 @@ const PUBLIC_MASTER_SELECT = {
   completionRate: true,
   completedOrders: true,
   verification: true,
+  isPaused: true,
+  pausedUntil: true,
   user: { select: { accountNumber: true, firstName: true, lastName: true } },
   services: {
     where: { isActive: true, service: { isActive: true } },
@@ -406,6 +408,10 @@ export class MasterService {
         preferredEndAt: true,
         expiresAt: true,
         createdAt: true,
+        latitude: true,
+        longitude: true,
+        customer: { select: { firstName: true, lastName: true } },
+        address: { select: { city: true, district: true } },
         service: { select: { id: true, name: true } },
         category: { select: { id: true, name: true } },
         _count: { select: { offers: true } },
@@ -417,11 +423,39 @@ export class MasterService {
     });
 
     const page = toCursorPage(rows, query);
+    // Mijoz biriktirgan rasmlar (karta uchun): har bir so‘rovga ko‘pi bilan 4 tasi va umumiy soni.
+    const assets = page.items.length
+      ? await this.db.mediaAsset.findMany({
+          where: {
+            linkedResourceType: 'ProblemRequest',
+            linkedResourceId: { in: page.items.map((item) => item.id) },
+            status: 'READY',
+            detectedMimeType: { startsWith: 'image/' },
+          },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true, linkedResourceId: true },
+        })
+      : [];
+    const photosBy = new Map<string, string[]>();
+    for (const asset of assets) photosBy.set(asset.linkedResourceId as string, [...(photosBy.get(asset.linkedResourceId as string) ?? []), asset.id]);
+    const myLat = profile.latitude != null ? Number(profile.latitude) : null;
+    const myLon = profile.longitude != null ? Number(profile.longitude) : null;
     return {
-      items: page.items.map(({ offers, matchingRuns, _count, serviceId, ...request }) => {
+      items: page.items.map(({ offers, matchingRuns, _count, serviceId, customer, address, latitude, longitude, ...request }) => {
         const suggestion = serviceId ? suggestions.get(serviceId) : undefined;
+        const photos = photosBy.get(request.id) ?? [];
+        const distanceKm =
+          myLat !== null && myLon !== null && latitude != null && longitude != null
+            ? Math.round(haversineKm(myLat, myLon, Number(latitude), Number(longitude)) * 10) / 10
+            : null;
         return {
           ...request,
+          // Maxfiylik: mijozning ismi va familiyasining bosh harfi, manzil — faqat shahar/tuman va taxminiy masofa.
+          customerName: [customer.firstName, customer.lastName ? `${customer.lastName.charAt(0)}.` : null].filter(Boolean).join(' ') || null,
+          area: [address?.district, address?.city].filter(Boolean).join(', ') || null,
+          distanceKm,
+          photos: photos.slice(0, 4),
+          photosCount: photos.length,
           offersCount: _count.offers,
           myOffer: offers[0] ?? null,
           notified: matchingRuns.some((run) => run.results.length > 0),

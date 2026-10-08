@@ -1,9 +1,21 @@
 import { registerAs } from '@nestjs/config';
 
+/**
+ * Qo‘ng‘iroq yozuvlari manzili. Qabul qilinadigan shakllar:
+ *  - `-1001234567890` yoki `-1001234567890:55` (guruh ID si [: mavzu ID si]);
+ *  - mavzuning havolasi: `https://t.me/c/1234567890/55` (guruh ID si `-100` bilan to‘ldiriladi).
+ */
+export function parseCallTarget(raw: string | undefined): { chatId: string; threadId: number | undefined } {
+  const value = (raw ?? '').trim();
+  const link = /(?:t\.me|telegram\.me)\/c\/(\d+)(?:\/(\d+))?/i.exec(value);
+  if (link) return { chatId: `-100${link[1]}`, threadId: link[2] ? Number(link[2]) : undefined };
+  const [chat, thread] = value.split(':');
+  return { chatId: (chat ?? '').trim(), threadId: thread && Number.isFinite(Number(thread)) ? Number(thread) : undefined };
+}
+
 function callTarget(kind: 'VIDEO' | 'AUDIO', raw: string | undefined) {
-  const [chat, thread] = (raw ?? '').trim().split(':');
-  const threadId = thread && Number.isFinite(Number(thread)) ? Number(thread) : undefined;
-  return kind === 'VIDEO' ? { callsVideoChatId: chat ?? '', callsVideoThreadId: threadId } : { callsAudioChatId: chat ?? '', callsAudioThreadId: threadId };
+  const { chatId, threadId } = parseCallTarget(raw);
+  return kind === 'VIDEO' ? { callsVideoChatId: chatId, callsVideoThreadId: threadId } : { callsAudioChatId: chatId, callsAudioThreadId: threadId };
 }
 
 export default registerAs('telegram', () => ({

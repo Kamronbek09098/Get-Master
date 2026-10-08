@@ -53,6 +53,13 @@ export interface OpenRequest {
   myOffer: { id: string; status: OfferStatus; price: string } | null;
   notified: boolean;
   suggested: { price: string | null; estimatedMinutes: number | null } | null;
+  /** Mijoz ismi (familiyasining bosh harfi bilan), tuman/shahar va taxminiy masofa. */
+  customerName?: string | null;
+  area?: string | null;
+  distanceKm?: number | null;
+  /** Mijoz biriktirgan rasmlar (ko‘pi bilan 4 tasi) va umumiy soni. */
+  photos?: string[];
+  photosCount?: number;
 }
 
 export type OpenRequestScope = 'mine' | 'all';

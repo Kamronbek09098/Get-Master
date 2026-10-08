@@ -30,6 +30,7 @@ import { CustomerProfilePage } from '@/pages/customer/CustomerProfilePage';
 import { MasterPage } from '@/pages/master/MasterPage';
 import { MasterProfilePage } from '@/pages/master/MasterProfilePage';
 import { MasterDetailsPage } from '@/pages/master/MasterDetailsPage';
+import { CustomerPublicPage } from '@/pages/customer/CustomerPublicPage';
 import { DisputesPage } from '@/pages/disputes/DisputesPage';
 import { ComplaintsPage } from '@/pages/complaints/ComplaintsPage';
 import { NotificationsPage } from '@/pages/notifications/NotificationsPage';
@@ -145,6 +146,7 @@ const panelRouter = createBrowserRouter([
           { path: '/usta/profil', element: master(<MasterProfilePage />) },
           { path: '/usta/profil/:section', element: master(<MasterProfilePage />) },
           { path: '/usta/chat', element: master(<ChatPage />) },
+          { path: '/usta/mijozlar/:id', element: master(<CustomerPublicPage />) },
           { path: '/usta/kafolat', element: master(<WarrantyPage />) },
           { path: '/usta/nizolar', element: master(<DisputesPage />) },
           { path: '/mijoz/ustalar', element: customer(<MasterPage />) },

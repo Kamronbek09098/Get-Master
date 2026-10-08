@@ -44,3 +44,29 @@
 .gm-cj__rate { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
 .gm-cj__review--plain { padding: 0; background: none; }
 .gm-cj__job:has(.gm-cj__review--plain) { gap: 6px; padding-block: 12px; }
+
+/* ===== Yakunlangan ish kartasi: aniq tuzilma (ish nomi · sana · baho beruvchi · yulduzlar · izoh) ===== */
+.gm-cj__list { gap: 12px; }
+.gm-cj__job { gap: 12px; padding: 16px 18px; border-radius: 20px; box-shadow: var(--gm-shadow-sm); transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.gm-cj__job:hover { border-color: var(--gm-color-border-strong); }
+.gm-cj__job:has(.gm-cj__review--plain) { gap: 12px; padding-block: 16px; }
+.gm-cj__job header { flex-wrap: nowrap; gap: 12px; }
+.gm-cj__done { align-items: center; gap: 10px; min-width: 0; font-size: 1rem; line-height: 1.3; }
+.gm-cj__done > span { overflow-wrap: anywhere; }
+.gm-cj__done i { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--gm-color-success-bg); color: var(--gm-color-success); }
+.gm-cj__done svg { color: inherit; }
+.gm-cj__job time { flex: none; padding: 4px 10px; border-radius: 999px; background: var(--gm-color-surface-muted); font-size: 12px; font-weight: 600; white-space: nowrap; }
+.gm-cj__review { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--gm-color-surface-muted); }
+.gm-cj__avatar { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--gm-color-primary-soft); color: var(--gm-color-primary); font-size: 12.5px; font-weight: 800; }
+.gm-cj__body { display: grid; gap: 6px; min-width: 0; flex: 1; }
+.gm-cj__who { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; }
+.gm-cj__who strong { font-size: 0.92rem; }
+.gm-cj__stars { display: inline-flex; align-items: center; gap: 8px; }
+.gm-cj__stars b { font-size: 0.85rem; font-variant-numeric: tabular-nums; color: var(--gm-color-text-muted); }
+.gm-cj__review p { color: var(--gm-color-text); font-size: 0.95rem; }
+@media (max-width: 520px) {
+  .gm-cj__job { padding: 14px; }
+  .gm-cj__job header { align-items: flex-start; }
+}
+.gm-cj__stars .gm-stars-static { gap: 1px; }
+.gm-cj__stars .gm-stars-static .gm-stars__star, .gm-cj__stars .gm-stars-static .gm-stars__svg, .gm-cj__stars .gm-stars-static .gm-stars__fill .gm-stars__svg { width: 16px; height: 16px; }

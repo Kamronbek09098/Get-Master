@@ -1,34 +1,37 @@
 import { useState } from 'react';
-import { CalendarClock, CheckCircle2, Inbox, Send, Timer, Users } from 'lucide-react';
+import { CheckCircle2, Inbox, Send, Users } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
-import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatCountdown, formatDateTime, formatMoney, formatRelativeTime } from '@/lib/utils';
-import { useCountdown } from '@/hooks/useCountdown';
 import { AcceptRequestDialog } from '@/features/offer/components/AcceptRequestDialog';
-import { OfferBadge } from '@/features/offer/components/OfferBadge';
+import { OpenRequestCard } from '@/features/offer/components/OpenRequestCard';
 import { useOpenRequests } from '@/features/offer/hooks/useOffers';
 import type { OpenRequest, OpenRequestScope } from '@/features/offer/types';
 import { t } from '@/i18n';
+import './ActiveOffers.css';
 
 const TABS: Array<{ value: OpenRequestScope; label: string }> = [
   { value: 'all', label: t('Barcha faol') },
   { value: 'mine', label: t('Menga mos') },
 ];
 
-function ExpiryCountdown({ expiresAt }: { expiresAt: string | null }) {
-  const remaining = useCountdown(expiresAt);
-  if (remaining === null) return null;
-  const expired = remaining <= 0;
-  const soon = !expired && remaining < 60 * 60_000;
-  return (
-    <Badge tone={expired ? 'danger' : soon ? 'warning' : 'neutral'}>
-      <Timer size={14} /> {formatCountdown(remaining)}
-    </Badge>
-  );
+const SKIPPED_KEY = 'getmaster.skipped-requests';
+function readSkipped(): Set<string> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SKIPPED_KEY) ?? '[]') as unknown;
+    return new Set(Array.isArray(raw) ? raw.filter((value): value is string => typeof value === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+function saveSkipped(value: Set<string>) {
+  try {
+    localStorage.setItem(SKIPPED_KEY, JSON.stringify([...value].slice(-300)));
+  } catch {
+    /* saqlab bo‘lmasa ham ishlayveradi */
+  }
 }
 
 export function ActiveOffersPage() {
@@ -36,13 +39,25 @@ export function ActiveOffersPage() {
   const [selected, setSelected] = useState<OpenRequest | null>(null);
   const requests = useOpenRequests(scope);
   const items = requests.data?.pages.flatMap((page) => page.items) ?? [];
+  const [skipped, setSkipped] = useState<Set<string>>(readSkipped);
+  const visible = items.filter((item) => !skipped.has(item.id));
+
+  function skip(id: string) {
+    const next = new Set(skipped).add(id);
+    setSkipped(next);
+    saveSkipped(next);
+  }
+  function restoreSkipped() {
+    setSkipped(new Set());
+    saveSkipped(new Set());
+  }
 
   return (
     <div>
       <div className="gm-page-header">
         <div>
           <h1>{t('Faol takliflar')}</h1>
-          <p className="gm-page-lead">{t('Mijozlar yuborgan va hozir ustalarni kutayotgan so‘rovlar. Yoqqanini «Qabul qilish» bilan oling — narxingiz mijozga taklif sifatida boradi.')}</p>
+          <p className="gm-page-lead">{t('Mijozlar yuborgan va hozir ustalarni kutayotgan so‘rovlar. Yoqqanini «Taklif berish» bilan oling — narxingiz mijozga taklif sifatida boradi.')}</p>
         </div>
       </div>
 
@@ -63,7 +78,7 @@ export function ActiveOffersPage() {
 
       {requests.isLoading && <PageLoader label={t('Takliflar yuklanmoqda…')} />}
       {requests.isError && <Alert tone="danger">{getErrorMessage(requests.error)}</Alert>}
-      {requests.data && items.length === 0 && (
+      {requests.data && visible.length === 0 && (
         <EmptyState
           icon={<Inbox size={34} strokeWidth={1.8} />}
           steps={[
@@ -80,40 +95,18 @@ export function ActiveOffersPage() {
         />
       )}
 
-      <div className="gm-list">
-        {items.map((request) => (
-          <div key={request.id} className="gm-card">
-            <div className="gm-card__header">
-              <h3>{request.title}</h3>
-              <div className="gm-action-row">
-                {request.notified && <Badge tone="primary">{t('Sizga yuborilgan')}</Badge>}
-                {request.service && <Badge tone="neutral">{request.service.name}</Badge>}
-                {request.expiresAt && <ExpiryCountdown expiresAt={request.expiresAt} />}
-              </div>
-            </div>
-            <p className="gm-request-card__description">{request.description}</p>
-            <p className="gm-card__meta gm-offer-meta">
-              <span>
-                <Users size={14} />{' '}{t('Takliflar: {offersCount}', { offersCount: request.offersCount })}</span>
-              <span>
-                <CalendarClock size={14} /> {formatRelativeTime(request.createdAt)}
-              </span>
-              {request.preferredStartAt && <span>{t('Xohlangan vaqt:')}{' '}{formatDateTime(request.preferredStartAt)}</span>}
-              {request.expiresAt && <span>{t('Taklif muddati:')}{' '}{formatDateTime(request.expiresAt)}</span>}
-            </p>
+      {skipped.size > 0 && items.some((item) => skipped.has(item.id)) && (
+        <p className="gm-skipped">
+          {t('O‘tkazib yuborilgan: {count} ta', { count: items.filter((item) => skipped.has(item.id)).length })}{' '}
+          <button type="button" onClick={restoreSkipped}>
+            {t('Qayta ko‘rsatish')}
+          </button>
+        </p>
+      )}
 
-            <div className="gm-action-row" style={{ marginTop: 'var(--gm-space-3)' }}>
-              {request.myOffer ? (
-                <>
-                  <OfferBadge status={request.myOffer.status} />
-                  <span className="gm-card__meta" style={{ margin: 0 }}>{t('Sizning taklifingiz: {money}', { money: formatMoney(request.myOffer.price) })}</span>
-                </>
-              ) : (
-                <Button size="sm" onClick={() => setSelected(request)}>
-                  <CheckCircle2 size={16} />{' '}{t('Qabul qilish')}</Button>
-              )}
-            </div>
-          </div>
+      <div className="gm-orc-list">
+        {visible.map((request) => (
+          <OpenRequestCard key={request.id} request={request} onAccept={() => setSelected(request)} onSkip={() => skip(request.id)} />
         ))}
       </div>
 

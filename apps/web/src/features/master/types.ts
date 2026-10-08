@@ -43,6 +43,9 @@ export interface PublicMaster {
   ratingCount: number;
   completedOrders: number;
   verification: MasterVerificationStatus;
+  /** Usta vaqtincha buyurtma qabul qilmayapti (pauza). */
+  isPaused?: boolean;
+  pausedUntil?: string | null;
   user: { accountNumber?: number; firstName: string | null; lastName: string | null };
   workRadiusKm?: string | number | null;
   serviceAreas?: string[] | null;

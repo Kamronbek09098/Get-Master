@@ -18,8 +18,10 @@ const stamp = (date: Date) => {
   return `${parts.year}-${parts.month}-${parts.day}_${parts.hour}-${parts.minute}-${parts.second}`;
 };
 const esc = (value: string) => value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const fullName = (user: { firstName: string | null; lastName: string | null; phone: string | null }) =>
-  [user.firstName, user.lastName].filter(Boolean).join(' ') || user.phone || '—';
+const roleLabel = (panel: string | null) => (panel === 'MASTER' ? 'Usta' : panel === 'CUSTOMER' ? 'Mijoz' : 'Foydalanuvchi');
+/** «Ism Familiya ID 584» */
+const personName = (user: { accountNumber: number; firstName: string | null; lastName: string | null; phone: string | null }) =>
+  `${[user.firstName, user.lastName].filter(Boolean).join(' ') || '—'} ID ${user.accountNumber}`;
 
 /**
  * Qo‘ng‘iroq yozuvi: har bir ishtirokchi o‘z mikrofon/kamerasini yozadi va qo‘ng‘iroq tugagach yuboradi.
@@ -39,8 +41,8 @@ export class CallRecordingService {
     const call = await this.db.call.findUnique({
       where: { id: callId },
       include: {
-        caller: { select: { id: true, firstName: true, lastName: true, phone: true } },
-        callee: { select: { id: true, firstName: true, lastName: true, phone: true } },
+        caller: { select: { id: true, accountNumber: true, firstName: true, lastName: true, phone: true } },
+        callee: { select: { id: true, accountNumber: true, firstName: true, lastName: true, phone: true } },
       },
     });
     if (!call || (call.callerId !== userId && call.calleeId !== userId)) throw new NotFoundException(ERRORS.CALL_NOT_FOUND);
@@ -57,20 +59,31 @@ export class CallRecordingService {
     }
     if (size < 512) throw new BadRequestException(ERRORS.CALL_RECORDING_TYPE);
     const data = Buffer.concat(chunks);
-    const owner = call.callerId === userId ? call.caller : call.callee;
-    const other = call.callerId === userId ? call.callee : call.caller;
+    const ownerIsCaller = call.callerId === userId;
+    const owner = ownerIsCaller ? call.caller : call.callee;
+    const other = ownerIsCaller ? call.callee : call.caller;
+    // Rol: qo‘ng‘iroq paytidagi panel; u yo‘q bo‘lsa — suhbatdagi rol.
+    const participants = await this.db.conversationParticipant.findMany({ where: { conversationId: call.conversationId }, select: { userId: true, roles: true } });
+    const rolePanel = (id: string, panel: string | null) => panel ?? (participants.find((item) => item.userId === id)?.roles[0] ?? null);
+    const ownerPanel = rolePanel(owner.id, ownerIsCaller ? call.callerPanel : call.calleePanel);
+    const otherPanel = rolePanel(other.id, ownerIsCaller ? call.calleePanel : call.callerPanel);
     const seconds = call.endedAt ? Math.max(0, Math.round((call.endedAt.getTime() - call.answeredAt.getTime()) / 1000)) : 0;
     const kind = call.mode === 'VIDEO' ? 'VIDEO' : 'AUDIO';
+    const person = (label: string, user: typeof owner) =>
+      `${label} ${esc(personName(user))}${user.phone ? `  (${esc(user.phone)})` : ''}`;
     const caption = [
-      `${kind === 'VIDEO' ? '🎥 Video' : '🎙 Audio'} qo‘ng‘iroq yozuvi`,
-      `<b>Yozuv egasi:</b> ${esc(fullName(owner))}${owner.phone ? ` (${esc(owner.phone)})` : ''}`,
-      `<b>Suhbatdosh:</b> ${esc(fullName(other))}${other.phone ? ` (${esc(other.phone)})` : ''}`,
+      kind === 'VIDEO' ? '🎥  Video qo‘ng‘iroq yozuvi' : '🎙  Audio qo‘ng‘iroq yozuvi',
+      `<b>Yozuv egasi:</b> ${person(roleLabel(ownerPanel), owner)}`,
+      `<b>Suhbatdosh:</b> ${person(roleLabel(otherPanel), other)}`,
+      '',
       `<b>Boshlangan:</b> ${call.answeredAt.toISOString().replace('T', ' ').slice(0, 19)} UTC · <b>Davomiyligi:</b> ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`,
       `<b>Qo‘ng‘iroq:</b> ${call.id}`,
+      '',
+      `<b>Bo‘lak:</b> ${part}`,
     ].join('\n');
     // Fayl nomi: {qo‘ng‘iroq sanasi}-{bo‘lak raqami} (bo‘linmagan bo‘lsa 1), masalan 2026-10-07_20-39-12-1.webm.
     const fileBase = `${stamp(call.answeredAt)}-${part}`;
-    const delivered = await this.telegram.sendCallRecording({ kind, data, mimeType: mime, caption: `${caption}\n<b>Bo‘lak:</b> ${part}`, fileBase });
+    const delivered = await this.telegram.sendCallRecording({ kind, data, mimeType: mime, caption, fileBase });
     if (!delivered) this.logger.warn(`Qo‘ng‘iroq ${callId} yozuvi Telegram’ga yetkazilmadi; saqlanmadi.`);
     return { delivered };
   }

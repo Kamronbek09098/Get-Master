@@ -157,4 +157,35 @@ export class CustomerService {
   private async lockUser(tx: Prisma.TransactionClient, userId: string): Promise<void> {
     await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
   }
+
+  /**
+   * Ustaga mijozning qisqa ommaviy profili. Faqat mijoz bilan suhbati bor usta ko‘ra oladi; telefon, email va manzil berilmaydi.
+   */
+  async findPublicForMaster(masterUserId: string, accountNumber: number) {
+    if (!Number.isSafeInteger(accountNumber) || accountNumber < 1 || accountNumber > 2_147_483_647) throw new NotFoundException(ERRORS.CUSTOMER_NOT_FOUND);
+    const customer = await this.db.user.findFirst({
+      where: { accountNumber, deletedAt: null, status: 'ACTIVE', userRoles: { none: { role: 'ADMIN' } } },
+      select: { id: true, accountNumber: true, firstName: true, lastName: true, createdAt: true },
+    });
+    if (!customer) throw new NotFoundException(ERRORS.CUSTOMER_NOT_FOUND);
+    const shared = await this.db.conversation.findFirst({
+      where: { type: { not: 'SUPPORT' }, AND: [{ participants: { some: { userId: masterUserId } } }, { participants: { some: { userId: customer.id } } }] },
+      select: { id: true },
+    });
+    if (!shared) throw new ForbiddenException(ERRORS.NOT_CONVERSATION_PARTICIPANT);
+    const profile = await this.db.masterProfile.findUnique({ where: { userId: masterUserId }, select: { id: true } });
+    const [completedOrders, ordersWithMe] = await Promise.all([
+      this.db.order.count({ where: { customerId: customer.id, status: 'COMPLETED' } }),
+      profile ? this.db.order.count({ where: { customerId: customer.id, masterId: profile.id } }) : Promise.resolve(0),
+    ]);
+    return {
+      accountNumber: customer.accountNumber,
+      firstName: customer.firstName,
+      lastName: customer.lastName,
+      memberSince: customer.createdAt,
+      completedOrders,
+      ordersWithMe,
+      conversationId: shared.id,
+    };
+  }
 }

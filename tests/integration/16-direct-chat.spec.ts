@@ -151,3 +151,23 @@ describe('POST /conversations/direct — chat with a master before any order', (
     expect((await h.post(`/conversations/${orderChat.id}/messages`, buyer.token, { text: 'qayta ochildi' })).status).toBe(201);
   });
 });
+
+describe('GET /customers/public/:accountNumber — a master sees a short customer profile only after chatting', () => {
+  it('shows name, id and counters without phone/email; strangers, customers and bad numbers are refused', async () => {
+    const buyer = await createUser(h, ['CUSTOMER'], { firstName: 'Profil' });
+    const target = await createMaster(h, service.id);
+    const stranger = await createMaster(h, service.id);
+    const num = (await h.db.user.findUniqueOrThrow({ where: { id: buyer.id }, select: { accountNumber: true } })).accountNumber;
+    expect((await h.get(`/customers/public/${num}`, target.token)).status).toBe(403); // suhbat hali yo‘q
+    await open(buyer.token, target.masterId);
+    const ok = await h.get(`/customers/public/${num}`, target.token);
+    expect(ok.status).toBe(200);
+    expect(ok.data).toMatchObject({ accountNumber: num, firstName: 'Profil', completedOrders: 0, ordersWithMe: 0 });
+    expect(JSON.stringify(ok.data)).not.toContain(buyer.phone);
+    expect((await h.get(`/customers/public/${num}`, stranger.token)).status).toBe(403);
+    expect((await h.get(`/customers/public/${num}`, buyer.token)).status).toBe(403); // faqat usta roli
+    expect((await h.get('/customers/public/999999999', target.token)).status).toBe(404);
+    expect((await h.get('/customers/public/abc', target.token)).status).toBe(400);
+    expect((await h.get(`/customers/public/${num}`, undefined)).status).toBe(401);
+  });
+});

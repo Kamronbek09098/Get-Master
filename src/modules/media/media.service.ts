@@ -257,6 +257,11 @@ export class MediaService {
           where: { requestId: asset.linkedResourceId, masterId: masterProfile.id },
         });
         if (offer) return;
+        // Faol, tasdiqlangan usta ochiq so‘rovdagi rasmlarni ko‘ra oladi (so‘rov matni kabi, taklif berish uchun).
+        if (masterProfile.status === 'ACTIVE' && masterProfile.verification === 'VERIFIED' && request && request.customerId !== userId) {
+          const open = ['SUBMITTED', 'MATCHING', 'OFFERS_RECEIVED'].includes(request.status) && (!request.expiresAt || request.expiresAt > new Date());
+          if (open) return;
+        }
       }
     } else if (asset.linkedResourceType === 'Order' && asset.linkedResourceId) {
       const order = await this.db.order.findUnique({ where: { id: asset.linkedResourceId } });

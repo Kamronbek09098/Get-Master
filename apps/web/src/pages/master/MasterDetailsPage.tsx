@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { Award, BadgeCheck, Briefcase, CalendarClock, MapPin, MessageCircle, Star } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatMoney, initials } from '@/lib/utils';
+import { formatDate, formatMoney, initials } from '@/lib/utils';
 import { useMaster } from '@/features/master/hooks/useMaster';
 import { useOpenMasterChat } from '@/features/communication/hooks/useCommunication';
 import { TrustBadge } from '@/features/trust/components/TrustBadge';
@@ -48,6 +49,7 @@ export function MasterDetailsPage() {
           <h1 id="gm-mp-name">{name}</h1>
           <div className="gm-mp-hero__badges">
             <TrustBadge verification={data.verification} />
+            {data.isPaused && <Badge tone="warning">{t('Pauzada')}</Badge>}
             <FavoriteButton masterId={data.id} />
             {data.workPlace && (
               <span className="gm-mp-hero__place">
@@ -57,6 +59,14 @@ export function MasterDetailsPage() {
           </div>
         </div>
       </section>
+
+      {data.isPaused && (
+        <Alert tone="warning" title={t('Usta hozircha buyurtma qabul qilmayapti')}>
+          {data.pausedUntil
+            ? t('{date} dan keyin qaytadi. Hozir unga chat orqali yozib qo‘yishingiz mumkin.', { date: formatDate(data.pausedUntil) })
+            : t('Usta qaytgach, siz bilan bog‘lanadi. Hozir unga chat orqali yozib qo‘yishingiz mumkin.')}
+        </Alert>
+      )}
 
       {/* 3 · Ishonch */}
       <section className="gm-mp-trust" aria-label={t('Ishonch ko‘rsatkichlari')}>

@@ -126,3 +126,8 @@
   .gm-mp-hero { grid-template-columns: 1fr; justify-items: start; gap: var(--gm-space-4); }
   .gm-mp-cta { width: 100%; }
 }
+
+/* Ishonch kartalari: uzun qiymat («Tasdiqlangan») karta chegarasidan chiqib ketmasin */
+.gm-mp-trust dl > div { min-width: 0; }
+.gm-mp-trust dd { font-size: clamp(20px, 2.2vw, 28px); overflow-wrap: anywhere; }
+.gm-mp-trust .is-ok dd { font-size: clamp(17px, 1.7vw, 22px); }
