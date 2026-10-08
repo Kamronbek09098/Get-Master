@@ -45,6 +45,10 @@ export interface ChatMessage {
   editedAt: string | null;
   deleted: boolean;
   status?: 'pending' | 'failed';
+  /** «Plus» obunasi: suhbatdosh o‘chirgan xabarning asl mazmuni. */
+  original?: { text: string | null; attachments: ChatAttachment[] | null };
+  /** «Plus» obunasi: suhbatdosh tahrirlagan xabarning avvalgi matnlari (eskidan yangiga). */
+  editHistory?: Array<{ previousText: string | null; editedAt: string }>;
 }
 
 export interface Conversation {

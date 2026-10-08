@@ -2,7 +2,7 @@ export type SubscriptionAudience = 'CUSTOMER' | 'MASTER';
 export type SubscriptionStatus = 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'CANCELED' | 'REJECTED';
 export type PlanCode = 'CUSTOMER_PLUS' | 'MASTER_PRO';
 export type Feature = 'SEE_DELETED_MESSAGES' | 'SEE_EDIT_HISTORY' | 'PRIORITY_REQUESTS' | 'PLUS_BADGE' | 'PRO_BADGE' | 'CATALOG_BOOST' | 'EXTRA_PORTFOLIO';
-export type PayMethod = 'CLICK' | 'PAYME' | 'UZUM' | 'CARD' | 'CASH';
+export type PayMethod = 'CLICK' | 'PAYME' | 'UZUM' | 'CARD';
 
 export interface PlanPrice {
   months: 1 | 3 | 12;

@@ -1,4 +1,4 @@
-import { CalendarClock, CheckCircle2, Clock, EyeOff, Timer, Users } from 'lucide-react';
+import { CalendarClock, CheckCircle2, Clock, EyeOff, Timer, Users, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useCountdown } from '@/hooks/useCountdown';
@@ -34,6 +34,7 @@ export function OpenRequestCard({ request, onAccept, onSkip }: { request: OpenRe
           <i aria-hidden="true" /> {t('Yangi ish so‘rovi')}
         </span>
         <div className="gm-orc__badges">
+          {request.isPriority && <Badge tone="warning"><Zap size={13} aria-hidden="true" /> {t('Tezkor')}</Badge>}
           {request.notified && <Badge tone="primary">{t('Sizga yuborilgan')}</Badge>}
           {request.expiresAt && <Countdown expiresAt={request.expiresAt} />}
         </div>

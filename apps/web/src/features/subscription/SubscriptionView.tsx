@@ -19,16 +19,14 @@ const METHOD_LABEL: Record<PayMethod, () => string> = {
   PAYME: () => 'Payme',
   UZUM: () => 'Uzum Bank',
   CARD: () => t('Karta orqali o‘tkazma'),
-  CASH: () => t('Naqd to‘lov'),
 };
 const METHOD_HINT: Record<PayMethod, () => string> = {
   CLICK: () => t('Click ilovasi orqali'),
   PAYME: () => t('Payme ilovasi orqali'),
   UZUM: () => t('Uzum Bank ilovasi orqali'),
   CARD: () => t('Karta raqamiga o‘tkazma'),
-  CASH: () => t('Ofisda yoki kuryerga'),
 };
-const LOGO: Record<PayMethod, 'CLICK' | 'PAYME' | 'UZUM' | 'OTHER' | 'CASH'> = { CLICK: 'CLICK', PAYME: 'PAYME', UZUM: 'UZUM', CARD: 'OTHER', CASH: 'CASH' };
+const LOGO: Record<PayMethod, 'CLICK' | 'PAYME' | 'UZUM' | 'OTHER'> = { CLICK: 'CLICK', PAYME: 'PAYME', UZUM: 'UZUM', CARD: 'OTHER' };
 const monthsLabel = (months: number) => (months === 12 ? t('1 yil') : t('{months} oy', { months }));
 
 const STATUS_BADGE: Record<string, { label: () => string; tone: 'success' | 'warning' | 'danger' | 'neutral' }> = {

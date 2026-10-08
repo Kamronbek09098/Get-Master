@@ -8,7 +8,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { TelegramAlertService } from '../../infrastructure/telegram/telegram-alert.service';
 import { NotificationService } from '../notification/notification.service';
 import type { GrantSubscriptionDto, RequestSubscriptionDto } from './dto/subscription.dto';
-import { Feature, PLANS, PlanDef, planByCode } from './plans.config';
+import { Feature, PAYMENT_METHODS, PLANS, PlanDef, planByCode } from './plans.config';
 
 const REMINDER_DAYS = 3;
 const addMonths = (date: Date, months: number) => {
@@ -79,7 +79,10 @@ export class SubscriptionService {
   // ---------- foydalanuvchi ----------
 
   plans() {
-    const methods = (this.config.get<string>('SUBSCRIPTION_METHODS') ?? 'CLICK,PAYME,UZUM,CARD,CASH').split(',').map((item) => item.trim()).filter(Boolean);
+    const methods = (this.config.get<string>('SUBSCRIPTION_METHODS') ?? PAYMENT_METHODS.join(','))
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item): item is (typeof PAYMENT_METHODS)[number] => (PAYMENT_METHODS as readonly string[]).includes(item));
     return {
       plans: PLANS.map((plan) => ({
         code: plan.code,

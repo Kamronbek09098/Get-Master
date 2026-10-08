@@ -46,5 +46,6 @@ export const planByCode = (code: string): PlanDef | undefined => PLANS.find((pla
 /** Pro usta portfolio limiti: oddiy ustadagidan necha baravar ko‘p. */
 export const PRO_PORTFOLIO_MULTIPLIER = 2;
 
-export const PAYMENT_METHODS = ['CLICK', 'PAYME', 'UZUM', 'CARD', 'CASH'] as const;
+/** Obuna uchun to‘lov usullari (naqd to‘lov yo‘q). */
+export const PAYMENT_METHODS = ['CLICK', 'PAYME', 'UZUM', 'CARD'] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];

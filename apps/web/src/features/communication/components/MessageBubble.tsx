@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent, TouchEvent } from 'react';
-import { AlertCircle, Check, CheckCheck, Clock, Copy, CornerUpLeft, FileText, MoreHorizontal, Pencil, Phone, RotateCw, Trash2, Video } from 'lucide-react';
+import { AlertCircle, Check, CheckCheck, Clock, Copy, CornerUpLeft, Eye, FileText, History, Lock, MoreHorizontal, Pencil, Phone, RotateCw, Trash2, Video } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuthStore } from '@/store/auth.store';
 import { env } from '@/lib/env';
 import { cx } from '@/lib/utils';
 import { accountName } from '@/lib/account-name';
@@ -94,6 +96,8 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
   const settled = !message.deleted && !message.status;
   const editable = mine && canEdit(message);
   const deletable = settled && message.type !== 'ORDER';
+  const [showHistory, setShowHistory] = useState(false);
+  const customerPanel = (env.appRole ?? useAuthStore.getState().preferredRole) === 'CUSTOMER';
   const hasText = !!message.text;
   const callEntry = message.type === 'SYSTEM' ? parseCallLog(message.text) : null;
   const callLog = callEntry ? describeCallLog(callEntry, meId) : null;
@@ -240,7 +244,22 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
           </button>
         )}
         {message.deleted ? (
-          <span className="gm-bubble__text">{t('Xabar o‘chirilgan')}</span>
+          <>
+            <span className="gm-bubble__text">{message.original ? <s>{t('Xabar o‘chirilgan')}</s> : t('Xabar o‘chirilgan')}</span>
+            {message.original ? (
+              <span className="gm-revealed" role="note">
+                <span className="gm-revealed__tag"><Eye size={12} aria-hidden="true" /> {t('Plus: o‘chirilgan xabar')}</span>
+                {message.original.attachments && message.original.attachments.length > 0 && <Attachments items={message.original.attachments} />}
+                {message.original.text && <span className="gm-revealed__text"><Linkified text={message.original.text} /></span>}
+              </span>
+            ) : (
+              !mine && customerPanel && (
+                <Link to="/mijoz/obuna" className="gm-revealed__lock">
+                  <Lock size={12} aria-hidden="true" /> {t('Plus bilan ko‘ring')}
+                </Link>
+              )
+            )}
+          </>
         ) : (
           <>
             {message.type === 'ORDER' && message.orderId && <ChatOrderCard orderId={message.orderId} />}
@@ -261,8 +280,22 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
             )}
           </>
         )}
+        {showHistory && message.editHistory && (
+          <ul className="gm-revealed gm-revealed--history" aria-label={t('Tahrir tarixi')}>
+            {message.editHistory.map((edit, index) => (
+              <li key={`${edit.editedAt}-${index}`}>
+                <small>{clock(edit.editedAt)}</small>
+                <span>{edit.previousText ?? '—'}</span>
+              </li>
+            ))}
+          </ul>
+        )}
         <span className="gm-bubble__meta">
-          {message.editedAt && !message.deleted && <em>tahrirlangan</em>}
+          {message.editedAt && !message.deleted && (message.editHistory?.length ? (
+            <button type="button" className="gm-bubble__edited" aria-expanded={showHistory} onClick={() => setShowHistory((open) => !open)}>
+              <History size={11} aria-hidden="true" /> tahrirlangan
+            </button>
+          ) : <em>tahrirlangan</em>)}
           <time dateTime={message.createdAt}>{clock(message.createdAt)}</time>
           {mine && !message.deleted && (
             <span className={cx('gm-bubble__ticks', read && 'gm-bubble__ticks--read')}>

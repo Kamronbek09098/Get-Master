@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDate, initials } from '@/lib/utils';
+import { PlusBadge } from '@/features/subscription/meta';
 import { customerPublicService } from '@/features/customer/services/customer-public.service';
 import { t } from '@/i18n';
 import '../master/MasterProfile.css';
@@ -34,6 +35,7 @@ export function CustomerPublicPage() {
           <h1 id="gm-cp-name">{name}</h1>
           <div className="gm-mp-hero__badges">
             <span className="gm-mp-hero__place">ID {data.accountNumber}</span>
+            {data.isPlus && <PlusBadge />}
           </div>
         </div>
       </section>

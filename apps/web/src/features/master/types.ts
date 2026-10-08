@@ -44,6 +44,8 @@ export interface PublicMaster {
   completedOrders: number;
   verification: MasterVerificationStatus;
   /** Usta vaqtincha buyurtma qabul qilmayapti (pauza). */
+  /** «Pro» obunali usta (oltin galochka, katalogda yuqori o‘rin). */
+  isPro?: boolean;
   isPaused?: boolean;
   pausedUntil?: string | null;
   /** Javob berish ko‘rsatkichi (0–100). */

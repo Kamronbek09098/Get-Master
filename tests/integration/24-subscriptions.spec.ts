@@ -41,6 +41,8 @@ describe('subscriptions: plans, requests and admin decisions', () => {
     expect((await req(customer.token, { planCode: 'MASTER_PRO', months: 1, method: 'CARD' })).status).toBe(403);
     expect((await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 2, method: 'CARD' })).status).toBe(400);
     expect((await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'BITCOIN' })).status).toBe(400);
+    expect((await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CASH' })).status).toBe(400); // naqd to‘lov yo‘q
+    expect((await h.get('/subscriptions/plans', customer.token)).data.methods).not.toContain('CASH');
     const made = await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 3, method: 'CLICK' });
     expect(made.status).toBe(201);
     expect(made.data).toMatchObject({ status: 'PENDING', months: 3, amount: '79000', method: 'CLICK' });
@@ -57,7 +59,7 @@ describe('subscriptions: plans, requests and admin decisions', () => {
 
   it('admin approves → Plus is active and reveals the peer’s deleted and edited messages; expiry removes it', async () => {
     const plain = await createAdmin(h, ['USERS']);
-    const made = await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CASH' });
+    const made = await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CARD' });
     expect((await h.get('/admin/subscriptions', plain.token)).status).toBe(403); // SUBSCRIPTIONS huquqi yo‘q
     const list = await h.get('/admin/subscriptions?status=PENDING', admin.token);
     expect(list.status).toBe(200);

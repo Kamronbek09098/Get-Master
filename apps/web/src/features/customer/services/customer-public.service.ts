@@ -5,6 +5,7 @@ export interface PublicCustomer {
   firstName: string | null;
   lastName: string | null;
   memberSince: string;
+  isPlus: boolean;
   completedOrders: number;
   ordersWithMe: number;
   conversationId: string;

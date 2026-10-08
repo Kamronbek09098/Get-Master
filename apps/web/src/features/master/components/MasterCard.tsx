@@ -4,6 +4,7 @@ import { accountName } from '@/lib/account-name';
 import { MediaThumbnail } from '@/features/media/components/MediaThumbnail';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { formatMoney } from '@/lib/utils';
+import { ProBadge } from '@/features/subscription/meta';
 import type { PublicMaster } from '../types';
 import { t } from '@/i18n';
 
@@ -41,7 +42,10 @@ export function MasterCard({ master }: { master: PublicMaster }) {
       <div className="gm-master__top">
         <ChatAvatar name={fullName} seed={master.id} size="lg" />
         <div className="gm-master__id">
-          <h3 className="gm-master__name">{shortName(master)}</h3>
+          <h3 className="gm-master__name">
+            {shortName(master)}
+            {master.isPro && <ProBadge size="sm" />}
+          </h3>
           <p className="gm-master__verify">
             {master.verification === 'VERIFIED' ? (
               <>

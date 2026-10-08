@@ -119,6 +119,7 @@ enum MediaAssetKind {
   MESSAGE_ATTACHMENT
   MASTER_VERIFICATION_DOCUMENT
   MASTER_PORTFOLIO
+  SUBSCRIPTION_RECEIPT
 }
 
 enum MatchingStatus {
@@ -1401,6 +1402,8 @@ model MediaAsset {
   @@index([uploaderId, status])
   @@index([linkedResourceType, linkedResourceId])
   @@index([status, updatedAt])
+  subscriptionReceipts  Subscription[]      @relation("SubscriptionReceipt")
+
   @@map("media_assets")
 }
 
@@ -1538,6 +1541,13 @@ model Subscription {
   decidedAt     DateTime?            @map("decided_at")
   rejectReason  String?              @map("reject_reason")
   reminderSent  Boolean              @default(false) @map("reminder_sent")
+  /// Click / Payme / Uzum tranzaksiya ID si va protokol holati (to‘lov muvaffaqiyatli bo‘lsa obuna avtomatik faollashadi).
+  providerTxId  String?              @map("provider_tx_id") @db.VarChar(128)
+  providerMeta  Json?                @map("provider_meta")
+  paidAt        DateTime?            @map("paid_at")
+  /// Karta o‘tkazmasi cheki (admin ko‘rib chiqadi).
+  receiptAssetId String?             @map("receipt_asset_id") @db.Uuid
+  receipt       MediaAsset?          @relation("SubscriptionReceipt", fields: [receiptAssetId], references: [id], onDelete: SetNull)
   createdAt     DateTime             @default(now())
   updatedAt     DateTime             @updatedAt
   user          User                 @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
@@ -1546,5 +1556,6 @@ model Subscription {
   @@index([userId, audience, status, endsAt])
   @@index([status, createdAt])
   @@index([status, endsAt])
+  @@index([method, providerTxId])
   @@map("subscriptions")
 }

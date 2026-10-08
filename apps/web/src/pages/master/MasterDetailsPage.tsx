@@ -5,6 +5,7 @@ import { Award, BadgeCheck, Briefcase, CalendarClock, MapPin, MessageCircle, Sta
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
+import { ProBadge } from '@/features/subscription/meta';
 import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDate, formatMoney, initials } from '@/lib/utils';
@@ -49,6 +50,7 @@ export function MasterDetailsPage() {
           <h1 id="gm-mp-name">{name}</h1>
           <div className="gm-mp-hero__badges">
             <TrustBadge verification={data.verification} />
+            {data.isPro && <ProBadge />}
             {data.isPaused && <Badge tone="warning">{t('Pauzada')}</Badge>}
             <FavoriteButton masterId={data.id} />
             {data.workPlace && (

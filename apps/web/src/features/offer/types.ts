@@ -52,6 +52,8 @@ export interface OpenRequest {
   offersCount: number;
   myOffer: { id: string; status: OfferStatus; price: string } | null;
   notified: boolean;
+  /** «Plus» mijozning tezkor so‘rovi. */
+  isPriority?: boolean;
   suggested: { price: string | null; estimatedMinutes: number | null } | null;
   /** Mijoz ismi (familiyasining bosh harfi bilan), tuman/shahar va taxminiy masofa. */
   customerName?: string | null;
