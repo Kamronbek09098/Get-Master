@@ -8,7 +8,13 @@ import { Sheet } from './Sheet';
 export function FilterSheet({ open, category, saved, onClose, onCategory, onSaved }: { open: boolean; category: string; saved: boolean; onClose: () => void; onCategory: (id: string) => void; onSaved: (on: boolean) => void }) {
   const categories = useServiceCategories();
   return (
-    <Sheet open={open} onClose={onClose} title={t('Kasb bo‘yicha filtrlash')} subtitle={t('Kerakli yo‘nalishni tanlang')}>
+    <Sheet open={open} onClose={onClose} title={t('Kasb bo‘yicha filtrlash')} subtitle={t('Kerakli yo‘nalishni tanlang')}
+      footer={
+        <button type="button" className="gf-cta gf-cta--sheet" onClick={onClose}>
+          {t('Natijalarni ko‘rsatish')}
+        </button>
+      }
+    >
       <div className="gf-filter">
         <button type="button" className={cx('gf-chipbtn gf-chipbtn--wide', saved && 'is-on')} aria-pressed={saved} onClick={() => onSaved(!saved)}>
           <Bookmark size={16} aria-hidden="true" /> {t('Saqlanganlar')}
@@ -25,9 +31,6 @@ export function FilterSheet({ open, category, saved, onClose, onCategory, onSave
           ))}
         </div>
         {categories.isError && <p className="gf-note gf-note--err" role="alert">{t('Kategoriyalarni yuklab bo‘lmadi.')}</p>}
-        <button type="button" className="gf-cta gf-cta--sheet" onClick={onClose}>
-          {t('Natijalarni ko‘rsatish')}
-        </button>
       </div>
     </Sheet>
   );

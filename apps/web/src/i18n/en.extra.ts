@@ -2459,4 +2459,8 @@ export const enExtra: Record<string, string> = {
   "Keyingi ish uchun yuqoriga suring": "Swipe up for the next work",
   "Chat ochilmoqda…": "Opening chat…",
   "Lenta": "Feed",
+  "Katta ochish": "Open large",
+  "🎬 Ish videosi": "🎬 Work video",
+  "Oldingi ish": "Previous work",
+  "Keyingi ish": "Next work",
 };

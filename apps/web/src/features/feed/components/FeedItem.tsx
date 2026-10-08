@@ -5,6 +5,7 @@ import { cx } from '@/lib/utils';
 import { t } from '@/i18n';
 import { clock, compact, initials } from '../format';
 import { feedService } from '../feed.service';
+import { useStableUrl } from '../useStableUrl';
 import type { FeedPost } from '../types';
 import { BeforeAfter } from './BeforeAfter';
 
@@ -65,6 +66,19 @@ function FeedItemBase(props: FeedItemProps) {
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = muted;
   }, [muted, mount]);
+
+  // Boshqa oynaga o‘tilganda video to‘xtaydi (batareya va trafik), qaytganda davom etadi.
+  useEffect(() => {
+    if (!active) return;
+    const onVisibility = () => {
+      const video = videoRef.current;
+      if (!video) return;
+      if (document.hidden) video.pause();
+      else if (!paused) void video.play().catch(() => undefined);
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, [active, paused]);
 
   // 2 soniya ko‘rilgan post «ko‘rildi» deb hisoblanadi (bir marta).
   useEffect(() => {
@@ -131,7 +145,12 @@ function FeedItemBase(props: FeedItemProps) {
   };
 
   const m = post.master;
-  const media = post.media;
+  const media = {
+    videoUrl: useStableUrl(post.media.videoUrl),
+    coverUrl: useStableUrl(post.media.coverUrl),
+    beforeUrl: useStableUrl(post.media.beforeUrl),
+    afterUrl: useStableUrl(post.media.afterUrl),
+  };
   const verifiedLabel = t('Tasdiqlangan usta');
 
   return (

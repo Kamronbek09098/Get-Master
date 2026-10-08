@@ -12,7 +12,8 @@ import { canEdit, clock, replySnippet } from '../format';
 import { describeCallLog, parseCallLog } from '@/features/call/call-log';
 import type { ChatAttachment, ChatMessage } from '../types';
 import { Linkified } from './Linkified';
-import { FeedShareCard, feedPostId } from '@/features/feed/components/FeedShareCard';
+import { FeedShareCard } from '@/features/feed/components/FeedShareCard';
+import { feedPostId } from '@/features/feed/format';
 import { ChatOrderCard } from './ChatOrderCard';
 import { VoicePlayer } from './VoicePlayer';
 import { RoundVideoPlayer } from './RoundVideoPlayer';
@@ -105,6 +106,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
   const callLogMode = callEntry?.mode;
   const panel = env.appRole ?? '';
   // Faqat rasm(lar)dan iborat xabar — Telegramdagidek ramkasiz, rasm pufakchani to‘liq egallaydi.
+  const feedShare = !!feedPostId(message.text) && !message.deleted;
   const mediaOnly =
     settled && message.type !== 'ORDER' && !hasText && !!message.attachments?.length && message.attachments.every((a) => a.mimeType.startsWith('image/') || isRoundVideo(a));
 
@@ -234,7 +236,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
       )}
       <div
         ref={bubbleRef}
-        className={cx('gm-bubble', mine && 'gm-bubble--mine', message.deleted && 'gm-bubble--deleted', failed && 'gm-bubble--failed', mediaOnly && 'gm-bubble--media')}
+        className={cx('gm-bubble', mine && 'gm-bubble--mine', message.deleted && 'gm-bubble--deleted', failed && 'gm-bubble--failed', mediaOnly && 'gm-bubble--media', feedShare && 'gm-bubble--feed')}
         onContextMenu={openMenu}
         onDoubleClick={settled && onReply ? () => onReply(message) : undefined}
       >
@@ -276,7 +278,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
             )}
             {hasText && !callLog && message.type !== 'ORDER' && (
               <span className="gm-bubble__text">
-                {feedPostId(message.text) ? <FeedShareCard postId={feedPostId(message.text) as string} mine={mine} /> : <Linkified text={message.text ?? ''} />}
+                {feedPostId(message.text) ? <FeedShareCard postId={feedPostId(message.text) as string} /> : <Linkified text={message.text ?? ''} />}
               </span>
             )}
           </>

@@ -13,6 +13,7 @@ import {
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
+import { pipeline, type Readable } from 'node:stream';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { Role } from '@prisma/client';
@@ -97,7 +98,8 @@ export class MediaController {
     res.setHeader('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(file.filename)}`);
     if (object.contentLength !== undefined) res.setHeader('Content-Length', String(object.contentLength));
     if (object.contentRange) res.setHeader('Content-Range', object.contentRange);
-    object.body.pipe(res);
+    // Mijoz uzilsa (video surish, sahifadan chiqish) saqlash oqimi yopiladi, aks holda ulanishlar to‘lib, keyingi fayllar ochilmay qoladi.
+    pipeline(object.body as Readable, res, () => undefined);
   }
 
   @Get(':id/:variant')

@@ -2459,4 +2459,8 @@ export const ruExtra: Record<string, string> = {
   "Keyingi ish uchun yuqoriga suring": "Свайпните вверх для следующей работы",
   "Chat ochilmoqda…": "Открываем чат…",
   "Lenta": "Лента",
+  "Katta ochish": "Открыть крупно",
+  "🎬 Ish videosi": "🎬 Видео работы",
+  "Oldingi ish": "Предыдущая работа",
+  "Keyingi ish": "Следующая работа",
 };

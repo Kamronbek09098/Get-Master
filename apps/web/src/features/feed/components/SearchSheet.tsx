@@ -7,6 +7,7 @@ import { initials } from '../format';
 import { t } from '@/i18n';
 import { useFeed } from '../hooks';
 import type { FeedPost } from '../types';
+import { PostThumb } from './PostThumb';
 import { Sheet } from './Sheet';
 
 const KEY = 'gm-feed-recent';
@@ -169,7 +170,7 @@ export function SearchSheet({ open, canFindMasters, onClose, onPickQuery, onPick
                   }}
                   aria-label={item.caption ?? item.master.name}
                 >
-                  {(item.media.coverUrl ?? item.media.afterUrl) ? <img src={(item.media.coverUrl ?? item.media.afterUrl) as string} alt="" loading="lazy" draggable={false} /> : <span className="gf-tile__blank" />}
+                  <PostThumb post={item} />
                   <span className="gf-tile__views">{item.master.name}</span>
                 </button>
               </li>

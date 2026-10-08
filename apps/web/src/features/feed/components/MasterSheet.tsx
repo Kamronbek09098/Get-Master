@@ -8,6 +8,7 @@ import { t } from '@/i18n';
 import { compact, initials } from '../format';
 import { useFeed, useToggleFollow } from '../hooks';
 import type { FeedPost } from '../types';
+import { PostThumb } from './PostThumb';
 import { Sheet } from './Sheet';
 
 type Tab = 'works' | 'services' | 'reviews';
@@ -25,7 +26,7 @@ export function MasterSheet({ post, canOrder, onClose, onOrder, onOpenPost }: { 
   const place = data?.regionName ?? data?.placeAddress;
 
   return (
-    <Sheet open={!!post} onClose={onClose} title={master?.name ?? ''} subtitle={master?.profession ?? undefined} tall label={t('Usta profili')}>
+    <Sheet open={!!post} onClose={onClose} title={t('Usta profili')} tall>
       {post && master && (
         <div className="gf-profile">
           <header className="gf-profile__head">
@@ -107,7 +108,7 @@ export function MasterSheet({ post, canOrder, onClose, onOrder, onOpenPost }: { 
                 {items.map((item) => (
                   <li key={item.id}>
                     <button type="button" className="gf-tile" onClick={() => onOpenPost(item)} aria-label={item.caption ?? t('Ishni ochish')}>
-                      {(item.media.coverUrl ?? item.media.afterUrl) ? <img src={(item.media.coverUrl ?? item.media.afterUrl) as string} alt="" loading="lazy" draggable={false} /> : <span className="gf-tile__blank" />}
+                      <PostThumb post={item} />
                       {item.kind === 'VIDEO' && <Play size={16} fill="currentColor" className="gf-tile__play" aria-hidden="true" />}
                       {item.kind === 'BEFORE_AFTER' && <span className="gf-tile__ba">{t('Oldin/Keyin')}</span>}
                       <span className="gf-tile__views"><Eye size={12} aria-hidden="true" /> {compact(item.counts.views)}</span>

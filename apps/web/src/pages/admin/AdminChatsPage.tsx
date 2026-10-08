@@ -13,7 +13,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { cx, formatDate, formatDateTime, formatRelativeTime, initials } from '@/lib/utils';
 import { avatarTone } from '@/features/communication/format';
 import { STATUS_TEXT } from '@/features/order/order-flow';
-import { MediaViewer } from '@/features/media/components/MediaViewer';
+import { AdminAttachment } from '@/features/admin/components/AdminAttachment';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { AccountLink } from '@/features/admin/components/AccountLink';
 import { useAdminConversation, useAdminConversationMessages, useAdminConversations } from '@/features/admin/hooks/useAdmin';
@@ -158,7 +158,7 @@ function MessageBubble({ message, side, first, last, people }: { message: AdminC
         {message.attachments && message.attachments.length > 0 && (
           <div className="gm-tg__files">
             {message.attachments.map((file) => (
-              <MediaViewer key={file.mediaAssetId} assetId={file.mediaAssetId} alt={file.name} label={file.name} size="lg" />
+              <AdminAttachment key={file.mediaAssetId} file={file} />
             ))}
           </div>
         )}

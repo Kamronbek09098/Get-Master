@@ -1,5 +1,6 @@
 import { env } from '@/lib/env';
 import type { ChatMessage, Conversation } from './types';
+import { feedPostId } from '@/features/feed/format';
 import { t } from '@/i18n';
 import { callLogPreview, describeCallLog, parseCallLog } from '@/features/call/call-log';
 
@@ -125,7 +126,7 @@ export function previewText(conversation: Conversation, meId: string | undefined
   const last = conversation.lastMessage;
   if (!last) return t('Xabar yo‘q');
   const callEntry = last.type === 'SYSTEM' ? parseCallLog(last.text) : null;
-  const text = last.deleted ? t('Xabar o‘chirilgan') : callEntry ? describeCallLog(callEntry, meId).title : (last.text ?? replySnippet(last));
+  const text = last.deleted ? t('Xabar o‘chirilgan') : callEntry ? describeCallLog(callEntry, meId).title : feedPostId(last.text) ? t('🎬 Ish videosi') : (last.text ?? replySnippet(last));
   return isOwnMessage(last, meId) ? t('Siz: {text}', { text }) : text;
 }
 

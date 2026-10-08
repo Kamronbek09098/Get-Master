@@ -22,3 +22,12 @@ export const initials = (name: string) =>
 /** Ulashish havolasi: shu ilova ichidagi lenta, post bilan. */
 export const postLink = (id: string, base = '/mijoz') => `${window.location.origin}${base}/lenta?post=${id}`;
 export const POST_LINK = /\/(?:mijoz|usta)\/lenta\?post=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i;
+
+/** Xabar faqat lenta havolasidan iborat bo‘lsa, uning post ID sini qaytaradi. */
+export function feedPostId(text: string | null | undefined): string | null {
+  const value = text?.trim();
+  if (!value) return null;
+  const match = POST_LINK.exec(value);
+  return match && value.replace(match[0], '').replace(/^https?:\/\/[^/\s]*/i, '').trim() === '' ? (match[1] ?? null) : null;
+}
+

@@ -6,7 +6,7 @@ import { useSheetDrag } from '@/hooks/useSheetDrag';
 import { t } from '@/i18n';
 
 /** Telefonda — pastdan chiqadigan oyna (sudrab yopiladi), kompyuterda — o‘ng tomondagi panel. */
-export function Sheet({ open, title, subtitle, onClose, children, tall = false, label }: { open: boolean; title: string; subtitle?: string; onClose: () => void; children: ReactNode; tall?: boolean; label?: string }) {
+export function Sheet({ open, title, subtitle, onClose, children, footer, tall = false, label }: { open: boolean; title: string; subtitle?: string; onClose: () => void; children: ReactNode; footer?: ReactNode; tall?: boolean; label?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const drag = useSheetDrag(ref, onClose);
 
@@ -42,6 +42,7 @@ export function Sheet({ open, title, subtitle, onClose, children, tall = false, 
           </button>
         </header>
         <div className="gf-sheet__body">{children}</div>
+        {footer && <footer className="gf-sheet__foot">{footer}</footer>}
       </div>
     </div>,
     document.body,

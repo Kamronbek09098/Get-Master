@@ -1,29 +1,52 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BadgeCheck, Play, TriangleAlert } from 'lucide-react';
+import { BadgeCheck, Play, TriangleAlert, Volume2 } from 'lucide-react';
 import { env } from '@/lib/env';
 import { t } from '@/i18n';
-import { clock, POST_LINK } from '../format';
+import { clock, initials } from '../format';
 import { useFeedPost } from '../hooks';
+import { useStableUrl } from '../useStableUrl';
 import './feed-share-card.css';
 
-/** Xabar faqat lenta havolasidan iborat bo‘lsa, uning post ID sini qaytaradi. */
-export function feedPostId(text: string | null | undefined): string | null {
-  const value = text?.trim();
-  if (!value) return null;
-  const match = POST_LINK.exec(value);
-  return match && value.replace(match[0], '').replace(/^https?:\/\/[^/\s]*/i, '').trim() === '' ? (match[1] ?? null) : null;
-}
+const reduceMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-/** Chatdagi ulashilgan ish: muqova, usta, kategoriya, qisqa tavsif va davomiylik. Bosilsa, lentadagi asl postga o‘tadi. */
-export function FeedShareCard({ postId, mine }: { postId: string; mine: boolean }) {
+/**
+ * Chatdagi ulashilgan ish (Instagramdagi kabi): usta, ish videosi o‘zi (ko‘ringanda ovozsiz avtomatik ijro etiladi),
+ * qisqa tavsif. Bosilsa, lentadagi asl postga o‘tadi.
+ */
+export function FeedShareCard({ postId }: { postId: string; mine?: boolean }) {
   const post = useFeedPost(postId);
   const base = env.appRole === 'MASTER' ? '/usta' : '/mijoz';
+  const video = useRef<HTMLVideoElement>(null);
+  const box = useRef<HTMLAnchorElement>(null);
+  const [failed, setFailed] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const videoUrl = useStableUrl(post.data?.media.videoUrl);
+  const coverUrl = useStableUrl(post.data?.media.coverUrl ?? post.data?.media.afterUrl);
+  const beforeUrl = useStableUrl(post.data?.media.beforeUrl);
+  const afterUrl = useStableUrl(post.data?.media.afterUrl);
+
+  // Faqat ekranda ko‘ringanda ijro etiladi (trafik va batareyani tejaydi).
+  useEffect(() => {
+    const node = box.current;
+    const el = video.current;
+    if (!node || !el || reduceMotion()) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting && entry.intersectionRatio >= 0.55) void el.play().catch(() => undefined);
+        else el.pause();
+      },
+      { threshold: [0, 0.55, 1] },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [videoUrl]);
 
   if (post.isLoading) return <span className="gf-sc gf-sc--skel" aria-hidden="true" />;
   if (post.isError || !post.data) {
     return (
       <span className="gf-sc gf-sc--gone" role="note">
-        <TriangleAlert size={18} aria-hidden="true" />
+        <TriangleAlert size={20} aria-hidden="true" />
         <span>
           <strong>{t('Ish topilmadi')}</strong>
           <small>{t('Usta uni o‘chirgan yoki u endi ochiq emas.')}</small>
@@ -32,27 +55,60 @@ export function FeedShareCard({ postId, mine }: { postId: string; mine: boolean 
     );
   }
   const item = post.data;
-  const cover = item.media.coverUrl ?? item.media.afterUrl;
+  const isVideo = item.kind === 'VIDEO' && !!videoUrl && !failed;
+
   return (
-    <Link to={`${base}/lenta?post=${item.id}`} className={mine ? 'gf-sc gf-sc--mine' : 'gf-sc'} aria-label={t('{name} ishini ochish', { name: item.master.name })}>
-      <span className="gf-sc__cover">
-        {cover ? <img src={cover} alt="" loading="lazy" draggable={false} /> : <span className="gf-sc__blank" />}
-        {item.kind === 'VIDEO' && (
-          <span className="gf-sc__play" aria-hidden="true">
-            <Play size={18} fill="currentColor" />
+    <Link ref={box} to={`${base}/lenta?post=${item.id}`} className="gf-sc" aria-label={t('{name} ishini ochish', { name: item.master.name })}>
+      <span className="gf-sc__head">
+        <span className="gf-sc__ava" aria-hidden="true">{initials(item.master.name)}</span>
+        <span className="gf-sc__who">
+          <strong>
+            {item.master.name}
+            {item.master.verified && <BadgeCheck size={14} aria-label={t('Tasdiqlangan usta')} />}
+          </strong>
+          {(item.service || item.category) && <small>{item.service?.name ?? item.category?.name}</small>}
+        </span>
+      </span>
+      <span className="gf-sc__media">
+        {isVideo && (
+          <video
+            ref={video}
+            src={videoUrl ? `${videoUrl}#t=0.4` : undefined}
+            poster={coverUrl ?? undefined}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            onPlaying={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onError={() => setFailed(true)}
+            aria-hidden="true"
+            tabIndex={-1}
+          />
+        )}
+        {!isVideo && item.kind === 'BEFORE_AFTER' && beforeUrl && afterUrl && (
+          <span className="gf-sc__split" aria-hidden="true">
+            <img src={beforeUrl} alt="" draggable={false} />
+            <img src={afterUrl} alt="" draggable={false} />
           </span>
         )}
-        {item.kind === 'VIDEO' && item.durationSec ? <span className="gf-sc__dur">{clock(item.durationSec)}</span> : null}
-        {item.kind === 'BEFORE_AFTER' && <span className="gf-sc__dur">{t('Oldin / Keyin')}</span>}
+        {!isVideo && item.kind !== 'BEFORE_AFTER' && coverUrl && <img src={coverUrl} alt="" draggable={false} />}
+        {item.kind === 'VIDEO' && !playing && (
+          <span className="gf-sc__play" aria-hidden="true">
+            <Play size={22} fill="currentColor" />
+          </span>
+        )}
+        {item.kind === 'VIDEO' && item.durationSec ? <span className="gf-sc__chip">{clock(item.durationSec)}</span> : null}
+        {item.kind === 'BEFORE_AFTER' && <span className="gf-sc__chip">{t('Oldin / Keyin')}</span>}
+        {isVideo && playing && (
+          <span className="gf-sc__sound" aria-hidden="true">
+            <Volume2 size={13} />
+          </span>
+        )}
       </span>
-      <span className="gf-sc__body">
-        <strong>
-          {item.master.name}
-          {item.master.verified && <BadgeCheck size={14} aria-hidden="true" />}
-        </strong>
-        {(item.category || item.service) && <em>{item.service?.name ?? item.category?.name}</em>}
-        {item.caption && <small>{item.caption}</small>}
-        <span className="gf-sc__cta">{t('Lentada ko‘rish')}</span>
+      <span className="gf-sc__foot">
+        {item.caption && <span className="gf-sc__cap">{item.caption}</span>}
+        <span className="gf-sc__cta">{t('Lentada ko‘rish')} ›</span>
       </span>
     </Link>
   );

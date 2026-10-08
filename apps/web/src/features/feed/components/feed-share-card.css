@@ -1,19 +1,40 @@
-.gf-sc { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; width: min(100%, 280px); padding: 8px; border-radius: 16px; background: #0f1420; color: #f6f8fc; text-decoration: none; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1); }
+/* Chatdagi ulashilgan ish kartochkasi: chat mavzusiga (ochiq/qorong‘i) mos, pufakchadan mustaqil. */
+.gf-sc { display: grid; width: min(280px, 72vw); overflow: hidden; border-radius: 20px; background: var(--gm-color-surface, #fff); color: var(--gm-color-text, #0b1530); text-decoration: none !important; box-shadow: 0 0 0 1px var(--gm-color-border, rgba(12, 22, 52, 0.12)), 0 12px 28px -16px rgba(10, 20, 48, 0.35); transition: transform 0.16s ease, box-shadow 0.16s ease; }
+.gf-sc:hover { transform: translateY(-1px); }
 .gf-sc:focus-visible { outline: 2px solid var(--gm-color-primary); outline-offset: 2px; }
-.gf-sc__cover { position: relative; display: block; aspect-ratio: 3 / 4; border-radius: 11px; overflow: hidden; background: #171d2d; }
-.gf-sc__cover img { width: 100%; height: 100%; object-fit: cover; }
-.gf-sc__blank { display: block; width: 100%; height: 100%; }
-.gf-sc__play { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; background: linear-gradient(0deg, rgba(0, 0, 0, 0.45), transparent 60%); }
-.gf-sc__dur { position: absolute; right: 5px; bottom: 5px; padding: 1px 6px; border-radius: 999px; background: rgba(0, 0, 0, 0.62); font-size: 0.68rem; font-weight: 700; }
-.gf-sc__body { display: grid; align-content: center; gap: 3px; min-width: 0; }
-.gf-sc__body strong { display: flex; align-items: center; gap: 4px; font-size: 0.9rem; }
-.gf-sc__body strong svg { color: #4da3ff; flex: none; }
-.gf-sc__body em { font-style: normal; font-size: 0.74rem; font-weight: 700; color: #ffd58a; }
-.gf-sc__body small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: rgba(246, 248, 252, 0.7); font-size: 0.78rem; line-height: 1.4; }
-.gf-sc__cta { margin-top: 4px; font-size: 0.76rem; font-weight: 800; color: #fff; }
-.gf-sc--skel { display: block; height: 116px; background: linear-gradient(100deg, #171d2d 30%, #222a40 50%, #171d2d 70%); background-size: 220% 100%; animation: gf-sc-shimmer 1.4s linear infinite; }
+.gf-sc * { text-decoration: none !important; }
+.gf-sc__head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.gf-sc__ava { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(145deg, #1d4ed8, #0b2a73); color: #fff; font-size: 0.74rem; font-weight: 800; }
+.gf-sc__who { display: grid; min-width: 0; }
+.gf-sc__who strong { display: flex; align-items: center; gap: 4px; font-size: 0.92rem; line-height: 1.25; color: inherit; }
+.gf-sc__who strong svg { flex: none; color: #2f7df6; }
+.gf-sc__who small { color: var(--gm-color-text-muted, rgba(11, 21, 48, 0.62)); font-size: 0.76rem; font-weight: 600; }
+.gf-sc__media { position: relative; display: block; aspect-ratio: 4 / 5; overflow: hidden; background: #0b1020; }
+.gf-sc__media video, .gf-sc__media > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gf-sc__split { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #fff; }
+.gf-sc__split img { width: 100%; height: 100%; object-fit: cover; }
+.gf-sc__play { position: absolute; top: 50%; left: 50%; display: grid; place-items: center; width: 56px; height: 56px; margin: -28px; padding-left: 3px; border-radius: 50%; background: rgba(10, 16, 32, 0.55); backdrop-filter: blur(6px); color: #fff; }
+.gf-sc__chip { position: absolute; right: 10px; top: 10px; padding: 3px 9px; border-radius: 999px; background: rgba(10, 16, 32, 0.62); color: #fff; font-size: 0.72rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.gf-sc__sound { position: absolute; left: 10px; bottom: 10px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: rgba(10, 16, 32, 0.62); color: #fff; }
+.gf-sc__foot { display: grid; gap: 4px; padding: 10px 12px 12px; }
+.gf-sc__cap { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 0.86rem; line-height: 1.45; color: inherit; }
+.gf-sc__cta { font-size: 0.8rem; font-weight: 800; color: var(--gm-color-primary); }
+.gf-sc--skel { display: block; height: 340px; background: linear-gradient(100deg, var(--gm-color-surface-muted, #eef1f8) 30%, var(--gm-color-border, #dfe5f1) 50%, var(--gm-color-surface-muted, #eef1f8) 70%); background-size: 220% 100%; animation: gf-sc-shimmer 1.4s linear infinite; }
 @keyframes gf-sc-shimmer { to { background-position: -220% 0; } }
-.gf-sc--gone { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.gf-sc--gone { display: flex; align-items: center; gap: 10px; padding: 14px; width: min(280px, 72vw); }
 .gf-sc--gone > span { display: grid; gap: 2px; }
-.gf-sc--gone small { color: rgba(246, 248, 252, 0.7); }
-@media (prefers-reduced-motion: reduce) { .gf-sc--skel { animation: none; } }
+.gf-sc--gone small { color: var(--gm-color-text-muted); }
+@media (prefers-reduced-motion: reduce) { .gf-sc--skel { animation: none; } .gf-sc { transition: none; } }
+
+/* Pufakcha: faqat kartochka bo‘lsa, ramkasiz; vaqt belgisi kartochka tagida */
+.gm-bubble--feed { padding: 0 !important; background: transparent !important; box-shadow: none !important; overflow: visible; }
+.gm-bubble--feed .gm-bubble__text { display: block; }
+.gm-bubble--feed .gm-bubble__meta { position: static !important; float: none !important; display: flex; justify-content: flex-end; margin: 4px 6px 0 !important; background: none !important; color: var(--gm-color-text-muted) !important; }
+
+/* Yuborilgan (ko‘k) pufakchada ham matn o‘z ranglarida qolsin: pufakcha matn rangi kartochkaga o‘tmasin */
+.gm-bubble .gf-sc, .gm-bubble .gm-bubble__text a.gf-sc { color: var(--gm-color-text, #0b1530); }
+.gm-bubble .gf-sc .gf-sc__who strong, .gm-bubble .gf-sc .gf-sc__cap { color: var(--gm-color-text, #0b1530); }
+.gm-bubble .gf-sc .gf-sc__who small { color: var(--gm-color-text-muted, rgba(11, 21, 48, 0.62)); }
+.gm-bubble .gf-sc .gf-sc__cta { color: var(--gm-color-primary); }
+.gm-bubble .gf-sc .gf-sc__chip, .gm-bubble .gf-sc .gf-sc__play, .gm-bubble .gf-sc .gf-sc__sound, .gm-bubble .gf-sc .gf-sc__ava { color: #fff; }
+.gm-bubble--feed.gm-bubble--mine .gm-bubble__meta, .gm-bubble--feed.gm-bubble--mine .gm-bubble__meta time { color: var(--gm-color-text-muted) !important; }

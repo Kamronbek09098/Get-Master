@@ -26,7 +26,20 @@ export function CommentsSheet({ post, onClose }: { post: FeedPost | null; onClos
   }
 
   return (
-    <Sheet open={!!post} onClose={onClose} title={t('Izohlar')} subtitle={post ? t('{count} ta izoh', { count: post.counts.comments }) : undefined} tall>
+    <Sheet open={!!post} onClose={onClose} title={t('Izohlar')} subtitle={post ? t('{count} ta izoh', { count: post.counts.comments }) : undefined}
+      tall
+      footer={
+        <>
+          <form className="gf-compose" onSubmit={submit}>
+        <input value={text} onChange={(event) => setText(event.target.value)} maxLength={500} placeholder={t('Izoh yozing…')} aria-label={t('Izoh yozing')} />
+        <button type="submit" className="gf-iconbtn gf-iconbtn--accent" disabled={!text.trim() || add.isPending} aria-label={t('Yuborish')}>
+          <SendHorizontal size={20} aria-hidden="true" />
+        </button>
+      </form>
+          {add.isError && <p className="gf-note gf-note--err" role="alert">{getErrorMessage(add.error)}</p>}
+        </>
+      }
+    >
       <div className="gf-comments">
         {comments.isLoading && (
           <ul className="gf-skel-list" aria-hidden="true">
@@ -62,13 +75,6 @@ export function CommentsSheet({ post, onClose }: { post: FeedPost | null; onClos
           ))}
         </ul>
       </div>
-      <form className="gf-compose" onSubmit={submit}>
-        <input value={text} onChange={(event) => setText(event.target.value)} maxLength={500} placeholder={t('Izoh yozing…')} aria-label={t('Izoh yozing')} />
-        <button type="submit" className="gf-iconbtn gf-iconbtn--accent" disabled={!text.trim() || add.isPending} aria-label={t('Yuborish')}>
-          <SendHorizontal size={20} aria-hidden="true" />
-        </button>
-      </form>
-      {add.isError && <p className="gf-note gf-note--err" role="alert">{getErrorMessage(add.error)}</p>}
     </Sheet>
   );
 }

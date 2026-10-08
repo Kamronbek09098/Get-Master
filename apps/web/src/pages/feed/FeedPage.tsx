@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowUp, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowUp, ChevronDown, ChevronUp, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { cx } from '@/lib/utils';
 import { env } from '@/lib/env';
 import { useOpenMasterChat } from '@/features/communication/hooks/useCommunication';
@@ -52,7 +52,14 @@ export function FeedPage() {
   const scroller = useRef<HTMLDivElement>(null);
   const sentinel = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
-  const [muted, setMuted] = useState(true);
+  // Ovoz tanlovi eslab qolinadi (brauzer avtopley uchun boshida ovozsiz).
+  const [muted, setMuted] = useState(() => {
+    try {
+      return localStorage.getItem('gm-feed-sound') !== '1';
+    } catch {
+      return true;
+    }
+  });
   const [hint, setHint] = useState(() => {
     try {
       return localStorage.getItem(HINT_KEY) !== '1';
@@ -156,7 +163,7 @@ export function FeedPage() {
   const gone = !!focusId && single.isError && !listed.some((post) => post.id === focusId);
 
   return (
-    <section className="gf" aria-label={t('Ish lentasi')}>
+    <section className={cx('gf', items.length === 0 && !feed.isLoading && 'gf--bare')} aria-label={t('Ish lentasi')}>
       <header className="gf-top">
         <h1 className="gf-sr">{t('Ish lentasi')}</h1>
         <nav className="gf-tabs-top" role="tablist" aria-label={t('Lenta bo‘limlari')}>
@@ -211,7 +218,16 @@ export function FeedPage() {
             mount={Math.abs(index - active) <= 1}
             muted={muted}
             canOrder={!isMaster && !post.viewer.own}
-            onToggleMute={() => setMuted((value) => !value)}
+            onToggleMute={() =>
+              setMuted((value) => {
+                try {
+                  localStorage.setItem('gm-feed-sound', value ? '1' : '0');
+                } catch {
+                  /* ixtiyoriy */
+                }
+                return !value;
+              })
+            }
             onLike={onLike}
             onSave={onSave}
             onFollow={onFollow}
@@ -235,6 +251,16 @@ export function FeedPage() {
         )}
       </div>
 
+      {items.length > 1 && (
+        <div className="gf-nav-btns">
+          <button type="button" className="gf-nav-btn" disabled={active <= 0} onClick={() => scroller.current?.scrollBy({ top: -scroller.current.clientHeight, behavior: 'smooth' })} aria-label={t('Oldingi ish')}>
+            <ChevronUp size={22} aria-hidden="true" />
+          </button>
+          <button type="button" className="gf-nav-btn" disabled={active >= items.length - 1 && !feed.hasNextPage} onClick={() => scroller.current?.scrollBy({ top: scroller.current.clientHeight, behavior: 'smooth' })} aria-label={t('Keyingi ish')}>
+            <ChevronDown size={22} aria-hidden="true" />
+          </button>
+        </div>
+      )}
       {hint && items.length > 0 && (
         <div className="gf-hint" role="note" aria-live="polite">
           <ArrowUp size={16} aria-hidden="true" /> {t('Keyingi ish uchun yuqoriga suring')}
