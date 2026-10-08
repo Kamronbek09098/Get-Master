@@ -1,3 +1,4 @@
+import { SubscriptionService } from '../subscription/subscription.service';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { OrderStatus, PaymentProvider, PaymentStatus, Prisma, Role } from '@prisma/client';
@@ -58,6 +59,7 @@ export class PaymentService {
     private readonly metrics: MetricsService,
     private readonly click: ClickService,
     private readonly payme: PaymeService,
+    private readonly subscriptions: SubscriptionService,
   ) {}
 
   async create(customerId: string, dto: CreatePaymentDto) {
@@ -365,6 +367,18 @@ export class PaymentService {
 
     const payment = await this.db.payment.findUnique({ where: { id: payload.paymentId } });
     if (!payment) {
+      // Obuna to‘lovi bo‘lishi mumkin (paymentId — obuna ID si): muvaffaqiyatli bo‘lsa obuna avtomatik faollashadi.
+      if (provider === 'UZUM' || provider === 'CLICK' || provider === 'PAYME') {
+        const outcome = await this.subscriptions.gatewayWebhook(provider, { subscriptionId: payload.paymentId, status: payload.status, amount: payload.amount, currency: payload.currency, providerPaymentId: payload.providerPaymentId, failureReason: payload.failureReason });
+        if (outcome.found) {
+          await this.db.paymentWebhookEvent.update({ where: { provider_eventId: { provider, eventId: payload.eventId } }, data: { processedAt: new Date() } });
+          if (outcome.mismatch) {
+            await this.auditMismatch(provider, payload, 'SUBSCRIPTION_AMOUNT_OR_CURRENCY_MISMATCH');
+            throw new WebhookVerificationFailedException();
+          }
+          return { subscription: true };
+        }
+      }
       await this.auditMismatch(provider, payload, 'PAYMENT_NOT_FOUND');
       throw new WebhookVerificationFailedException();
     }

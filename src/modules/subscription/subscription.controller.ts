@@ -4,7 +4,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RateLimit } from '../../common/decorators/rate-limit.decorator';
 import { RequiresPermission } from '../../common/decorators/permission.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { AdminSubscriptionQueryDto, GrantSubscriptionDto, RejectSubscriptionDto, RequestSubscriptionDto } from './dto/subscription.dto';
+import { AdminSubscriptionQueryDto, AttachReceiptDto, GrantSubscriptionDto, RejectSubscriptionDto, RequestSubscriptionDto } from './dto/subscription.dto';
 import { SubscriptionService } from './subscription.service';
 
 @Controller('subscriptions')
@@ -27,6 +27,11 @@ export class SubscriptionController {
     return this.subscriptions.request(userId, roles, dto);
   }
 
+  @Post('requests/:id/receipt')
+  attachReceipt(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Body() dto: AttachReceiptDto) {
+    return this.subscriptions.attachReceipt(userId, id, dto.mediaAssetId);
+  }
+
   @Post('requests/:id/cancel')
   cancel(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string) {
     return this.subscriptions.cancelRequest(userId, id);
@@ -43,6 +48,11 @@ export class AdminSubscriptionController {
   @Get()
   list(@Query() query: AdminSubscriptionQueryDto) {
     return this.subscriptions.adminList(query);
+  }
+
+  @Get('summary')
+  summary() {
+    return this.subscriptions.adminSummary();
   }
 
   @Post('grant')

@@ -5,8 +5,8 @@ export class InitiateUploadDto {
   @IsEnum(MediaAssetKind)
   kind!: MediaAssetKind;
 
-  @IsIn(['ProblemRequest', 'Order', 'Conversation', 'MasterProfile'])
-  linkType!: 'ProblemRequest' | 'Order' | 'Conversation' | 'MasterProfile';
+  @IsIn(['ProblemRequest', 'Order', 'Conversation', 'MasterProfile', 'Subscription'])
+  linkType!: 'ProblemRequest' | 'Order' | 'Conversation' | 'MasterProfile' | 'Subscription';
 
   @IsUUID('4')
   @IsNotEmpty()

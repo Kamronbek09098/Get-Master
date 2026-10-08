@@ -58,7 +58,8 @@ export type MediaAssetKind =
   | 'WORK_PROOF'
   | 'MESSAGE_ATTACHMENT'
   | 'MASTER_VERIFICATION_DOCUMENT'
-  | 'MASTER_PORTFOLIO';
+  | 'MASTER_PORTFOLIO'
+  | 'SUBSCRIPTION_RECEIPT';
 
 export type MediaAssetStatus =
   | 'UPLOADING'
@@ -71,4 +72,4 @@ export type MediaAssetStatus =
 
 export type AttachmentType = 'PHOTO' | 'VIDEO' | 'VOICE' | 'DOCUMENT' | 'OTHER';
 
-export type LinkTargetType = 'ProblemRequest' | 'Order' | 'Conversation' | 'MasterProfile';
+export type LinkTargetType = 'ProblemRequest' | 'Order' | 'Conversation' | 'MasterProfile' | 'Subscription';

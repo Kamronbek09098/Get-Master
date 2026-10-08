@@ -9,7 +9,14 @@ export function usePlans() {
 
 export function useMySubscriptions() {
   const hasSession = useAuthStore((state) => state.hasSession);
-  return useQuery({ queryKey: ['subscriptions', 'me'], queryFn: () => subscriptionService.me(), enabled: hasSession, staleTime: 60_000 });
+  return useQuery({
+    queryKey: ['subscriptions', 'me'],
+    queryFn: () => subscriptionService.me(),
+    enabled: hasSession,
+    staleTime: 60_000,
+    // Onlayn to‘lov kutilayotgan bo‘lsa, obuna faollashishi bilan sahifa o‘zi yangilanadi.
+    refetchInterval: (query) => (query.state.data?.pending.some((row) => row.method !== 'CARD') ? 4_000 : false),
+  });
 }
 
 /** Mijoz «Plus» obunasi hozir faolmi (chatda o‘chirilgan xabarlarni ko‘rish va h.k.). */
@@ -34,8 +41,20 @@ export function useCancelSubscriptionRequest() {
   });
 }
 
-export function useAdminSubscriptions(status: SubscriptionStatus | '', page: number) {
-  return useQuery({ queryKey: ['admin', 'subscriptions', status, page], queryFn: () => subscriptionService.adminList(status, page), refetchInterval: 30_000 });
+export function useAdminSubscriptions(status: SubscriptionStatus | '', page: number, q = '', method = '') {
+  return useQuery({ queryKey: ['admin', 'subscriptions', status, page, q, method], queryFn: () => subscriptionService.adminList(status, page, q, method), refetchInterval: 30_000 });
+}
+
+export function useAdminSubscriptionSummary() {
+  return useQuery({ queryKey: ['admin', 'subscriptions', 'summary'], queryFn: () => subscriptionService.adminSummary(), refetchInterval: 60_000 });
+}
+
+export function useAttachReceipt() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, mediaAssetId }: { id: string; mediaAssetId: string }) => subscriptionService.attachReceipt(id, mediaAssetId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['subscriptions', 'me'] }),
+  });
 }
 
 export function useAdminSubscriptionActions() {

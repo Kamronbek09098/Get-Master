@@ -22,7 +22,7 @@ function Countdown({ expiresAt }: { expiresAt: string | null }) {
 }
 
 /** Ustaga ko‘rinadigan ochiq so‘rov kartasi: aniq qatorlar, mijoz rasmlari va asosiy harakat tugmalari. */
-export function OpenRequestCard({ request, onAccept, onSkip }: { request: OpenRequest; onAccept: () => void; onSkip: () => void }) {
+export function OpenRequestCard({ request, onAccept, onSkip, paused = false }: { request: OpenRequest; onAccept: () => void; onSkip: () => void; paused?: boolean }) {
   const photos = request.photos ?? [];
   const more = Math.max((request.photosCount ?? photos.length) - photos.length, 0);
   const place = [request.area, request.distanceKm != null ? `${request.distanceKm.toFixed(1).replace('.', ',')} km` : null].filter(Boolean).join(' · ');
@@ -103,7 +103,7 @@ export function OpenRequestCard({ request, onAccept, onSkip }: { request: OpenRe
         </div>
       ) : (
         <div className="gm-orc__actions">
-          <Button size="lg" onClick={onAccept}>
+          <Button size="lg" onClick={onAccept} disabled={paused} title={paused ? t('Pauza paytida taklif berib bo‘lmaydi') : undefined}>
             <CheckCircle2 size={18} /> {t('Taklif berish')}
           </Button>
           <Button size="lg" variant="secondary" onClick={onSkip}>

@@ -36,6 +36,11 @@ export class GrantSubscriptionDto {
   note?: string;
 }
 
+export class AttachReceiptDto {
+  @IsUUID('4')
+  mediaAssetId!: string;
+}
+
 export class RejectSubscriptionDto {
   @IsString()
   @MinLength(3)
@@ -53,6 +58,15 @@ export class AdminSubscriptionQueryDto {
   @IsInt()
   @Min(1)
   page?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  q?: string;
+
+  @IsOptional()
+  @IsIn(['CLICK', 'PAYME', 'UZUM', 'CARD'])
+  method?: 'CLICK' | 'PAYME' | 'UZUM' | 'CARD';
 }
 
 export class SubscriptionIdParam {

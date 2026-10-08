@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Crown, Gift, Inbox, Undo2, X } from 'lucide-react';
+import { Banknote, Check, Crown, Gift, Inbox, Receipt, Search, Undo2, Users, X, Zap } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
@@ -11,12 +11,14 @@ import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { getErrorMessage } from '@/lib/error-messages';
 import { cx, formatDate, formatDateTime, formatMoney } from '@/lib/utils';
-import { useAdminSubscriptionActions, useAdminSubscriptions } from '@/features/subscription/hooks';
+import { MediaViewer } from '@/features/media/components/MediaViewer';
+import { useAdminSubscriptionActions, useAdminSubscriptionSummary, useAdminSubscriptions } from '@/features/subscription/hooks';
 import type { AdminSubscriptionRow, PlanCode, SubscriptionStatus } from '@/features/subscription/types';
 import './AdminSubscriptionsPage.css';
 import { t } from '@/i18n';
 
-const TABS: Array<{ value: SubscriptionStatus; label: () => string }> = [
+const TABS: Array<{ value: SubscriptionStatus | ''; label: () => string }> = [
+  { value: '', label: () => t('Hammasi') },
   { value: 'PENDING', label: () => t('Kutilmoqda') },
   { value: 'ACTIVE', label: () => t('Faol') },
   { value: 'EXPIRED', label: () => t('Tugagan') },
@@ -25,6 +27,14 @@ const TABS: Array<{ value: SubscriptionStatus; label: () => string }> = [
 ];
 const PLAN_NAME: Record<string, string> = { CUSTOMER_PLUS: 'Plus', MASTER_PRO: 'Pro' };
 const METHOD: Record<string, string> = { CLICK: 'Click', PAYME: 'Payme', UZUM: 'Uzum Bank', CARD: 'Karta' };
+const AUTO = ['CLICK', 'PAYME', 'UZUM'];
+const STATUS_BADGE: Record<string, { label: () => string; tone: 'success' | 'warning' | 'danger' | 'neutral' }> = {
+  PENDING: { label: () => t('Kutilmoqda'), tone: 'warning' },
+  ACTIVE: { label: () => t('Faol'), tone: 'success' },
+  EXPIRED: { label: () => t('Tugagan'), tone: 'neutral' },
+  REJECTED: { label: () => t('Rad etilgan'), tone: 'danger' },
+  CANCELED: { label: () => t('Bekor qilingan'), tone: 'neutral' },
+};
 
 function ReasonDialog({ title, confirm, busy, error, onSubmit, onClose }: { title: string; confirm: string; busy: boolean; error: string | null; onSubmit: (reason: string) => void; onClose: () => void }) {
   const [reason, setReason] = useState('');
@@ -86,6 +96,9 @@ function Row({ row }: { row: AdminSubscriptionRow }) {
   const { approve, reject, revoke } = useAdminSubscriptionActions();
   const [dialog, setDialog] = useState<'reject' | 'revoke' | null>(null);
   const error = approve.isError ? getErrorMessage(approve.error) : null;
+  const auto = !!row.method && AUTO.includes(row.method);
+  const waitingReceipt = row.status === 'PENDING' && row.method === 'CARD' && !row.receiptAssetId;
+  const waitingPayment = row.status === 'PENDING' && auto;
   return (
     <article className="gm-asub__row">
       <div className="gm-asub__main">
@@ -95,11 +108,14 @@ function Row({ row }: { row: AdminSubscriptionRow }) {
         </div>
         <div className="gm-asub__plan">
           <Badge tone={row.audience === 'MASTER' ? 'warning' : 'primary'}><Crown size={13} /> {PLAN_NAME[row.planCode] ?? row.planCode}</Badge>
+          <Badge tone={(STATUS_BADGE[row.status] ?? STATUS_BADGE.PENDING!).tone}>{(STATUS_BADGE[row.status] ?? STATUS_BADGE.PENDING!).label()}</Badge>
+          {auto && row.paidAt && <Badge tone="success"><Zap size={13} /> {t('Avtomatik faollashgan')}</Badge>}
           <strong>{row.months === 12 ? t('1 yil') : t('{months} oy', { months: row.months })}</strong>
           <span>{row.source === 'GRANT' ? t('Sovg‘a') : formatMoney(row.amount, row.currency)}</span>
         </div>
         <div className="gm-asub__meta">
           {row.method && <span>{METHOD[row.method] ?? row.method}</span>}
+          {row.providerTxId && <span>Tx: <code>{row.providerTxId}</code></span>}
           <code>{row.reference}</code>
           <span>{formatDateTime(row.createdAt)}</span>
           {row.endsAt && <span>{t('{date} gacha', { date: formatDate(row.endsAt) })}</span>}
@@ -108,7 +124,15 @@ function Row({ row }: { row: AdminSubscriptionRow }) {
         </div>
       </div>
       <div className="gm-asub__actions">
-        {row.status === 'PENDING' && (
+        {row.receiptAssetId && (
+          <div className="gm-asub__receipt">
+            <MediaViewer assetId={row.receiptAssetId} alt={t('To‘lov cheki')} label={t('To‘lov cheki')} />
+            <span><Receipt size={13} aria-hidden="true" /> {t('Chek')}</span>
+          </div>
+        )}
+        {waitingReceipt && <span className="gm-asub__wait">{t('Chek kutilmoqda')}</span>}
+        {waitingPayment && <span className="gm-asub__wait">{t('To‘lov kutilmoqda')}</span>}
+        {row.status === 'PENDING' && row.method === 'CARD' && !!row.receiptAssetId && (
           <>
             <Button size="sm" loading={approve.isPending} onClick={() => approve.mutate(row.id)}><Check size={15} aria-hidden="true" /> {t('Tasdiqlash')}</Button>
             <Button size="sm" variant="secondary" onClick={() => setDialog('reject')}><X size={15} aria-hidden="true" /> {t('Rad etish')}</Button>
@@ -131,10 +155,14 @@ function Row({ row }: { row: AdminSubscriptionRow }) {
 
 /** Admin: obuna to‘lov so‘rovlarini tasdiqlash/rad etish, faol obunalarni ko‘rish va sovg‘a qilish. */
 export function AdminSubscriptionsPage() {
-  const [status, setStatus] = useState<SubscriptionStatus>('PENDING');
+  const [status, setStatus] = useState<SubscriptionStatus | ''>('PENDING');
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [query, setQuery] = useState('');
+  const [method, setMethod] = useState('');
   const [granting, setGranting] = useState(false);
-  const list = useAdminSubscriptions(status, page);
+  const list = useAdminSubscriptions(status, page, query, method);
+  const summary = useAdminSubscriptionSummary().data;
   const data = list.data;
   const pages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
 
@@ -148,11 +176,34 @@ export function AdminSubscriptionsPage() {
         <Button onClick={() => setGranting(true)}><Gift size={17} aria-hidden="true" /> {t('Obuna sovg‘a qilish')}</Button>
       </div>
 
+      {summary && (
+        <section className="gm-asub__stats" aria-label={t('Umumiy ko‘rsatkichlar')}>
+          <div><span><Users size={16} aria-hidden="true" /> {t('Faol Plus mijozlar')}</span><strong>{summary.activeCustomers}</strong></div>
+          <div><span><Crown size={16} aria-hidden="true" /> {t('Faol Pro ustalar')}</span><strong>{summary.activeMasters}</strong></div>
+          <div className={summary.pendingReceipts > 0 ? 'is-alert' : undefined}><span><Receipt size={16} aria-hidden="true" /> {t('Ko‘rib chiqilishi kerak')}</span><strong>{summary.pendingReceipts}</strong></div>
+          <div><span><Banknote size={16} aria-hidden="true" /> {t('Oxirgi 30 kun tushumi')}</span><strong>{formatMoney(summary.revenue30d, 'UZS')}</strong></div>
+          <div><span><Banknote size={16} aria-hidden="true" /> {t('Jami tushum')}</span><strong>{formatMoney(summary.revenueTotal, 'UZS')}</strong></div>
+          {summary.byMethod30d.length > 0 && (
+            <ul className="gm-asub__methods" aria-label={t('Usullar bo‘yicha (30 kun)')}>
+              {summary.byMethod30d.map((item) => (
+                <li key={item.method}>{METHOD[item.method] ?? item.method} <b>{item.count}</b> · {formatMoney(item.amount, 'UZS')}</li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
+      <form className="gm-asub__filters" onSubmit={(event) => { event.preventDefault(); setQuery(search); setPage(1); }}>
+        <Input label={t('Qidirish')} value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Ism, telefon, ID yoki kod')} />
+        <Select label={t('To‘lov usuli')} value={method} onChange={(event) => { setMethod(event.target.value); setPage(1); }} options={[{ value: '', label: t('Hammasi') }, ...Object.entries(METHOD).map(([value, label]) => ({ value, label }))]} />
+        <Button type="submit" variant="secondary"><Search size={16} aria-hidden="true" /> {t('Qidirish')}</Button>
+      </form>
+
       <div className="gm-asub__tabs" role="tablist">
         {TABS.map((tab) => (
           <button key={tab.value} type="button" role="tab" aria-selected={status === tab.value} className={cx('gm-asub__tab', status === tab.value && 'is-active')} onClick={() => { setStatus(tab.value); setPage(1); }}>
             {tab.label()}
-            <b>{data?.counts[tab.value] ?? 0}</b>
+            <b>{tab.value ? (data?.counts[tab.value] ?? 0) : Object.values(data?.counts ?? {}).reduce((sum, count) => sum + (count ?? 0), 0)}</b>
           </button>
         ))}
       </div>

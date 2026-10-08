@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime } from '@/lib/utils';
 import { useIncomingRequests } from '@/features/offer/hooks/useOffers';
+import { PausedNotice, usePaused } from '@/features/master/components/PausedNotice';
 import { OfferBadge } from '@/features/offer/components/OfferBadge';
 import { OfferForm } from '@/features/offer/components/OfferForm';
 import { t } from '@/i18n';
@@ -14,6 +15,7 @@ import { t } from '@/i18n';
 export function CreateOfferPage() {
   const incoming = useIncomingRequests();
   const [openId, setOpenId] = useState<string | null>(null);
+  const paused = usePaused();
 
   if (incoming.isLoading) return <PageLoader label={t('So‘rovlar yuklanmoqda…')} />;
   if (incoming.isError) return <Alert tone="danger">{getErrorMessage(incoming.error)}</Alert>;
@@ -27,6 +29,7 @@ export function CreateOfferPage() {
           <p className="gm-page-lead">{t('Sizga moslangan yangi so‘rovlar shu yerda ko‘rinadi.')}</p>
         </div>
       </div>
+      {paused && <PausedNotice />}
       {items.length === 0 && (
         <EmptyState
           icon={<Send size={34} strokeWidth={1.8} />}
@@ -52,9 +55,9 @@ export function CreateOfferPage() {
               <p className="gm-card__meta">{t('Yaratildi: {dateTime}', { dateTime: formatDateTime(request.createdAt) })}{request.preferredStartAt && t(' · Xohlangan vaqt: {dateTime}', { dateTime: formatDateTime(request.preferredStartAt) })}
               </p>
               {!myOffer && openId !== request.id && (
-                <Button size="sm" onClick={() => setOpenId(request.id)}>{t('Taklif berish')}</Button>
+                <Button size="sm" disabled={paused} onClick={() => setOpenId(request.id)}>{t('Taklif berish')}</Button>
               )}
-              {!myOffer && openId === request.id && (
+              {!myOffer && !paused && openId === request.id && (
                 <OfferForm requestId={request.id} onDone={() => setOpenId(null)} />
               )}
             </div>

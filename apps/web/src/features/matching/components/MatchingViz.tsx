@@ -1,4 +1,4 @@
-import { Check, Clock3, MapPin, Search, Sparkles, Star, Wrench } from 'lucide-react';
+import { Check, Clock3, X, MapPin, Search, Sparkles, Star, Wrench } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import './MatchingViz.css';
 import { t } from '@/i18n';
@@ -17,11 +17,11 @@ const STAGES: Array<{ icon: LucideIcon; label: string }> = [
  */
 export function MatchingViz({ done = false, found = 0 }: { done?: boolean; found?: number }) {
   return (
-    <section className={done ? 'gm-mviz gm-mviz--done' : 'gm-mviz'} role="status" aria-live="polite" aria-label={done ? t('Qidiruv yakunlandi') : t('Ustalar izlanmoqda')}>
+    <section className={done ? (found > 0 ? 'gm-mviz gm-mviz--done' : 'gm-mviz gm-mviz--done gm-mviz--empty') : 'gm-mviz'} role="status" aria-live="polite" aria-label={done ? t('Qidiruv yakunlandi') : t('Ustalar izlanmoqda')}>
       <div className="gm-mviz__stage" aria-hidden="true">
         <span className="gm-mviz__ring gm-mviz__ring--a" />
         <span className="gm-mviz__ring gm-mviz__ring--b" />
-        <span className="gm-mviz__core">{done ? <Check size={26} strokeWidth={3} /> : <Search size={24} />}</span>
+        <span className="gm-mviz__core">{done ? found > 0 ? <Check size={26} strokeWidth={3} /> : <X size={26} strokeWidth={3} /> : <Search size={24} />}</span>
         {STAGES.map((stage, i) => (
           <span key={stage.label} className="gm-mviz__dot" style={{ ['--i' as string]: i, ['--n' as string]: STAGES.length }}>
             <stage.icon size={14} />

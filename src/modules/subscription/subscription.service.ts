@@ -8,7 +8,7 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { TelegramAlertService } from '../../infrastructure/telegram/telegram-alert.service';
 import { NotificationService } from '../notification/notification.service';
 import type { GrantSubscriptionDto, RequestSubscriptionDto } from './dto/subscription.dto';
-import { Feature, PAYMENT_METHODS, PLANS, PlanDef, planByCode } from './plans.config';
+import { Feature, PAYMENT_METHODS, PLANS, PaymentMethod, PlanDef, planByCode } from './plans.config';
 
 const REMINDER_DAYS = 3;
 const addMonths = (date: Date, months: number) => {
@@ -33,6 +33,8 @@ const view = (row: Subscription) => ({
   startsAt: row.startsAt,
   endsAt: row.endsAt,
   rejectReason: row.rejectReason,
+  paidAt: row.paidAt,
+  hasReceipt: !!row.receiptAssetId,
   createdAt: row.createdAt,
 });
 
@@ -78,11 +80,24 @@ export class SubscriptionService {
 
   // ---------- foydalanuvchi ----------
 
+  /** Onlayn usullar faqat to‘lov tizimi sozlangan bo‘lsa taklif qilinadi; karta o‘tkazmasi (chek bilan) doim bor. */
+  availableMethods(): PaymentMethod[] {
+    const get = (key: string) => this.config.get<string>(key, '');
+    const online: Record<string, boolean> = {
+      CLICK: !!(get('payment.click.merchantId') && get('payment.click.serviceId') && get('payment.click.secretKey')),
+      PAYME: !!(get('payment.payme.merchantId') && get('payment.payme.secretKey')),
+      UZUM: !!(get('payment.uzum.merchantId') && get('payment.uzum.secretKey')),
+      CARD: true,
+    };
+    const wanted = (this.config.get<string>('SUBSCRIPTION_METHODS') ?? PAYMENT_METHODS.join(',')).split(',').map((item) => item.trim());
+    return PAYMENT_METHODS.filter((method) => wanted.includes(method) && online[method]);
+  }
+
   plans() {
-    const methods = (this.config.get<string>('SUBSCRIPTION_METHODS') ?? PAYMENT_METHODS.join(','))
-      .split(',')
-      .map((item) => item.trim())
-      .filter((item): item is (typeof PAYMENT_METHODS)[number] => (PAYMENT_METHODS as readonly string[]).includes(item));
+    const methods = this.availableMethods();
+    // Barcha usullar ko‘rsatiladi; to‘lov tizimi hali ulanmagan bo‘lsa — «tez orada» deb belgilanadi va tanlab bo‘lmaydi.
+    const wanted = (this.config.get<string>('SUBSCRIPTION_METHODS') ?? PAYMENT_METHODS.join(',')).split(',').map((item) => item.trim());
+    const allMethods = PAYMENT_METHODS.filter((method) => wanted.includes(method)).map((method) => ({ method, available: methods.includes(method) }));
     return {
       plans: PLANS.map((plan) => ({
         code: plan.code,
@@ -98,6 +113,7 @@ export class SubscriptionService {
         })),
       })),
       methods,
+      allMethods,
       currency: 'UZS',
     };
   }
@@ -119,7 +135,7 @@ export class SubscriptionService {
     return {
       customer: current('CUSTOMER'),
       master: current('MASTER'),
-      pending: pending.map(view),
+      pending: pending.map((row) => ({ ...view(row), checkoutUrl: this.checkoutUrl(row) })),
       history: rows.filter((row) => row.status !== 'PENDING').map(view),
       instructions: this.instructions(),
     };
@@ -133,16 +149,43 @@ export class SubscriptionService {
     };
   }
 
+  /** Click / Payme to‘lov sahifasi havolasi (to‘lov muvaffaqiyatli bo‘lsa obuna darhol faollashadi). */
+  checkoutUrl(row: { id: string; amount: Prisma.Decimal | number | string; method: string | null }): string | null {
+    const returnUrl = this.config.get<string>('payment.returnUrl', '');
+    if (row.method === 'CLICK') {
+      const params = new URLSearchParams({
+        service_id: this.config.get<string>('payment.click.serviceId', ''),
+        merchant_id: this.config.get<string>('payment.click.merchantId', ''),
+        amount: Number(row.amount).toFixed(2),
+        transaction_param: row.id,
+        ...(returnUrl ? { return_url: returnUrl } : {}),
+      });
+      return `https://my.click.uz/services/pay?${params.toString()}`;
+    }
+    if (row.method === 'PAYME') {
+      const raw = `m=${this.config.get<string>('payment.payme.merchantId', '')};ac.order_id=${row.id};a=${Math.round(Number(row.amount) * 100)}`;
+      const host = this.config.get<boolean>('payment.payme.testMode', true) ? 'checkout.test.paycom.uz' : 'checkout.paycom.uz';
+      return `https://${host}/${Buffer.from(raw).toString('base64')}`;
+    }
+    if (row.method === 'UZUM') return `${this.config.get<string>('payment.uzum.checkoutBase', '') || 'https://payment.example/checkout'}/${row.id}`;
+    return null;
+  }
+
   async request(userId: string, roles: Role[], dto: RequestSubscriptionDto) {
     const plan = planByCode(dto.planCode) as PlanDef;
+    if (!this.availableMethods().includes(dto.method)) throw new BadRequestException(ERRORS.SUBSCRIPTION_METHOD_UNAVAILABLE);
     if (plan.audience === 'MASTER') {
       const profile = await this.db.masterProfile.findUnique({ where: { userId }, select: { id: true } });
       if (!roles.includes(Role.MASTER) || !profile) throw new ForbiddenException(ERRORS.SUBSCRIPTION_MASTER_ONLY);
     } else if (!roles.includes(Role.CUSTOMER)) {
       throw new ForbiddenException(ERRORS.SUBSCRIPTION_CUSTOMER_ONLY);
     }
-    const waiting = await this.db.subscription.findFirst({ where: { userId, audience: plan.audience, status: 'PENDING' }, select: { id: true } });
-    if (waiting) throw new ConflictException(ERRORS.SUBSCRIPTION_PENDING_EXISTS);
+    const waiting = await this.db.subscription.findFirst({ where: { userId, audience: plan.audience, status: 'PENDING' } });
+    if (waiting) {
+      // Chek yuklangan (admin ko‘rib chiqayotgan) so‘rov bo‘lsa — yangisi ochilmaydi; to‘lanmagan urinish esa yangisi bilan almashtiriladi.
+      if (waiting.method === 'CARD' && waiting.receiptAssetId) throw new ConflictException(ERRORS.SUBSCRIPTION_PENDING_EXISTS);
+      await this.db.subscription.update({ where: { id: waiting.id }, data: { status: 'CANCELED', note: 'Yangi so‘rov bilan almashtirildi' } });
+    }
     const created = await this.db.subscription.create({
       data: {
         userId,
@@ -156,11 +199,27 @@ export class SubscriptionService {
         reference: `GM-${randomBytes(4).toString('hex').toUpperCase()}`,
       },
     });
-    const user = await this.db.user.findUnique({ where: { id: userId }, select: { accountNumber: true, firstName: true, lastName: true, phone: true } });
-    if (user) {
-      this.telegram.notifySubscriptionRequested({ name: fullName(user), account: user.accountNumber, phone: user.phone, plan: `${plan.name} · ${dto.months} oy`, amount: Number(created.amount), method: dto.method, reference: created.reference });
+    if (dto.method === 'CARD') {
+      const user = await this.db.user.findUnique({ where: { id: userId }, select: { accountNumber: true, firstName: true, lastName: true, phone: true } });
+      if (user) {
+        this.telegram.notifySubscriptionRequested({ name: fullName(user), account: user.accountNumber, phone: user.phone, plan: `${plan.name} · ${dto.months} oy`, amount: Number(created.amount), method: 'Karta (chek kutilmoqda)', reference: created.reference });
+      }
     }
-    return { ...view(created), instructions: this.instructions() };
+    return { ...view(created), checkoutUrl: this.checkoutUrl(created), instructions: this.instructions() };
+  }
+
+  /** Karta o‘tkazmasi cheki: foydalanuvchi yuklagan fayl so‘rovga biriktiriladi (admin ko‘rib chiqadi). */
+  async attachReceipt(userId: string, id: string, mediaAssetId: string) {
+    const row = await this.db.subscription.findFirst({ where: { id, userId } });
+    if (!row) throw new NotFoundException(ERRORS.SUBSCRIPTION_NOT_FOUND);
+    if (row.status !== 'PENDING' || row.method !== 'CARD') throw new ConflictException(ERRORS.SUBSCRIPTION_NOT_PENDING);
+    const asset = await this.db.mediaAsset.findFirst({ where: { id: mediaAssetId, uploaderId: userId, kind: 'SUBSCRIPTION_RECEIPT', linkedResourceType: 'Subscription', linkedResourceId: id } });
+    if (!asset) throw new NotFoundException(ERRORS.MEDIA_NOT_FOUND);
+    if (asset.status !== 'READY') throw new ConflictException(ERRORS.SUBSCRIPTION_RECEIPT_NOT_READY);
+    const updated = await this.db.subscription.update({ where: { id }, data: { receiptAssetId: asset.id, providerMeta: { receiptAt: new Date().toISOString() } } });
+    const user = await this.db.user.findUnique({ where: { id: userId }, select: { accountNumber: true, firstName: true, lastName: true, phone: true } });
+    if (user) this.telegram.notifySubscriptionRequested({ name: fullName(user), account: user.accountNumber, phone: user.phone, plan: `${planByCode(row.planCode)?.name ?? row.planCode} · ${row.months} oy`, amount: Number(row.amount), method: 'Karta — CHEK YUKLANDI', reference: row.reference });
+    return view(updated);
   }
 
   async cancelRequest(userId: string, id: string) {
@@ -173,15 +232,30 @@ export class SubscriptionService {
 
   // ---------- admin ----------
 
-  async adminList(query: { status?: Subscription['status']; page?: number }) {
+  async adminList(query: { status?: Subscription['status']; page?: number; q?: string; method?: string }) {
     const limit = 30;
     const page = Math.max(query.page ?? 1, 1);
-    const where: Prisma.SubscriptionWhereInput = query.status ? { status: query.status } : {};
+    const q = query.q?.trim();
+    const and: Prisma.SubscriptionWhereInput[] = [];
+    if (q) {
+      const numeric = /^\d{1,9}$/.test(q) ? Number(q) : null;
+      and.push({
+        OR: [
+          { reference: { contains: q.toUpperCase() } },
+          { user: { phone: { contains: q } } },
+          { user: { firstName: { contains: q, mode: 'insensitive' } } },
+          { user: { lastName: { contains: q, mode: 'insensitive' } } },
+          ...(numeric !== null ? [{ user: { accountNumber: numeric } }] : []),
+        ],
+      });
+    }
+    if (query.method) and.push({ method: query.method });
+    const where: Prisma.SubscriptionWhereInput = { ...(query.status ? { status: query.status } : {}), ...(and.length ? { AND: and } : {}) };
     const [total, rows, counts] = await Promise.all([
       this.db.subscription.count({ where }),
       this.db.subscription.findMany({
         where,
-        orderBy: query.status === 'PENDING' ? { createdAt: 'asc' } : { createdAt: 'desc' },
+        orderBy: query.status === 'PENDING' ? [{ receiptAssetId: { sort: 'desc', nulls: 'last' } }, { createdAt: 'asc' }] : { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
         include: { user: { select: { id: true, accountNumber: true, firstName: true, lastName: true, phone: true } } },
@@ -189,7 +263,12 @@ export class SubscriptionService {
       this.db.subscription.groupBy({ by: ['status'], _count: true }),
     ]);
     return {
-      items: rows.map((row) => ({ ...view(row), user: { id: row.user.id, accountNumber: row.user.accountNumber, name: fullName(row.user), phone: row.user.phone } })),
+      items: rows.map((row) => ({
+        ...view(row),
+        receiptAssetId: row.receiptAssetId,
+        providerTxId: row.providerTxId,
+        user: { id: row.user.id, accountNumber: row.user.accountNumber, name: fullName(row.user), phone: row.user.phone },
+      })),
       total,
       page,
       limit,
@@ -197,10 +276,37 @@ export class SubscriptionService {
     };
   }
 
+  /** Superadmin uchun umumiy ko‘rinish: faol obunalar, kutilayotgan cheklar, tushum (usul va reja bo‘yicha). */
+  async adminSummary() {
+    const now = new Date();
+    const since = new Date(now.getTime() - 30 * 86_400_000);
+    const [active, pendingReceipts, pendingNoReceipt, paid30, paidAll] = await Promise.all([
+      this.db.subscription.groupBy({ by: ['audience'], where: { status: 'ACTIVE', startsAt: { lte: now }, endsAt: { gt: now } }, _count: true }),
+      this.db.subscription.count({ where: { status: 'PENDING', method: 'CARD', receiptAssetId: { not: null } } }),
+      this.db.subscription.count({ where: { status: 'PENDING', receiptAssetId: null } }),
+      this.db.subscription.groupBy({ by: ['method'], where: { source: 'PURCHASE', status: { in: ['ACTIVE', 'EXPIRED'] }, paidAt: { gte: since } }, _sum: { amount: true }, _count: true }),
+      this.db.subscription.groupBy({ by: ['planCode'], where: { source: 'PURCHASE', status: { in: ['ACTIVE', 'EXPIRED'] } }, _sum: { amount: true }, _count: true }),
+    ]);
+    const sum = (rows: Array<{ _sum: { amount: Prisma.Decimal | null } }>) => rows.reduce((total, row) => total + Number(row._sum.amount ?? 0), 0);
+    return {
+      activeCustomers: active.find((row) => row.audience === 'CUSTOMER')?._count ?? 0,
+      activeMasters: active.find((row) => row.audience === 'MASTER')?._count ?? 0,
+      pendingReceipts,
+      pendingNoReceipt,
+      revenue30d: sum(paid30),
+      revenueTotal: sum(paidAll),
+      byMethod30d: paid30.map((row) => ({ method: row.method ?? '—', count: row._count, amount: Number(row._sum.amount ?? 0) })),
+      byPlan: paidAll.map((row) => ({ planCode: row.planCode, count: row._count, amount: Number(row._sum.amount ?? 0) })),
+    };
+  }
+
   async approve(adminId: string, id: string) {
     const row = await this.db.subscription.findUnique({ where: { id } });
     if (!row) throw new NotFoundException(ERRORS.SUBSCRIPTION_NOT_FOUND);
     if (row.status !== 'PENDING') throw new ConflictException(ERRORS.SUBSCRIPTION_NOT_PENDING);
+    // Click/Payme/Uzum to‘lovlari avtomatik faollashadi; admin faqat karta chekini ko‘rib chiqadi.
+    if (row.method !== 'CARD') throw new ConflictException(ERRORS.SUBSCRIPTION_AUTO_ONLY);
+    if (!row.receiptAssetId) throw new ConflictException(ERRORS.SUBSCRIPTION_RECEIPT_REQUIRED);
     const activated = await this.db.$transaction(async (tx) => {
       const updated = await this.activate(tx, row);
       await tx.subscription.update({ where: { id }, data: { decidedById: adminId, decidedAt: new Date() } });
@@ -215,6 +321,7 @@ export class SubscriptionService {
     const row = await this.db.subscription.findUnique({ where: { id } });
     if (!row) throw new NotFoundException(ERRORS.SUBSCRIPTION_NOT_FOUND);
     if (row.status !== 'PENDING') throw new ConflictException(ERRORS.SUBSCRIPTION_NOT_PENDING);
+    if (row.method !== 'CARD') throw new ConflictException(ERRORS.SUBSCRIPTION_AUTO_ONLY);
     const updated = await this.db.$transaction(async (tx) => {
       const next = await tx.subscription.update({ where: { id }, data: { status: 'REJECTED', rejectReason: reason.trim(), decidedById: adminId, decidedAt: new Date() } });
       await tx.auditLog.create({ data: { actorId: adminId, action: 'SUBSCRIPTION_REJECTED', targetType: 'Subscription', targetId: id, reason } });
@@ -260,6 +367,84 @@ export class SubscriptionService {
     return view(updated);
   }
 
+  // ---------- to‘lov tizimlari (Click / Payme / Uzum) ----------
+
+  /** To‘lov tizimi so‘rovi bo‘yicha obuna (id — tranzaksiya parametri). */
+  async gatewayFind(id: string, method: 'CLICK' | 'PAYME' | 'UZUM') {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
+    return this.db.subscription.findFirst({ where: { id, method, source: 'PURCHASE' } });
+  }
+
+  async gatewayFindByTx(method: 'PAYME' | 'CLICK' | 'UZUM', txId: string) {
+    return this.db.subscription.findFirst({ where: { method, providerTxId: txId } });
+  }
+
+  async gatewayStatement(from: number, to: number) {
+    return this.db.subscription.findMany({ where: { method: 'PAYME', providerTxId: { not: null }, createdAt: { gte: new Date(from), lte: new Date(to) } }, orderBy: { createdAt: 'asc' }, take: 200 });
+  }
+
+  /** Protokol holatini (Click prepare, Payme tranzaksiya) saqlaydi. */
+  async gatewayUpdate(id: string, data: { providerTxId?: string; meta?: Record<string, unknown> }) {
+    const row = await this.db.subscription.findUniqueOrThrow({ where: { id }, select: { providerMeta: true } });
+    return this.db.subscription.update({
+      where: { id },
+      data: {
+        ...(data.providerTxId ? { providerTxId: data.providerTxId } : {}),
+        ...(data.meta ? { providerMeta: { ...((row.providerMeta as object | null) ?? {}), ...data.meta } as Prisma.InputJsonValue } : {}),
+      },
+    });
+  }
+
+  /** To‘lov muvaffaqiyatli: admin ruxsatisiz obuna darhol faollashadi (takroriy chaqiruv xavfsiz). */
+  async gatewayPaid(id: string, txId: string, meta?: Record<string, unknown>) {
+    const result = await this.db.$transaction(async (tx) => {
+      const row = await tx.subscription.findUniqueOrThrow({ where: { id } });
+      if (row.status === 'ACTIVE' || row.status === 'EXPIRED') return { row, fresh: false };
+      if (row.status !== 'PENDING') return { row, fresh: false, blocked: true };
+      const withTx = await tx.subscription.update({
+        where: { id },
+        data: {
+          providerTxId: txId,
+          paidAt: new Date(),
+          decidedAt: new Date(),
+          providerMeta: { ...((row.providerMeta as object | null) ?? {}), ...(meta ?? {}) } as Prisma.InputJsonValue,
+        },
+      });
+      const activated = await this.activate(tx, withTx);
+      await tx.auditLog.create({ data: { actorId: null, action: 'SUBSCRIPTION_PAID', targetType: 'Subscription', targetId: id, after: { method: row.method, txId, userId: row.userId, plan: row.planCode, months: row.months } } });
+      return { row: activated, fresh: true };
+    });
+    if (result.fresh) await this.notifyUser(result.row.userId, 'subscription.activated', 'Obuna faollashtirildi', `${planByCode(result.row.planCode)?.name ?? ''} obunangiz ${result.row.months} oyga faollashtirildi. To‘lov uchun rahmat!`);
+    return result;
+  }
+
+  /** To‘lov bekor qilindi/muvaffaqiyatsiz (hali faollashmagan so‘rov yopiladi). */
+  async gatewayFail(id: string, reason: string) {
+    await this.db.subscription.updateMany({ where: { id, status: 'PENDING' }, data: { status: 'CANCELED', note: reason } });
+  }
+
+  /** Payme: to‘lov yakunlangach qaytarilsa (CancelTransaction) — obuna bekor qilinadi. */
+  async gatewayRefunded(id: string, reason: string) {
+    const row = await this.db.subscription.findUnique({ where: { id } });
+    if (!row || (row.status !== 'ACTIVE' && row.status !== 'EXPIRED')) return;
+    await this.db.$transaction(async (tx) => {
+      await tx.subscription.update({ where: { id }, data: { status: 'CANCELED', endsAt: new Date(), note: reason } });
+      await this.syncMasterPro(tx, row.userId);
+      await tx.auditLog.create({ data: { actorId: null, action: 'SUBSCRIPTION_REFUNDED', targetType: 'Subscription', targetId: id, reason } });
+    });
+    await this.notifyUser(row.userId, 'subscription.expired', 'Obuna bekor qilindi', 'To‘lov qaytarilgani sababli obunangiz bekor qilindi.');
+  }
+
+  /** Umumiy webhook (Uzum): imzolangan hodisa natijasi bo‘yicha. */
+  async gatewayWebhook(provider: 'UZUM' | 'CLICK' | 'PAYME', input: { subscriptionId: string; status: 'SUCCEEDED' | 'FAILED'; amount: number; currency: string; providerPaymentId?: string; failureReason?: string }) {
+    const row = await this.gatewayFind(input.subscriptionId, provider);
+    if (!row) return { found: false as const };
+    if (Number(row.amount) !== input.amount || row.currency !== input.currency) return { found: true as const, mismatch: true as const };
+    if (input.status === 'SUCCEEDED') await this.gatewayPaid(row.id, input.providerPaymentId ?? `${provider}-${row.id}`);
+    else await this.gatewayFail(row.id, input.failureReason ?? `${provider}: to‘lov bajarilmadi`);
+    return { found: true as const, mismatch: false as const };
+  }
+
   // ---------- ichki ----------
 
   /** PENDING yozuvni faollashtiradi: boshlanishi — mavjud obuna tugagan paytdan (davom ettirish), aks holda hozir. */
@@ -302,6 +487,9 @@ export class SubscriptionService {
         if (row.audience === 'MASTER') await this.syncMasterPro(this.db, row.userId);
         if (!stillActive) await this.notifyUser(row.userId, 'subscription.expired', 'Obuna muddati tugadi', `${planByCode(row.planCode)?.name ?? ''} obunangiz tugadi. Qayta obuna bo‘lib, imkoniyatlarni tiklashingiz mumkin.`);
       }
+      // To‘lanmagan eskirgan so‘rovlar: onlayn to‘lov 24 soatdan, chek yuklanmagan karta so‘rovi 3 kundan keyin yopiladi.
+      await this.db.subscription.updateMany({ where: { status: 'PENDING', method: { in: ['CLICK', 'PAYME', 'UZUM'] }, createdAt: { lt: new Date(now.getTime() - 86_400_000) } }, data: { status: 'CANCELED', note: 'To‘lov amalga oshmadi' } });
+      await this.db.subscription.updateMany({ where: { status: 'PENDING', method: 'CARD', receiptAssetId: null, createdAt: { lt: new Date(now.getTime() - 3 * 86_400_000) } }, data: { status: 'CANCELED', note: 'Chek yuklanmadi' } });
       const soon = await this.db.subscription.findMany({
         where: { status: 'ACTIVE', reminderSent: false, endsAt: { gt: now, lte: new Date(now.getTime() + REMINDER_DAYS * 86_400_000) } },
         select: { id: true, userId: true, audience: true, planCode: true, endsAt: true },

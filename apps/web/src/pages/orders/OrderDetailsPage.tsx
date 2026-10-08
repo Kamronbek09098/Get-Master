@@ -1,3 +1,4 @@
+import { usePaused } from '@/features/master/components/PausedNotice';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
@@ -57,6 +58,7 @@ export function OrderDetailsPage() {
   const order = useOrder(id);
   const proofs = useWorkProofs(id);
   const confirmOrder = useConfirmOrder(id);
+  const paused = usePaused();
   const startTravel = useStartTravel(id);
   const arrive = useArrive(id);
   const startWork = useStartWork(id);
@@ -102,9 +104,9 @@ export function OrderDetailsPage() {
   if (isMaster) {
     if (status === 'BOOKED')
       step = (
-        <StepCard tone="next" icon={<CheckCircle2 size={22} />} title={t('Buyurtmani tasdiqlang')} lead={t('Mijoz sizni tanladi. Buyurtmani tasdiqlasangiz, mijoz sizning kelishingizni kutadi.')}>
+        <StepCard tone="next" icon={<CheckCircle2 size={22} />} title={t('Buyurtmani tasdiqlang')} lead={paused ? t('Pauza rejimida buyurtmani qabul qila olmaysiz. Avval pauzani o‘chiring.') : t('Mijoz sizni tanladi. Buyurtmani tasdiqlasangiz, mijoz sizning kelishingizni kutadi.')}>
           <div className="gm-oactions">
-            <Button loading={confirmOrder.isPending} onClick={() => confirmOrder.mutate()}>{t('Buyurtmani tasdiqlash')}</Button>
+            <Button loading={confirmOrder.isPending} disabled={paused} onClick={() => confirmOrder.mutate()}>{t('Buyurtmani tasdiqlash')}</Button>
           </div>
         </StepCard>
       );

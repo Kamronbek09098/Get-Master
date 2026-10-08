@@ -11,6 +11,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime, formatMoney } from '@/lib/utils';
 import { OrderStatus } from '@/features/order/components/OrderStatus';
 import { FLOW_STEPS, stepIndex } from '@/features/order/order-flow';
+import { usePaused } from '@/features/master/components/PausedNotice';
 import { useArrive, useCancelOrder, useConfirmCompletion, useConfirmOrder, useOrder, useStartTravel, useStartWork, useSubmitCompletion } from '@/features/order/hooks/useOrders';
 import { PaymentMethodCards } from '@/features/payment/components/PaymentMethodCards';
 import { useConfirmCash } from '@/features/payment/hooks/usePayment';
@@ -32,6 +33,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
   const complete = useConfirmCompletion(orderId);
   const cancel = useCancelOrder(orderId);
   const cash = useConfirmCash();
+  const paused = usePaused();
   const [cancelOpen, setCancelOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [method, setMethod] = useState<PaymentProvider | ''>('');
@@ -55,7 +57,8 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
   if (master) {
     if (status === 'BOOKED') {
       hint = t('Mijoz sizga buyurtma yubordi. Qabul qilasizmi?');
-      actions.push({ label: t('Qabul qilish'), icon: <CheckCircle2 size={15} />, run: () => confirm.mutate(), primary: true });
+      if (paused) hint = t('Pauza rejimida buyurtmani qabul qila olmaysiz. Avval pauzani o‘chiring.');
+      actions.push({ label: t('Qabul qilish'), icon: <CheckCircle2 size={15} />, run: () => confirm.mutate(), primary: true, disabled: paused });
     } else if (status === 'CONFIRMED') {
       hint = t('Buyurtma qabul qilindi. Tayyor bo‘lgach, yo‘lga chiqing.');
       actions.push({ label: t('Yo‘lga chiqdim'), icon: <Navigation size={15} />, run: () => travel.mutate(), primary: true });

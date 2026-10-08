@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, Clock, Copy, Crown, Gift, Hourglass, Sparkles, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Copy, Crown, ExternalLink, Gift, Hourglass, Sparkles, XCircle } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -8,8 +8,10 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { cx, formatDate, formatDateTime, formatMoney } from '@/lib/utils';
 import { ProviderLogo } from '@/features/payment/components/ProviderLogo';
 import { useAppStore } from '@/store/app.store';
-import { useCancelSubscriptionRequest, useMySubscriptions, usePlans, useRequestSubscription } from './hooks';
+import { MediaUploadField } from '@/features/media/components/MediaUploadField';
+import { useAttachReceipt, useCancelSubscriptionRequest, useMySubscriptions, usePlans, useRequestSubscription } from './hooks';
 import { FEATURE_META } from './meta';
+import { GATEWAY_METHODS } from './types';
 import type { PayMethod, Plan, SubscriptionAudience, SubscriptionRow } from './types';
 import './subscription.css';
 import { t } from '@/i18n';
@@ -56,14 +58,23 @@ function daysLeft(endsAt: string): number {
 
 function PendingCard({ row, instructions, plan }: { row: SubscriptionRow; instructions: { card: string; holder: string; note: string }; plan: Plan | undefined }) {
   const cancel = useCancelSubscriptionRequest();
+  const attach = useAttachReceipt();
   const method = (row.method ?? 'CARD') as PayMethod;
+  const online = GATEWAY_METHODS.includes(method);
+  const attachReceipt = (mediaAssetId: string) => attach.mutate({ id: row.id, mediaAssetId });
   return (
     <section className="gm-sub__card gm-sub__pending" aria-label={t('Kutilayotgan so‘rov')}>
       <div className="gm-sub__pending-head">
         <span className="gm-sub__pending-icon" aria-hidden="true"><Hourglass size={22} /></span>
         <div>
-          <h2>{t('To‘lovni yakunlang')}</h2>
-          <p>{t('So‘rovingiz qabul qilindi. To‘lovni amalga oshirgach, administrator tasdiqlaydi va obuna avtomatik faollashadi.')}</p>
+          <h2>{online ? t('To‘lov kutilmoqda') : row.hasReceipt ? t('Chek ko‘rib chiqilmoqda') : t('To‘lovni yakunlang')}</h2>
+          <p>
+            {online
+              ? t('To‘lov sahifasida to‘lovni yakunlang: to‘lov muvaffaqiyatli bo‘lishi bilan obuna darhol faollashadi, hech kimning ruxsati kerak emas.')
+              : row.hasReceipt
+                ? t('Chekingiz yuborildi. Administrator ko‘rib chiqadi va obuna tasdiqlangach faollashadi.')
+                : t('Quyidagi kartaga to‘lov qiling va to‘lov chekini (rasmini) yuklang. Administrator tekshirib, obunani faollashtiradi.')}
+          </p>
         </div>
       </div>
       <dl className="gm-sub__rows">
@@ -71,17 +82,43 @@ function PendingCard({ row, instructions, plan }: { row: SubscriptionRow; instru
         <div><dt>{t('To‘lov summasi')}</dt><dd>{formatMoney(row.amount, row.currency)}</dd></div>
         <div><dt>{t('Usul')}</dt><dd>{METHOD_LABEL[method]()}</dd></div>
       </dl>
-      <div className="gm-sub__copies">
-        <CopyField label={t('Izoh kodi')} value={row.reference} />
-        {instructions.card && <CopyField label={t('Karta raqami')} value={instructions.card} />}
-        {instructions.holder && <CopyField label={t('Qabul qiluvchi')} value={instructions.holder} />}
-      </div>
-      <p className="gm-sub__note">{instructions.note || t('To‘lov izohiga yuqoridagi kodni yozing, shunda to‘lovingizni tezroq topamiz.')}</p>
+      {online ? (
+        <div className="gm-sub__payblock">
+          {row.checkoutUrl && (
+            <a className="gm-sub__pay" href={row.checkoutUrl}>
+              <span className="gm-sub__logo gm-sub__logo--sm"><ProviderLogo provider={LOGO[method]} size={44} /></span>
+              <span>{t('{method} orqali to‘lash', { method: METHOD_LABEL[method]() })}</span>
+              <ExternalLink size={16} aria-hidden="true" />
+            </a>
+          )}
+          <p className="gm-sub__live" role="status">
+            <i aria-hidden="true" /> {t('To‘lov holati avtomatik tekshirilmoqda')}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="gm-sub__copies">
+            <CopyField label={t('Izoh kodi')} value={row.reference} />
+            {instructions.card && <CopyField label={t('Karta raqami')} value={instructions.card} />}
+            {instructions.holder && <CopyField label={t('Qabul qiluvchi')} value={instructions.holder} />}
+          </div>
+          <p className="gm-sub__note">{instructions.note || t('To‘lov izohiga yuqoridagi kodni yozing, shunda to‘lovingizni tezroq topamiz.')}</p>
+          {!row.hasReceipt ? (
+            <div className="gm-sub__receipt">
+              <MediaUploadField label={t('To‘lov cheki')} accept="image/*" kind="SUBSCRIPTION_RECEIPT" linkType="Subscription" linkId={row.id} onReady={attachReceipt} />
+              {attach.isError && <Alert tone="danger">{getErrorMessage(attach.error)}</Alert>}
+              <p className="gm-sub__note">{t('Chek aniq o‘qilishi kerak: summa, sana va qabul qiluvchi ko‘rinib tursin.')}</p>
+            </div>
+          ) : (
+            <Alert tone="success">{t('Chek qabul qilindi. Odatda 1 soat ichida ko‘rib chiqiladi.')}</Alert>
+          )}
+        </>
+      )}
       {cancel.isError && <Alert tone="danger">{getErrorMessage(cancel.error)}</Alert>}
       <div className="gm-sub__pending-actions">
-        <Button variant="secondary" loading={cancel.isPending} onClick={() => cancel.mutate(row.id)}>
+        <button type="button" className="gm-sub__cancel" disabled={cancel.isPending} onClick={() => cancel.mutate(row.id)}>
           <XCircle size={16} aria-hidden="true" /> {t('So‘rovni bekor qilish')}
-        </Button>
+        </button>
       </div>
     </section>
   );
@@ -93,7 +130,8 @@ export function SubscriptionView({ audience }: { audience: SubscriptionAudience 
   const mine = useMySubscriptions();
   const request = useRequestSubscription();
   const [months, setMonths] = useState<1 | 3 | 12>(3);
-  const [method, setMethod] = useState<PayMethod>('CLICK');
+  const [method, setMethod] = useState<PayMethod>('CARD');
+  const [allHistory, setAllHistory] = useState(false);
 
   if (plans.isLoading || mine.isLoading) return <PageLoader />;
   if (plans.isError) return <Alert tone="danger">{getErrorMessage(plans.error)}</Alert>;
@@ -105,7 +143,7 @@ export function SubscriptionView({ audience }: { audience: SubscriptionAudience 
   const active = audience === 'CUSTOMER' ? data.customer : data.master;
   const pending = data.pending.find((row) => row.audience === audience);
   const price = plan.prices.find((item) => item.months === months);
-  const methods = (plans.data?.methods ?? []).filter((item): item is PayMethod => item in METHOD_LABEL);
+  const methodList = (plans.data?.allMethods ?? (plans.data?.methods ?? []).map((item) => ({ method: item as PayMethod, available: true }))).filter((item) => item.method in METHOD_LABEL);
   const history = data.history.filter((row) => row.audience === audience);
   const left = active ? daysLeft(active.endsAtTotal) : 0;
   const progress = active && active.startsAt ? Math.min(100, Math.max(4, (left / Math.max(1, (new Date(active.endsAtTotal).getTime() - new Date(active.startsAt).getTime()) / 86_400_000)) * 100)) : 0;
@@ -134,7 +172,7 @@ export function SubscriptionView({ audience }: { audience: SubscriptionAudience 
         )}
       </section>
 
-      <section className="gm-sub__features" aria-label={t('Imkoniyatlar')}>
+      <section className={cx('gm-sub__features', plan.features.length % 2 === 0 && plan.features.length >= 4 && 'gm-sub__features--even')} aria-label={t('Imkoniyatlar')}>
         {plan.features.map((feature) => {
           const meta = FEATURE_META[feature];
           const Icon = meta.icon;
@@ -172,14 +210,15 @@ export function SubscriptionView({ audience }: { audience: SubscriptionAudience 
 
           <h3 className="gm-sub__sub">{t('To‘lov usuli')}</h3>
           <div className="gm-sub__methods" role="radiogroup" aria-label={t('To‘lov usuli')}>
-            {methods.map((item) => (
-              <label key={item} className={cx('gm-sub__method', method === item && 'is-selected')}>
-                <input type="radio" name="method" checked={method === item} onChange={() => setMethod(item)} />
-                <ProviderLogo provider={LOGO[item]} size={34} />
+            {methodList.map(({ method: item, available }) => (
+              <label key={item} className={cx('gm-sub__method', method === item && 'is-selected', !available && 'is-off')} aria-disabled={!available}>
+                <input type="radio" name="method" checked={method === item} disabled={!available} onChange={() => setMethod(item)} />
+                <span className="gm-sub__logo"><ProviderLogo provider={LOGO[item]} size={44} /></span>
                 <span>
                   <strong>{METHOD_LABEL[item]()}</strong>
                   <small>{METHOD_HINT[item]()}</small>
                 </span>
+                {!available && <em className="gm-sub__soon">{t('Tez orada')}</em>}
               </label>
             ))}
           </div>
@@ -190,11 +229,18 @@ export function SubscriptionView({ audience }: { audience: SubscriptionAudience 
               <small>{t('Jami')}</small>
               <strong>{price ? formatMoney(price.price, 'UZS') : '—'}</strong>
             </div>
-            <Button size="lg" loading={request.isPending} disabled={!price} onClick={() => request.mutate({ planCode: plan.code, months, method })}>
-              <Crown size={18} aria-hidden="true" /> {active ? t('Uzaytirish') : t('Obuna bo‘lish')}
+            <Button size="lg" loading={request.isPending} disabled={!price} onClick={() =>
+                request.mutate(
+                  { planCode: plan.code, months, method },
+                  // Onlayn usul: to‘lov sahifasiga o‘tadi; to‘lov muvaffaqiyatli bo‘lsa, obuna o‘zi faollashadi.
+                  { onSuccess: (created) => created.checkoutUrl && window.location.assign(created.checkoutUrl) },
+                )
+              }
+            >
+              <Crown size={18} aria-hidden="true" /> {GATEWAY_METHODS.includes(method) ? t('To‘lashga o‘tish') : active ? t('Uzaytirish') : t('Obuna bo‘lish')}
             </Button>
           </div>
-          <p className="gm-sub__fine">{t('To‘lov tasdiqlangach obuna faollashadi. Istalgan vaqtda so‘rovni bekor qilishingiz mumkin.')}</p>
+          <p className="gm-sub__fine">{GATEWAY_METHODS.includes(method) ? t('Click, Payme va Uzum orqali to‘lov muvaffaqiyatli bo‘lishi bilan obuna darhol faollashadi.') : t('Karta orqali to‘lovda chekni yuklaysiz, administrator tasdiqlagach obuna faollashadi.')}</p>
         </section>
       )}
 
@@ -202,7 +248,7 @@ export function SubscriptionView({ audience }: { audience: SubscriptionAudience 
         <section className="gm-sub__card" aria-label={t('Obuna tarixi')}>
           <h2>{t('Obuna tarixi')}</h2>
           <ul className="gm-sub__history">
-            {history.map((row) => {
+            {(allHistory ? history : history.slice(0, 4)).map((row) => {
               const badge = STATUS_BADGE[row.status] ?? { label: () => row.status, tone: 'neutral' as const };
               return (
                 <li key={row.id}>
@@ -220,6 +266,11 @@ export function SubscriptionView({ audience }: { audience: SubscriptionAudience 
               );
             })}
           </ul>
+          {history.length > 4 && (
+            <button type="button" className="gm-sub__more" onClick={() => setAllHistory((value) => !value)}>
+              {allHistory ? t('Kamroq ko‘rsatish') : t('Barchasini ko‘rsatish ({count})', { count: history.length })}
+            </button>
+          )}
         </section>
       )}
     </div>

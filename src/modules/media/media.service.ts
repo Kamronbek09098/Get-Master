@@ -225,6 +225,13 @@ export class MediaService {
         if (!participant) throw new ForbiddenException(ERRORS.NOT_CONVERSATION_PARTICIPANT);
         return;
       }
+      case 'SUBSCRIPTION_RECEIPT': {
+        if (link.type !== 'Subscription') throw new ForbiddenException(ERRORS.MEDIA_INVALID_TARGET);
+        const subscription = await this.db.subscription.findUnique({ where: { id: link.id } });
+        if (!subscription || subscription.userId !== uploaderId) throw new ForbiddenException(ERRORS.MEDIA_ACCESS_DENIED);
+        if (subscription.status !== 'PENDING' || subscription.method !== 'CARD') throw new ForbiddenException(ERRORS.SUBSCRIPTION_NOT_PENDING);
+        return;
+      }
       case 'MASTER_PORTFOLIO':
       case 'MASTER_VERIFICATION_DOCUMENT': {
         const masterProfile = await this.db.masterProfile.findUnique({ where: { userId: uploaderId } });

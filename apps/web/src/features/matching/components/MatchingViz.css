@@ -72,3 +72,7 @@
 @keyframes gm-mviz-step { 0%, 100% { color: var(--mv-step); } 10%, 22% { color: var(--mv-step-lit); } 35% { color: var(--mv-step); } }
 @media (max-width: 560px) { .gm-mviz { grid-template-columns: 1fr; justify-items: center; text-align: center; } .gm-mviz__steps { justify-items: center; } }
 @media (prefers-reduced-motion: reduce) { .gm-mviz *, .gm-mviz__ring { animation: none !important; } }
+
+/* Mos usta topilmadi: yashil galochka o‘rniga qizil «X» */
+.gm-mviz--empty { --mv-ok: #dc2f3c; --mv-ok-bg: #ef4452; --mv-ok-ink: #ffffff; --mv-ok-shadow: 0 8px 22px rgba(239, 68, 82, 0.4); }
+:root[data-theme='dark'] .gm-mviz--empty { --mv-ok: #fb7185; --mv-ok-bg: #fb7185; --mv-ok-ink: #2a0610; --mv-ok-shadow: 0 0 30px rgba(251, 113, 133, 0.5); }

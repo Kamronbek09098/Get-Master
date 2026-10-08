@@ -31,3 +31,20 @@
   .gm-asub__actions .gm-button { flex: 1; }
   .gm-asub__two { grid-template-columns: 1fr; }
 }
+
+.gm-asub__stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.gm-asub__stats > div { display: grid; gap: 6px; padding: 14px 16px; border: 1px solid var(--gm-color-border); border-radius: 18px; background: var(--gm-color-surface); box-shadow: var(--gm-shadow-sm); }
+.gm-asub__stats span { display: inline-flex; align-items: center; gap: 6px; color: var(--gm-color-text-muted); font-size: 0.8rem; font-weight: 700; }
+.gm-asub__stats strong { font: 800 1.4rem / 1.1 var(--gm-font-display); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.gm-asub__stats .is-alert { border-color: var(--gm-color-warning); background: var(--gm-color-warning-bg); }
+.gm-asub__methods { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.gm-asub__methods li { padding: 5px 12px; border-radius: 999px; background: var(--gm-color-surface-muted); font-size: 0.82rem; font-weight: 600; }
+.gm-asub__filters { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; padding: 14px 16px; border: 1px solid var(--gm-color-border); border-radius: 18px; background: var(--gm-color-surface); }
+.gm-asub__receipt { position: relative; width: 74px; height: 74px; border-radius: 14px; overflow: hidden; background: var(--gm-color-surface-muted); }
+.gm-asub__receipt .gm-mviewer__open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; }
+.gm-asub__receipt .gm-media-thumb { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+.gm-asub__receipt .gm-mviewer__hint { display: none; }
+.gm-asub__receipt span { position: absolute; left: 4px; bottom: 4px; display: inline-flex; align-items: center; gap: 3px; padding: 1px 6px; border-radius: 8px; background: rgba(10, 20, 40, 0.65); color: #fff; font-size: 0.68rem; font-weight: 700; pointer-events: none; }
+.gm-asub__wait { color: var(--gm-color-text-muted); font-size: 0.86rem; font-weight: 600; }
+.gm-asub__actions { align-items: center; }
+@media (max-width: 640px) { .gm-asub__filters { grid-template-columns: 1fr; } }

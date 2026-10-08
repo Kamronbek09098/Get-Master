@@ -1,5 +1,5 @@
 import { attachOrderToPairConversation } from '../communication/pair-conversation';
-import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { NotificationChannel, Prisma } from '@prisma/client';
 import { MasterStatsService } from '../master/master-stats.service';
 import { AvailabilityService } from '../master/availability.service';
@@ -8,6 +8,7 @@ import { OutboxService } from '../../infrastructure/outbox/outbox.service';
 import { NotificationService } from '../notification/notification.service';
 import {
   AlreadyOfferedException,
+  DomainException,
   OfferNotAvailableException,
   MasterTimeUnavailableException,
   RequestAlreadyBookedException,
@@ -56,9 +57,9 @@ export class OfferService {
   async create(userId: string, dto: CreateOfferDto) {
     const masterProfile = await this.db.masterProfile.findUnique({ where: { userId } });
     if (!masterProfile) throw new ForbiddenException(ERRORS.MASTER_PROFILE_REQUIRED);
+    if (masterProfile.isPaused) throw new ForbiddenException(ERRORS.MASTER_PAUSED_OFFER);
     if (
       masterProfile.verification !== 'VERIFIED' ||
-      masterProfile.isPaused ||
       masterProfile.status === 'SUSPENDED' ||
       masterProfile.status === 'RESTRICTED'
     ) {
@@ -202,8 +203,9 @@ export class OfferService {
     const booked = await this.db.$transaction(async (tx) => {
       const offer = await tx.offer.findUnique({ where: { id: offerId } });
       if (!offer) throw new NotFoundException(ERRORS.OFFER_NOT_FOUND);
-      const offerMaster = await tx.masterProfile.findUnique({ where: { id: offer.masterId }, select: { userId: true } });
+      const offerMaster = await tx.masterProfile.findUnique({ where: { id: offer.masterId }, select: { userId: true, isPaused: true } });
       if (offerMaster?.userId === customerId) throw new ForbiddenException(ERRORS.SELF_DEALING);
+      if (offerMaster?.isPaused) throw new DomainException(HttpStatus.CONFLICT, 'MASTER_TIME_UNAVAILABLE', ERRORS.MASTER_PAUSED_BOOK);
 
       const lockedRows = await tx.$queryRaw<Array<{ id: string; status: string; customerId: string; serviceId: string | null; latitude: Prisma.Decimal | null; longitude: Prisma.Decimal | null }>>`
         SELECT id, status, "customerId", "serviceId", latitude, longitude

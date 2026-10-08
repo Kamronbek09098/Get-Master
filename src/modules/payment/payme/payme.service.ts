@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
 import { MetricsService } from '../../../infrastructure/metrics/metrics.service';
+import { SubscriptionService } from '../../subscription/subscription.service';
 import { PAYME_TRANSACTION_TIMEOUT_MS, PaymeError, PaymeMetadata, PaymeRpcRequest, PaymeRpcResponse, PaymeState } from './payme.types';
 
 const AMOUNT_EPSILON_TIYIN = 1;
@@ -23,6 +24,7 @@ export class PaymeService {
     private readonly config: ConfigService,
     private readonly outbox: OutboxService,
     private readonly metrics: MetricsService,
+    private readonly subscriptions: SubscriptionService,
   ) {}
 
   isConfigured(): boolean {
@@ -65,6 +67,9 @@ export class PaymeService {
     }
     const params = (body.params ?? {}) as Record<string, unknown>;
     try {
+      // Obuna to‘lovlari alohida: hisob (order_id) yoki tranzaksiya obunaga tegishli bo‘lsa shu yerda hal qilinadi.
+      const forSubscription = await this.subscriptionRpc(body.method, id, params);
+      if (forSubscription) return forSubscription;
       switch (body.method) {
         case 'CheckPerformTransaction':
           return await this.checkPerformTransaction(id, params);
@@ -284,6 +289,113 @@ export class PaymeService {
         };
       })
       .filter((tx): tx is NonNullable<typeof tx> => tx !== null);
-    return this.result(id, { transactions });
+    return this.result(id, { transactions: [...transactions, ...(await this.subscriptionStatement(from, to))] });
+  }
+
+  // ---- Obuna to‘lovlari (Payme): PerformTransaction muvaffaqiyatli bo‘lishi bilan obuna avtomatik faollashadi ----
+
+  private subscriptionMeta(row: { providerMeta: unknown }): PaymeMetadata | undefined {
+    return (row.providerMeta as { payme?: PaymeMetadata } | null)?.payme;
+  }
+
+  private async subscriptionRpc(method: string, id: number | string | null, params: Record<string, unknown>): Promise<PaymeRpcResponse | null> {
+    const account = params.account as Record<string, unknown> | undefined;
+    switch (method) {
+      case 'CheckPerformTransaction': {
+        const sub = typeof account?.order_id === 'string' ? await this.subscriptions.gatewayFind(account.order_id, 'PAYME') : null;
+        if (!sub) return null;
+        if (sub.status !== 'PENDING') return this.cantPerform(id);
+        if (typeof params.amount !== 'number' || Math.abs(params.amount - Math.round(Number(sub.amount) * 100)) > AMOUNT_EPSILON_TIYIN) return this.invalidAmount(id);
+        return this.result(id, { allow: true });
+      }
+      case 'CreateTransaction': {
+        const paymeId = params.id;
+        if (typeof paymeId !== 'string' || !paymeId) return null;
+        const known = await this.subscriptions.gatewayFindByTx('PAYME', paymeId);
+        if (known) {
+          const meta = this.subscriptionMeta(known);
+          if (!meta) return this.transactionNotFound(id);
+          if (meta.state === PaymeState.CREATED && Date.now() - meta.createTime > PAYME_TRANSACTION_TIMEOUT_MS) {
+            await this.cancelSubscriptionTx(known.id, meta, PaymeState.CANCELLED, 4);
+            return this.cantPerform(id);
+          }
+          return this.result(id, { create_time: meta.createTime, transaction: known.id, state: meta.state });
+        }
+        const sub = typeof account?.order_id === 'string' ? await this.subscriptions.gatewayFind(account.order_id, 'PAYME') : null;
+        if (!sub) return null;
+        if (sub.status !== 'PENDING') return this.cantPerform(id);
+        if (typeof params.amount !== 'number' || Math.abs(params.amount - Math.round(Number(sub.amount) * 100)) > AMOUNT_EPSILON_TIYIN) return this.invalidAmount(id);
+        const other = this.subscriptionMeta(sub);
+        if (other && other.state === PaymeState.CREATED && Date.now() - other.createTime <= PAYME_TRANSACTION_TIMEOUT_MS) return this.cantPerform(id);
+        const createTime = Date.now();
+        await this.subscriptions.gatewayUpdate(sub.id, { providerTxId: paymeId, meta: { payme: { transactionId: paymeId, createTime, state: PaymeState.CREATED } satisfies PaymeMetadata } });
+        return this.result(id, { create_time: createTime, transaction: sub.id, state: PaymeState.CREATED });
+      }
+      case 'PerformTransaction':
+      case 'CancelTransaction':
+      case 'CheckTransaction': {
+        const paymeId = params.id;
+        if (typeof paymeId !== 'string') return null;
+        const sub = await this.subscriptions.gatewayFindByTx('PAYME', paymeId);
+        if (!sub) return null;
+        const meta = this.subscriptionMeta(sub);
+        if (!meta) return this.transactionNotFound(id);
+        if (method === 'CheckTransaction') {
+          return this.result(id, { create_time: meta.createTime, perform_time: meta.performTime ?? 0, cancel_time: meta.cancelTime ?? 0, transaction: sub.id, state: meta.state, reason: meta.reason ?? null });
+        }
+        if (method === 'PerformTransaction') {
+          if (meta.state === PaymeState.COMPLETED) return this.result(id, { transaction: sub.id, perform_time: meta.performTime, state: PaymeState.COMPLETED });
+          if (meta.state !== PaymeState.CREATED) return this.cantPerform(id);
+          if (Date.now() - meta.createTime > PAYME_TRANSACTION_TIMEOUT_MS) {
+            await this.cancelSubscriptionTx(sub.id, meta, PaymeState.CANCELLED, 4);
+            return this.cantPerform(id);
+          }
+          const performTime = Date.now();
+          await this.subscriptions.gatewayPaid(sub.id, paymeId, { payme: { ...meta, state: PaymeState.COMPLETED, performTime } satisfies PaymeMetadata });
+          return this.result(id, { transaction: sub.id, perform_time: performTime, state: PaymeState.COMPLETED });
+        }
+        // CancelTransaction
+        const reason = typeof params.reason === 'number' ? params.reason : 0;
+        if (meta.state === PaymeState.CANCELLED || meta.state === PaymeState.CANCELLED_AFTER_COMPLETE) return this.result(id, { transaction: sub.id, cancel_time: meta.cancelTime, state: meta.state });
+        const next = meta.state === PaymeState.COMPLETED ? PaymeState.CANCELLED_AFTER_COMPLETE : PaymeState.CANCELLED;
+        const cancelTime = await this.cancelSubscriptionTx(sub.id, meta, next, reason);
+        return this.result(id, { transaction: sub.id, cancel_time: cancelTime, state: next });
+      }
+      default:
+        return null;
+    }
+  }
+
+  private async cancelSubscriptionTx(subscriptionId: string, meta: PaymeMetadata, state: number, reason: number): Promise<number> {
+    const cancelTime = Date.now();
+    await this.subscriptions.gatewayUpdate(subscriptionId, { meta: { payme: { ...meta, state, cancelTime, reason } satisfies PaymeMetadata } });
+    if (state === PaymeState.CANCELLED_AFTER_COMPLETE) await this.subscriptions.gatewayRefunded(subscriptionId, `Payme cancel reason=${reason}`);
+    else {
+      await this.subscriptions.gatewayFail(subscriptionId, `Payme cancel reason=${reason}`);
+      this.metrics.paymentFailed('PAYME');
+    }
+    return cancelTime;
+  }
+
+  private async subscriptionStatement(from: number, to: number) {
+    const rows = await this.subscriptions.gatewayStatement(from, to);
+    return rows.flatMap((row) => {
+      const meta = this.subscriptionMeta(row);
+      if (!meta) return [];
+      return [
+        {
+          id: meta.transactionId,
+          time: meta.createTime,
+          amount: Math.round(Number(row.amount) * 100),
+          account: { order_id: row.id },
+          create_time: meta.createTime,
+          perform_time: meta.performTime ?? 0,
+          cancel_time: meta.cancelTime ?? 0,
+          transaction: row.id,
+          state: meta.state,
+          reason: meta.reason ?? null,
+        },
+      ];
+    });
   }
 }

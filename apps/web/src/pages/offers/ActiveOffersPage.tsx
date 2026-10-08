@@ -6,6 +6,7 @@ import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/lib/error-messages';
 import { AcceptRequestDialog } from '@/features/offer/components/AcceptRequestDialog';
+import { PausedNotice, usePaused } from '@/features/master/components/PausedNotice';
 import { OpenRequestCard } from '@/features/offer/components/OpenRequestCard';
 import { useOpenRequests } from '@/features/offer/hooks/useOffers';
 import type { OpenRequest, OpenRequestScope } from '@/features/offer/types';
@@ -38,6 +39,7 @@ export function ActiveOffersPage() {
   const [scope, setScope] = useState<OpenRequestScope>('all');
   const [selected, setSelected] = useState<OpenRequest | null>(null);
   const requests = useOpenRequests(scope);
+  const paused = usePaused();
   const items = requests.data?.pages.flatMap((page) => page.items) ?? [];
   const [skipped, setSkipped] = useState<Set<string>>(readSkipped);
   const visible = items.filter((item) => !skipped.has(item.id));
@@ -60,6 +62,8 @@ export function ActiveOffersPage() {
           <p className="gm-page-lead">{t('Mijozlar yuborgan va hozir ustalarni kutayotgan so‘rovlar. Yoqqanini «Taklif berish» bilan oling — narxingiz mijozga taklif sifatida boradi.')}</p>
         </div>
       </div>
+
+      {paused && <PausedNotice />}
 
       <div className="gm-tabs" role="tablist" aria-label={t('Ko‘rinish')}>
         {TABS.map((tab) => (
@@ -106,7 +110,7 @@ export function ActiveOffersPage() {
 
       <div className="gm-orc-list">
         {visible.map((request) => (
-          <OpenRequestCard key={request.id} request={request} onAccept={() => setSelected(request)} onSkip={() => skip(request.id)} />
+          <OpenRequestCard key={request.id} request={request} paused={paused} onAccept={() => setSelected(request)} onSkip={() => skip(request.id)} />
         ))}
       </div>
 

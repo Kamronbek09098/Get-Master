@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { OutboxService } from '../../../infrastructure/outbox/outbox.service';
 import { MetricsService } from '../../../infrastructure/metrics/metrics.service';
+import { SubscriptionService } from '../../subscription/subscription.service';
 import { ClickCallbackBody, ClickCallbackResponse, ClickError, ClickErrorNote } from './click.types';
 
 const AMOUNT_EPSILON = 0.01;
@@ -30,6 +31,7 @@ export class ClickService {
     private readonly config: ConfigService,
     private readonly outbox: OutboxService,
     private readonly metrics: MetricsService,
+    private readonly subscriptions: SubscriptionService,
   ) {}
 
   isConfigured(): boolean {
@@ -95,7 +97,10 @@ export class ClickService {
     if (this.sign(body, 0) !== body.sign_string) return this.fail(ClickError.SIGN_FAILED, body);
 
     const payment = await this.db.payment.findFirst({ where: { id: body.merchant_trans_id, provider: 'CLICK' } });
-    if (!payment) return this.fail(ClickError.ORDER_NOT_FOUND, body);
+    if (!payment) {
+      const subscription = await this.subscriptions.gatewayFind(body.merchant_trans_id, 'CLICK');
+      return subscription ? this.prepareSubscription(body, subscription) : this.fail(ClickError.ORDER_NOT_FOUND, body);
+    }
     if (Math.abs(Number(payment.amount) - Number(body.amount)) > AMOUNT_EPSILON) return this.fail(ClickError.AMOUNT_INVALID, body);
     if (payment.status === 'SUCCEEDED') return this.fail(ClickError.ALREADY_PAID, body);
     if (payment.status !== 'PENDING' && payment.status !== 'PROCESSING') return this.fail(ClickError.TRANSACTION_CANCELLED, body);
@@ -129,7 +134,10 @@ export class ClickService {
     if (this.sign(body, 1) !== body.sign_string) return this.fail(ClickError.SIGN_FAILED, body);
 
     const payment = await this.db.payment.findFirst({ where: { id: body.merchant_trans_id, provider: 'CLICK' } });
-    if (!payment) return this.fail(ClickError.ORDER_NOT_FOUND, body);
+    if (!payment) {
+      const subscription = await this.subscriptions.gatewayFind(body.merchant_trans_id, 'CLICK');
+      return subscription ? this.completeSubscription(body, subscription) : this.fail(ClickError.ORDER_NOT_FOUND, body);
+    }
 
     // Click o'z tomonida to'lovni bekor qilgan bo'lsa (masalan karta rad etilgan), shuni bildiradi — bizdan faqat qabul qilganimizni tasdiqlash kutiladi.
     if (Number(body.error ?? 0) < 0) {
@@ -184,5 +192,42 @@ export class ClickService {
       error: ClickError.SUCCESS,
       error_note: ClickErrorNote[ClickError.SUCCESS],
     };
+  }
+
+  // ---- Obuna to‘lovlari: to‘lov muvaffaqiyatli bo‘lishi bilan obuna avtomatik faollashadi ----
+
+  private success(body: ClickCallbackBody, extra: Partial<ClickCallbackResponse> = {}): ClickCallbackResponse {
+    return { click_trans_id: body.click_trans_id, merchant_trans_id: body.merchant_trans_id, ...extra, error: ClickError.SUCCESS, error_note: ClickErrorNote[ClickError.SUCCESS] };
+  }
+
+  private async prepareSubscription(body: ClickCallbackBody, subscription: { id: string; amount: Prisma.Decimal; status: string; providerMeta: unknown }): Promise<ClickCallbackResponse> {
+    if (Math.abs(Number(subscription.amount) - Number(body.amount)) > AMOUNT_EPSILON) return this.fail(ClickError.AMOUNT_INVALID, body);
+    if (subscription.status === 'ACTIVE' || subscription.status === 'EXPIRED') return this.fail(ClickError.ALREADY_PAID, body);
+    if (subscription.status !== 'PENDING') return this.fail(ClickError.TRANSACTION_CANCELLED, body);
+    const meta = (subscription.providerMeta as { click?: ClickMetadata } | null)?.click;
+    const clickTransId = String(body.click_trans_id);
+    const prepareId = meta?.clickTransId === clickTransId ? meta.prepareId : Date.now();
+    if (!meta || meta.clickTransId !== clickTransId) {
+      await this.subscriptions.gatewayUpdate(subscription.id, { meta: { click: { clickTransId, prepareId, prepareTime: Date.now() } satisfies ClickMetadata } });
+    }
+    return this.success(body, { merchant_prepare_id: prepareId });
+  }
+
+  private async completeSubscription(body: ClickCallbackBody, subscription: { id: string; amount: Prisma.Decimal; status: string; providerMeta: unknown }): Promise<ClickCallbackResponse> {
+    if (Number(body.error ?? 0) < 0) {
+      await this.subscriptions.gatewayFail(subscription.id, body.error_note ?? 'Click tomonidan bekor qilindi');
+      this.metrics.paymentFailed('CLICK');
+      return this.success(body, { merchant_confirm_id: undefined });
+    }
+    const meta = (subscription.providerMeta as { click?: ClickMetadata } | null)?.click;
+    const clickTransId = String(body.click_trans_id);
+    if (!meta || meta.clickTransId !== clickTransId || String(meta.prepareId) !== String(body.merchant_prepare_id)) return this.fail(ClickError.TRANSACTION_NOT_FOUND, body);
+    if (Math.abs(Number(subscription.amount) - Number(body.amount)) > AMOUNT_EPSILON) return this.fail(ClickError.AMOUNT_INVALID, body);
+    if (subscription.status === 'PENDING') {
+      await this.subscriptions.gatewayPaid(subscription.id, clickTransId, { click: { ...meta, completeTime: Date.now() } });
+    } else if (subscription.status !== 'ACTIVE' && subscription.status !== 'EXPIRED') {
+      return this.fail(ClickError.TRANSACTION_CANCELLED, body);
+    }
+    return this.success(body, { merchant_confirm_id: meta.prepareId });
   }
 }

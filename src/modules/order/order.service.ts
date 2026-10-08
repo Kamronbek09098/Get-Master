@@ -214,6 +214,9 @@ export class OrderService {
 
   async confirm(userId: string, orderId: string, panel: Panel | null = null) {
     const actor = await this.resolveActor(userId, orderId, ['MASTER'], panel);
+    // Pauza rejimidagi usta yangi buyurtmani qabul qila olmaydi (davom etayotgan buyurtmalar esa davom etadi).
+    const owner = await this.db.order.findUnique({ where: { id: orderId }, select: { master: { select: { isPaused: true } } } });
+    if (owner?.master.isPaused) throw new ForbiddenException(ERRORS.MASTER_PAUSED_CONFIRM);
     return this.transition(orderId, 'CONFIRMED', actor, { confirmedAt: new Date() });
   }
 

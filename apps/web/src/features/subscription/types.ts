@@ -3,6 +3,7 @@ export type SubscriptionStatus = 'PENDING' | 'ACTIVE' | 'EXPIRED' | 'CANCELED' |
 export type PlanCode = 'CUSTOMER_PLUS' | 'MASTER_PRO';
 export type Feature = 'SEE_DELETED_MESSAGES' | 'SEE_EDIT_HISTORY' | 'PRIORITY_REQUESTS' | 'PLUS_BADGE' | 'PRO_BADGE' | 'CATALOG_BOOST' | 'EXTRA_PORTFOLIO';
 export type PayMethod = 'CLICK' | 'PAYME' | 'UZUM' | 'CARD';
+export const GATEWAY_METHODS: PayMethod[] = ['CLICK', 'PAYME', 'UZUM'];
 
 export interface PlanPrice {
   months: 1 | 3 | 12;
@@ -22,6 +23,8 @@ export interface Plan {
 export interface PlansResponse {
   plans: Plan[];
   methods: string[];
+  /** Barcha usullar; `available: false` — to‘lov tizimi hali ulanmagan (tanlab bo‘lmaydi). */
+  allMethods?: Array<{ method: PayMethod; available: boolean }>;
   currency: string;
 }
 
@@ -40,6 +43,10 @@ export interface SubscriptionRow {
   startsAt: string | null;
   endsAt: string | null;
   rejectReason: string | null;
+  paidAt?: string | null;
+  hasReceipt?: boolean;
+  /** Click / Payme / Uzum to‘lov sahifasi (to‘lanmagan so‘rov uchun). */
+  checkoutUrl?: string | null;
   createdAt: string;
 }
 
@@ -57,7 +64,20 @@ export interface MySubscriptions {
   instructions: PaymentInstructions;
 }
 
+export interface AdminSummary {
+  activeCustomers: number;
+  activeMasters: number;
+  pendingReceipts: number;
+  pendingNoReceipt: number;
+  revenue30d: number;
+  revenueTotal: number;
+  byMethod30d: Array<{ method: string; count: number; amount: number }>;
+  byPlan: Array<{ planCode: string; count: number; amount: number }>;
+}
+
 export interface AdminSubscriptionRow extends SubscriptionRow {
+  receiptAssetId?: string | null;
+  providerTxId?: string | null;
   user: { id: string; accountNumber: number; name: string; phone: string | null };
 }
 

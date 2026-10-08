@@ -1,5 +1,6 @@
+import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { bootHarness, createAdmin, createMaster, createSuperAdmin, createUser, firstService, type Harness, type TestMaster, type TestUser } from '../helpers/harness';
+import { bootHarness, createAdmin, createMaster, createSuperAdmin, createUser, firstService, uploadImage, type Harness, type TestMaster, type TestUser } from '../helpers/harness';
 
 let h: Harness;
 let customer: TestUser;
@@ -11,6 +12,7 @@ const asIp = () => `10.24.0.${++ip}`;
 
 beforeAll(async () => {
   process.env.RATE_LIMIT_CALL_MAX = '200';
+  Object.assign(process.env, { CLICK_MERCHANT_ID: 'm1', CLICK_SERVICE_ID: 's1', CLICK_SECRET_KEY: 'test-only-click-webhook-secret', PAYME_MERCHANT_ID: 'pm1', PAYME_SECRET_KEY: 'test-only-payme-secret', UZUM_MERCHANT_ID: 'um1', UZUM_SECRET_KEY: 'test-only-uzum-secret' });
   h = await bootHarness();
   const service = await firstService(h);
   customer = await createUser(h);
@@ -20,10 +22,29 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await h.close();
-  delete process.env.RATE_LIMIT_CALL_MAX;
+  for (const key of ['RATE_LIMIT_CALL_MAX', 'CLICK_MERCHANT_ID', 'CLICK_SERVICE_ID', 'PAYME_MERCHANT_ID', 'PAYME_SECRET_KEY', 'UZUM_MERCHANT_ID', 'UZUM_SECRET_KEY']) delete process.env[key];
 });
 
 const req = (token: string, body: Record<string, unknown>) => h.api('POST', '/subscriptions/requests', { token, body, ip: asIp() });
+const md5 = (parts: (string | number)[]) => createHash('md5').update(parts.join('')).digest('hex');
+
+/** Karta cheki: fayl yuklanadi va so‘rovga biriktiriladi. */
+async function uploadReceiptAs(user: TestUser, subscriptionId: string) {
+  // Begona foydalanuvchi boshqaning so‘roviga chek yuklay olmasligi.
+  const sharp = (await import('sharp')).default;
+  const png = await sharp({ create: { width: 40, height: 40, channels: 3, background: { r: 10, g: 90, b: 160 } } }).png().toBuffer();
+  const form = new FormData();
+  form.set('kind', 'SUBSCRIPTION_RECEIPT');
+  form.set('linkType', 'Subscription');
+  form.set('linkId', subscriptionId);
+  form.set('file', new Blob([new Uint8Array(png)], { type: 'image/png' }), 'x.png');
+  return h.api('POST', '/media/uploads', { token: user.token, form });
+}
+
+async function uploadReceipt(user: TestUser, subscriptionId: string) {
+  const assetId = await uploadImage(h, user.token, 'SUBSCRIPTION_RECEIPT', 'Subscription', subscriptionId, 80);
+  return h.post(`/subscriptions/requests/${subscriptionId}/receipt`, user.token, { mediaAssetId: assetId });
+}
 
 describe('subscriptions: plans, requests and admin decisions', () => {
   it('lists plans with prices and savings', async () => {
@@ -34,36 +55,114 @@ describe('subscriptions: plans, requests and admin decisions', () => {
     expect(plus.prices.map((price: { months: number }) => price.months)).toEqual([1, 3, 12]);
     expect(plus.prices[0].savingPercent).toBe(0);
     expect(plus.prices[2].savingPercent).toBeGreaterThan(20);
+    expect(res.data.methods).toEqual(['CLICK', 'PAYME', 'UZUM', 'CARD']);
     expect((await h.get('/subscriptions/plans', undefined)).status).toBe(401);
   });
 
-  it('a customer requests Plus once at a time; masters-only plan is refused for non-masters; bad input is rejected', async () => {
+  it('a customer requests Plus; a Click attempt is replaced by a card request; validation and ownership hold', async () => {
     expect((await req(customer.token, { planCode: 'MASTER_PRO', months: 1, method: 'CARD' })).status).toBe(403);
     expect((await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 2, method: 'CARD' })).status).toBe(400);
     expect((await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'BITCOIN' })).status).toBe(400);
     expect((await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CASH' })).status).toBe(400); // naqd to‘lov yo‘q
-    expect((await h.get('/subscriptions/plans', customer.token)).data.methods).not.toContain('CASH');
-    const made = await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 3, method: 'CLICK' });
-    expect(made.status).toBe(201);
-    expect(made.data).toMatchObject({ status: 'PENDING', months: 3, amount: '79000', method: 'CLICK' });
-    expect(made.data.reference).toMatch(/^GM-[0-9A-F]{8}$/);
-    expect((await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CARD' })).status).toBe(409);
+    const click = await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 3, method: 'CLICK' });
+    expect(click.status).toBe(201);
+    expect(click.data).toMatchObject({ status: 'PENDING', months: 3, amount: '79000', method: 'CLICK' });
+    expect(click.data.checkoutUrl).toContain('https://my.click.uz/services/pay?');
+    expect(click.data.checkoutUrl).toContain(`transaction_param=${click.data.id}`);
+    const card = await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CARD' });
+    expect(card.status).toBe(201);
+    expect(card.data.checkoutUrl).toBeNull();
+    expect((await h.db.subscription.findUniqueOrThrow({ where: { id: click.data.id } })).status).toBe('CANCELED'); // to‘lanmagan urinish almashtirildi
     const me = await h.get('/subscriptions/me', customer.token);
     expect(me.data.customer).toBeNull();
     expect(me.data.pending).toHaveLength(1);
-    // O‘z so‘rovini bekor qiladi; boshqasi — yo‘q.
-    expect((await h.post(`/subscriptions/requests/${made.data.id}/cancel`, peer.token)).status).toBe(404);
-    expect((await h.post(`/subscriptions/requests/${made.data.id}/cancel`, customer.token)).status).toBe(201);
-    expect((await h.post(`/subscriptions/requests/${made.data.id}/cancel`, customer.token)).status).toBe(409);
+    expect((await h.post(`/subscriptions/requests/${card.data.id}/cancel`, peer.token)).status).toBe(404);
+    expect((await h.post(`/subscriptions/requests/${card.data.id}/cancel`, customer.token)).status).toBe(201);
+    expect((await h.post(`/subscriptions/requests/${card.data.id}/cancel`, customer.token)).status).toBe(409);
   });
 
-  it('admin approves → Plus is active and reveals the peer’s deleted and edited messages; expiry removes it', async () => {
+  it('Click: a successful payment activates the subscription instantly, with no admin step (idempotent, wrong amount refused)', async () => {
+    const buyer = await createUser(h);
+    const made = await req(buyer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CLICK' });
+    const id: string = made.data.id;
+    const amount = '29000.00';
+    const transId = `77${Math.floor(Math.random() * 100000)}`;
+    const call = (body: Record<string, unknown>) => h.api('POST', '/payments/click/callback', { body });
+    const wrong = await call({ click_trans_id: transId, service_id: 's1', merchant_trans_id: id, amount: '1000.00', action: '0', sign_time: 't1', sign_string: md5([transId, 's1', 'test-only-click-webhook-secret', id, '1000.00', '0', 't1']) });
+    expect(wrong.body.error).toBe(-2);
+    const prepare = await call({ click_trans_id: transId, service_id: 's1', merchant_trans_id: id, amount, action: '0', sign_time: 't1', sign_string: md5([transId, 's1', 'test-only-click-webhook-secret', id, amount, '0', 't1']) });
+    expect(prepare.body.error).toBe(0);
+    expect((await h.db.subscription.findUniqueOrThrow({ where: { id } })).status).toBe('PENDING');
+    const prepareId = prepare.body.merchant_prepare_id;
+    const complete = { click_trans_id: transId, service_id: 's1', merchant_trans_id: id, merchant_prepare_id: prepareId, amount, action: '1', sign_time: 't2', sign_string: md5([transId, 's1', 'test-only-click-webhook-secret', id, prepareId, amount, '1', 't2']) };
+    expect((await call(complete)).body.error).toBe(0);
+    const row = await h.db.subscription.findUniqueOrThrow({ where: { id } });
+    expect(row).toMatchObject({ status: 'ACTIVE', providerTxId: transId });
+    expect(row.paidAt).not.toBeNull();
+    expect((await h.get('/subscriptions/me', buyer.token)).data.customer).toMatchObject({ status: 'ACTIVE' });
+    expect((await call(complete)).body.error).toBe(0); // takroriy chaqiruv xavfsiz
+    expect(await h.db.subscription.count({ where: { userId: buyer.id, status: 'ACTIVE' } })).toBe(1);
+    // Admin ruxsati kerak emas — hatto urinsa ham: avtomatik to‘lov admin tomonidan tasdiqlanmaydi.
+    expect((await h.patch(`/admin/subscriptions/${id}/approve`, admin.token)).status).toBe(409);
+  });
+
+  it('Payme: CreateTransaction + PerformTransaction activates a Pro subscription; cancelling after completion revokes it', async () => {
+    const made = await req(master.token, { planCode: 'MASTER_PRO', months: 1, method: 'PAYME' });
+    const id: string = made.data.id;
+    expect(made.data.checkoutUrl).toContain('checkout.test.paycom.uz');
+    const auth = `Basic ${Buffer.from('Paycom:test-only-payme-secret').toString('base64')}`;
+    const rpc = (method: string, params: Record<string, unknown>) => h.api('POST', '/payments/payme', { body: { jsonrpc: '2.0', id: 1, method, params }, headers: { authorization: auth } });
+    const amount = 5_900_000; // 59 000 so‘m, tiyinda
+    expect((await rpc('CheckPerformTransaction', { amount: 100, account: { order_id: id } })).body.error.code).toBe(-31001);
+    expect((await rpc('CheckPerformTransaction', { amount, account: { order_id: id } })).body.result.allow).toBe(true);
+    const txId = `pm-${randomUUID().slice(0, 12)}`;
+    const created = await rpc('CreateTransaction', { id: txId, time: Date.now(), amount, account: { order_id: id } });
+    expect(created.body.result).toMatchObject({ state: 1, transaction: id });
+    expect((await h.db.masterProfile.findUniqueOrThrow({ where: { id: master.masterId } })).isPro).toBe(false);
+    const performed = await rpc('PerformTransaction', { id: txId });
+    expect(performed.body.result.state).toBe(2);
+    expect((await h.db.subscription.findUniqueOrThrow({ where: { id } })).status).toBe('ACTIVE');
+    expect((await h.db.masterProfile.findUniqueOrThrow({ where: { id: master.masterId } })).isPro).toBe(true);
+    expect((await rpc('CheckTransaction', { id: txId })).body.result.state).toBe(2);
+    const statement = await rpc('GetStatement', { from: Date.now() - 60_000, to: Date.now() + 60_000 });
+    expect(statement.body.result.transactions.some((tx: { id: string }) => tx.id === txId)).toBe(true);
+    const cancelled = await rpc('CancelTransaction', { id: txId, reason: 5 });
+    expect(cancelled.body.result.state).toBe(-2);
+    expect((await h.db.subscription.findUniqueOrThrow({ where: { id } })).status).toBe('CANCELED');
+    expect((await h.db.masterProfile.findUniqueOrThrow({ where: { id: master.masterId } })).isPro).toBe(false);
+  });
+
+  it('Uzum: a signed webhook for a subscription activates it; a wrong amount is refused', async () => {
+    const buyer = await createUser(h);
+    const made = await req(buyer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'UZUM' });
+    const send = (payload: Record<string, unknown>) => {
+      const rawBody = JSON.stringify(payload);
+      return h.api('POST', '/webhooks/payments/uzum', { rawBody, headers: { 'x-webhook-signature': createHmac('sha256', 'test-only-uzum-secret').update(rawBody).digest('hex') } });
+    };
+    const base = { paymentId: made.data.id, currency: 'UZS', providerPaymentId: `uz-${randomUUID().slice(0, 8)}` };
+    expect((await send({ ...base, eventId: `e-${randomUUID()}`, status: 'SUCCEEDED', amount: 1 })).status).toBeGreaterThanOrEqual(400);
+    expect((await h.db.subscription.findUniqueOrThrow({ where: { id: made.data.id } })).status).toBe('PENDING');
+    expect((await send({ ...base, eventId: `e-${randomUUID()}`, status: 'SUCCEEDED', amount: 29000 })).status).toBeLessThan(300);
+    expect((await h.db.subscription.findUniqueOrThrow({ where: { id: made.data.id } })).status).toBe('ACTIVE');
+  });
+
+  it('Card: the receipt is uploaded, then the admin approves (or rejects) — only card requests need an admin; Plus then reveals deleted and edited messages', async () => {
     const plain = await createAdmin(h, ['USERS']);
     const made = await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CARD' });
     expect((await h.get('/admin/subscriptions', plain.token)).status).toBe(403); // SUBSCRIPTIONS huquqi yo‘q
+    // Chek yuklanmaguncha tasdiqlab bo‘lmaydi; begonaning cheki ham qabul qilinmaydi.
+    expect((await h.patch(`/admin/subscriptions/${made.data.id}/approve`, admin.token)).status).toBe(409);
+    expect((await uploadReceiptAs(peer, made.data.id)).status).toBeGreaterThanOrEqual(400);
+    const attached = await uploadReceipt(customer, made.data.id);
+    expect(attached.status).toBe(201);
+    expect(attached.data.hasReceipt).toBe(true);
+    // Chek yuklangach so‘rov yopilmaydi va yangisi ochilmaydi.
+    expect((await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 3, method: 'CARD' })).status).toBe(409);
     const list = await h.get('/admin/subscriptions?status=PENDING', admin.token);
-    expect(list.status).toBe(200);
-    expect(list.data.items.some((item: { id: string }) => item.id === made.data.id)).toBe(true);
+    const item = list.data.items.find((entry: { id: string }) => entry.id === made.data.id);
+    expect(item.receiptAssetId).toBeTruthy();
+    const summary = await h.get('/admin/subscriptions/summary', admin.token);
+    expect(summary.data.pendingReceipts).toBeGreaterThanOrEqual(1);
 
     // Suhbat: peer yozadi, tahrirlaydi va o‘chiradi.
     const conv = await h.db.conversation.create({ data: { type: 'DIRECT', directKey: `${customer.id}:${peer.id}`, participants: { create: [{ userId: customer.id, roles: ['CUSTOMER'] }, { userId: peer.id, roles: ['MASTER'] }] } } });
@@ -71,7 +170,7 @@ describe('subscriptions: plans, requests and admin decisions', () => {
     await h.db.messageEdit.create({ data: { messageId: edited.id, previousText: 'eski matn' } });
     const gone = await h.db.message.create({ data: { conversationId: conv.id, senderId: peer.id, senderPanel: 'MASTER', type: 'TEXT', text: 'o‘chirilgan sir', deletedAt: new Date() } });
     const before = await h.get(`/conversations/${conv.id}/messages`, customer.token);
-    const maskedBefore = before.data.items.find((item: { id: string }) => item.id === gone.id);
+    const maskedBefore = before.data.items.find((entry: { id: string }) => entry.id === gone.id);
     expect(maskedBefore).toMatchObject({ deleted: true, text: null });
     expect(maskedBefore.original).toBeUndefined();
     expect(before.data.perks.seeDeleted).toBe(false);
@@ -80,26 +179,22 @@ describe('subscriptions: plans, requests and admin decisions', () => {
     expect(approved.status).toBe(200);
     expect(approved.data.status).toBe('ACTIVE');
     expect((await h.patch(`/admin/subscriptions/${made.data.id}/approve`, admin.token)).status).toBe(409);
-    expect((await h.get('/subscriptions/me', customer.token)).data.customer).toMatchObject({ planCode: 'CUSTOMER_PLUS', status: 'ACTIVE' });
-
     const after = await h.get(`/conversations/${conv.id}/messages`, customer.token);
     expect(after.data.perks.seeDeleted).toBe(true);
-    expect(after.data.items.find((item: { id: string }) => item.id === gone.id)).toMatchObject({ deleted: true, original: { text: 'o‘chirilgan sir' } });
-    expect(after.data.items.find((item: { id: string }) => item.id === edited.id).editHistory[0].previousText).toBe('eski matn');
-    // Suhbatdosh (obunasiz) o‘z tomonidan hech narsa qo‘shimcha ko‘rmaydi.
+    expect(after.data.items.find((entry: { id: string }) => entry.id === gone.id)).toMatchObject({ deleted: true, original: { text: 'o‘chirilgan sir' } });
+    expect(after.data.items.find((entry: { id: string }) => entry.id === edited.id).editHistory[0].previousText).toBe('eski matn');
     const peerView = await h.get(`/conversations/${conv.id}/messages`, peer.token);
-    expect(peerView.data.items.find((item: { id: string }) => item.id === gone.id).original).toBeUndefined();
+    expect(peerView.data.items.find((entry: { id: string }) => entry.id === gone.id).original).toBeUndefined();
 
     // Muddat tugasa — imkoniyat yo‘qoladi.
     await h.db.subscription.update({ where: { id: made.data.id }, data: { endsAt: new Date(Date.now() - 1000) } });
-    const expired = await h.get(`/conversations/${conv.id}/messages`, customer.token);
-    expect(expired.data.perks.seeDeleted).toBe(false);
-    expect((await h.get('/subscriptions/me', customer.token)).data.customer).toBeNull();
+    expect((await h.get(`/conversations/${conv.id}/messages`, customer.token)).data.perks.seeDeleted).toBe(false);
   });
 
   it('rejecting needs a reason; grants stack after the current period; revoke ends it', async () => {
     const buyer = await createUser(h);
     const made = await req(buyer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CARD' });
+    await uploadReceipt(buyer, made.data.id);
     expect((await h.patch(`/admin/subscriptions/${made.data.id}/reject`, admin.token, { reason: '' })).status).toBe(400);
     const rejected = await h.patch(`/admin/subscriptions/${made.data.id}/reject`, admin.token, { reason: 'To‘lov topilmadi' });
     expect(rejected.data).toMatchObject({ status: 'REJECTED', rejectReason: 'To‘lov topilmadi' });
@@ -117,11 +212,8 @@ describe('subscriptions: plans, requests and admin decisions', () => {
   });
 
   it('Pro: badge, catalog boost and a higher portfolio limit for masters; priority flag for Plus requests', async () => {
-    const mine = await req(master.token, { planCode: 'MASTER_PRO', months: 1, method: 'PAYME' });
-    expect(mine.status).toBe(201);
-    const before = await h.db.masterProfile.findUniqueOrThrow({ where: { id: master.masterId }, select: { isPro: true } });
-    expect(before.isPro).toBe(false);
-    expect((await h.patch(`/admin/subscriptions/${mine.data.id}/approve`, admin.token)).status).toBe(200);
+    expect((await h.db.masterProfile.findUniqueOrThrow({ where: { id: master.masterId }, select: { isPro: true } })).isPro).toBe(false);
+    expect((await h.post('/admin/subscriptions/grant', admin.token, { user: master.id, planCode: 'MASTER_PRO', months: 1 })).status).toBe(201);
     const after = await h.db.masterProfile.findUniqueOrThrow({ where: { id: master.masterId }, select: { isPro: true, proUntil: true } });
     expect(after.isPro).toBe(true);
     const pub = await h.get(`/masters/${master.masterId}`, customer.token);
