@@ -156,3 +156,10 @@
 .gm-mp-trust dl > div { min-width: 0; }
 .gm-mp-trust dd { font-size: clamp(20px, 2.2vw, 28px); overflow-wrap: anywhere; }
 .gm-mp-trust .is-ok dd { font-size: clamp(17px, 1.7vw, 22px); }
+
+/* Tablar: Ma'lumot / Ishlar / Sharhlar */
+.gm-mp-tabs { display: flex; gap: 8px; margin: 4px 0 16px; overflow-x: auto; scrollbar-width: none; }
+.gm-mp-tabs::-webkit-scrollbar { display: none; }
+.gm-mp-tabs button { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 16px; border: 1.5px solid var(--gm-color-border); border-radius: 999px; background: var(--gm-color-surface); color: var(--gm-color-text); font: inherit; font-size: 15px; font-weight: 700; white-space: nowrap; cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+.gm-mp-tabs button.is-active { background: var(--gm-color-text); border-color: var(--gm-color-text); color: var(--gm-color-surface); }
+.gm-mp-tabs button:focus-visible { outline: 2px solid var(--gm-color-primary); outline-offset: 2px; }

@@ -43,6 +43,7 @@ import { ComplaintModule } from './modules/complaint/complaint.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { GeoModule } from './modules/geo/geo.module';
 import { DisputeModule } from './modules/dispute/dispute.module';
+import { FeedModule } from './modules/feed/feed.module';
 import { MasterModule } from './modules/master/master.module';
 import { MatchingModule } from './modules/matching/matching.module';
 import { NotificationModule } from './modules/notification/notification.module';
@@ -70,7 +71,7 @@ import { ErrorLogModule } from './modules/error-log/error-log.module';
     ConfigModule.forRoot({ isGlobal: true, cache: true, expandVariables: true, load: [appConfig, authConfig, databaseConfig, paymentConfig, redisConfig, storageConfig, scannerConfig, aiConfig, mailConfig, telegramConfig, limitsConfig, webrtcConfig], validate }),
     ScheduleModule.forRoot(), RedisModule, QueueModule, OutboxModule, PaymentProviderModule,
     MetricsModule, TelegramModule, SmsModule, CallModule, SubscriptionModule, PrismaModule, AuthModule, OtpModule, AdminModule, BookingModule, ClassificationModule, CommunicationModule,
-    ComplaintModule, CustomerModule, GeoModule, DisputeModule, MailModule, MasterModule, MatchingModule, MediaModule, NotificationModule,
+    ComplaintModule, CustomerModule, GeoModule, DisputeModule, MailModule, MasterModule, FeedModule, MatchingModule, MediaModule, NotificationModule,
     OfferModule, OrderModule, PaymentModule, RequestModule, ReviewModule, ServiceModule, PublicModule, PushModule, TrustModule,
     WorkModule, WarrantyModule, LegalModule, TrustSafetyModule, AuditModule, UsersModule, ErrorLogModule,
   ],

@@ -5,6 +5,7 @@ import {
   Bell,
   MessagesSquare,
   Blocks,
+  Clapperboard,
   BriefcaseBusiness,
   Bug,
   CalendarClock,
@@ -76,6 +77,7 @@ function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permiss
   if (role === 'MASTER') {
     return [
       { to: '/usta/takliflar', label: t('Takliflar'), icon: BriefcaseBusiness, group: 'Ish', primary: true },
+      { to: '/usta/lenta', label: t('Ish lentasi'), short: t('Lenta'), icon: Clapperboard, group: 'Ish', primary: true },
       { to: '/usta/buyurtmalar', label: t('Buyurtmalar'), icon: ClipboardList, group: 'Ish', primary: true },
       { to: '/usta/jadval', label: t('Ish jadvali'), icon: CalendarClock, group: 'Ish' },
       { to: '/usta/portfolio', label: t('Portfolio'), icon: Images, group: 'Ish' },
@@ -91,11 +93,13 @@ function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permiss
     ];
   }
   return [
-    { to: '/mijoz/buyurtmalar', label: t('Buyurtmalar'), icon: PackageCheck, group: 'Asosiy', primary: true },
+    { to: '/mijoz/lenta', label: t('Ish lentasi'), short: t('Lenta'), icon: Clapperboard, group: 'Asosiy', primary: true },
+    { to: '/mijoz/xizmatlar', label: t('Xizmatlar'), icon: Blocks, group: 'Asosiy', primary: true },
     { to: '/mijoz/sorov-yaratish', label: t('Yangi buyurtma'), short: t('Yangi'), icon: PlusCircle, group: 'Asosiy', primary: true },
+    { to: '/mijoz/buyurtmalar', label: t('Buyurtmalar'), short: t('Buyurtma'), icon: PackageCheck, group: 'Asosiy', primary: true },
+    { to: '/mijoz/ustalar', label: t('Ustalar katalogi'), short: t('Katalog'), icon: Users, group: 'Asosiy' },
     { to: '/mijoz/tolovlar', label: t('To‘lovlar'), icon: CreditCard, group: 'Asosiy' },
-    { to: '/mijoz/ustalar', label: t('Ustalar'), icon: Users, group: 'Asosiy' },
-    { to: '/mijoz/chat', label: t('Chat'), icon: MessageCircle, group: 'Muloqot', primary: true },
+    { to: '/mijoz/chat', label: t('Chat'), icon: MessageCircle, group: 'Muloqot' },
     { to: '/mijoz/kafolat', label: t('Kafolatlar'), icon: ShieldCheck, group: 'Muloqot' },
     { to: '/mijoz/shikoyatlar', label: t('Shikoyatlar'), icon: ShieldAlert, group: 'Muloqot' },
     { to: '/mijoz/nizolar', label: t('Nizolar'), icon: Scale, group: 'Muloqot' },

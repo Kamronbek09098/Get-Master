@@ -182,3 +182,9 @@
 
 .gm-sub__pid { margin: 0; font-size: 0.8rem; color: var(--gm-color-text-muted); }
 .gm-sub__pid code { font-family: ui-monospace, monospace; font-weight: 600; color: var(--gm-color-text); user-select: all; }
+
+/* To'lov usullari: oxirgi (yolg'iz qolgan) karta ham qator o'rtasida turadi */
+.gm-sub__methods { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.gm-sub__method { flex: 0 1 calc((100% - 20px) / 3); box-sizing: border-box; min-width: 0; }
+@media (max-width: 760px) { .gm-sub__method { flex-basis: calc((100% - 10px) / 2); } }
+@media (max-width: 380px) { .gm-sub__method { flex-basis: 100%; } }

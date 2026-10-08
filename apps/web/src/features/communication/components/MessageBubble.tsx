@@ -12,6 +12,7 @@ import { canEdit, clock, replySnippet } from '../format';
 import { describeCallLog, parseCallLog } from '@/features/call/call-log';
 import type { ChatAttachment, ChatMessage } from '../types';
 import { Linkified } from './Linkified';
+import { FeedShareCard, feedPostId } from '@/features/feed/components/FeedShareCard';
 import { ChatOrderCard } from './ChatOrderCard';
 import { VoicePlayer } from './VoicePlayer';
 import { RoundVideoPlayer } from './RoundVideoPlayer';
@@ -275,7 +276,7 @@ export function MessageBubble({ message, mine, meId, first, last, read, onEdit, 
             )}
             {hasText && !callLog && message.type !== 'ORDER' && (
               <span className="gm-bubble__text">
-                <Linkified text={message.text ?? ''} />
+                {feedPostId(message.text) ? <FeedShareCard postId={feedPostId(message.text) as string} mine={mine} /> : <Linkified text={message.text ?? ''} />}
               </span>
             )}
           </>

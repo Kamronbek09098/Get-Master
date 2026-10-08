@@ -13,9 +13,10 @@ export function useMySubscriptions() {
     queryKey: ['subscriptions', 'me'],
     queryFn: () => subscriptionService.me(),
     enabled: hasSession,
-    staleTime: 60_000,
-    // Onlayn to‘lov kutilayotgan bo‘lsa, obuna faollashishi bilan sahifa o‘zi yangilanadi.
-    refetchInterval: (query) => (query.state.data?.pending.some((row) => row.method !== 'CARD') ? 4_000 : false),
+    // Admin sovg‘a qilgan yoki to‘lov tasdiqlangan obuna sahifa ochiq turganda ham tez ko‘rinishi uchun: qisqa muddat, fokusda va davriy yangilash.
+    staleTime: 10_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: (query) => (query.state.data?.pending.some((row) => row.method !== 'CARD') ? 4_000 : 20_000),
   });
 }
 

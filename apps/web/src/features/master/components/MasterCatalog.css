@@ -231,6 +231,7 @@
     padding-inline: var(--gm-space-4);
     scrollbar-width: none;
     scroll-snap-type: x proximity;
+    scroll-padding-inline: var(--gm-space-4);
   }
   .gm-masters-chips::-webkit-scrollbar {
     display: none;

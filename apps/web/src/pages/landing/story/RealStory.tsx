@@ -34,6 +34,7 @@ export function RealStory({ content, stories }: { content: LandingContent; stori
     const ticks = Array.from(section.querySelectorAll<HTMLElement>('[data-tick]'));
     const trigger = section.querySelector<HTMLElement>('[data-trigger]');
     const brand = section.querySelector<HTMLElement>('[data-brand]');
+    const hint = section.querySelector<HTMLElement>('[data-hint]');
     const bar = section.querySelector<HTMLElement>('[data-bar]');
     const at = active.chapters.map((chapter) => chapter.at);
 
@@ -43,7 +44,8 @@ export function RealStory({ content, stories }: { content: LandingContent; stori
         const start = at[i]!;
         const end = at[i + 1] ?? 1.01;
         const fadeIn = i === 0 ? 1 : smooth(start - 0.03, start + 0.015, p);
-        const fadeOut = i === chapters.length - 1 ? 0 : smooth(end - 0.03, end - 0.005, p);
+        // Oxirgi bosqich yakuniy belgi chiqishidan oldin so‘nadi: ikkalasi hech qachon ustma-ust tushmaydi.
+        const fadeOut = i === chapters.length - 1 ? smooth(0.935, 0.95, p) : smooth(end - 0.03, end - 0.005, p);
         el.style.setProperty('--on', (fadeIn * (1 - fadeOut)).toFixed(3));
       });
       let idx = 0;
@@ -57,7 +59,10 @@ export function RealStory({ content, stories }: { content: LandingContent; stori
       // «So‘rov yuborildi» — GetMaster ishga tushiruvchi kichik lahza (≈6–14%).
       trigger?.style.setProperty('--on', (smooth(0.05, 0.08, p) * (1 - smooth(0.12, 0.16, p))).toFixed(3));
       // Yakuniy sokin belgi (≈95–100%).
-      brand?.style.setProperty('--on', smooth(0.945, 0.985, p).toFixed(3));
+      const brandOn = smooth(0.955, 0.985, p);
+      brand?.style.setProperty('--on', brandOn.toFixed(3));
+      // «Pastga» belgisi yakuniy kartochka bilan to‘qnashmasligi uchun yashiriladi.
+      hint?.style.setProperty('--on', (1 - smooth(0.9, 0.935, p)).toFixed(3));
       if (bar) bar.style.transform = `scaleX(${p.toFixed(3)})`;
     };
 
@@ -96,14 +101,9 @@ export function RealStory({ content, stories }: { content: LandingContent; stori
   const scrollDown = () => window.scrollTo({ top: (sectionRef.current?.offsetTop ?? 0) + (sectionRef.current?.offsetHeight ?? window.innerHeight), behavior: 'smooth' });
 
   const base = storyBase(active.id);
-  // Telefonda yengil (≤720p) nusxa, kompyuterda WebM → MP4.
+  // Telefonda yengil nusxa, kompyuterda to‘liq MP4 (har kadr kalit kadr: skroll bilan silliq oldinga-orqaga suriladi).
   const mobile = useMemo(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 820px)').matches, []);
-  const sources = mobile
-    ? [{ src: `${base}-m.mp4`, type: 'video/mp4' }]
-    : [
-        { src: `${base}.webm`, type: 'video/webm' },
-        { src: `${base}.mp4`, type: 'video/mp4' },
-      ];
+  const sources = [{ src: mobile ? `${base}-m.mp4` : `${base}.mp4`, type: 'video/mp4' }];
 
   const heroCopy = (
     <div className="gm-rs__hero">
@@ -221,7 +221,7 @@ export function RealStory({ content, stories }: { content: LandingContent; stori
             <i data-bar />
           </li>
         </ol>
-        <button type="button" className="gm-rs__hint" onClick={scrollDown} aria-label={t('Pastga tushish')}>
+        <button type="button" className="gm-rs__hint" data-hint onClick={scrollDown} aria-label={t('Pastga tushish')}>
           <span>{t('Pastga')}</span>
           <i aria-hidden="true" />
         </button>

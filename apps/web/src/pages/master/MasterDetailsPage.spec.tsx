@@ -49,13 +49,13 @@ describe('MasterDetailsPage chat button', () => {
     renderPage();
     expect(screen.getByRole('heading', { name: 'Aziz Rahimov' })).toBeInTheDocument();
     expect(screen.getByText('Elektrik')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Chat orqali bog‘lanish/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Usta bilan bog‘lanish/ })).toBeInTheDocument();
   });
 
   it('opens a chat with this master and goes to the chat page with the conversation selected', async () => {
     openChat.mockImplementation((_id: string, options?: { onSuccess?: (c: { id: string }) => void }) => options?.onSuccess?.({ id: 'conv-9' }));
     renderPage();
-    await userEvent.click(screen.getByRole('button', { name: /Chat orqali bog‘lanish/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Usta bilan bog‘lanish/ }));
     expect(openChat).toHaveBeenCalledWith('m1', expect.anything());
     expect(await screen.findByText('chat sahifasi')).toBeInTheDocument();
   });

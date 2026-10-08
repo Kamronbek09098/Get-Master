@@ -13,14 +13,14 @@ describe('getNavItems', () => {
   it('gives masters their working tools', () => {
     const paths = getNavItems('MASTER').map((item) => item.to);
     expect(paths).toEqual(expect.arrayContaining(['/usta/jadval', '/usta/portfolio', '/usta/daromad', '/usta/takliflar']));
-    expect(getNavItems('MASTER').filter((item) => item.primary).length).toBeLessThanOrEqual(4);
+    expect(getNavItems('MASTER').filter((item) => item.primary).length).toBeLessThanOrEqual(5);
     expect(paths.some((path) => path.startsWith('/admin'))).toBe(false);
   });
 
   it('defaults to the customer menu', () => {
     for (const role of ['CUSTOMER', null] as const) {
       const paths = getNavItems(role).map((item) => item.to);
-      expect(paths[0]).toBe('/mijoz/buyurtmalar');
+      expect(paths[0]).toBe('/mijoz/lenta');
       expect(paths).toContain('/mijoz/tolovlar');
     }
   });
@@ -32,14 +32,14 @@ describe('getNavItems', () => {
     }
   });
 
-  it('gives every item an icon and a group, and keeps at most 4 primary items for the mobile bar', () => {
+  it('gives every item an icon and a group, and keeps at most 5 primary items for the mobile bar', () => {
     for (const role of ['ADMIN', 'MASTER', 'CUSTOMER'] as const) {
       const items = getNavItems(role);
       for (const item of items) {
         expect(item.icon).toBeTruthy();
         expect(item.group).toBeTruthy();
       }
-      expect(items.filter((item) => item.primary).length).toBeLessThanOrEqual(4);
+      expect(items.filter((item) => item.primary).length).toBeLessThanOrEqual(5);
     }
   });
 });

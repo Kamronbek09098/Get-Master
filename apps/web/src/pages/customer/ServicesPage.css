@@ -1,0 +1,17 @@
+.gm-svc__chips { display: flex; gap: 8px; margin: 0 -16px 16px; padding: 2px 16px 6px; overflow-x: auto; scrollbar-width: none; }
+.gm-svc__chips::-webkit-scrollbar { display: none; }
+.gm-svc__chips button { flex: none; min-height: 40px; padding: 8px 18px; border-radius: 999px; border: 1.5px solid var(--gm-color-border); background: var(--gm-color-surface); color: var(--gm-color-text); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; }
+.gm-svc__chips button.is-active { background: var(--gm-color-primary); border-color: var(--gm-color-primary); color: var(--gm-color-primary-contrast); }
+.gm-svc__chips button:focus-visible { outline: 2px solid var(--gm-color-primary); outline-offset: 2px; }
+.gm-svc__list { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+.gm-svc__card { display: flex; flex-direction: column; gap: 12px; padding: 20px; border: 1px solid var(--gm-color-border); border-radius: 24px; background: var(--gm-color-surface); box-shadow: var(--gm-shadow-sm); }
+.gm-svc__card header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.gm-svc__tag { padding: 5px 12px; border-radius: 999px; background: var(--gm-color-primary-soft); color: var(--gm-color-primary); font-size: 12.5px; font-weight: 800; }
+.gm-svc__masters { display: inline-flex; align-items: center; gap: 5px; color: var(--gm-color-text-muted); font-size: 12.5px; font-weight: 600; }
+.gm-svc__card h3 { margin: 0; font-size: 1.1rem; line-height: 1.35; overflow-wrap: anywhere; }
+.gm-svc__price { margin: 0; font-size: 1.55rem; font-weight: 800; color: var(--gm-color-success); font-variant-numeric: tabular-nums; }
+.gm-svc__price small { font-size: 0.9rem; font-weight: 600; color: var(--gm-color-text-muted); }
+.gm-svc__actions { display: grid; gap: 4px; margin-top: auto; justify-items: center; }
+.gm-svc__actions .gm-button { text-decoration: none; }
+.gm-svc__more { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--gm-color-text); font-weight: 700; text-decoration: none; }
+.gm-svc__more svg { color: var(--gm-color-primary); }

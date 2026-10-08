@@ -142,3 +142,13 @@
   .gm-mobile-nav__link:active { transform: scale(0.94); }
   .gm-mobile-nav__link--active::before { content: ''; position: absolute; top: -7px; left: 30%; right: 30%; height: 3px; border-radius: 0 0 3px 3px; background: var(--gm-color-primary); }
 }
+
+/* Ilova uslubidagi pastki menyu: faol bo'lim ostida aniq belgi, ikonka kattaroq */
+@media (max-width: 899px) {
+  .gm-mobile-nav { padding-top: 8px; border-radius: 22px 22px 0 0; box-shadow: 0 -10px 30px -18px rgba(10, 18, 48, 0.35); }
+  .gm-mobile-nav__link { position: relative; background: transparent; min-height: 54px; font-size: 11.5px; }
+  .gm-mobile-nav__link--active { background: transparent; color: var(--gm-color-primary); }
+  .gm-mobile-nav__link--active::before { content: ''; position: absolute; top: -9px; left: 50%; width: 26px; height: 3px; margin-left: -13px; border-radius: 0 0 4px 4px; background: var(--gm-color-primary); }
+  .gm-mobile-nav__link--active .gm-mobile-nav__icon svg { stroke-width: 2.4; }
+}
+@media (max-width: 899px) { .gm-mobile-nav__link { font-size: 10.5px; padding-inline: 0; } .gm-mobile-nav__link span:last-child { overflow: visible; text-overflow: clip; } }

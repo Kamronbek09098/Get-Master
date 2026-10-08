@@ -48,7 +48,7 @@
 .gm-rs__timeline button:focus-visible { outline: 2px solid #ffb020; outline-offset: 2px; border-radius: 4px; }
 .gm-rs__timeline li.gm-rs__bar { left: 0; right: 0; top: auto; bottom: 0; height: 2px; background: rgba(255, 255, 255, 0.2); transform: none; pointer-events: none; }
 .gm-rs__bar i { display: block; height: 100%; transform: scaleX(0); transform-origin: 0 50%; background: #ffb020; }
-.gm-rs__hint { position: absolute; z-index: 6; padding: 0; border: 0; background: none; cursor: pointer; color: inherit; left: 50%; bottom: 58px; transform: translateX(-50%); display: grid; justify-items: center; gap: 8px; font: 500 11.55px/1 var(--gm-mono); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255, 255, 255, 0.8); transition: opacity 0.4s; }
+.gm-rs__hint { opacity: var(--on, 1); position: absolute; z-index: 6; padding: 0; border: 0; background: none; cursor: pointer; color: inherit; left: 50%; bottom: 58px; transform: translateX(-50%); display: grid; justify-items: center; gap: 8px; font: 500 11.55px/1 var(--gm-mono); letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255, 255, 255, 0.8); transition: opacity 0.4s; }
 .gm-rs__hint i { width: 1px; height: 30px; background: linear-gradient(180deg, #ffb020, transparent); animation: gm-hint 1.8s ease-in-out infinite; transform-origin: 50% 0; }
 
 @media (max-width: 700px) {
@@ -81,3 +81,13 @@
 /* Yuqori menyu: yozuv va tugmalar 10% kattaroq */
 .gm-landing__links a { font-size: 15.4px; }
 .gm-landing__nav .gm-button--md { min-height: 44px; padding: 0 20px; font-size: 15.4px; }
+
+/* Yakuniy kartochka: matn va tugma ustma-ust tushmasin, fon xira bo‘lib o‘qilishi osonlashadi */
+.gm-rs__brand { top: auto; padding: 0 24px; }
+.gm-rs__brand::before { content: ''; position: absolute; inset: -140px 0 -90px; z-index: -1; background: radial-gradient(60% 70% at 50% 62%, rgba(4, 9, 30, 0.72), transparent 75%); }
+.gm-rs__brand p { max-width: 36ch; text-wrap: balance; line-height: 1.5; }
+.gm-rs__brand .gm-button { min-height: 48px; padding-inline: 26px; }
+.gm-rs__chapter { text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45); }
+.gm-rs__chapter .gm-rs__text { max-width: 46ch; text-wrap: pretty; }
+@media (max-width: 720px) { .gm-rs__brand { bottom: 92px; } .gm-rs__brand p { font-size: 15px; } }
+@media (min-width: 721px) { .gm-rs__brand { bottom: clamp(110px, 17vh, 170px); } }

@@ -23,7 +23,7 @@ function renderGuard(roles: Role[]) {
         <Route path="/secret" element={<RoleGuard roles={roles}>maxfiy</RoleGuard>} />
         <Route path="/login" element={<p>kirish</p>} />
         <Route path="/admin" element={<p>admin bosh sahifa</p>} />
-        <Route path="/mijoz/buyurtmalar" element={<p>mijoz bosh sahifa</p>} />
+        <Route path="/mijoz/lenta" element={<p>mijoz bosh sahifa</p>} />
         <Route path="/usta/profil" element={<RoleGuard roles={['MASTER']}>usta profili</RoleGuard>} />
       </Routes>
     </MemoryRouter>,

@@ -22,6 +22,9 @@ interface UploadFile {
   size: number;
 }
 
+/** Ish lentasi videosi: ko‘pi bilan 40 MB (taxminan 60 soniyalik 720p). */
+export const FEED_VIDEO_MAX_BYTES = 40 * 1024 * 1024;
+
 @Injectable()
 export class MediaService {
   constructor(
@@ -43,7 +46,10 @@ export class MediaService {
       throw new BadRequestException(ERRORS.FILE_NAME_TOO_LONG);
     }
 
-    const maxSize = this.config.get<number>('storage.maxUploadSizeBytes')!;
+    // Lenta/portfolio uchun qisqa video: umumiy chegaradan kattaroq (rasm va boshqa fayllar uchun chegara o‘zgarmaydi).
+    const baseMax = this.config.get<number>('storage.maxUploadSizeBytes')!;
+    const isShortVideo = kind === 'MASTER_PORTFOLIO' && file.mimetype.startsWith('video/');
+    const maxSize = isShortVideo ? Math.max(baseMax, FEED_VIDEO_MAX_BYTES) : baseMax;
     if (file.size > maxSize || file.buffer.length > maxSize) {
       return this.reject(uploaderId, kind, file, link, 'File exceeds the maximum allowed size');
     }
@@ -243,11 +249,40 @@ export class MediaService {
     }
   }
 
+  /**
+   * Lenta uchun: tayyor fayllar uchun imzolangan API havolalarini bir marta hisoblaydi (har bir fayl uchun alohida so‘rov kerak bo‘lmasin).
+   * Kirish huquqi chaqiruvchi tomonidan tekshirilgan (faqat e'lon qilingan postlar fayllari uchun chaqiriladi).
+   */
+  async signMany(assetIds: string[], apiBase: string): Promise<Map<string, { thumbnail: string | null; medium: string | null; original: string | null }>> {
+    const ids = [...new Set(assetIds.filter(Boolean))];
+    const out = new Map<string, { thumbnail: string | null; medium: string | null; original: string | null }>();
+    if (ids.length === 0) return out;
+    const assets = await this.db.mediaAsset.findMany({ where: { id: { in: ids }, status: 'READY' }, select: { id: true, thumbnailKey: true, mediumKey: true, originalKey: true } });
+    const ttl = this.config.get<number>('storage.signedUrlTtlSeconds')!;
+    const expires = Math.floor(Date.now() / 1000) + ttl;
+    const url = (id: string, variant: 'original' | 'thumbnail' | 'medium') =>
+      `${apiBase}/api/v1/media/file/${id}/${variant}?expires=${expires}&sig=${this.streamSignature(id, variant, expires)}`;
+    for (const asset of assets) {
+      out.set(asset.id, {
+        thumbnail: asset.thumbnailKey ? url(asset.id, 'thumbnail') : null,
+        medium: asset.mediumKey ? url(asset.id, 'medium') : null,
+        original: asset.originalKey ? url(asset.id, 'original') : null,
+      });
+    }
+    return out;
+  }
+
   private async authorizeAccess(userId: string, roles: Role[], asset: MediaAsset): Promise<void> {
     if (roles.includes(Role.ADMIN)) return;
     if (asset.uploaderId === userId) return;
 
     if (asset.kind === 'MASTER_PORTFOLIO') {
+      // Ish lentasida e'lon qilingan (ochiq) post fayllarini har bir kirgan foydalanuvchi ko‘ra oladi.
+      const post = await this.db.workPost.findFirst({
+        where: { status: 'PUBLISHED', OR: [{ videoAssetId: asset.id }, { coverAssetId: asset.id }, { beforeAssetId: asset.id }, { afterAssetId: asset.id }] },
+        select: { id: true },
+      });
+      if (post) return;
       const item = await this.db.masterPortfolio.findFirst({
         where: { OR: [{ mediaAssetId: asset.id }, { beforeMediaAssetId: asset.id }] },
         select: { status: true },

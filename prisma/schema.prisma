@@ -355,6 +355,10 @@ enum VerificationDocumentType {
 }
 
 model User {
+  workPostLikes            WorkPostLike[]
+  workPostSaves            WorkPostSave[]
+  workPostComments         WorkPostComment[]
+  masterFollows            MasterFollow[]
   id                       String                    @id @default(uuid()) @db.Uuid
   accountNumber            Int                       @unique @default(autoincrement()) @map("account_number")
   phone                    String?                   @unique @db.VarChar(32)
@@ -578,6 +582,8 @@ model Address {
 }
 
 model MasterProfile {
+  workPosts        WorkPost[]
+  followers        MasterFollow[]
   id               String                   @id @default(uuid()) @db.Uuid
   /// «Pro» obunasi faolmi (katalogda yuqori o‘rin va Pro belgisi); obuna tugaganda o‘chadi.
   isPro            Boolean                  @default(false) @map("is_pro")
@@ -1432,12 +1438,11 @@ model MediaAsset {
   portfolioItem        MasterPortfolio?    @relation("PortfolioAfter")
   portfolioBeforeItem  MasterPortfolio?    @relation("PortfolioBefore")
   verificationDocument MasterVerification?
+  subscriptionReceipts Subscription[]      @relation("SubscriptionReceipt")
 
   @@index([uploaderId, status])
   @@index([linkedResourceType, linkedResourceId])
   @@index([status, updatedAt])
-  subscriptionReceipts  Subscription[]      @relation("SubscriptionReceipt")
-
   @@map("media_assets")
 }
 
@@ -1556,40 +1561,134 @@ enum SubscriptionStatus {
 
 /// Obuna: mijoz uchun «Plus», usta uchun «Pro». To‘lov so‘rovi (PENDING) admin tasdiqlagach yoki sovg‘a sifatida beriladi (ACTIVE).
 model Subscription {
-  id            String               @id @default(uuid()) @db.Uuid
-  userId        String               @db.Uuid
-  audience      SubscriptionAudience
-  planCode      String               @map("plan_code") @db.VarChar(32)
-  months        Int
-  amount        Decimal              @db.Decimal(14, 2)
-  currency      String               @default("UZS") @db.VarChar(3)
-  status        SubscriptionStatus   @default(PENDING)
+  id             String               @id @default(uuid()) @db.Uuid
+  userId         String               @db.Uuid
+  audience       SubscriptionAudience
+  planCode       String               @map("plan_code") @db.VarChar(32)
+  months         Int
+  amount         Decimal              @db.Decimal(14, 2)
+  currency       String               @default("UZS") @db.VarChar(3)
+  status         SubscriptionStatus   @default(PENDING)
   /// PURCHASE (to‘lov so‘rovi) yoki GRANT (admin sovg‘asi).
-  source        String               @default("PURCHASE") @db.VarChar(16)
-  method        String?              @db.VarChar(24)
-  reference     String               @unique @db.VarChar(24)
-  note          String?
-  startsAt      DateTime?            @map("starts_at")
-  endsAt        DateTime?            @map("ends_at")
-  decidedById   String?              @map("decided_by_id") @db.Uuid
-  decidedAt     DateTime?            @map("decided_at")
-  rejectReason  String?              @map("reject_reason")
-  reminderSent  Boolean              @default(false) @map("reminder_sent")
+  source         String               @default("PURCHASE") @db.VarChar(16)
+  method         String?              @db.VarChar(24)
+  reference      String               @unique @db.VarChar(24)
+  note           String?
+  startsAt       DateTime?            @map("starts_at")
+  endsAt         DateTime?            @map("ends_at")
+  decidedById    String?              @map("decided_by_id") @db.Uuid
+  decidedAt      DateTime?            @map("decided_at")
+  rejectReason   String?              @map("reject_reason")
+  reminderSent   Boolean              @default(false) @map("reminder_sent")
   /// Click / Payme / Uzum tranzaksiya ID si va protokol holati (to‘lov muvaffaqiyatli bo‘lsa obuna avtomatik faollashadi).
-  providerTxId  String?              @map("provider_tx_id") @db.VarChar(128)
-  providerMeta  Json?                @map("provider_meta")
-  paidAt        DateTime?            @map("paid_at")
+  providerTxId   String?              @map("provider_tx_id") @db.VarChar(128)
+  providerMeta   Json?                @map("provider_meta")
+  paidAt         DateTime?            @map("paid_at")
   /// Karta o‘tkazmasi cheki (admin ko‘rib chiqadi).
-  receiptAssetId String?             @map("receipt_asset_id") @db.Uuid
-  receipt       MediaAsset?          @relation("SubscriptionReceipt", fields: [receiptAssetId], references: [id], onDelete: SetNull)
-  createdAt     DateTime             @default(now())
-  updatedAt     DateTime             @updatedAt
-  user          User                 @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
-  decidedBy     User?                @relation("SubscriptionDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  receiptAssetId String?              @map("receipt_asset_id") @db.Uuid
+  receipt        MediaAsset?          @relation("SubscriptionReceipt", fields: [receiptAssetId], references: [id], onDelete: SetNull)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  user           User                 @relation("UserSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+  decidedBy      User?                @relation("SubscriptionDecider", fields: [decidedById], references: [id], onDelete: SetNull)
 
   @@index([userId, audience, status, endsAt])
   @@index([status, createdAt])
   @@index([status, endsAt])
   @@index([method, providerTxId])
   @@map("subscriptions")
+}
+
+enum WorkPostKind {
+  VIDEO
+  BEFORE_AFTER
+  PHOTO
+}
+
+enum WorkPostStatus {
+  PUBLISHED
+  HIDDEN
+}
+
+/// Professional ish lentasi (Work Feed): usta bajargan ish videosi, «oldin/keyin» yoki rasmi.
+model WorkPost {
+  id            String            @id @default(uuid()) @db.Uuid
+  masterId      String            @db.Uuid
+  kind          WorkPostKind
+  status        WorkPostStatus    @default(PUBLISHED)
+  caption       String?           @db.VarChar(1000)
+  tags          String[]          @default([])
+  categoryId    String?           @map("category_id") @db.Uuid
+  serviceId     String?           @map("service_id") @db.Uuid
+  /// Fayllar `media_assets` dagi MASTER_PORTFOLIO turidagi tayyor fayllar (havola sifatida; bevosita bog‘lanmagan).
+  videoAssetId  String?           @map("video_asset_id") @db.Uuid
+  coverAssetId  String?           @map("cover_asset_id") @db.Uuid
+  beforeAssetId String?           @map("before_asset_id") @db.Uuid
+  afterAssetId  String?           @map("after_asset_id") @db.Uuid
+  durationSec   Int?              @map("duration_sec")
+  viewCount     Int               @default(0) @map("view_count")
+  likeCount     Int               @default(0) @map("like_count")
+  saveCount     Int               @default(0) @map("save_count")
+  commentCount  Int               @default(0) @map("comment_count")
+  shareCount    Int               @default(0) @map("share_count")
+  createdAt     DateTime          @default(now())
+  master        MasterProfile     @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  likes         WorkPostLike[]
+  saves         WorkPostSave[]
+  comments      WorkPostComment[]
+
+  @@index([status, createdAt])
+  @@index([masterId, createdAt])
+  @@index([categoryId])
+  @@map("work_posts")
+}
+
+model WorkPostLike {
+  postId    String   @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  post      WorkPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId])
+  @@map("work_post_likes")
+}
+
+model WorkPostSave {
+  postId    String   @db.Uuid
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  post      WorkPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@index([userId, createdAt])
+  @@map("work_post_saves")
+}
+
+model WorkPostComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @db.Uuid
+  userId    String   @db.Uuid
+  text      String   @db.VarChar(500)
+  createdAt DateTime @default(now())
+  post      WorkPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@map("work_post_comments")
+}
+
+/// Foydalanuvchi ustani «kuzatadi» (lentadagi «Kuzatilmoqda» bo‘limi).
+model MasterFollow {
+  userId    String        @db.Uuid
+  masterId  String        @db.Uuid
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  master    MasterProfile @relation(fields: [masterId], references: [id], onDelete: Cascade)
+
+  @@id([userId, masterId])
+  @@index([masterId])
+  @@map("master_follows")
 }

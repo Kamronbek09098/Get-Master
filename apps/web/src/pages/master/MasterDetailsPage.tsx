@@ -1,7 +1,9 @@
 import { accountName } from '@/lib/account-name';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
-import { Award, BadgeCheck, Briefcase, CalendarClock, MapPin, MessageCircle, Star } from 'lucide-react';
+import { Award, BadgeCheck, Briefcase, CalendarClock, MapPin, MessageCircle, Star, Info, LayoutGrid, MessageSquareText } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { ReviewList } from '@/features/review/components/ReviewList';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -22,12 +24,20 @@ import { CompletedJobs } from '@/features/master/components/CompletedJobs';
 import { t } from '@/i18n';
 import './MasterProfile.css';
 
+type DetailTab = 'info' | 'works' | 'reviews';
+const TABS: Array<{ id: DetailTab; icon: LucideIcon; label: () => string }> = [
+  { id: 'info', icon: Info, label: () => t('Ma’lumot') },
+  { id: 'works', icon: LayoutGrid, label: () => t('Ishlar') },
+  { id: 'reviews', icon: MessageSquareText, label: () => t('Sharhlar') },
+];
+
 export function MasterDetailsPage() {
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const master = useMaster(id);
   const openChat = useOpenMasterChat();
   const [areaOpen, setAreaOpen] = useState<string | null>(null);
+  const [tab, setTab] = useState<DetailTab>('info');
 
   if (master.isLoading) return <PageLoader label={t('Usta yuklanmoqda…')} />;
   if (master.isError) return <Alert tone="danger">{getErrorMessage(master.error)}</Alert>;
@@ -114,6 +124,16 @@ export function MasterDetailsPage() {
         </dl>
       </section>
 
+      <div className="gm-mp-tabs" role="tablist" aria-label={t('Usta ma’lumotlari')}>
+        {TABS.map((item) => (
+          <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} className={tab === item.id ? 'is-active' : undefined} onClick={() => setTab(item.id)}>
+            <item.icon size={18} aria-hidden="true" /> {item.label()}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'info' && (
+        <>
       {/* 4 · Mutaxassislik */}
       {data.bio && (
         <section className="gm-mp-section">
@@ -136,13 +156,6 @@ export function MasterDetailsPage() {
               </li>
             ))}
           </ul>
-        </section>
-      )}
-
-      {(data.portfolio ?? []).length > 0 && (
-        <section className="gm-mp-section">
-          <h2>{t('Portfolio')}</h2>
-          <PublicPortfolio items={data.portfolio ?? []} />
         </section>
       )}
 
@@ -184,7 +197,26 @@ export function MasterDetailsPage() {
         </section>
       )}
 
+        </>
+      )}
+      {tab === 'works' && (
+        <>
+      {(data.portfolio ?? []).length > 0 && (
+        <section className="gm-mp-section">
+          <h2>{t('Portfolio')}</h2>
+          <PublicPortfolio items={data.portfolio ?? []} />
+        </section>
+      )}
+
       <CompletedJobs masterId={data.id} completedOrders={data.completedOrders} />
+        </>
+      )}
+      {tab === 'reviews' && (
+        <section className="gm-mp-section">
+          <h2>{t('Sharhlar')}</h2>
+          <ReviewList masterId={data.id} />
+        </section>
+      )}
 
       {/* 9 · Chaqiruv: sahifa oxirida (DOM da oxirgi), skrollda pastda yopishib turadi */}
       <div className="gm-mp-cta gm-action-row">
@@ -193,7 +225,7 @@ export function MasterDetailsPage() {
           loading={openChat.isPending}
           onClick={() => openChat.mutate(data.id, { onSuccess: (conversation) => navigate(`/mijoz/chat?suhbat=${conversation.id}`) })}
         >
-          <MessageCircle size={20} />{' '}{t('Chat orqali bog‘lanish')}</Button>
+          <MessageCircle size={20} />{' '}{t('Usta bilan bog‘lanish')}</Button>
         {openChat.isError && <Alert tone="danger">{getErrorMessage(openChat.error)}</Alert>}
       </div>
     </div>

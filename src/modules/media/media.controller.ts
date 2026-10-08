@@ -24,7 +24,8 @@ import { MediaService } from './media.service';
 import { InitiateUploadDto } from './dto/initiate-upload.dto';
 import { ERRORS } from '../../common/constants/error-messages';
 
-const HARD_UPLOAD_LIMIT_BYTES = 11 * 1024 * 1024;
+// Multer yuqori chegarasi: qisqa video (40 MB) uchun; rasm va boshqa fayllar uchun aniq chegara xizmat ichida tekshiriladi.
+const HARD_UPLOAD_LIMIT_BYTES = 41 * 1024 * 1024;
 
 /** Multer fayl nomini Latin-1 deb o‘qiydi; kirill va o‘zbek harflari buzilmasligi uchun UTF-8 ga qaytaramiz. */
 const decodeFilename = (name: string) => {

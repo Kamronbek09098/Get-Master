@@ -1,0 +1,63 @@
+/* Ish joylash oqimi: lenta bilan bir xil qorong‘i dizayn tizimi */
+.gu { min-height: 100%; display: grid; justify-items: center; }
+.gu__frame { width: min(100%, 560px); min-height: calc(100dvh - var(--gm-header-height, 64px)); padding: 12px 16px calc(var(--gm-bottom-nav-h, 72px) + 24px); background: var(--gf-bg); border-radius: 0; overflow: visible !important; }
+@media (min-width: 900px) { .gu__frame { min-height: 0; margin-top: 8px; border-radius: 28px; box-shadow: 0 0 0 1px var(--gf-line); padding-bottom: 28px; } }
+.gu__head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.gu__head h1 { margin: 0; font-size: 1.3rem; }
+.gu__steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0 20px; padding: 0; list-style: none; }
+.gu__steps li { display: grid; justify-items: start; gap: 6px; font-size: 0.74rem; font-weight: 700; color: var(--gf-faint); }
+.gu__steps li::before { content: ''; height: 4px; width: 100%; border-radius: 4px; background: var(--gf-line-strong); order: -1; }
+.gu__steps li span { display: none; }
+.gu__steps li.is-on, .gu__steps li.is-done { color: var(--gf-text); }
+.gu__steps li.is-on::before, .gu__steps li.is-done::before { background: var(--gf-accent); }
+.gu__body { display: grid; gap: 16px; }
+.gu__body h2 { margin: 0; font-size: 1.2rem; }
+.gu__kinds { display: grid; gap: 10px; }
+.gu__kind { display: grid; grid-template-columns: auto 1fr; column-gap: 14px; align-items: center; min-height: 76px; padding: 12px 16px; border: 1.5px solid var(--gf-line-strong); border-radius: 20px; background: var(--gf-panel); text-align: left; cursor: pointer; transition: border-color 0.16s ease, background-color 0.16s ease; }
+.gu__kind svg { grid-row: span 2; color: var(--gf-accent); }
+.gu__kind strong { font-size: 1.02rem; }
+.gu__kind small { color: var(--gf-muted); font-size: 0.84rem; }
+.gu__kind.is-on { border-color: #fff; background: var(--gf-panel-2); }
+.gu__drop { position: relative; display: grid; place-content: center; justify-items: center; gap: 8px; min-height: 220px; padding: 20px; border: 2px dashed var(--gf-line-strong); border-radius: 24px; background: var(--gf-panel); text-align: center; cursor: pointer; overflow: hidden; }
+.gu__drop small { color: var(--gf-muted); max-width: 30ch; }
+.gu__drop input, .gu__slot input, .gu__change input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.gu__drop.has { padding: 0; border-style: solid; }
+.gu__drop img { width: 100%; max-height: 420px; object-fit: cover; }
+.gu__drop:focus-within, .gu__slot:focus-within, .gu__change:focus-within { outline: 2px solid #fff; outline-offset: 2px; }
+.gu__video { position: relative; border-radius: 24px; overflow: hidden; background: #000; aspect-ratio: 9 / 12; max-height: 52dvh; margin: 0 auto; width: 100%; }
+.gu__video video { width: 100%; height: 100%; object-fit: contain; }
+.gu__video .gf-chip { position: absolute; right: 10px; top: 10px; }
+.gu__cover { display: grid; gap: 10px; padding: 14px; border-radius: 20px; background: var(--gf-panel); }
+.gu__cover label { font-weight: 700; font-size: 0.9rem; }
+.gu__cover input[type='range'] { width: 100%; min-height: 32px; accent-color: #fff; }
+.gu__cover-row { display: flex; align-items: center; gap: 12px; }
+.gu__cover-row img { width: 56px; height: 72px; border-radius: 10px; object-fit: cover; box-shadow: 0 0 0 2px var(--gf-accent); }
+.gu__cover-row small { color: var(--gf-muted); }
+.gu__change { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; color: var(--gf-accent); font-weight: 700; cursor: pointer; }
+.gu__pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.gu__slot { position: relative; display: grid; place-content: center; justify-items: center; gap: 6px; aspect-ratio: 3 / 4; border: 2px dashed var(--gf-line-strong); border-radius: 22px; background: var(--gf-panel); overflow: hidden; cursor: pointer; }
+.gu__slot.has { border-style: solid; border-color: var(--gf-line); }
+.gu__slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.gu__slot-tag { position: absolute; left: 10px; bottom: 10px; padding: 5px 12px; border-radius: 999px; background: var(--gf-glass); backdrop-filter: blur(8px); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.gu__field { display: grid; gap: 8px; }
+.gu__field > label, .gu__field > span { font-weight: 700; font-size: 0.9rem; }
+.gu__field small { color: var(--gf-faint); font-size: 0.78rem; }
+.gu__field textarea { width: 100%; padding: 14px 16px; border: 1px solid var(--gf-line-strong); border-radius: 16px; background: var(--gf-panel-2); color: var(--gf-text); font: inherit; font-size: 16px; line-height: 1.5; resize: vertical; }
+.gu__field textarea:focus-visible, .gu__tags:focus-within { outline: 2px solid #fff; outline-offset: 1px; }
+.gu__tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 50px; padding: 8px 12px; border: 1px solid var(--gf-line-strong); border-radius: 16px; background: var(--gf-panel-2); }
+.gu__tags input { flex: 1; min-width: 120px; min-height: 32px; border: 0; outline: 0; background: transparent; color: var(--gf-text); font: inherit; font-size: 16px; }
+.gu__tags .gf-tag { gap: 6px; cursor: default; }
+.gu__tags .gf-tag button { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.18); cursor: pointer; }
+.gu__summary { display: grid; grid-template-columns: 88px 1fr; gap: 14px; padding: 14px; border-radius: 20px; background: var(--gf-panel); }
+.gu__summary p { margin: 4px 0; color: var(--gf-muted); font-size: 0.9rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.gu__summary small { color: var(--gf-faint); }
+.gu__thumb { aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden; background: var(--gf-panel-2); }
+.gu__thumb img, .gu__thumb video { width: 100%; height: 100%; object-fit: cover; }
+.gu__prog { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.gu__prog li { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 14px; background: var(--gf-panel); color: var(--gf-faint); font-weight: 600; }
+.gu__prog li.is-run { color: var(--gf-text); background: var(--gf-panel-2); }
+.gu__prog li.is-ok { color: var(--gf-ok); }
+.gu__dot { width: 8px; height: 8px; margin: 5px; border-radius: 50%; background: var(--gf-line-strong); }
+.gu__spin { animation: gf-spin 0.9s linear infinite; }
+.gu__retry { display: grid; gap: 10px; }
+.gu .gf-cta:disabled { opacity: 0.4; cursor: default; }

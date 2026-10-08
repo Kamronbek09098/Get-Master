@@ -1,0 +1,19 @@
+.gf-sc { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; width: min(100%, 280px); padding: 8px; border-radius: 16px; background: #0f1420; color: #f6f8fc; text-decoration: none; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1); }
+.gf-sc:focus-visible { outline: 2px solid var(--gm-color-primary); outline-offset: 2px; }
+.gf-sc__cover { position: relative; display: block; aspect-ratio: 3 / 4; border-radius: 11px; overflow: hidden; background: #171d2d; }
+.gf-sc__cover img { width: 100%; height: 100%; object-fit: cover; }
+.gf-sc__blank { display: block; width: 100%; height: 100%; }
+.gf-sc__play { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; background: linear-gradient(0deg, rgba(0, 0, 0, 0.45), transparent 60%); }
+.gf-sc__dur { position: absolute; right: 5px; bottom: 5px; padding: 1px 6px; border-radius: 999px; background: rgba(0, 0, 0, 0.62); font-size: 0.68rem; font-weight: 700; }
+.gf-sc__body { display: grid; align-content: center; gap: 3px; min-width: 0; }
+.gf-sc__body strong { display: flex; align-items: center; gap: 4px; font-size: 0.9rem; }
+.gf-sc__body strong svg { color: #4da3ff; flex: none; }
+.gf-sc__body em { font-style: normal; font-size: 0.74rem; font-weight: 700; color: #ffd58a; }
+.gf-sc__body small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: rgba(246, 248, 252, 0.7); font-size: 0.78rem; line-height: 1.4; }
+.gf-sc__cta { margin-top: 4px; font-size: 0.76rem; font-weight: 800; color: #fff; }
+.gf-sc--skel { display: block; height: 116px; background: linear-gradient(100deg, #171d2d 30%, #222a40 50%, #171d2d 70%); background-size: 220% 100%; animation: gf-sc-shimmer 1.4s linear infinite; }
+@keyframes gf-sc-shimmer { to { background-position: -220% 0; } }
+.gf-sc--gone { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+.gf-sc--gone > span { display: grid; gap: 2px; }
+.gf-sc--gone small { color: rgba(246, 248, 252, 0.7); }
+@media (prefers-reduced-motion: reduce) { .gf-sc--skel { animation: none; } }

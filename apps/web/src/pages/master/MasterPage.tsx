@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Button } from '@/components/ui/Button';
@@ -17,7 +18,8 @@ import { t } from '@/i18n';
 
 export function MasterPage() {
   const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState<string | undefined>();
+  const [params] = useSearchParams();
+  const [categoryId, setCategoryId] = useState<string | undefined>(params.get('kategoriya') ?? undefined);
   const [mode, setMode] = useState<ServiceMode | undefined>();
   const [region, setRegion] = useState('');
   const debouncedSearch = useDebounce(search, 400);

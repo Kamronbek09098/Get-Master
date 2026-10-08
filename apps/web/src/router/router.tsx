@@ -14,6 +14,7 @@ import { env } from '@/lib/env';
 import { useAuthStore } from '@/store/auth.store';
 import type { ReactNode } from 'react';
 import type { Role } from '@/types/common';
+import { ServicesPage } from '@/pages/customer/ServicesPage';
 import { RoleSelectPage } from '@/pages/RoleSelectPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
@@ -45,6 +46,8 @@ import { PaymentHistoryPage } from '@/pages/payments/PaymentHistoryPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { SafetyPage } from '@/pages/safety/SafetyPage';
 
+const FeedPage = lazy(() => import('@/pages/feed/FeedPage').then((m) => ({ default: m.FeedPage })));
+const UploadPage = lazy(() => import('@/pages/feed/UploadPage').then((m) => ({ default: m.UploadPage })));
 const AdminHome = lazy(() => import('@/pages/admin/AdminHome').then((m) => ({ default: m.AdminHome })));
 const AdminReportsPage = lazy(() => import('@/pages/admin/AdminReportsPage').then((m) => ({ default: m.AdminReportsPage })));
 const AdminUsersPage = lazy(() => import('@/pages/admin/AdminUsersPage').then((m) => ({ default: m.AdminUsersPage })));
@@ -154,6 +157,10 @@ const panelRouter = createBrowserRouter([
           { path: '/usta/kafolat', element: master(<WarrantyPage />) },
           { path: '/usta/nizolar', element: master(<DisputesPage />) },
           { path: '/mijoz/ustalar', element: customer(<MasterPage />) },
+          { path: '/mijoz/xizmatlar', element: customer(<ServicesPage />) },
+          { path: '/mijoz/lenta', element: customer(<FeedPage />) },
+          { path: '/usta/lenta', element: master(<FeedPage />) },
+          { path: '/usta/lenta/yangi', element: master(<UploadPage />) },
           { path: '/mijoz/ustalar/:id', element: customer(<MasterDetailsPage />) },
           { path: '/bronlar', element: shared(<OrdersRedirect />) },
           { path: '/bronlar/:id', element: shared(<OrdersRedirect />) },
