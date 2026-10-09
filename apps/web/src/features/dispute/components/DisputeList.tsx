@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime } from '@/lib/utils';
 import { useMyDisputes } from '../hooks/useDisputes';
-import { CASE_STATUS_LABEL } from '../types';
+import { CASE_STATUS_LABEL, caseTitle } from '../types';
 import { t } from '@/i18n';
 
 export function DisputeList() {
@@ -33,7 +33,7 @@ export function DisputeList() {
       {items.map((dispute) => (
         <div key={dispute.id} className="gm-card">
           <div className="gm-card__header">
-            <h3>{dispute.title}</h3>
+            <h3>{caseTitle(dispute.title, dispute.orderId)}</h3>
             <Badge tone="warning">{CASE_STATUS_LABEL[dispute.status]}</Badge>
           </div>
           <p>{dispute.description}</p>

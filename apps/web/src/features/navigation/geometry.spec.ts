@@ -40,6 +40,12 @@ describe('navigation geometry', () => {
     expect(afterTurn.stepIndex).toBe(1);
     expect(afterTurn.remainingM).toBeLessThan(700);
 
+    // GPS yo‘ldan biroz chetda bo‘lsa, marker yo‘lga yopishtiriladi va yo‘l yo‘nalishini oladi
+    const nearRoad = progressOn(route, { lat: 41.30015, lon: 69.246 }, 0);
+    expect(nearRoad.offRouteM).toBeLessThan(25);
+    expect(Math.abs(nearRoad.snapped.lat - 41.3)).toBeLessThan(0.00001);
+    expect(Math.round(nearRoad.segmentBearing)).toBe(90);
+
     const off = progressOn(route, { lat: 41.3, lon: 69.26 }, 0);
     expect(off.offRouteM).toBeGreaterThan(300);
   });

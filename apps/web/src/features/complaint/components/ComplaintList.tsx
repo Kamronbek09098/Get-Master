@@ -6,7 +6,7 @@ import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime } from '@/lib/utils';
-import { CASE_STATUS_LABEL } from '@/features/dispute/types';
+import { CASE_STATUS_LABEL, caseTitle } from '@/features/dispute/types';
 import type { Complaint } from '../types';
 import { useMyComplaints } from '../hooks/useComplaints';
 import { useMe } from '@/features/session/hooks/useMe';
@@ -58,7 +58,7 @@ function ComplaintCard({ complaint }: { complaint: Complaint }) {
         <Badge tone={tone === 'ok' ? 'success' : tone === 'no' ? 'danger' : 'primary'}>{CASE_STATUS_LABEL[complaint.status]}</Badge>
       </div>
 
-      <h3 className="gm-cplt__title">{complaint.title}</h3>
+      <h3 className="gm-cplt__title">{caseTitle(complaint.title, complaint.orderId)}</h3>
       {!open && <p className="gm-cplt__text gm-cplt__text--clamp">{complaint.description}</p>}
       <p className="gm-cplt__date">{formatDateTime(complaint.createdAt)}</p>
 

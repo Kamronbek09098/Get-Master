@@ -109,7 +109,7 @@
 }
 .gm-aordd__parties {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
   gap: var(--gm-space-3);
 }
 .gm-aordd__party {
@@ -276,21 +276,14 @@
 .gm-aordd__row dt { font-weight: 600; font-size: 0.82rem; }
 .gm-aordd__row dd { font-weight: 600; }
 
-.gm-aordd__party {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-areas: 'av role' 'av name' 'av id' 'av extra';
-  align-items: center;
-  column-gap: 14px;
-  padding: 14px 16px;
-  border: 1px solid var(--gm-color-border);
-  border-radius: var(--gm-radius-lg);
-}
-.gm-aordd__party .gm-chat-avatar { grid-area: av; align-self: center; }
-.gm-aordd__party > small { grid-area: role; }
-.gm-aordd__party > a, .gm-aordd__party > .gm-aordd__link { grid-area: name; font-size: 1rem; font-weight: 800; }
-.gm-aordd__party > span:nth-of-type(1) { grid-area: id; color: var(--gm-color-text-muted); }
-.gm-aordd__party > span:nth-of-type(2) { grid-area: extra; color: var(--gm-color-text-muted); }
+/* Tomon kartasi: chapda avatar, o‘ngda rol, ism, ID va qo‘shimcha (ustunlar bir-biriga tushmaydi) */
+.gm-aordd__party { display: flex; flex-direction: row; align-items: center; gap: 14px; min-width: 0; padding: 14px 16px; border: 1px solid var(--gm-color-border); border-radius: var(--gm-radius-lg); background: var(--gm-color-surface-muted); }
+.gm-aordd__party .gm-chat-avatar { flex: none; }
+.gm-aordd__party-body { display: grid; gap: 2px; min-width: 0; }
+.gm-aordd .gm-aordd__party-role { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gm-color-primary); }
+.gm-aordd__party-name { font-size: 1.02rem; font-weight: 800; line-height: 1.25; color: var(--gm-color-text); text-decoration: none; overflow-wrap: anywhere; }
+.gm-aordd__party-name:hover { color: var(--gm-color-primary); text-decoration: underline; }
+.gm-aordd__party-meta { font-size: 0.82rem; color: var(--gm-color-text-muted); overflow-wrap: anywhere; }
 
 .gm-aordd__text { padding: 12px 14px; border-radius: 12px; background: var(--gm-color-surface-muted); line-height: 1.55; }
 .gm-aordd__gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
@@ -318,3 +311,21 @@
   .gm-aordd__row dt { flex: none; }
 }
 @media (prefers-reduced-motion: reduce) { .gm-aordd__back { transition: none; } }
+
+/* Buyurtmaga tegishli shikoyat va nizolar */
+.gm-aordd__cases { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.gm-aordd__case { position: relative; display: grid; gap: 4px; padding: 12px 14px 12px 18px; overflow: hidden; border: 1px solid var(--gm-color-border); border-radius: 14px; background: var(--gm-color-surface-muted, rgba(100, 116, 139, 0.08)); }
+.gm-aordd__case::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: #d97706; }
+.gm-aordd__case--ok::before { background: var(--gm-color-success, #059669); }
+.gm-aordd__case--no::before { background: var(--gm-color-danger, #dc2626); }
+.gm-aordd__case-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+.gm-aordd__case-type { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gm-color-text-muted); }
+.gm-aordd__case-title { font-size: 0.95rem; line-height: 1.35; overflow-wrap: anywhere; }
+.gm-aordd__case-date { color: var(--gm-color-text-muted); font-size: 0.8rem; }
+.gm-aordd__link svg { transition: transform 0.15s ease; }
+.gm-aordd__link:hover svg { transform: translateX(3px); }
+
+.gm-aordd__stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 18px 22px; align-items: start; }
+.gm-aordd__stage { min-width: 0; }
+.gm-aordd__gallery { grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); }
+.gm-aordd__cases + .gm-aordd__link { margin-top: 12px; }

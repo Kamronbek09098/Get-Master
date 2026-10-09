@@ -59,3 +59,18 @@
 .gm-acase__toggle svg { transition: transform 0.2s ease; }
 .gm-acase__toggle svg.is-up { transform: rotate(180deg); }
 @media (max-width: 640px) { .gm-acase { padding: 16px 16px 14px 20px; } }
+
+/* ---- Karta: aniq, ixcham va tilga moslashuvchan ---- */
+.gm-acase { gap: 12px; transition: box-shadow 0.18s ease, transform 0.18s ease; }
+.gm-acase:hover { box-shadow: 0 14px 34px -18px rgba(15, 23, 42, 0.35); }
+.gm-acase__top { flex-wrap: wrap; row-gap: 6px; }
+.gm-acase__no { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--gm-color-surface-muted, rgba(100, 116, 139, 0.1)); }
+.gm-acase__facts { grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px 20px; padding: 14px 16px; }
+.gm-acase__facts dd a { color: var(--gm-color-primary); font-weight: 700; text-decoration: none; }
+.gm-acase__facts dd a:hover { text-decoration: underline; }
+.gm-acase__toggle { display: inline-flex; align-items: center; justify-content: center; justify-self: stretch; gap: 8px; min-height: 44px; padding: 0 18px; border: 1.5px solid var(--gm-color-border); border-radius: 14px; background: var(--gm-color-surface); color: var(--gm-color-primary); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; }
+.gm-acase__toggle:hover { background: var(--gm-color-primary-soft); border-color: var(--gm-color-primary); }
+.gm-acase__toggle:focus-visible { outline: 2px solid var(--gm-color-primary); outline-offset: 2px; }
+.gm-acase__toggle svg { transition: transform 0.2s ease; }
+.gm-acase__toggle svg.is-up { transform: rotate(180deg); }
+@media (min-width: 641px) { .gm-acase__toggle { justify-self: start; min-width: 190px; } }

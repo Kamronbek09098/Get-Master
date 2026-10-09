@@ -15,6 +15,7 @@ import { formatDistance, formatDuration, maneuverOf, progressOn } from '@/featur
 import type { LatLon, Maneuver } from '@/features/navigation/geometry';
 import { maneuverText } from '@/features/navigation/instructions';
 import { useLiveLocation } from '@/features/navigation/useLiveLocation';
+import { useDeviceHeading } from '@/features/navigation/useDeviceHeading';
 import { NavVoice, tierFor } from '@/features/navigation/voice';
 import type { Tier } from '@/features/navigation/voice';
 import { t } from '@/i18n';
@@ -78,6 +79,7 @@ export function NavigationPage() {
 
   const live = useLiveLocation(!!dest, simPath);
   const position = live.position;
+  const compass = useDeviceHeading(!!dest);
 
   // Marshrutni birinchi aniq joylashuvdan boshlab quramiz (yoki yo‘ldan chiqilganda qayta quramiz).
   useEffect(() => {
@@ -139,6 +141,18 @@ export function NavigationPage() {
     return () => void lock?.release().catch(() => undefined);
   }, []);
 
+  // Marker: yo‘lga yopishtiriladi (GPS xatosi bo‘lsa ham yo‘lda turadi); yo‘nalish — harakatda GPS/yo‘l bo‘yicha, turganda telefon kompasi bo‘yicha.
+  const moving = (position?.speed ?? 0) > 1.5;
+  const snapped = position && progress && progress.offRouteM < 40 && position.accuracy < 70 ? progress.snapped : null;
+  const course = position ? (snapped && moving ? progress!.segmentBearing : position.heading) : null;
+  const cameraHeading = useRef<number | null>(null);
+  if (moving && course != null) cameraHeading.current = course;
+  const markerHeading = moving ? course : (compass.heading ?? course ?? cameraHeading.current);
+  const mapPosition = useMemo(
+    () => (position ? { ...position, lat: snapped?.lat ?? position.lat, lon: snapped?.lon ?? position.lon, heading: cameraHeading.current ?? position.heading ?? markerHeading } : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [position, snapped?.lat, snapped?.lon, markerHeading],
+  );
   const next = route && progress ? route.steps[Math.min(progress.stepIndex + 1, route.steps.length - 1)] : null;
   const maneuver: Maneuver = next ? maneuverOf(next) : 'straight';
   const arrived = !!progress && progress.remainingM <= ARRIVED_M;
@@ -197,12 +211,14 @@ export function NavigationPage() {
   const routeProblem = !!origin && routes.isError;
 
   return (
-    <div className="gn" onPointerDown={() => engine.current?.unlock()}>
+    <div className="gn" onPointerDown={() => { engine.current?.unlock(); if (compass.needsPermission) compass.request(); }}>
       <NavMap
         route={route?.geometry ?? null}
         passed={progress?.index ?? 0}
         alternatives={list.filter((_, i) => i !== routeIndex).map((item) => item.geometry)}
-        position={position}
+        position={mapPosition}
+        markerHeading={markerHeading}
+        compassActive={!moving && compass.heading != null}
         destination={dest}
         follow={follow && !!position && !arrived}
         onUserMove={() => setFollow(false)}

@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime } from '@/lib/utils';
 import { useAdminCases, useUpdateCase } from '@/features/admin/hooks/useAdmin';
-import { CASE_STATUS_LABEL } from '@/features/dispute/types';
+import { CASE_STATUS_LABEL, caseTitle, caseTone } from '@/features/dispute/types';
 import type { CaseItem, CaseStatus } from '@/features/dispute/types';
 import { t } from '@/i18n';
 import './AdminCasesPage.css';
@@ -39,7 +39,7 @@ function CaseCard({ item, kind }: { item: CaseItem; kind: 'complaints' | 'disput
   const next = NEXT_STATUSES[item.status];
   const finished = next.length === 0;
   const options = [item.status, ...next].map((value) => ({ value, label: CASE_STATUS_LABEL[value] }));
-  const tone = item.status === 'RESOLVED' || item.status === 'CONFIRMED' ? 'ok' : item.status === 'DISMISSED' ? 'no' : 'wait';
+  const tone = caseTone(item.status);
   const reviewing = item.status !== 'REPORTED';
   const panelId = `case-${item.id}`;
 
@@ -52,7 +52,7 @@ function CaseCard({ item, kind }: { item: CaseItem; kind: 'complaints' | 'disput
         <Badge tone={tone === 'ok' ? 'success' : tone === 'no' ? 'danger' : 'warning'}>{CASE_STATUS_LABEL[item.status]}</Badge>
       </div>
 
-      <h3 className="gm-acase__title">{item.title}</h3>
+      <h3 className="gm-acase__title">{caseTitle(item.title, item.orderId)}</h3>
       {!open && <p className="gm-acase__text gm-acase__text--clamp">{item.description}</p>}
 
       <dl className="gm-acase__facts">

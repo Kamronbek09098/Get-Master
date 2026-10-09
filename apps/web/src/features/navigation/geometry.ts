@@ -36,12 +36,16 @@ export interface RouteProgress {
   stepIndex: number;
   /** Keyingi manevrgacha qolgan masofa (metr). */
   toNextM: number;
+  /** Joylashuvning marshrut chizig‘idagi proyeksiyasi (xaritada yo‘lga «yopishtirilgan» nuqta). */
+  snapped: LatLon;
+  /** Shu segmentning yo‘nalishi (0–360°). */
+  segmentBearing: number;
 }
 
 /** Joylashuvni marshrutga bog‘lab, qolgan masofa/vaqt va keyingi burilishni hisoblaydi. */
 export function progressOn(route: NavRoute, position: LatLon, hint = 0): RouteProgress {
   const pts = route.geometry;
-  let best = { index: 0, dist: Infinity, along: 0 };
+  let best = { index: 0, dist: Infinity, along: 0, proj: position };
   // Avval so‘nggi indeks atrofida qidiriladi (tezroq va orqaga sakramaydi), topilmasa — butun chiziq.
   const scan = (from: number, to: number) => {
     for (let i = from; i < to; i += 1) {
@@ -57,7 +61,7 @@ export function progressOn(route: NavRoute, position: LatLon, hint = 0): RoutePr
       const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((px - ax) * bx + (py - ay) * by) / len2));
       const proj = { lat: a.lat + (b.lat - a.lat) * t, lon: a.lon + (b.lon - a.lon) * t };
       const d = distanceM(position, proj);
-      if (d < best.dist) best = { index: i, dist: d, along: seg * t };
+      if (d < best.dist) best = { index: i, dist: d, along: seg * t, proj };
     }
   };
   const window = 60;
@@ -85,7 +89,7 @@ export function progressOn(route: NavRoute, position: LatLon, hint = 0): RoutePr
       break;
     }
   }
-  return { index: best.index, offRouteM: best.dist, remainingM: remaining, remainingS: route.durationS * ratio, stepIndex, toNextM: toNext };
+  return { index: best.index, offRouteM: best.dist, remainingM: remaining, remainingS: route.durationS * ratio, stepIndex, toNextM: toNext, snapped: best.proj, segmentBearing: bearing(here, next) };
 }
 
 function nearestIndex(pts: Array<[number, number]>, target: [number, number], from: number): number {

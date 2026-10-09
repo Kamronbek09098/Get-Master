@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { CASE_STATUS_LABEL, CASE_TYPE_LABEL, caseTitle, caseTone, shortId } from '@/features/dispute/types';
+import type { CaseStatus } from '@/features/dispute/types';
 import { ArrowLeft, ArrowRight, Ban, CheckCircle2, MapPin, MessageSquare, Star } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -27,6 +29,10 @@ import { ProviderLogo } from '@/features/payment/components/ProviderLogo';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import './AdminOrderDetailPage.css';
 import { t } from '@/i18n';
+
+const REFUND_STATUS: Record<string, string> = { PENDING: t('Kutilmoqda'), PROCESSING: t('Jarayonda'), SUCCEEDED: t('Bajarildi'), FAILED: t('Xatolik'), CANCELLED: t('Bekor qilindi') };
+const REFUND_REASON: Record<string, string> = { ADMIN_DECISION: t('Administrator qarori'), ORDER_CANCELLED: t('Buyurtma bekor qilingan'), DISPUTE: t('Nizo natijasi'), CUSTOMER_REQUEST: t('Mijoz so‘rovi') };
+const REVIEW_STATUS: Record<string, string> = { PUBLISHED: t('E’lon qilingan'), FLAGGED: t('Shikoyat qilingan'), HIDDEN: t('Yashirilgan'), REMOVED: t('O‘chirilgan') };
 
 const STAGES: Array<{ key: 'BEFORE' | 'DURING' | 'AFTER'; label: string }> = [
   { key: 'BEFORE', label: t('Ishdan oldin') },
@@ -76,12 +82,14 @@ function Party({ role, person, extra }: { role: string; person: AdminOrderPerson
   return (
     <div className="gm-aordd__party">
       <ChatAvatar name={accountName(person)} seed={person.id} size="lg" />
-      <small>{role}</small>
-      <AccountLink accountNumber={person.accountNumber} className="gm-aordd__link">
-        {accountName(person)}
-      </AccountLink>
-      <span>{t('ID {accountNumber} · {phone}', { accountNumber: person.accountNumber, phone: person.phone })}</span>
-      {extra && <span>{extra}</span>}
+      <div className="gm-aordd__party-body">
+        <small className="gm-aordd__party-role">{role}</small>
+        <AccountLink accountNumber={person.accountNumber} className="gm-aordd__party-name">
+          {accountName(person)}
+        </AccountLink>
+        <span className="gm-aordd__party-meta">{t('ID {accountNumber} · {phone}', { accountNumber: person.accountNumber, phone: person.phone })}</span>
+        {extra && <span className="gm-aordd__party-meta">{extra}</span>}
+      </div>
     </div>
   );
 }
@@ -268,7 +276,8 @@ export function AdminOrderDetailPage() {
             {order.workProofs.length === 0 ? (
               <EmptyState title={t('Rasm yuklanmagan')} />
             ) : (
-              STAGES.map((stage) => {
+              <div className="gm-aordd__stages">
+              {STAGES.map((stage) => {
                 const proofs = order.workProofs.filter((proof) => proof.stage === stage.key);
                 if (proofs.length === 0) return null;
                 return (
@@ -293,7 +302,8 @@ export function AdminOrderDetailPage() {
                     </div>
                   </div>
                 );
-              })
+              })}
+              </div>
             )}
           </Card>
 
@@ -343,7 +353,7 @@ export function AdminOrderDetailPage() {
                         </small>
                         {payment.provider === 'CASH' && payment.status === 'PENDING' && <CashConfirm paymentId={payment.id} />}
                         {payment.refunds.map((refund) => (
-                          <small key={refund.id}>{t('Qaytarish: {money} · {status} · {reason}', { money: formatMoney(refund.amount, payment.currency), status: refund.status, reason: refund.reason })}</small>
+                          <small key={refund.id}>{t('Qaytarish: {money} · {status} · {reason}', { money: formatMoney(refund.amount, payment.currency), status: REFUND_STATUS[refund.status] ?? refund.status, reason: REFUND_REASON[refund.reason] ?? refund.reason })}</small>
                         ))}
                       </li>
                     );
@@ -385,7 +395,7 @@ export function AdminOrderDetailPage() {
                   </div>
                   <p className="gm-aordd__text">{order.review.comment ?? t('Izoh qoldirilmagan.')}</p>
                   <small>
-                    {accountName(order.review.author)} · {formatDateTime(order.review.createdAt)} · {order.review.status}
+                    {accountName(order.review.author)} · {formatDateTime(order.review.createdAt)} · {REVIEW_STATUS[order.review.status] ?? order.review.status}
                   </small>
                 </Card>
               )}
@@ -400,19 +410,19 @@ export function AdminOrderDetailPage() {
               )}
               {order.cases.length > 0 && (
                 <Card title={t('Shikoyat va nizolar')}>
-                  <ul className="gm-aordd__plain">
+                  <ul className="gm-aordd__cases">
                     {order.cases.map((item) => (
-                      <li key={item.id}>
-                        <div>
-                          <strong>{item.title}</strong> <Badge tone="warning">{item.status}</Badge>
+                      <li key={item.id} className={`gm-aordd__case gm-aordd__case--${caseTone(item.status)}`}>
+                        <div className="gm-aordd__case-top">
+                          <span className="gm-aordd__case-type">{CASE_TYPE_LABEL[item.type] ?? item.type} № {shortId(item.id)}</span>
+                          <Badge tone={caseTone(item.status) === 'ok' ? 'success' : caseTone(item.status) === 'no' ? 'danger' : 'warning'}>{CASE_STATUS_LABEL[item.status as CaseStatus] ?? item.status}</Badge>
                         </div>
-                        <small>
-                          {item.type} · {formatDateTime(item.createdAt)}
-                        </small>
+                        <strong className="gm-aordd__case-title">{caseTitle(item.title, order.id)}</strong>
+                        <small className="gm-aordd__case-date">{formatDateTime(item.createdAt)}</small>
                       </li>
                     ))}
                   </ul>
-                  <Link to="/admin/shikoyatlar" className="gm-aordd__link">{t('Shikoyat va nizolar bo‘limi →')}</Link>
+                  <Link to={order.cases.some((item) => item.type === 'DISPUTE') ? '/admin/shikoyatlar?kind=disputes' : '/admin/shikoyatlar'} className="gm-aordd__link">{t('Shikoyat va nizolar bo‘limi')} <ArrowRight size={15} aria-hidden="true" /></Link>
                 </Card>
               )}
             </div>

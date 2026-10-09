@@ -23,6 +23,10 @@ export interface NavMapProps {
   /** Xarita harakat yo‘nalishi tepada bo‘lib buriladi va 3D qiyalik oladi (kuzatuv yoqilganda). */
   headingUp?: boolean;
   onToggleHeadingUp?: () => void;
+  /** Marker qaragan yo‘nalish: harakatda — yo‘l bo‘yicha, turganda — telefon kompasi. */
+  markerHeading?: number | null;
+  /** Marker kompas bo‘yicha burilgan (nur konusi ko‘rinadi). */
+  compassActive?: boolean;
 }
 
 /** OpenFreeMap (bepul, kalitsiz, OpenStreetMap ma’lumoti): vektor xarita — burilganda yozuvlar to‘g‘ri o‘qiladi. */
@@ -35,12 +39,14 @@ const lines = (list: Array<Array<[number, number]>>): GeoJSON.FeatureCollection 
 const themeOf = () => (document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
 
 /** Navigatsiya xaritasi (MapLibre): marshrut, o‘tilgan qism, strelka, manzil, yo‘nalish bo‘yicha burilish va 3D qiyalik. */
-export function NavMap({ route, passed, alternatives, position, destination, follow, onUserMove, fitKey, followZoom = 17, headingUp = true, onToggleHeadingUp }: NavMapProps) {
+export function NavMap({ route, passed, alternatives, position, destination, follow, onUserMove, fitKey, followZoom = 17, headingUp = true, onToggleHeadingUp, markerHeading = null, compassActive = false }: NavMapProps) {
   const holder = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const ready = useRef(false);
   const data = useRef({ route, passed, alternatives });
   const me = useRef<maplibregl.Marker | null>(null);
+  const glide = useRef(0);
+  const headingRef = useRef(0);
   const [zoomOffset, setZoomOffset] = useState(0);
   const [heading, setHeading] = useState(0);
   const onMove = useRef(onUserMove);
@@ -137,27 +143,60 @@ export function NavMap({ route, passed, alternatives, position, destination, fol
     if (!me.current) {
       const el = document.createElement('div');
       el.className = 'gn-me';
-      el.innerHTML = '<span class="gn-me__acc"></span><span class="gn-me__arrow"><svg viewBox="0 0 40 40" width="40" height="40"><path d="M20 3 33 34 20 27 7 34Z" fill="#2563eb" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg></span>';
+      el.innerHTML =
+        '<span class="gn-me__acc"></span>' +
+        '<span class="gn-me__dir"><svg class="gn-me__cone" viewBox="0 0 100 100" width="100" height="100" aria-hidden="true"><defs><radialGradient id="gnc" cx="50%" cy="100%" r="100%"><stop offset="0" stop-color="#2563eb" stop-opacity=".55"/><stop offset="1" stop-color="#2563eb" stop-opacity="0"/></radialGradient></defs><path d="M50 50 22 6A60 60 0 0 1 78 6Z" fill="url(#gnc)"/></svg>' +
+        '<svg class="gn-me__arrow" viewBox="0 0 40 40" width="34" height="34" aria-hidden="true"><path d="M20 3 33 34 20 27 7 34Z" fill="#2563eb" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg></span>';
       me.current = new maplibregl.Marker({ element: el, rotationAlignment: 'map', pitchAlignment: 'map' }).setLngLat([position.lon, position.lat]).addTo(m);
     }
-    me.current.setLngLat([position.lon, position.lat]);
-    me.current.setRotation(position.heading ?? 0);
+    // Marker joyi tekis siljiydi (GPS 1 s da bir marta keladi): oldingi nuqtadan yangisiga ~0.9 s da interpolyatsiya.
+    const marker = me.current;
+    const from = marker.getLngLat();
+    const to = { lng: position.lon, lat: position.lat };
+    cancelAnimationFrame(glide.current);
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const k = Math.min(1, (now - t0) / 900);
+      marker.setLngLat([from.lng + (to.lng - from.lng) * k, from.lat + (to.lat - from.lat) * k]);
+      if (k < 1) glide.current = requestAnimationFrame(step);
+    };
+    if (Math.abs(from.lng - to.lng) + Math.abs(from.lat - to.lat) > 0.01) marker.setLngLat([to.lng, to.lat]);
+    else glide.current = requestAnimationFrame(step);
+    marker.getElement().classList.toggle('is-compass', compassActive);
+    // Noaniqlik doirasi (metrda → pikselga): zoomga qarab o‘lchanadi.
+    const acc = marker.getElement().querySelector<HTMLElement>('.gn-me__acc');
+    if (acc) {
+      const mpp = (156543.03 * Math.cos((position.lat * Math.PI) / 180)) / 2 ** m.getZoom();
+      const px = Math.max(30, Math.min(220, (position.accuracy * 2) / mpp));
+      acc.style.width = acc.style.height = `${px}px`;
+    }
     if (follow) {
       const zoom = Math.min(19, Math.max(12, followZoom + zoomOffset));
       const h = holder.current?.clientHeight ?? 700;
+      // Telefonda pastki panel xaritani yopadi: ko‘rinadigan qismning pastki uchdan bir qismida turish uchun shu balandlik hisobga olinadi.
+      const panel = window.innerWidth < 900 ? (holder.current?.closest('.gn')?.querySelector<HTMLElement>('.gn-panel')?.offsetHeight ?? 0) : 0;
+      const visible = h - panel;
       m.easeTo({
         center: [position.lon, position.lat],
         zoom,
         bearing: rotated ? (position.heading ?? 0) : 0,
         pitch: rotated ? FOLLOW_PITCH : 0,
         // Joylashuv ekranning pastki qismida turadi: oldinga qaraydigan joy ko‘proq.
-        padding: { top: rotated ? h * 0.32 : 0, bottom: 0, left: 0, right: 0 },
+        padding: { top: rotated ? visible * 0.34 : 0, bottom: panel, left: 0, right: 0 },
         duration: 900,
         easing: (x) => x,
         essential: true,
       });
     }
-  }, [position, follow, followZoom, zoomOffset, rotated]);
+  }, [position, follow, followZoom, zoomOffset, rotated, compassActive]);
+
+  // Marker yo‘nalishi: eng qisqa yo‘l bilan silliq buriladi (0° ↔ 360° sakramaydi)
+  useEffect(() => {
+    if (!me.current || markerHeading == null) return;
+    const delta = ((((markerHeading - headingRef.current) % 360) + 540) % 360) - 180;
+    headingRef.current += delta;
+    me.current.setRotation(headingRef.current);
+  }, [markerHeading, position]);
 
   const zoomBy = (delta: number) => {
     if (follow) setZoomOffset((value) => Math.max(-4, Math.min(2, value + delta)));
