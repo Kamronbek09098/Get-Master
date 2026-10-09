@@ -19,6 +19,26 @@ import type { ProblemRequest } from '../types';
 import './RequestForm.css';
 import { t } from '@/i18n';
 
+/** «datetime-local» maydoni uchun mahalliy vaqt (YYYY-MM-DDTHH:mm). */
+const toLocal = (date: Date) => {
+  const shifted = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return shifted.toISOString().slice(0, 16);
+};
+const at = (daysAhead: number, hour: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() + daysAhead);
+  d.setHours(hour, 0, 0, 0);
+  return d;
+};
+const QUICK_TIMES = (): Array<{ label: string; value: string }> => {
+  const soon = new Date(Date.now() + 60 * 60_000);
+  soon.setMinutes(Math.ceil(soon.getMinutes() / 15) * 15, 0, 0);
+  const list = [{ label: t('1 soatdan keyin'), value: toLocal(soon) }];
+  if (new Date().getHours() < 17) list.push({ label: t('Bugun 18:00'), value: toLocal(at(0, 18)) });
+  list.push({ label: t('Ertaga 10:00'), value: toLocal(at(1, 10)) }, { label: t('Ertaga 15:00'), value: toLocal(at(1, 15)) });
+  return list;
+};
+
 const TITLE_MAX = 255;
 const DESCRIPTION_MIN_GOOD = 40;
 
@@ -29,6 +49,11 @@ const schema = z
     addressId: z.string(),
     title: z.string().trim().min(1, t('Sarlavhani kiriting')).max(TITLE_MAX),
     description: z.string().trim().min(1, t('Muammoni tavsiflab bering')),
+    // Ish bajarilishi kerak bo‘lgan vaqt: majburiy va o‘tmishda bo‘lmasligi kerak.
+    preferredStartAt: z
+      .string()
+      .min(1, t('Ish qachon bajarilishi kerakligini kiriting'))
+      .refine((value) => new Date(value).getTime() >= Date.now() - 60_000, t('Vaqt o‘tmishda bo‘lishi mumkin emas')),
   })
   // Usta mijozga kelsa — manzil majburiy; mijoz ustaning oldiga borsa — shart emas.
   .refine((values) => values.serviceMode === 'AT_MASTER' || values.addressId.length > 0, { path: ['addressId'], message: t('Manzilni tanlang yoki qo‘shing') });
@@ -60,9 +85,9 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
     watch,
     setValue,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { serviceId: '', serviceMode: 'AT_CUSTOMER', addressId: '', title: '', description: '' } });
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { serviceId: '', serviceMode: 'AT_CUSTOMER', addressId: '', title: '', description: '', preferredStartAt: '' } });
 
-  const [serviceId, title, description, addressId, serviceMode] = watch(['serviceId', 'title', 'description', 'addressId', 'serviceMode']);
+  const [serviceId, title, description, addressId, serviceMode, preferredStartAt] = watch(['serviceId', 'title', 'description', 'addressId', 'serviceMode', 'preferredStartAt']);
   const addressList = useMemo(() => addresses.data ?? [], [addresses.data]);
 
   useEffect(() => {
@@ -91,12 +116,13 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
     { label: t('Sarlavha yozildi'), done: title.trim().length > 0 },
     { label: t('Muammo tavsiflandi'), done: description.trim().length > 0 },
     ...(atMaster ? [] : [{ label: t('Manzil tanlandi'), done: !!addressId }]),
+    { label: t('Bajarilish vaqti kiritildi'), done: !!preferredStartAt },
   ];
   const remaining = checklist.filter((item) => !item.done).length;
   const descriptionLength = description.trim().length;
 
   function onSubmit(values: FormValues) {
-    createRequest.mutate({ ...values, addressId: values.addressId || undefined }, { onSuccess: onCreated });
+    createRequest.mutate({ ...values, addressId: values.addressId || undefined, preferredStartAt: new Date(values.preferredStartAt).toISOString() }, { onSuccess: onCreated });
   }
 
   return (
@@ -192,6 +218,17 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
               {addressList.length > 0 ? errors.addressId.message : t('So‘rov yuborish uchun avval manzil qo‘shing.')}
             </p>
           )}
+        </Section>
+
+        <Section step={(serviceId ? 5 : 4) as number} title={t('Ish qachon bajarilsin?')} hint={t('Majburiy — usta shu vaqtga kelishi mumkin bo‘lsa taklif beradi.')}>
+          <div className="gm-reqform__when" role="group" aria-label={t('Tez tanlash')}>
+            {QUICK_TIMES().map((item) => (
+              <button key={item.label} type="button" className={cx('gm-reqform__chip', preferredStartAt === item.value && 'is-on')} aria-pressed={preferredStartAt === item.value} onClick={() => setValue('preferredStartAt', item.value, { shouldValidate: true })}>
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <Input label={t('Sana va vaqt')} type="datetime-local" required min={toLocal(new Date())} error={errors.preferredStartAt?.message} {...register('preferredStartAt')} />
         </Section>
 
         <div className="gm-reqform__submit">

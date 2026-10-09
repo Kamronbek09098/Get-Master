@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MasterStatsService } from '../../src/modules/master/master-stats.service';
-import { bookOrder, bootHarness, createMaster, createUser, firstService, type Harness, openRequest, runWork, type TestMaster, type TestUser, waitFor } from '../helpers/harness';
+import { bookOrder, bootHarness, createMaster, createUser, firstService, type Harness, openRequest, runWork, type TestMaster, type TestUser, waitFor, soon } from '../helpers/harness';
 
 let h: Harness;
 let service: { id: string };
@@ -97,7 +97,7 @@ describe('master statistics are derived from the real order/offer lifecycle', ()
     const rookie = await createMaster(h, svc.id);
     const done = await bookOrder(h, customer, proven, svc.id);
     await runWork(h, done, customer, proven, true);
-    const id = (await h.post('/problem-requests', customer.token, { title: 'Stats matching', description: 'Matching must read real statistics.', serviceId: svc.id, latitude: 41.311, longitude: 69.279 })).data.id;
+    const id = (await h.post('/problem-requests', customer.token, { preferredStartAt: soon(), title: 'Stats matching', description: 'Matching must read real statistics.', serviceId: svc.id, latitude: 41.311, longitude: 69.279 })).data.id;
     await h.post(`/problem-requests/${id}/submit`, customer.token);
     const run = await waitFor(async () => h.db.matchingRun.findFirst({ where: { requestId: id, status: 'COMPLETED' } }), { label: 'matching' });
     const rows = await h.db.matchingResult.findMany({ where: { runId: run.id } });

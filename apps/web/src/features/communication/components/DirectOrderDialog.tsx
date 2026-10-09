@@ -30,16 +30,16 @@ export function DirectOrderDialog({ conversationId, masterName, onClose }: { con
 
   const priceNumber = Number(price.replace(/\s/g, ''));
   const inPast = !!when && new Date(when).getTime() <= Date.now();
-  const valid = !inPast && title.trim().length >= 3 && description.trim().length >= 3 && Number.isFinite(priceNumber) && priceNumber > 0;
+  const valid = !!when && !inPast && title.trim().length >= 3 && description.trim().length >= 3 && Number.isFinite(priceNumber) && priceNumber > 0;
 
   function submit() {
-    if (when && new Date(when).getTime() <= Date.now()) return;
+    if (!when || new Date(when).getTime() <= Date.now()) return;
     create.mutate(
       {
         title: title.trim(),
         description: description.trim(),
         price: priceNumber,
-        scheduledStartAt: when ? new Date(when).toISOString() : undefined,
+        scheduledStartAt: new Date(when).toISOString(),
         addressId: addressId || undefined,
       },
       { onSuccess: onClose },
@@ -65,7 +65,8 @@ export function DirectOrderDialog({ conversationId, masterName, onClose }: { con
         <Textarea label={t('Tavsif')} required rows={3} maxLength={4000} hint={t('Muammo yoki ish haqida batafsil yozing')} value={description} onChange={(event) => setDescription(event.target.value)} />
         <Input label={t('Kelishilgan narx (so‘m)')} required inputMode="numeric" placeholder={t('Masalan, 150000')} value={price} onChange={(event) => setPrice(sanitizeMoney(event.target.value))} />
         <Input
-          label={t('Qachon kelsin? (ixtiyoriy)')}
+          label={t('Qachon kelsin?')}
+          required
           type="datetime-local"
           min={nowLocal()}
           value={when}

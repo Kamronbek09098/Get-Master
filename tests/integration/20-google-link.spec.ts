@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { bootHarness, createAdmin, createUser, type Harness } from '../helpers/harness';
+import { bootHarness, createAdmin, createUser, type Harness, soon } from '../helpers/harness';
 
 let h: Harness;
 const realFetch = globalThis.fetch;
@@ -109,7 +109,7 @@ describe('Google account linking', () => {
     const first = await h.post('/auth/google', undefined, { credential: `${sub()}:nophone@example.com` });
     const token = first.headers.getSetCookie().map((c) => c.split(';')[0]).join('; ');
     const authed = (path: string, body?: unknown, method = 'POST') => h.api(method, path, { cookie: token, body });
-    const blocked = await authed('/problem-requests', { title: 'Kran oqyapti', description: 'Oshxonadagi kran suv oqizyapti', latitude: 41.3, longitude: 69.2 });
+    const blocked = await authed('/problem-requests', { preferredStartAt: soon(), title: 'Kran oqyapti', description: 'Oshxonadagi kran suv oqizyapti', latitude: 41.3, longitude: 69.2 });
     expect(blocked.status).toBe(403);
     expect(blocked.body.message).toMatch(/telefon raqamingizni kiriting va tasdiqlang/);
 

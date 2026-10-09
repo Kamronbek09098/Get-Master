@@ -1,6 +1,6 @@
 import { createHash, createHmac, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { bootHarness, createAdmin, createMaster, createSuperAdmin, createUser, firstService, uploadImage, type Harness, type TestMaster, type TestUser } from '../helpers/harness';
+import { bootHarness, createAdmin, createMaster, createSuperAdmin, createUser, firstService, uploadImage, type Harness, type TestMaster, type TestUser, soon } from '../helpers/harness';
 
 let h: Harness;
 let customer: TestUser;
@@ -66,7 +66,7 @@ describe('subscriptions: plans, requests and admin decisions', () => {
     expect((await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CASH' })).status).toBe(400); // naqd to‘lov yo‘q
     const click = await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 3, method: 'CLICK' });
     expect(click.status).toBe(201);
-    expect(click.data).toMatchObject({ status: 'PENDING', months: 3, amount: '79000', method: 'CLICK' });
+    expect(click.data).toMatchObject({ status: 'PENDING', months: 3, amount: '13500', method: 'CLICK' });
     expect(click.data.checkoutUrl).toContain('https://my.click.uz/services/pay?');
     expect(click.data.checkoutUrl).toContain(`transaction_param=${click.data.id}`);
     const card = await req(customer.token, { planCode: 'CUSTOMER_PLUS', months: 1, method: 'CARD' });
@@ -112,7 +112,7 @@ describe('subscriptions: plans, requests and admin decisions', () => {
     expect(made.data.checkoutUrl).toContain('checkout.test.paycom.uz');
     const auth = `Basic ${Buffer.from('Paycom:test-only-payme-secret').toString('base64')}`;
     const rpc = (method: string, params: Record<string, unknown>) => h.api('POST', '/payments/payme', { body: { jsonrpc: '2.0', id: 1, method, params }, headers: { authorization: auth } });
-    const amount = 5_900_000; // 59 000 so‘m, tiyinda
+    const amount = 1_000_000; // 10 000 so‘m, tiyinda
     expect((await rpc('CheckPerformTransaction', { amount: 100, account: { order_id: id } })).body.error.code).toBe(-31001);
     expect((await rpc('CheckPerformTransaction', { amount, account: { order_id: id } })).body.result.allow).toBe(true);
     const txId = `pm-${randomUUID().slice(0, 12)}`;
@@ -224,10 +224,10 @@ describe('subscriptions: plans, requests and admin decisions', () => {
     // Priority: Plus mijozning so‘rovi tezkor deb belgilanadi.
     const plus = await createUser(h);
     await h.post('/admin/subscriptions/grant', admin.token, { user: plus.id, planCode: 'CUSTOMER_PLUS', months: 1 });
-    const created = await h.post('/problem-requests', plus.token, { title: 'Tezkor', description: 'Tezkor so‘rov uchun yetarlicha uzun tavsif matni.', serviceId: (await firstService(h)).id, latitude: 41.3, longitude: 69.2 });
+    const created = await h.post('/problem-requests', plus.token, { preferredStartAt: soon(), title: 'Tezkor', description: 'Tezkor so‘rov uchun yetarlicha uzun tavsif matni.', serviceId: (await firstService(h)).id, latitude: 41.3, longitude: 69.2 });
     expect(created.status).toBe(201);
     expect((await h.db.problemRequest.findUniqueOrThrow({ where: { id: created.data.id }, select: { isPriority: true } })).isPriority).toBe(true);
-    const normal = await h.post('/problem-requests', customer.token, { title: 'Oddiy', description: 'Oddiy so‘rov uchun yetarlicha uzun tavsif matni.', serviceId: (await firstService(h)).id, latitude: 41.3, longitude: 69.2 });
+    const normal = await h.post('/problem-requests', customer.token, { preferredStartAt: soon(), title: 'Oddiy', description: 'Oddiy so‘rov uchun yetarlicha uzun tavsif matni.', serviceId: (await firstService(h)).id, latitude: 41.3, longitude: 69.2 });
     expect((await h.db.problemRequest.findUniqueOrThrow({ where: { id: normal.data.id }, select: { isPriority: true } })).isPriority).toBe(false);
   });
 

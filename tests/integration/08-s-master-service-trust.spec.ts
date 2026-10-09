@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MasterService } from '../../src/modules/master/master.service';
 import { TrustService } from '../../src/modules/trust/trust.service';
-import { bootHarness, createAdmin, createMaster, createUser, firstService, type Harness, MISSING_UUID, type TestUser, uploadImage, waitFor } from '../helpers/harness';
+import { bootHarness, createAdmin, createMaster, createUser, firstService, type Harness, MISSING_UUID, type TestUser, uploadImage, waitFor, soon } from '../helpers/harness';
 
 let h: Harness;
 let service: { id: string; categoryId: string };
@@ -394,7 +394,7 @@ describe('S04 — service catalog', () => {
     expect((await h.db.service.findUniqueOrThrow({ where: { id: svc.id } })).isActive).toBe(false);
     expect((await h.get(`/services/${svc.id}`)).status).toBe(404);
     expect((await h.get('/service-categories')).data.map((c: any) => c.id)).not.toContain(cat.id);
-    expect((await h.post('/problem-requests', customer.token, { title: 'Inactive', description: 'uses an inactive service', serviceId: svc.id })).status).toBe(400);
+    expect((await h.post('/problem-requests', customer.token, { preferredStartAt: soon(), title: 'Inactive', description: 'uses an inactive service', serviceId: svc.id })).status).toBe(400);
     expect((await h.post('/masters/me/services', (await createMaster(h, service.id)).token, { serviceId: svc.id })).status).toBe(400);
     expect((await h.post('/services', admin.token, { categoryId: cat.id, name: 'Late' })).status).toBe(409);
   });

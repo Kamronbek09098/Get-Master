@@ -35,7 +35,7 @@ export const orderService = {
   submitCompletion(id: string) {
     return apiPost<Order>(`/orders/${id}/submit-completion`);
   },
-  createDirect(input: { conversationId: string; title: string; description: string; price: number; scheduledStartAt?: string; addressId?: string }) {
+  createDirect(input: { conversationId: string; title: string; description: string; price: number; scheduledStartAt: string; addressId?: string }) {
     return apiPost<{ order: Order; messageId: string }>('/orders/direct', input);
   },
   confirmCompletion(id: string, paymentMethod?: string) {

@@ -49,9 +49,10 @@ export class CreateRequestDto {
   @Max(180)
   longitude?: number;
 
-  @IsOptional()
+  /** Ish bajarilishi kerak bo‘lgan vaqt: majburiy. */
+  @IsNotEmpty()
   @IsDateString()
-  preferredStartAt?: string;
+  preferredStartAt!: string;
 
   @IsOptional()
   @IsDateString()

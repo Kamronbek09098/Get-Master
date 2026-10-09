@@ -1,5 +1,5 @@
-/** Platforma komissiyasi: ustadan olinadi (mijoz narxga qo‘shimcha to‘lamaydi). Standart — 2%. */
-export const DEFAULT_COMMISSION_RATE = 0.02;
+/** Platforma komissiyasi: ustadan olinadi (mijoz narxga qo‘shimcha to‘lamaydi). Standart — 5%. */
+export const DEFAULT_COMMISSION_RATE = 0.05;
 
 export function commissionRate(): number {
   const raw = process.env.PLATFORM_COMMISSION_RATE;

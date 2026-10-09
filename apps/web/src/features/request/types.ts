@@ -49,7 +49,8 @@ export interface CreateRequestInput {
   addressId?: string;
   latitude?: number;
   longitude?: number;
-  preferredStartAt?: string;
+  /** Ish bajarilishi kerak bo‘lgan vaqt (ISO): majburiy. */
+  preferredStartAt: string;
   preferredEndAt?: string;
 }
 

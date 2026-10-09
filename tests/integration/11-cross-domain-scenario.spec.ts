@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { bootHarness, createMaster, createUser, freshService, type Harness, payOrder, type TestMaster, type TestUser, uploadImage, waitFor } from '../helpers/harness';
+import { bootHarness, createMaster, createUser, freshService, type Harness, payOrder, type TestMaster, type TestUser, uploadImage, waitFor, soon } from '../helpers/harness';
 
 let h: Harness;
 let service: { id: string; categoryId: string };
@@ -28,6 +28,7 @@ afterAll(async () => {
 describe('end-to-end: request → … → review → statistics', () => {
   it('1. customer creates and submits a request', async () => {
     const created = await h.post('/problem-requests', customer.token, {
+      preferredStartAt: soon(),
       title: 'Kran oqyapti',
       description: 'Oshxonadagi kran tunda ham tomchilab oqmoqda, tezroq ko‘rib chiqish kerak.',
       serviceId: service.id,

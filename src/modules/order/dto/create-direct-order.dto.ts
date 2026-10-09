@@ -24,9 +24,10 @@ export class CreateDirectOrderDto {
   @IsPositive()
   price!: number;
 
-  @IsOptional()
+  /** Ish bajarilishi kerak bo‘lgan vaqt: majburiy. */
+  @IsNotEmpty()
   @IsDateString()
-  scheduledStartAt?: string;
+  scheduledStartAt!: string;
 
   @IsOptional()
   @IsUUID('4')

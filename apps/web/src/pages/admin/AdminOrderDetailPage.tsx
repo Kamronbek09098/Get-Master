@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CASE_STATUS_LABEL, CASE_TYPE_LABEL, caseTitle, caseTone, shortId } from '@/features/dispute/types';
 import type { CaseStatus } from '@/features/dispute/types';
-import { ArrowLeft, ArrowRight, Ban, CheckCircle2, MapPin, MessageSquare, Star } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, X, Ban, CheckCircle2, MapPin, MessageSquare, Star } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -200,6 +200,32 @@ export function AdminOrderDetailPage() {
           {order.status === 'DISPUTED' && <Alert tone="warning">{t('Buyurtma bo‘yicha nizo ochilgan. Ishning rasmlari va suhbatni ko‘rib chiqib, qaror qabul qiling.')}</Alert>}
           {order.cancellationReason && <Alert tone="info">{t('Bekor qilish sababi:')}{' '}{order.cancellationReason}</Alert>}
 
+          <section className="gm-aordd__flow" aria-label={t('Holatlar tarixi')}>
+            <h2 className="gm-aordd__flow-title">{t('Holatlar tarixi')}</h2>
+            <ol className="gm-aordd__steps">
+              {order.statusHistory.map((step, index) => {
+                const last = index === order.statusHistory.length - 1;
+                // Buyurtma yakunlangan yoki bekor qilingan bo‘lsa, oxirgi bosqich «tugallangan» belgisi bilan ko‘rsatiladi.
+                const final = last && (order.status === 'COMPLETED' || order.status === 'CANCELLED' || order.status === 'EXPIRED');
+                const failed = final && order.status !== 'COMPLETED';
+                return (
+                  <li key={step.id} className={final ? (failed ? 'is-final is-failed' : 'is-final is-success') : last ? 'is-current' : 'is-done'}>
+                    <span className="gm-aordd__steps-dot" aria-hidden="true">
+                      {final && (failed ? <X size={10} strokeWidth={4} /> : <Check size={10} strokeWidth={4} />)}
+                    </span>
+                    <strong className="gm-aordd__steps-title">{STATUS_TEXT[step.newStatus]}</strong>
+                    <span className="gm-aordd__steps-who">
+                      <b>{ACTOR[step.actorType] ?? step.actorType}</b>
+                      {step.actor && <span title={accountName(step.actor)}>{accountName(step.actor)}</span>}
+                    </span>
+                    {step.reason && step.reason !== 'Offer accepted' && <em>{t('Sabab:')}{' '}{step.reason}</em>}
+                    <time dateTime={step.createdAt}>{formatDateTime(step.createdAt)}</time>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+
           <section className="gm-aordd__money" aria-label={t('Summalar')}>
             <div>
               <small>{t('Kelishilgan narx')}</small>
@@ -232,21 +258,26 @@ export function AdminOrderDetailPage() {
             </Card>
 
             <Card title={t('Jadval va manzil')}>
+              <h3 className="gm-aordd__sub">{t('Rejalashtirilgan vaqt')}</h3>
+              <p className="gm-aordd__hint">{t('Mijoz va usta kelishgan ish vaqti. Mijoz vaqt tanlamagan bo‘lsa, «Kelishiladi» deb belgilanadi.')}</p>
               <dl>
-                <Row label={t('Boshlanish')}>{order.booking.scheduledStartAt ? formatDateTime(order.booking.scheduledStartAt) : '—'}</Row>
-                <Row label={t('Tugash')}>{order.booking.scheduledEndAt ? formatDateTime(order.booking.scheduledEndAt) : '—'}</Row>
+                <Row label={t('Rejalashtirilgan boshlanish')}>{order.booking.scheduledStartAt ? formatDateTime(order.booking.scheduledStartAt) : <span className="gm-aordd__none">{t('Kelishiladi')}</span>}</Row>
+                <Row label={t('Rejalashtirilgan tugash')}>{order.booking.scheduledEndAt ? formatDateTime(order.booking.scheduledEndAt) : <span className="gm-aordd__none">{t('Belgilanmagan')}</span>}</Row>
                 <Row label={t('Manzil')}>
                   {order.booking.request.address ? (
                     <>
                       <MapPin size={13} aria-hidden="true" /> {[order.booking.request.address.city, order.booking.request.address.district, order.booking.request.address.addressLine].filter(Boolean).join(', ')}
                     </>
                   ) : (
-                    '—'
+                    <span className="gm-aordd__none">{t('Ko‘rsatilmagan')}</span>
                   )}
                 </Row>
-                <Row label={t('Ish boshlangan')}>{order.startedAt ? formatDateTime(order.startedAt) : '—'}</Row>
-                <Row label={t('Ish topshirilgan')}>{order.completionSubmittedAt ? formatDateTime(order.completionSubmittedAt) : '—'}</Row>
-                <Row label={t('Yakunlangan')}>{order.completedAt ? formatDateTime(order.completedAt) : '—'}</Row>
+              </dl>
+              <h3 className="gm-aordd__sub">{t('Haqiqiy bajarilish')}</h3>
+              <dl>
+                <Row label={t('Ish boshlangan')}>{order.startedAt ? formatDateTime(order.startedAt) : <span className="gm-aordd__none">{t('Hali yo‘q')}</span>}</Row>
+                <Row label={t('Ish topshirilgan')}>{order.completionSubmittedAt ? formatDateTime(order.completionSubmittedAt) : <span className="gm-aordd__none">{t('Hali yo‘q')}</span>}</Row>
+                <Row label={t('Yakunlangan')}>{order.completedAt ? formatDateTime(order.completedAt) : <span className="gm-aordd__none">{t('Hali yo‘q')}</span>}</Row>
               </dl>
             </Card>
           </div>
@@ -308,27 +339,6 @@ export function AdminOrderDetailPage() {
           </Card>
 
           <div className="gm-aordd__grid">
-            <Card title={t('Holatlar tarixi')}>
-              <ol className="gm-aordd__timeline">
-                {order.statusHistory.map((step) => (
-                  <li key={step.id}>
-                    <strong>{STATUS_TEXT[step.newStatus]}</strong>
-                    <span>
-                      {step.oldStatus && (
-                        <>
-                          {STATUS_TEXT[step.oldStatus]} <ArrowRight size={11} aria-hidden="true" />{' '}
-                        </>
-                      )}
-                      {ACTOR[step.actorType] ?? step.actorType}
-                      {step.actor && ` · ${accountName(step.actor)}`}
-                    </span>
-                    {step.reason && step.reason !== 'Offer accepted' && <em>{t('Sabab:')}{' '}{step.reason}</em>}
-                    <time>{formatDateTime(step.createdAt)}</time>
-                  </li>
-                ))}
-              </ol>
-            </Card>
-
             <Card title={t('To‘lovlar')} aside={<Badge tone="primary">{order.payments.length} ta</Badge>}>
               {order.payments.length === 0 ? (
                 <EmptyState title={t('To‘lov usuli kiritilmagan')} description={order.status === 'COMPLETED' ? t('Mijoz buyurtmani yakunlagan, lekin to‘lov usulini tanlamagan.') : t('Mijoz ishni tasdiqlaganda to‘lov usulini tanlaydi.')} />
@@ -352,9 +362,17 @@ export function AdminOrderDetailPage() {
                           {payment.failureReason && ` · ${payment.failureReason}`}
                         </small>
                         {payment.provider === 'CASH' && payment.status === 'PENDING' && <CashConfirm paymentId={payment.id} />}
-                        {payment.refunds.map((refund) => (
-                          <small key={refund.id}>{t('Qaytarish: {money} · {status} · {reason}', { money: formatMoney(refund.amount, payment.currency), status: REFUND_STATUS[refund.status] ?? refund.status, reason: REFUND_REASON[refund.reason] ?? refund.reason })}</small>
-                        ))}
+                        {payment.refunds.length > 0 && (
+                          <ul className="gm-aordd__refunds" aria-label={t('Qaytarishlar')}>
+                            {payment.refunds.map((refund) => (
+                              <li key={refund.id}>
+                                <strong>{formatMoney(refund.amount, payment.currency)}</strong>
+                                <span>{REFUND_REASON[refund.reason] ?? refund.reason}</span>
+                                <Badge tone={refund.status === 'SUCCEEDED' ? 'success' : refund.status === 'FAILED' ? 'danger' : 'warning'}>{REFUND_STATUS[refund.status] ?? refund.status}</Badge>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </li>
                     );
                   })}
@@ -387,16 +405,25 @@ export function AdminOrderDetailPage() {
           {(order.review || order.warranty || order.cases.length > 0) && (
             <div className="gm-aordd__grid">
               {order.review && (
-                <Card title={t('Mijoz sharhi')}>
-                  <div className="gm-aordd__stars" aria-label={`${order.review.rating} baho`}>
-                    {Array.from({ length: 5 }, (_, index) => (
-                      <Star key={index} size={18} fill={index < order.review!.rating ? 'currentColor' : 'none'} />
-                    ))}
+                <Card title={t('Mijoz sharhi')} aside={<Badge tone={order.review.status === 'PUBLISHED' ? 'success' : 'warning'}>{REVIEW_STATUS[order.review.status] ?? order.review.status}</Badge>}>
+                  <div className="gm-aordd__review">
+                    <div className="gm-aordd__review-head">
+                      <ChatAvatar name={accountName(order.review.author)} seed={order.review.author?.id ?? order.id} size="md" />
+                      <div className="gm-aordd__review-who">
+                        <strong>{accountName(order.review.author)}</strong>
+                        <time dateTime={order.review.createdAt}>{formatDateTime(order.review.createdAt)}</time>
+                      </div>
+                      <div className="gm-aordd__review-rate" role="img" aria-label={t('Baho: {rating} / 5', { rating: order.review.rating })}>
+                        <span className="gm-aordd__stars" aria-hidden="true">
+                          {Array.from({ length: 5 }, (_, index) => (
+                            <Star key={index} size={18} fill={index < order.review!.rating ? 'currentColor' : 'none'} />
+                          ))}
+                        </span>
+                        <b>{order.review.rating}/5</b>
+                      </div>
+                    </div>
+                    <blockquote className={order.review.comment ? 'gm-aordd__quote' : 'gm-aordd__quote is-empty'}>{order.review.comment ?? t('Izoh qoldirilmagan.')}</blockquote>
                   </div>
-                  <p className="gm-aordd__text">{order.review.comment ?? t('Izoh qoldirilmagan.')}</p>
-                  <small>
-                    {accountName(order.review.author)} · {formatDateTime(order.review.createdAt)} · {REVIEW_STATUS[order.review.status] ?? order.review.status}
-                  </small>
                 </Card>
               )}
               {order.warranty && (

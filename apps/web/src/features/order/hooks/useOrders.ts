@@ -78,7 +78,7 @@ export function useRemoveWorkProof(id: string) {
 export function useCreateDirectOrder(conversationId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { title: string; description: string; price: number; scheduledStartAt?: string; addressId?: string }) => orderService.createDirect({ conversationId, ...input }),
+    mutationFn: (input: { title: string; description: string; price: number; scheduledStartAt: string; addressId?: string }) => orderService.createDirect({ conversationId, ...input }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['conversations'] });
       void queryClient.invalidateQueries({ queryKey: ['orders'] });

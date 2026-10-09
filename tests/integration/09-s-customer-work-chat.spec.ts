@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { bookOrder, bootHarness, createMaster, createUser, firstService, type Harness, MISSING_UUID, type TestMaster, type TestUser, uploadImage, waitFor } from '../helpers/harness';
+import { bookOrder, bootHarness, createMaster, createUser, firstService, type Harness, MISSING_UUID, type TestMaster, type TestUser, uploadImage, waitFor, soon } from '../helpers/harness';
 
 let h: Harness;
 let service: { id: string };
@@ -53,7 +53,7 @@ describe('S06 — customer addresses', () => {
       expect((await h.post('/customers/me/addresses', c.token, bad)).status, JSON.stringify(bad)).toBe(400);
     }
     expect((await h.patch(`/customers/me/addresses/${MISSING_UUID}`, c.token, { city: 'x' })).status).toBe(404);
-    const res = await h.post('/problem-requests', stranger.token, { title: 'Steal address', description: 'uses foreign address id', addressId: mine.data.id });
+    const res = await h.post('/problem-requests', stranger.token, { preferredStartAt: soon(), title: 'Steal address', description: 'uses foreign address id', addressId: mine.data.id });
     expect(res.status).toBe(403);
   });
 });

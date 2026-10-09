@@ -174,11 +174,13 @@ export class FeedService {
   }
 
   async view(userId: string, id: string) {
+    await this.requirePublic(id);
     await this.db.workPost.updateMany({ where: { id, status: 'PUBLISHED', master: { userId: { not: userId } } }, data: { viewCount: { increment: 1 } } });
     return { ok: true };
   }
 
   async share(id: string) {
+    await this.requirePublic(id);
     await this.db.workPost.updateMany({ where: { id, status: 'PUBLISHED' }, data: { shareCount: { increment: 1 } } });
     return { ok: true };
   }

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MatchingService } from '../../src/modules/matching/matching.service';
-import { bootHarness, createMaster, freshService, createUser, firstService, type Harness, MISSING_UUID, type TestMaster, type TestUser, waitFor } from '../helpers/harness';
+import { bootHarness, createMaster, freshService, createUser, firstService, type Harness, MISSING_UUID, type TestMaster, type TestUser, waitFor, soon } from '../helpers/harness';
 
 let h: Harness;
 let service: { id: string; categoryId: string };
@@ -21,6 +21,7 @@ afterAll(async () => {
 });
 
 const draft = (over: Record<string, unknown> = {}) => ({
+  preferredStartAt: new Date(Date.now() + 86_400_000).toISOString(),
   title: `Leaky tap ${Math.random().toString(36).slice(2, 8)}`,
   description: 'Water drips from the kitchen tap all night long.',
   latitude: 41.311,
@@ -30,9 +31,9 @@ const draft = (over: Record<string, unknown> = {}) => ({
 
 describe('K05 — request lifecycle', () => {
   it('validates input and is CUSTOMER-only', async () => {
-    expect((await h.post('/problem-requests', customer.token, { description: 'x' })).status).toBe(400);
+    expect((await h.post('/problem-requests', customer.token, { preferredStartAt: soon(), description: 'x' })).status).toBe(400);
     // Manzil majburiy: saqlangan manzil yoki koordinatalarsiz so'rov yaratilmaydi.
-    const noAddress = await h.post('/problem-requests', customer.token, { title: 'No address', description: 'Request without any address or coordinates.' });
+    const noAddress = await h.post('/problem-requests', customer.token, { preferredStartAt: soon(), title: 'No address', description: 'Request without any address or coordinates.' });
     expect(noAddress.status).toBe(400);
     expect((await h.post('/problem-requests', customer.token, draft({ latitude: 200 }))).status).toBe(400);
     expect((await h.post('/problem-requests', customer.token, draft({ status: 'BOOKED' }))).status).toBe(400);

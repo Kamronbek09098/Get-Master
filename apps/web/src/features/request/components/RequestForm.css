@@ -293,3 +293,9 @@
 .gm-reqform__mode strong { font-size: 0.98rem; }
 .gm-reqform__mode small { color: var(--gm-color-text-muted); font-size: 0.82rem; }
 .gm-reqform__mode input:focus-visible ~ span { outline: 2px solid var(--gm-color-primary); outline-offset: 4px; border-radius: 8px; }
+
+.gm-reqform__when { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 4px; }
+.gm-reqform__chip { min-height: 40px; padding: 0 16px; border: 1.5px solid var(--gm-color-border-strong, var(--gm-color-border)); border-radius: 999px; background: var(--gm-color-surface); color: var(--gm-color-text); font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; }
+.gm-reqform__chip:hover { border-color: var(--gm-color-primary); }
+.gm-reqform__chip.is-on { background: var(--gm-color-primary); border-color: var(--gm-color-primary); color: var(--gm-color-primary-contrast); }
+.gm-reqform__chip:focus-visible { outline: 2px solid var(--gm-color-primary); outline-offset: 2px; }

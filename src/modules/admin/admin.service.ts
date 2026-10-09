@@ -96,7 +96,7 @@ export class AdminService {
     const gross = revenue._sum.amount ?? new Prisma.Decimal(0);
     const refunded = revenue._sum.refundedAmount ?? new Prisma.Decimal(0);
     const netRevenue = gross.sub(refunded);
-    const commissionRate = this.config.get<number>('payment.platformCommissionRate', 0.02);
+    const commissionRate = this.config.get<number>('payment.platformCommissionRate', 0.05);
     return {
       summary: {
         totalRevenue: gross,

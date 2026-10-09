@@ -9,7 +9,7 @@ let homeMaster: TestMaster;
 let salonService: { id: string; categoryId: string };
 let homeService: { id: string; categoryId: string };
 
-const body = (extra: Record<string, unknown> = {}) => ({ title: `Soch olish ${randomUUID().slice(0, 6)}`, description: 'Erkaklar soch turmagi kerak', ...extra });
+const body = (extra: Record<string, unknown> = {}) => ({ preferredStartAt: new Date(Date.now() + 86_400_000).toISOString(), title: `Soch olish ${randomUUID().slice(0, 6)}`, description: 'Erkaklar soch turmagi kerak', ...extra });
 
 beforeAll(async () => {
   h = await bootHarness();

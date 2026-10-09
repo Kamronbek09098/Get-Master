@@ -16,7 +16,7 @@ afterAll(async () => {
   await h.close();
 });
 
-describe('platform commission (2% from the master)', () => {
+describe('platform commission (5% from the master)', () => {
   it('records the fee and the master share when an order is completed; the customer still pays the agreed price', async () => {
     const order = await bookOrder(h, customer, master, serviceId, { price: 150_000 });
     const before = await h.db.order.findUniqueOrThrow({ where: { id: order.orderId } });
@@ -25,8 +25,8 @@ describe('platform commission (2% from the master)', () => {
     const done = await h.db.order.findUniqueOrThrow({ where: { id: order.orderId } });
     expect(done.status).toBe('COMPLETED');
     expect(Number(done.finalAmount)).toBe(150_000);
-    expect(Number(done.platformFee)).toBe(3_000);
-    expect(Number(done.masterAmount)).toBe(147_000);
+    expect(Number(done.platformFee)).toBe(7_500);
+    expect(Number(done.masterAmount)).toBe(142_500);
   });
 
   it('does not charge a fee for cancelled orders', async () => {

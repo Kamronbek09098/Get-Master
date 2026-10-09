@@ -234,8 +234,11 @@ export const MISSING_UUID = '00000000-0000-4000-8000-00000000dead';
 
 const DESCRIPTION = 'Integration scenario request with a sufficiently long description.';
 
+let startCounter = 0;
 export async function openRequest(h: Harness, customer: TestUser, serviceId: string, status: 'MATCHING' | 'SUBMITTED' = 'MATCHING'): Promise<string> {
   const created = await h.post('/problem-requests', customer.token, {
+    // Har bir so‘rov alohida vaqtga: bir ustaning parallel buyurtmalari jadvalda to‘qnashmasin.
+    preferredStartAt: new Date(Date.now() + 86_400_000 + (startCounter += 1) * 3 * 3_600_000).toISOString(),
     title: `Scenario ${randomUUID().slice(0, 8)}`,
     description: DESCRIPTION,
     serviceId,
@@ -312,3 +315,6 @@ export async function payOrder(h: Harness, customer: TestUser, orderId: string, 
   });
   return { payment, hook };
 }
+
+/** Buyurtma bajarilishi kerak bo‘lgan vaqt (so‘rov yaratishda majburiy): ertaga. */
+export const soon = (): string => new Date(Date.now() + 86_400_000).toISOString();
