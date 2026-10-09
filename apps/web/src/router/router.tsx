@@ -46,6 +46,7 @@ import { PaymentHistoryPage } from '@/pages/payments/PaymentHistoryPage';
 import { TermsPage } from '@/pages/legal/TermsPage';
 import { SafetyPage } from '@/pages/safety/SafetyPage';
 
+const NavigationPage = lazy(() => import('@/pages/navigation/NavigationPage').then((m) => ({ default: m.NavigationPage })));
 const FeedPage = lazy(() => import('@/pages/feed/FeedPage').then((m) => ({ default: m.FeedPage })));
 const UploadPage = lazy(() => import('@/pages/feed/UploadPage').then((m) => ({ default: m.UploadPage })));
 const AdminHome = lazy(() => import('@/pages/admin/AdminHome').then((m) => ({ default: m.AdminHome })));
@@ -140,6 +141,7 @@ const panelRouter = createBrowserRouter([
           { path: '/mijoz/buyurtmalar/:orderId/tolov', element: customer(<PaymentPage />) },
           { path: '/usta/buyurtmalar', element: master(<OrdersPage />) },
           { path: '/usta/buyurtmalar/:id', element: master(<OrderDetailsPage />) },
+          { path: '/usta/buyurtmalar/:id/navigatsiya', element: master(<NavigationPage />) },
           { path: '/usta/takliflar', element: master(<ActiveOffersPage />) },
           { path: '/mijoz/profil', element: customer(<CustomerProfilePage />) },
           { path: '/mijoz/profil/:section', element: customer(<CustomerProfilePage />) },

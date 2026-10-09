@@ -11,6 +11,24 @@ export interface GeoPlace {
   uri?: string;
 }
 
+export interface NavStep {
+  type: string;
+  modifier: string | null;
+  name: string;
+  distanceM: number;
+  durationS: number;
+  /** [lon, lat] */
+  location: [number, number];
+}
+
+export interface NavRoute {
+  distanceM: number;
+  durationS: number;
+  /** [lon, lat] */
+  geometry: Array<[number, number]>;
+  steps: NavStep[];
+}
+
 const query = (params: Record<string, string | number | undefined>) => {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) if (value !== undefined && value !== '') search.set(key, String(value));
@@ -24,6 +42,9 @@ export const geoService = {
   },
   geocode(input: { q?: string; uri?: string }) {
     return apiGet<{ provider: string; place: GeoPlace | null }>(`/geo/geocode?${query(input)}`);
+  },
+  route(from: { lat: number; lon: number }, to: { lat: number; lon: number }) {
+    return apiGet<{ routes: NavRoute[] }>(`/geo/route?${query({ fromLat: from.lat, fromLon: from.lon, toLat: to.lat, toLon: to.lon })}`);
   },
   reverse(lat: number, lon: number) {
     return apiGet<{ provider: string; place: GeoPlace | null }>(`/geo/reverse?${query({ lat, lon })}`);

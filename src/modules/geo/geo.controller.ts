@@ -31,4 +31,14 @@ export class GeoController {
     }
     return { provider: this.geo.provider().geocoder, place: await this.geo.reverse(latitude, longitude) };
   }
+
+  /** Avtomobil marshruti: boshlanish (usta) va tugash (mijoz manzili) nuqtalari bo‘yicha asosiy va muqobil yo‘llar. */
+  @Get('route')
+  async route(@Query('fromLat') fromLat?: string, @Query('fromLon') fromLon?: string, @Query('toLat') toLat?: string, @Query('toLon') toLon?: string) {
+    const [a, b, c, d] = [num(fromLat), num(fromLon), num(toLat), num(toLon)];
+    if ([a, b, c, d].some((value) => value === undefined) || Math.abs(a!) > 90 || Math.abs(c!) > 90 || Math.abs(b!) > 180 || Math.abs(d!) > 180) {
+      throw new BadRequestException('Koordinata noto‘g‘ri');
+    }
+    return { routes: await this.geo.route({ lat: a!, lon: b! }, { lat: c!, lon: d! }) };
+  }
 }

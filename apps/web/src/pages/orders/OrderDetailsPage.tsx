@@ -1,7 +1,7 @@
 import { usePaused } from '@/features/master/components/PausedNotice';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { CheckCircle2, Clock, Flag, Hammer, MapPinned, Navigation, ShieldAlert, Star, Store, XCircle } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
@@ -88,6 +88,7 @@ export function OrderDetailsPage() {
   // Mijoz ustaning oldiga boradi (sartaroshxona, avtoservis…): «yo‘lda» bosqichi yo‘q.
   const atMaster = data.request?.serviceMode === 'AT_MASTER';
   const placeLine = data.location?.addressLine ?? null;
+  const dest = !atMaster && Number.isFinite(Number(data.location?.latitude)) && data.location?.latitude != null && data.location?.longitude != null;
   const status = data.status;
   const counts = { BEFORE: 0, DURING: 0, AFTER: 0 };
   for (const proof of proofs.data ?? []) if (proof.mediaAssetId) counts[proof.stage] += 1;
@@ -126,6 +127,7 @@ export function OrderDetailsPage() {
         <StepCard tone="next" icon={<Navigation size={22} />} title={t('Manzilga yo‘lga chiqing')} lead={t('Yo‘lga chiqqaningizda mijozga xabar boradi.')}>
           <div className="gm-oactions">
             <Button loading={startTravel.isPending} onClick={() => startTravel.mutate()}>{t('Yo‘lga chiqdim')}</Button>
+            {dest && <Link to={`/usta/buyurtmalar/${id}/navigatsiya`} className="gm-button gm-button--secondary"><Navigation size={16} aria-hidden="true" /> {t('Navigatsiya')}</Link>}
           </div>
         </StepCard>
       );
@@ -133,6 +135,7 @@ export function OrderDetailsPage() {
       step = (
         <StepCard tone="next" icon={<MapPinned size={22} />} title={t('Manzilga yetib keldingizmi?')} lead={t('Yetib kelganingizni belgilang, so‘ng ishni boshlashdan oldin rasmga oling.')}>
           <div className="gm-oactions">
+            {dest && <Link to={`/usta/buyurtmalar/${id}/navigatsiya`} className="gm-button gm-button--secondary"><Navigation size={16} aria-hidden="true" /> {t('Navigatsiya')}</Link>}
             <Button loading={arrive.isPending} onClick={() => arrive.mutate()}>{t('Yetib keldim')}</Button>
           </div>
         </StepCard>

@@ -23,6 +23,34 @@ const CACHE_MAX = 2000;
 const UZ_VIEWBOX = '55.9,45.6,73.2,37.1'; // Nominatim: O‘zbekiston atrofi (left,top,right,bottom)
 const UA = 'GetMaster/1.0 (address-picker)';
 
+export interface GeoRouteStep {
+  type: string;
+  modifier: string | null;
+  name: string;
+  distanceM: number;
+  durationS: number;
+  /** [lon, lat] — burilish nuqtasi. */
+  location: [number, number];
+}
+
+export interface GeoRoute {
+  distanceM: number;
+  durationS: number;
+  /** [lon, lat] nuqtalar ketma-ketligi. */
+  geometry: Array<[number, number]>;
+  steps: GeoRouteStep[];
+}
+
+interface OsrmResponse {
+  code: string;
+  routes?: Array<{
+    distance: number;
+    duration: number;
+    geometry: { coordinates: Array<[number, number]> };
+    legs: Array<{ steps: Array<{ name: string; distance: number; duration: number; maneuver: { type: string; modifier?: string; location: [number, number] } }> }>;
+  }>;
+}
+
 type Cached = { at: number; value: unknown };
 
 /**
@@ -237,6 +265,44 @@ export class GeoService implements OnModuleInit {
       latitude: Number(row.lat),
       longitude: Number(row.lon),
     };
+  }
+
+  /**
+   * Avtomobil marshruti (OSRM): asosiy va muqobil yo‘llar, burilishlar bilan. `OSRM_URL` — marshrut serveri (standart: http://localhost:5001).
+   * Server ishlamasa yoki yo‘l topilmasa, 503/400 xato qaytadi (ilova bunda xaritada tashqi navigatsiyani taklif qiladi).
+   */
+  async route(from: { lat: number; lon: number }, to: { lat: number; lon: number }): Promise<GeoRoute[]> {
+    const base = (process.env.OSRM_URL?.trim() || 'http://localhost:5001').replace(/\/$/, '');
+    const key = `route:${from.lat.toFixed(4)},${from.lon.toFixed(4)}:${to.lat.toFixed(4)},${to.lon.toFixed(4)}`;
+    const hit = this.cache.get(key);
+    if (hit && Date.now() - hit.at < 60_000) return hit.value as GeoRoute[];
+    const url = `${base}/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?alternatives=3&steps=true&geometries=geojson&overview=full`;
+    let body: OsrmResponse;
+    try {
+      const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      body = (await response.json()) as OsrmResponse;
+    } catch (error) {
+      this.logger.warn(`Marshrut serveri javob bermadi: ${String(error)}`);
+      throw new ServiceUnavailableException('Marshrut xizmati hozir ishlamayapti');
+    }
+    if (body.code !== 'Ok' || !body.routes?.length) throw new BadRequestException('Bu manzilga avtomobil yo‘li topilmadi');
+    const routes: GeoRoute[] = body.routes.slice(0, 3).map((route) => ({
+      distanceM: Math.round(route.distance),
+      durationS: Math.round(route.duration),
+      geometry: route.geometry.coordinates,
+      steps: route.legs.flatMap((leg) =>
+        leg.steps.map((step) => ({
+          type: step.maneuver.type,
+          modifier: step.maneuver.modifier ?? null,
+          name: step.name || '',
+          distanceM: Math.round(step.distance),
+          durationS: Math.round(step.duration),
+          location: step.maneuver.location,
+        })),
+      ),
+    }));
+    this.cache.set(key, { at: Date.now(), value: routes });
+    return routes;
   }
 }
 
