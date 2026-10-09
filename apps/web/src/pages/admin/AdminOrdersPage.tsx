@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, ArrowRight, Camera, CheckCircle2, ClipboardList, Search, Wallet, X } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
@@ -41,8 +41,9 @@ const dayStart = (value: string) => (value ? new Date(`${value}T00:00:00`).toISO
 const dayEnd = (value: string) => (value ? new Date(`${value}T23:59:59.999`).toISOString() : undefined);
 
 export function AdminOrdersPage() {
+  const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<AdminOrderStatus | ''>('');
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('q') ?? '');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [flagged, setFlagged] = useState(false);

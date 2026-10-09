@@ -21,6 +21,7 @@ import { UserQueryDto } from './dto/user-query.dto';
 import { CreateAdminDto, SetAdminDelegationDto, SetAdminPermissionsDto, SetSuperAdminDto, SetTwoFactorValueDto } from './dto/admin-account.dto';
 import { AdminService } from './admin.service';
 import { DashboardQueryDto } from './dto/dashboard-query.dto';
+import { PaymentsReportQueryDto } from './dto/payments-report-query.dto';
 import { RevenueReportQueryDto } from './dto/revenue-report-query.dto';
 import { CustomerQueryDto } from '../customer/dto/customer-query.dto';
 
@@ -82,6 +83,24 @@ export class AdminController {
   @Get('dashboard')
   getDashboard(@Query() query: DashboardQueryDto) {
     return this.adminService.getDashboard(query);
+  }
+
+  @RequiresPermission('REPORTS')
+  @Get('dashboard/orders-series')
+  getOrdersSeries(@Query('days') days?: string) {
+    return this.adminService.getOrdersSeries(Number(days) || 7);
+  }
+
+  @RequiresPermission('REPORTS')
+  @Get('reports/overview')
+  getReportsOverview(@Query() query: DashboardQueryDto) {
+    return this.adminService.getReportsOverview(query);
+  }
+
+  @RequiresPermission('REPORTS')
+  @Get('reports/payments')
+  getReportPayments(@Query() query: PaymentsReportQueryDto) {
+    return this.adminService.getReportPayments(query);
   }
 
   @RequiresPermission('REPORTS')

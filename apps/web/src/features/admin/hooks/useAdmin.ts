@@ -1,11 +1,23 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CaseStatus } from '@/features/dispute/types';
 import { adminService } from '../services/admin.service';
-import type { DateRange } from '../services/admin.service';
+import type { DateRange, ReportPaymentsParams } from '../services/admin.service';
 import type { AdminOrderFilters, AuditFilters, CreateAdminInput, DevOpsWindow, UserFilters, VerificationDecision } from '../types';
 
 export function useDashboard(range: DateRange) {
   return useQuery({ queryKey: ['admin', 'dashboard', range], queryFn: () => adminService.dashboard(range) });
+}
+
+export function useOrdersSeries(days: 7 | 30 | 90) {
+  return useQuery({ queryKey: ['admin', 'orders-series', days], queryFn: () => adminService.ordersSeries(days), placeholderData: (previous) => previous });
+}
+
+export function useReportsOverview(range: DateRange) {
+  return useQuery({ queryKey: ['admin', 'reports-overview', range], queryFn: () => adminService.reportsOverview(range), placeholderData: (previous) => previous });
+}
+
+export function useReportPayments(params: ReportPaymentsParams) {
+  return useQuery({ queryKey: ['admin', 'reports-payments', params], queryFn: () => adminService.reportPayments(params), placeholderData: (previous) => previous });
 }
 
 export function useRevenueReport(range: DateRange) {

@@ -24,12 +24,12 @@ function detect(value: RangeInputs): Preset {
 }
 
 /** Davr tanlash: tayyor tugmalar (Hammasi / Bugun / 7 kun / 30 kun) va «Boshqa» — qo‘lda sana oralig‘i. */
-export function DateRangeFilter({ value, onChange }: { value: RangeInputs; onChange: (next: RangeInputs) => void }) {
+export function DateRangeFilter({ value, onChange, withAll = true, showCalendarIcon = true }: { value: RangeInputs; onChange: (next: RangeInputs) => void; withAll?: boolean; showCalendarIcon?: boolean }) {
   const [forceCustom, setForceCustom] = useState(false);
   const active: Preset = forceCustom ? 'custom' : detect(value);
   const today = iso(new Date());
   const presets: Array<{ id: Preset; label: string; range?: RangeInputs }> = [
-    { id: 'all', label: t('Hammasi'), range: { from: '', to: '' } },
+    ...(withAll ? [{ id: 'all' as Preset, label: t('Hammasi'), range: { from: '', to: '' } }] : []),
     { id: 'today', label: t('Bugun'), range: { from: today, to: today } },
     { id: '7', label: t('7 kun'), range: { from: daysAgo(6), to: today } },
     { id: '30', label: t('30 kun'), range: { from: daysAgo(29), to: today } },
@@ -38,7 +38,7 @@ export function DateRangeFilter({ value, onChange }: { value: RangeInputs; onCha
   return (
     <div className="gm-range">
       <div className="gm-range__chips" role="group" aria-label={t('Davr')}>
-        <CalendarDays size={16} aria-hidden="true" className="gm-range__icon" />
+        {showCalendarIcon && <CalendarDays size={16} aria-hidden="true" className="gm-range__icon" />}
         {presets.map((preset) => (
           <button
             key={preset.id}

@@ -57,6 +57,18 @@ export interface DevOpsSnapshot {
   traffic: Array<{ at: string; count: number }>;
 }
 
+export interface SubscriptionAudienceStats {
+  planCode: string | null;
+  planName: string | null;
+  monthlyPrice: number | null;
+  active: number;
+  pending: number;
+  expiringSoon: number;
+  purchased: number;
+  gifted: number;
+  revenue: string | number;
+}
+
 export interface Dashboard {
   users: { total: number; byStatus: Record<string, number> };
   masters: { total: number; byStatus: Record<string, number>; byVerification: Record<string, number> };
@@ -68,8 +80,29 @@ export interface Dashboard {
   reviews: { total: number; averageRating: number | string };
   attention: { pendingVerifications: number; openCases: number; pendingSubscriptions: number; activeOrders: number; errors24h: number };
   today: { newUsers: number; newRequests: number; newOrders: number; completedOrders: number; revenue: string | number };
-  subscriptions: { activeByPlan: Record<string, number>; activeTotal: number; purchasedCount: number; purchasedAmount: string | number };
+  subscriptions: {
+    activeTotal: number;
+    revenueTotal: string | number;
+    customer: SubscriptionAudienceStats;
+    master: SubscriptionAudienceStats;
+  };
   feed: { posts: number; views: number; likes: number; shares: number; comments: number };
+  recentOrders: Array<{
+    id: string;
+    orderNumber: number;
+    status: string;
+    createdAt: string;
+    finalAmount: string | number;
+    currency: string;
+    customer: { id: string; accountNumber: number; firstName: string | null; lastName: string | null };
+    master: { id: string; accountNumber: number; firstName: string | null; lastName: string | null };
+    service: string;
+  }>;
+}
+
+export interface OrdersSeries {
+  days: 7 | 30 | 90;
+  points: Array<{ date: string; created: number; completed: number }>;
 }
 
 export interface RevenueSummary {
@@ -83,6 +116,51 @@ export interface RevenueSummary {
   completedOrders: number;
   cancelledOrders: number;
   disputeCount: number;
+}
+
+export interface ReportTotals {
+  revenue: number;
+  refunded: number;
+  settledPayments: number;
+  payments: number;
+  orders: number;
+  completed: number;
+  cancelled: number;
+  platformFee: number;
+  completedWithoutFee: number;
+}
+
+export interface ReportsOverview {
+  commissionRate: number;
+  range: { from: string; to: string; all: boolean };
+  current: ReportTotals;
+  previous: ReportTotals | null;
+  series: Array<{ date: string; revenue: number; refunded: number; payments: number; orders: number; completed: number; cancelled: number }>;
+  paymentStatus: { succeeded: number; pending: number; refunded: number; failed: number; cancelled: number };
+  reconciliation: { mismatchCount: number; items: Array<{ paymentId: string; recorded: number; ledger: number; difference: number }> };
+}
+
+export interface ReportPaymentRow {
+  id: string;
+  orderId: string;
+  provider: PaymentProvider;
+  status: PaymentStatus;
+  amount: string;
+  refundedAmount: string;
+  currency: string;
+  createdAt: string;
+  succeededAt: string | null;
+  order: { orderNumber: number };
+  customer: { id: string; accountNumber: number; firstName: string | null; lastName: string | null; phone: string };
+}
+
+export interface ReportPaymentsPage {
+  items: ReportPaymentRow[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  filteredSettled: { amount: number; refunded: number };
 }
 
 export interface RevenueRow {

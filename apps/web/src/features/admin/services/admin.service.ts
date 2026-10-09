@@ -20,6 +20,9 @@ import type {
   AuditSummary,
   AuditLog,
   Dashboard,
+  OrdersSeries,
+  ReportPaymentsPage,
+  ReportsOverview,
   DevOpsSnapshot,
   DevOpsWindow,
   RevenueRow,
@@ -35,6 +38,16 @@ function qs(params: Record<string, string | undefined>): string {
   return query ? `?${query}` : '';
 }
 
+export interface ReportPaymentsParams extends DateRange {
+  search?: string;
+  provider?: string;
+  status?: string;
+  sort?: string;
+  dir?: string;
+  page?: number;
+  limit?: number;
+}
+
 export interface DateRange {
   dateFrom?: string;
   dateTo?: string;
@@ -43,6 +56,15 @@ export interface DateRange {
 export const adminService = {
   dashboard(range: DateRange) {
     return apiGet<Dashboard>(`/admin/dashboard${qs({ ...range })}`);
+  },
+  ordersSeries(days: 7 | 30 | 90) {
+    return apiGet<OrdersSeries>(`/admin/dashboard/orders-series${qs({ days: String(days) })}`);
+  },
+  reportsOverview(range: DateRange) {
+    return apiGet<ReportsOverview>(`/admin/reports/overview${qs({ ...range })}`);
+  },
+  reportPayments(params: ReportPaymentsParams) {
+    return apiGet<ReportPaymentsPage>(`/admin/reports/payments${qs({ ...params, page: params.page ? String(params.page) : undefined, limit: params.limit ? String(params.limit) : undefined })}`);
   },
   report(range: DateRange) {
     return apiGet<{ summary: RevenueSummary } & CursorPage<RevenueRow>>(`/admin/reports${qs({ ...range })}`);
