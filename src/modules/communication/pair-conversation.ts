@@ -23,6 +23,8 @@ export async function findPairConversation(db: Db, a: string, b: string) {
  */
 export async function attachOrderToPairConversation(db: Db, input: { orderId: string; customerId: string; masterUserId: string }): Promise<string> {
   const key = pairKey(input.customerId, input.masterUserId);
+  // Bir juftlikning parallel buyurtmalari bir vaqtda ikkita suhbat yaratmasligi uchun: tranzaksiya oxirigacha juftlik bo‘yicha qulf.
+  await db.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;
   const existing = await findPairConversation(db, input.customerId, input.masterUserId);
   if (existing) {
     await db.conversation.update({ where: { id: existing.id }, data: { orderId: input.orderId, type: 'ORDER', directKey: existing.directKey ?? key, updatedAt: new Date() } });

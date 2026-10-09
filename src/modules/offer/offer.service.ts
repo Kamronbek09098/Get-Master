@@ -210,8 +210,8 @@ export class OfferService {
       if (offerMaster?.userId === customerId) throw new ForbiddenException(ERRORS.SELF_DEALING);
       if (offerMaster?.isPaused) throw new DomainException(HttpStatus.CONFLICT, 'MASTER_TIME_UNAVAILABLE', ERRORS.MASTER_PAUSED_BOOK);
 
-      const lockedRows = await tx.$queryRaw<Array<{ id: string; status: string; customerId: string; serviceId: string | null; latitude: Prisma.Decimal | null; longitude: Prisma.Decimal | null; serviceMode: 'AT_CUSTOMER' | 'AT_MASTER' }>>`
-        SELECT id, status, "customerId", "serviceId", latitude, longitude, service_mode AS "serviceMode"
+      const lockedRows = await tx.$queryRaw<Array<{ id: string; status: string; customerId: string; serviceId: string | null; latitude: Prisma.Decimal | null; longitude: Prisma.Decimal | null; serviceMode: 'AT_CUSTOMER' | 'AT_MASTER'; preferredStartAt: Date | null }>>`
+        SELECT id, status, "customerId", "serviceId", latitude, longitude, service_mode AS "serviceMode", preferred_start_at AS "preferredStartAt"
         FROM problem_requests
         WHERE id = ${offer.requestId}::uuid
         FOR UPDATE
@@ -250,7 +250,8 @@ export class OfferService {
           customerId,
           masterId: offer.masterId,
           serviceId: request.serviceId,
-          scheduledStartAt: offer.availableAt,
+          // Usta vaqt taklif qilmagan bo‘lsa, mijoz kiritgan bajarilish vaqti jadvalga qo‘yiladi.
+          scheduledStartAt: offer.availableAt ?? request.preferredStartAt,
           agreedPrice: offer.price,
           currency: offer.currency,
           locationSnapshot: place

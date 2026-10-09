@@ -238,7 +238,8 @@ let startCounter = 0;
 export async function openRequest(h: Harness, customer: TestUser, serviceId: string, status: 'MATCHING' | 'SUBMITTED' = 'MATCHING'): Promise<string> {
   const created = await h.post('/problem-requests', customer.token, {
     // Har bir so‘rov alohida vaqtga: bir ustaning parallel buyurtmalari jadvalda to‘qnashmasin.
-    preferredStartAt: new Date(Date.now() + 86_400_000 + (startCounter += 1) * 3 * 3_600_000).toISOString(),
+    // Ish darhol boshlana olishi uchun vaqt “hozir” atrofida (backend 1 daqiqagacha o‘tmishni qabul qiladi); har so‘rov uchun farqli.
+    preferredStartAt: new Date(Date.now() - ((startCounter += 1) % 50) * 1000 - 1000).toISOString(),
     title: `Scenario ${randomUUID().slice(0, 8)}`,
     description: DESCRIPTION,
     serviceId,

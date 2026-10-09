@@ -1,5 +1,12 @@
 /** Автогенерация: переводы 2-го этапа (ru). Ключ — исходный узбекский текст. */
 export const ruExtra: Record<string, string> = {
+  "Kasb yoki xizmatni qidiring...": "Найдите профессию или услугу...",
+  "Taklif narxi": "Цена предложения",
+  "Taxminiy ish vaqti": "Ориентировочное время работы",
+  "Taklif yuborilgan": "Предложение отправлено",
+  "{hours} soat": "{hours} ч",
+  "{minutes} daq": "{minutes} мин",
+  "Xaritada belgilangan nuqta": "Точка, отмеченная на карте",
   "Ko‘proq yuklash": "Загрузить ещё",
   "Yuklanmoqda": "Загрузка",
   "© {getFullYear} GetMaster": "© {getFullYear} GetMaster",
@@ -2523,7 +2530,6 @@ export const ruExtra: Record<string, string> = {
   "Baho: {rating} / 5": "Оценка: {rating} / 5",
   "Qaytarishlar": "Возвраты",
   "Rejalashtirilgan vaqt": "Запланированное время",
-  "Mijoz va usta kelishgan ish vaqti. Mijoz vaqt tanlamagan bo‘lsa, «Kelishiladi» deb belgilanadi.": "Время работы, согласованное клиентом и мастером. Если время не выбрано, показывается «По договорённости».",
   "Rejalashtirilgan boshlanish": "Плановое начало",
   "Rejalashtirilgan tugash": "Плановое окончание",
   "Belgilanmagan": "Не задано",

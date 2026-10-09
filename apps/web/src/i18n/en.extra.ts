@@ -1,5 +1,12 @@
 /** Автогенерация: переводы 2-го этапа (en). Ключ — исходный узбекский текст. */
 export const enExtra: Record<string, string> = {
+  "Kasb yoki xizmatni qidiring...": "Search for a trade or service...",
+  "Taklif narxi": "Offer price",
+  "Taxminiy ish vaqti": "Estimated work time",
+  "Taklif yuborilgan": "Offer sent",
+  "{hours} soat": "{hours}h",
+  "{minutes} daq": "{minutes}m",
+  "Xaritada belgilangan nuqta": "Point selected on the map",
   "Ko‘proq yuklash": "Load more",
   "Yuklanmoqda": "Loading",
   "© {getFullYear} GetMaster": "© {getFullYear} GetMaster",
@@ -2523,7 +2530,6 @@ export const enExtra: Record<string, string> = {
   "Baho: {rating} / 5": "Rating: {rating} / 5",
   "Qaytarishlar": "Refunds",
   "Rejalashtirilgan vaqt": "Planned time",
-  "Mijoz va usta kelishgan ish vaqti. Mijoz vaqt tanlamagan bo‘lsa, «Kelishiladi» deb belgilanadi.": "The work time agreed by the customer and master. If no time was chosen, it shows “To be agreed”.",
   "Rejalashtirilgan boshlanish": "Planned start",
   "Rejalashtirilgan tugash": "Planned end",
   "Belgilanmagan": "Not set",

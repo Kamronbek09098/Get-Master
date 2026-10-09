@@ -78,6 +78,59 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+const DEFAULT_JOB_MINUTES = 60;
+
+function formatWorkMinutes(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (h && m) return t('{hours} soat {minutes} daq', { hours: h, minutes: m });
+  return h ? t('{hours} soat', { hours: h }) : t('{minutes} daq', { minutes: m });
+}
+
+/** Rejalashtirilgan vaqt va manzil: boshlanish — kelishilgan vaqt, tugash — boshlanish + ustaning taxminiy ish vaqti. */
+function ScheduleRows({ order }: { order: AdminOrderDetail }) {
+  const { booking } = order;
+  const startIso = booking.scheduledStartAt ?? booking.request.preferredStartAt;
+  const plannedStart = startIso ? new Date(startIso) : null;
+  const estMinutes = booking.offer.estimatedMinutes ?? (plannedStart ? DEFAULT_JOB_MINUTES : null);
+  const endIso = booking.scheduledEndAt;
+  const plannedEnd = endIso ? new Date(endIso) : plannedStart && estMinutes ? new Date(plannedStart.getTime() + estMinutes * 60_000) : null;
+  const snap = booking.locationSnapshot as { latitude?: string | number | null; longitude?: string | number | null; addressLine?: string | null; title?: string | null } | null;
+  const a = booking.request.address;
+  const lat = snap?.latitude != null ? Number(snap.latitude) : null;
+  const lng = snap?.longitude != null ? Number(snap.longitude) : null;
+  const coords = lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
+  const addressText = a
+    ? [a.city, a.district, a.addressLine].filter(Boolean).join(', ')
+    : snap?.addressLine || (coords ? `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}` : t('Xaritada belgilangan nuqta'));
+  return (
+    <>
+      <Row label={t('Rejalashtirilgan boshlanish')}>{plannedStart ? formatDateTime(plannedStart.toISOString()) : <span className="gm-aordd__none">{t('Kelishiladi')}</span>}</Row>
+      <Row label={t('Rejalashtirilgan tugash')}>
+        {plannedEnd ? (
+          <>
+            {formatDateTime(plannedEnd.toISOString())}
+            {estMinutes ? <span className="gm-aordd__none"> · {formatWorkMinutes(estMinutes)}</span> : null}
+          </>
+        ) : (
+          <span className="gm-aordd__none">{t('Belgilanmagan')}</span>
+        )}
+      </Row>
+      <Row label={t('Manzil')}>
+        <MapPin size={13} aria-hidden="true" /> {addressText}
+        {coords ? (
+          <>
+            {' '}
+            <a href={`https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=17/${coords.lat}/${coords.lng}`} target="_blank" rel="noreferrer">
+              {t('Xaritada ko‘rish')}
+            </a>
+          </>
+        ) : null}
+      </Row>
+    </>
+  );
+}
+
 function Party({ role, person, extra }: { role: string; person: AdminOrderPerson; extra?: string }) {
   return (
     <div className="gm-aordd__party">
@@ -259,19 +312,8 @@ export function AdminOrderDetailPage() {
 
             <Card title={t('Jadval va manzil')}>
               <h3 className="gm-aordd__sub">{t('Rejalashtirilgan vaqt')}</h3>
-              <p className="gm-aordd__hint">{t('Mijoz va usta kelishgan ish vaqti. Mijoz vaqt tanlamagan bo‘lsa, «Kelishiladi» deb belgilanadi.')}</p>
               <dl>
-                <Row label={t('Rejalashtirilgan boshlanish')}>{order.booking.scheduledStartAt ? formatDateTime(order.booking.scheduledStartAt) : <span className="gm-aordd__none">{t('Kelishiladi')}</span>}</Row>
-                <Row label={t('Rejalashtirilgan tugash')}>{order.booking.scheduledEndAt ? formatDateTime(order.booking.scheduledEndAt) : <span className="gm-aordd__none">{t('Belgilanmagan')}</span>}</Row>
-                <Row label={t('Manzil')}>
-                  {order.booking.request.address ? (
-                    <>
-                      <MapPin size={13} aria-hidden="true" /> {[order.booking.request.address.city, order.booking.request.address.district, order.booking.request.address.addressLine].filter(Boolean).join(', ')}
-                    </>
-                  ) : (
-                    <span className="gm-aordd__none">{t('Ko‘rsatilmagan')}</span>
-                  )}
-                </Row>
+                <ScheduleRows order={order} />
               </dl>
               <h3 className="gm-aordd__sub">{t('Haqiqiy bajarilish')}</h3>
               <dl>
@@ -283,14 +325,29 @@ export function AdminOrderDetailPage() {
           </div>
 
           <Card title={t('Mijoz so‘rovi')}>
+            <h3 className="gm-aordd__sub">{t('Muammo tavsifi')}</h3>
             <p className="gm-aordd__text">{order.booking.request.description}</p>
-            <dl>
-              <Row label={t('Usta taklifi')}>
-                {formatMoney(order.booking.offer.price, order.currency)}
-                {order.booking.offer.estimatedMinutes ? t(' · taxminan {estimatedMinutes} daqiqa', { estimatedMinutes: order.booking.offer.estimatedMinutes }) : ''}
-              </Row>
-              {order.booking.offer.message && <Row label={t('Usta izohi')}>{order.booking.offer.message}</Row>}
-            </dl>
+            <h3 className="gm-aordd__sub">{t('Usta taklifi')}</h3>
+            <div className="gm-aordd__offer">
+              <div className="gm-aordd__tile gm-aordd__tile--price">
+                <span>{t('Taklif narxi')}</span>
+                <strong>{formatMoney(order.booking.offer.price, order.currency)}</strong>
+              </div>
+              <div className="gm-aordd__tile">
+                <span>{t('Taxminiy ish vaqti')}</span>
+                <strong>{order.booking.offer.estimatedMinutes ? formatWorkMinutes(order.booking.offer.estimatedMinutes) : <em className="gm-aordd__none">{t('Belgilanmagan')}</em>}</strong>
+              </div>
+              <div className="gm-aordd__tile">
+                <span>{t('Taklif yuborilgan')}</span>
+                <strong>{formatDateTime(order.booking.offer.createdAt)}</strong>
+              </div>
+            </div>
+            {order.booking.offer.message && (
+              <div className="gm-aordd__note">
+                <span>{t('Usta izohi')}</span>
+                <p>{order.booking.offer.message}</p>
+              </div>
+            )}
             {order.requestAssets.length > 0 && (
               <div className="gm-aordd__gallery" aria-label={t('Mijoz yuklagan rasmlar')}>
                 {order.requestAssets.map((asset) => (
