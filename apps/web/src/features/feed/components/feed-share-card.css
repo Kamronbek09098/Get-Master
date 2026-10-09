@@ -38,3 +38,16 @@
 .gm-bubble .gf-sc .gf-sc__cta { color: var(--gm-color-primary); }
 .gm-bubble .gf-sc .gf-sc__chip, .gm-bubble .gf-sc .gf-sc__play, .gm-bubble .gf-sc .gf-sc__sound, .gm-bubble .gf-sc .gf-sc__ava { color: #fff; }
 .gm-bubble--feed.gm-bubble--mine .gm-bubble__meta, .gm-bubble--feed.gm-bubble--mine .gm-bubble__meta time { color: var(--gm-color-text-muted) !important; }
+
+/* Instagram uslubi: faqat vertikal video, tepada usta, pastda ijro belgisi. Ramka va matn bloklarisiz. */
+.gf-sc { width: min(240px, 64vw); background: #0b1020; border-radius: 22px; box-shadow: none; }
+.gf-sc__media { aspect-ratio: 9 / 16; border-radius: 22px; }
+.gf-sc__media::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.45), transparent 28%, transparent 72%, rgba(0,0,0,.4)); pointer-events: none; }
+.gf-sc__who { position: absolute; z-index: 2; left: 10px; top: 10px; right: 56px; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.gf-sc__who strong { display: flex; align-items: center; gap: 4px; min-width: 0; color: #fff !important; font-size: 0.86rem; text-shadow: 0 1px 8px rgba(0,0,0,.6); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.gf-sc__who strong svg { color: #4da3ff; }
+.gf-sc__ava { width: 32px; height: 32px; box-shadow: 0 0 0 2px rgba(255,255,255,.85); }
+.gf-sc__mini { position: absolute; z-index: 2; left: 10px; bottom: 10px; display: grid; place-items: center; width: 30px; height: 30px; padding-left: 2px; border-radius: 8px; background: #fff; color: #0b1020; }
+.gf-sc__chip { z-index: 2; top: 14px; }
+.gf-sc__sound { z-index: 2; left: auto; right: 10px; }
+.gm-bubble .gf-sc .gf-sc__mini { color: #0b1020; }

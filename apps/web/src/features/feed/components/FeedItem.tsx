@@ -22,7 +22,7 @@ export interface FeedItemProps {
   onFollow: (post: FeedPost, on: boolean) => void;
   onComments: (post: FeedPost) => void;
   onShare: (post: FeedPost) => void;
-  onMore: (post: FeedPost) => void;
+  onMore: (post: FeedPost, anchor: DOMRect) => void;
   onMaster: (post: FeedPost) => void;
   onOrder: (post: FeedPost) => void;
   onTag: (tag: string) => void;
@@ -242,7 +242,7 @@ function FeedItemBase(props: FeedItemProps) {
             <Bookmark size={27} fill={post.viewer.saved ? 'currentColor' : 'none'} aria-hidden="true" />
             <span>{compact(post.counts.saves)}</span>
           </button>
-          <button type="button" className="gf-act" aria-label={t('Yana')} onClick={() => props.onMore(post)}>
+          <button type="button" className="gf-act" aria-label={t('Yana')} onClick={(event) => props.onMore(post, event.currentTarget.getBoundingClientRect())}>
             <Ellipsis size={27} aria-hidden="true" />
           </button>
         </div>

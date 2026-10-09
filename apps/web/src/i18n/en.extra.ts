@@ -2463,4 +2463,6 @@ export const enExtra: Record<string, string> = {
   "🎬 Ish videosi": "🎬 Work video",
   "Oldingi ish": "Previous work",
   "Keyingi ish": "Next work",
+  "Suhbatlar yo‘q": "No conversations",
+  "Ustaga yozsangiz, suhbat shu yerda chiqadi.": "Message a master and the chat will appear here.",
 };

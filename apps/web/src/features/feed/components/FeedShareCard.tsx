@@ -59,16 +59,6 @@ export function FeedShareCard({ postId }: { postId: string; mine?: boolean }) {
 
   return (
     <Link ref={box} to={`${base}/lenta?post=${item.id}`} className="gf-sc" aria-label={t('{name} ishini ochish', { name: item.master.name })}>
-      <span className="gf-sc__head">
-        <span className="gf-sc__ava" aria-hidden="true">{initials(item.master.name)}</span>
-        <span className="gf-sc__who">
-          <strong>
-            {item.master.name}
-            {item.master.verified && <BadgeCheck size={14} aria-label={t('Tasdiqlangan usta')} />}
-          </strong>
-          {(item.service || item.category) && <small>{item.service?.name ?? item.category?.name}</small>}
-        </span>
-      </span>
       <span className="gf-sc__media">
         {isVideo && (
           <video
@@ -93,9 +83,16 @@ export function FeedShareCard({ postId }: { postId: string; mine?: boolean }) {
           </span>
         )}
         {!isVideo && item.kind !== 'BEFORE_AFTER' && coverUrl && <img src={coverUrl} alt="" draggable={false} />}
-        {item.kind === 'VIDEO' && !playing && (
-          <span className="gf-sc__play" aria-hidden="true">
-            <Play size={22} fill="currentColor" />
+        <span className="gf-sc__who">
+          <span className="gf-sc__ava" aria-hidden="true">{initials(item.master.name)}</span>
+          <strong>
+            {item.master.name}
+            {item.master.verified && <BadgeCheck size={14} aria-label={t('Tasdiqlangan usta')} />}
+          </strong>
+        </span>
+        {item.kind === 'VIDEO' && (
+          <span className="gf-sc__mini" aria-hidden="true">
+            <Play size={16} fill="currentColor" />
           </span>
         )}
         {item.kind === 'VIDEO' && item.durationSec ? <span className="gf-sc__chip">{clock(item.durationSec)}</span> : null}
@@ -105,10 +102,6 @@ export function FeedShareCard({ postId }: { postId: string; mine?: boolean }) {
             <Volume2 size={13} />
           </span>
         )}
-      </span>
-      <span className="gf-sc__foot">
-        {item.caption && <span className="gf-sc__cap">{item.caption}</span>}
-        <span className="gf-sc__cta">{t('Lentada ko‘rish')} ›</span>
       </span>
     </Link>
   );

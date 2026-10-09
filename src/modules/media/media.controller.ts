@@ -99,7 +99,15 @@ export class MediaController {
     if (object.contentLength !== undefined) res.setHeader('Content-Length', String(object.contentLength));
     if (object.contentRange) res.setHeader('Content-Range', object.contentRange);
     // Mijoz uzilsa (video surish, sahifadan chiqish) saqlash oqimi yopiladi, aks holda ulanishlar to‘lib, keyingi fayllar ochilmay qoladi.
-    pipeline(object.body as Readable, res, () => undefined);
+    const body = object.body as Readable;
+    const release = () => {
+      if (!body.destroyed) body.destroy();
+    };
+    // Mijoz uzilgan bo‘lishi mumkin (pipeline ishga tushmasdan oldin ham): oqimni darhol yopamiz.
+    if (res.destroyed || res.writableEnded) return release();
+    res.once('close', release);
+    req.once('aborted', release);
+    pipeline(body, res, release);
   }
 
   @Get(':id/:variant')

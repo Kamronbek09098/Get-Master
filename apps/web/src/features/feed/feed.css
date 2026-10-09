@@ -3,7 +3,7 @@
    Yagona dizayn tizimi. Mavzu: ochiq va qorong‘i; video ustidagi qatlam («sahna») har ikkala mavzuda qorong‘i media uslubida.
    Radius: 12 / 16 / 22 / 28 · Bo‘shliq: 4 / 8 / 12 / 16 / 24 · Harakat: 160–260ms, ease-out.
    ============================================================ */
-.gf, .gf-overlay {
+.gf, .gf-overlay, .gf-pop-bg {
   --gf-t-bg: #eef2fa;
   --gf-t-panel: #ffffff;
   --gf-t-panel-2: #f0f3fa;
@@ -21,7 +21,7 @@
   --gf-t-err: #c0243c;
   --gf-t-scrim: rgba(12, 22, 48, 0.45);
 }
-:root[data-theme='dark'] .gf, :root[data-theme='dark'] .gf-overlay {
+:root[data-theme='dark'] .gf, :root[data-theme='dark'] .gf-overlay, :root[data-theme='dark'] .gf-pop-bg {
   --gf-t-bg: #05070d;
   --gf-t-panel: #0f1420;
   --gf-t-panel-2: #171d2d;
@@ -39,7 +39,7 @@
   --gf-t-err: #ff8a9b;
   --gf-t-scrim: rgba(2, 4, 10, 0.6);
 }
-.gf, .gf-overlay {
+.gf, .gf-overlay, .gf-pop-bg {
   --gf-bg: var(--gf-t-bg); --gf-panel: var(--gf-t-panel); --gf-panel-2: var(--gf-t-panel-2);
   --gf-line: var(--gf-t-line); --gf-line-strong: var(--gf-t-line-strong);
   --gf-text: var(--gf-t-text); --gf-muted: var(--gf-t-muted); --gf-faint: var(--gf-t-faint);
@@ -61,8 +61,8 @@
 /* Video yo‘q bo‘lsa (bo‘sh holat) yuqori navigatsiya sahifa mavzusiga mos */
 .gf--bare .gf-top { --gf-text: var(--gf-t-text); --gf-muted: var(--gf-t-muted); --gf-faint: var(--gf-t-faint); --gf-glass: var(--gf-t-glass); --gf-line: var(--gf-t-line); --gf-line-strong: var(--gf-t-line-strong); --gf-inv: var(--gf-t-inv); --gf-accent: var(--gf-t-accent); }
 .gf--bare .gf-tabs-top button { text-shadow: none; }
-:where(.gf, .gf-overlay) * { box-sizing: border-box; }
-:where(.gf, .gf-overlay) button { font: inherit; color: inherit; }
+:where(.gf, .gf-overlay, .gf-pop-bg) * { box-sizing: border-box; }
+:where(.gf, .gf-overlay, .gf-pop-bg) button { font: inherit; color: inherit; }
 .gf-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
 /* ---------- Joylashuv ---------- */
@@ -81,7 +81,8 @@
 @media (min-width: 900px) {
   .gf { z-index: 40; inset: var(--gm-header-height, 64px) 0 0 var(--gm-sidebar-width, 288px); --gf-nav: 0px; }
   .gf-item { padding: 18px 0; }
-  .gf-stage { --gf-stage-w: min(500px, calc((100dvh - var(--gm-header-height, 64px) - 36px) * 9 / 16)); width: var(--gf-stage-w); height: 100%; border-radius: 28px; overflow: visible; box-shadow: 0 30px 80px -30px var(--gf-t-shadow), 0 0 0 1px var(--gf-t-line); }
+  .gf { --gf-stage-w: min(500px, calc((100dvh - var(--gm-header-height, 64px) - 36px) * 9 / 16)); }
+  .gf-stage { width: var(--gf-stage-w); height: 100%; border-radius: 28px; overflow: visible; box-shadow: 0 30px 80px -30px var(--gf-t-shadow), 0 0 0 1px var(--gf-t-line); }
   .gf-stage > .gf-media, .gf-stage > .gf-ba, .gf-stage > .gf-fail { border-radius: 28px; }
   .gf-scrim--bottom { border-radius: 0 0 28px 28px; }
   .gf-scrim--top { border-radius: 28px 28px 0 0; }
@@ -359,34 +360,83 @@
 }
 
 /* ============================================================
-   Keng ekran (veb, ≥1280px): Reels uslubi — markazda video, chap tomonda usta va tavsif,
-   o‘ng tomonda harakatlar paneli. Ma’lumot sahnadan tashqarida, sahifa mavzusida.
+   Keng ekran (veb, ≥1280px): Reels uslubi. Katta video markazda, chap chetda usta va tavsif,
+   video yonida yalang (doirasiz) harakat tugmalari, chap tepada bo‘limlar, o‘ng tepada qidiruv/filtr.
+   Sahnadan tashqaridagi hamma narsa sahifa mavzusida (ochiq/qorong‘i).
    ============================================================ */
 @media (min-width: 1280px) {
-  .gf-item { padding: 20px 0; }
-  .gf-stage { border-radius: 16px; box-shadow: 0 24px 70px -30px var(--gf-t-shadow), 0 0 0 1px var(--gf-t-line); }
-  .gf-stage > .gf-media, .gf-stage > .gf-ba, .gf-stage > .gf-fail, .gf-scrim--top { border-radius: 16px; }
-  .gf-scrim--bottom { height: 26%; border-radius: 0 0 16px 16px; }
-  .gf-progress { border-radius: 0 0 16px 16px; }
-  .gf-top { width: var(--gf-stage-w, 440px); }
+  .gf {
+    --gf-w: calc(100vw - var(--gm-sidebar-width, 288px));
+    background: radial-gradient(ellipse 65% 85% at 50% 45%, #ffffff 0%, #f1f4f9 70%, #e8edf5 100%);
+  }
+  :root[data-theme='dark'] .gf { background: radial-gradient(ellipse 70% 90% at 50% 45%, #1c2027 0%, #0c0e12 100%); }
+  .gf-item { padding: 8px 0; }
+  .gf { --gf-stage-w: min(640px, calc((100dvh - var(--gm-header-height, 64px) - 16px) * 9 / 16)); }
+  .gf-stage { border-radius: 12px; box-shadow: none; }
+  .gf-stage > .gf-media, .gf-stage > .gf-ba, .gf-stage > .gf-fail, .gf-scrim--top { border-radius: 12px; }
+  .gf-scrim--top { height: 90px; }
+  .gf-scrim--bottom { height: 22%; border-radius: 0 0 12px 12px; }
+  .gf-progress { border-radius: 0 0 12px 12px; }
 
+  /* Chap tepada: bo‘limlar; o‘ng tepada: qidiruv va filtr */
+  .gf-top { inset: 0; width: auto; transform: none; padding: 0; display: block; --gf-text: var(--gf-t-text); --gf-muted: var(--gf-t-muted); --gf-faint: var(--gf-t-faint); --gf-glass: var(--gf-t-panel); --gf-line: var(--gf-t-line); --gf-line-strong: var(--gf-t-line-strong); --gf-inv: var(--gf-t-inv); --gf-accent: var(--gf-t-accent); }
+  .gf-top > * { position: absolute; }
+  .gf-tabs-top { left: 36px; top: 24px; flex-direction: column; align-items: flex-start; gap: 0; overflow: visible; }
+  .gf-tabs-top button { min-height: 40px; font-size: 1.08rem; text-shadow: none; padding: 0 2px; }
+  .gf-tabs-top button.is-on::after { left: 2px; right: auto; width: 24px; bottom: 4px; }
+  .gf-top__tools { left: calc(50% + var(--gf-stage-w) / 2 + 40px); top: 22px; flex-direction: column; gap: 10px; }
+  .gf-top__tools .gf-iconbtn--glass { background: var(--gf-t-panel); box-shadow: 0 0 0 1px var(--gf-t-line), 0 8px 20px -12px var(--gf-t-shadow); backdrop-filter: none; }
+  .gf-active { left: 36px; top: 24px; flex-direction: column; align-items: flex-start; max-width: 260px; }
+
+  /* Chap chet: usta, tavsif, teglar va tugma */
   .gf-info {
-    right: calc(100% + 36px); left: auto; bottom: 2px;
-    width: min(360px, calc((100vw - var(--gm-sidebar-width, 288px) - var(--gf-stage-w, 440px)) / 2 - 90px));
-    padding: 0; gap: 12px;
+    --gf-info-w: min(380px, calc((var(--gf-w) - var(--gf-stage-w)) / 2 - 90px));
+    right: calc(100% + (var(--gf-w) - var(--gf-stage-w)) / 2 - 36px - var(--gf-info-w)); left: auto; bottom: 0;
+    width: var(--gf-info-w); padding: 0; gap: 12px;
     color: var(--gf-t-text);
     --gf-text: var(--gf-t-text); --gf-muted: var(--gf-t-muted); --gf-faint: var(--gf-t-faint); --gf-line: var(--gf-t-line); --gf-line-strong: var(--gf-t-line-strong); --gf-inv: var(--gf-t-inv); --gf-accent: var(--gf-t-accent);
   }
-  .gf-info .gf-creator__id strong, .gf-info .gf-caption { text-shadow: none; }
-  .gf-info .gf-avatar { border-color: var(--gf-t-line-strong); }
-  .gf-info .gf-follow:hover { background: var(--gf-t-panel-2); }
-  .gf-info .gf-tag { background: var(--gf-t-panel-2); color: var(--gf-t-text); backdrop-filter: none; }
-  .gf-info .gf-tag--svc { background: color-mix(in srgb, #ffb020 22%, transparent); color: var(--gf-t-accent); }
+  .gf-info .gf-creator { display: flex; align-items: center; gap: 12px; }
+  .gf-info .gf-creator__id { flex: 0 1 auto; }
+  .gf-info .gf-follow { min-height: 0; padding: 0; border: 0; border-radius: 0; background: none; color: #4f7cff; font-size: 0.92rem; font-weight: 700; }
+  .gf-info .gf-follow::before { content: '•'; margin-right: 8px; color: var(--gf-t-muted); }
+  .gf-info .gf-follow:hover { background: none; text-decoration: underline; }
+  .gf-info .gf-follow.is-on { color: var(--gf-t-muted); }
+  .gf-info .gf-avatar { width: 40px; height: 40px; border-color: var(--gf-t-line-strong); }
+  .gf-info .gf-creator__id strong, .gf-info .gf-caption { text-shadow: none; color: var(--gf-t-text); }
+  .gf-info .gf-tag { background: var(--gf-t-panel); color: var(--gf-t-text); backdrop-filter: none; box-shadow: 0 0 0 1px var(--gf-t-line); }
+  .gf-info .gf-tag--svc { background: color-mix(in srgb, #ffb020 22%, transparent); color: var(--gf-t-accent); box-shadow: none; }
   .gf-info .gf-more { color: var(--gf-t-muted); }
-  .gf-info .gf-cta { box-shadow: none; }
+  .gf-info .gf-cta { box-shadow: none; max-width: 300px; }
   .gf-caption { max-width: none; -webkit-line-clamp: 3; }
 
-  /* Ovoz tugmasi sahnaning pastki o‘ng burchagida, davomiylik chapda */
-  .gf-topright { top: auto; right: 16px; bottom: 20px; flex-direction: row-reverse; }
-  .gf-topright .gf-chip { position: absolute; right: 56px; bottom: 6px; white-space: nowrap; }
+  /* O‘ng chet: yalang tugmalar (doirasiz), raqam tagida */
+  .gf-rail { left: 100%; right: auto; margin-left: 38px; bottom: 6px; gap: 8px; --gf-text: var(--gf-t-text); --gf-muted: var(--gf-t-muted); color: var(--gf-t-text); }
+  .gf-rail .gf-act, .gf-rail .gf-act:hover { background: none; box-shadow: none; border-radius: 12px; min-width: 52px; min-height: 56px; padding: 6px 4px 2px; transform: none; }
+  .gf-rail .gf-act:hover svg { transform: scale(1.1); }
+  .gf-rail .gf-act span { font-size: 0.78rem; font-weight: 600; }
+  .gf-rail .gf-act--like.is-on svg { color: var(--gf-like); }
+  .gf-rail .gf-act--save.is-on svg { color: var(--gf-t-accent); }
+
+  /* Ovoz tugmasi pastki o‘ng burchakda, davomiylik uning yonida */
+  .gf-topright { top: auto; right: 14px; bottom: 16px; flex-direction: row-reverse; }
+  .gf-topright .gf-chip { position: absolute; right: 52px; bottom: 6px; white-space: nowrap; }
+
+  .gf-nav-btns { right: 24px; top: 50%; }
+}
+
+/* «Yana» menyusi (veb): tugma yonida kichik ochiladigan karta */
+.gf-pop-bg { position: fixed; inset: 0; z-index: 1200; }
+.gf-pop { position: fixed; width: 264px; padding: 8px; border-radius: 18px; background: var(--gf-t-panel); color: var(--gf-t-text); box-shadow: 0 0 0 1px var(--gf-t-line), 0 24px 60px -20px var(--gf-t-shadow); animation: gf-fade 0.14s ease-out; --gf-text: var(--gf-t-text); --gf-panel-2: var(--gf-t-panel-2); --gf-err: var(--gf-t-err); }
+.gf-pop .gf-menu button { min-height: 46px; padding: 0 12px; font-size: 0.92rem; color: var(--gf-t-text); }
+.gf-pop .gf-menu button:hover { background: var(--gf-t-panel-2); }
+.gf-pop .gf-menu .is-danger { color: var(--gf-t-err); }
+
+/* «Xabarlar» tugmasi (veb): chatga tez o‘tish */
+.gf-msg { display: none; }
+@media (min-width: 1280px) {
+  .gf-msg { position: absolute; z-index: 30; right: 32px; bottom: 24px; display: inline-flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 22px 0 18px; border-radius: 999px; background: var(--gf-t-panel); color: var(--gf-t-text); font-weight: 700; font-size: 0.98rem; text-decoration: none; border: 0; cursor: pointer; box-shadow: 0 0 0 1px var(--gf-t-line), 0 14px 34px -14px var(--gf-t-shadow); transition: transform 0.16s ease; }
+  .gf-msg:hover { transform: translateY(-2px); }
+  .gf-msg:focus-visible { outline: 2px solid var(--gf-t-text); outline-offset: 2px; }
+  .gf-msg em { min-width: 22px; height: 22px; display: grid; place-items: center; padding: 0 6px; border-radius: 999px; background: #e5384f; color: #fff; font-style: normal; font-size: 0.74rem; }
 }

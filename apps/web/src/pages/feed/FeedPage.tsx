@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowUp, ChevronDown, ChevronUp, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowUp, Send, ChevronDown, ChevronUp, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { cx } from '@/lib/utils';
 import { env } from '@/lib/env';
 import { useOpenMasterChat } from '@/features/communication/hooks/useCommunication';
+import { useQuery } from '@tanstack/react-query';
+import { communicationService } from '@/features/communication/services/communication.service';
 import { useServiceCategories } from '@/features/service/hooks/useServices';
 import { useAppStore } from '@/store/app.store';
 import { CommentsSheet } from '@/features/feed/components/CommentsSheet';
@@ -11,19 +13,15 @@ import { FeedItem } from '@/features/feed/components/FeedItem';
 import { FeedEmpty, FeedError, FeedSkeleton, PostGone } from '@/features/feed/components/FeedStates';
 import { FilterSheet } from '@/features/feed/components/FilterSheet';
 import { MasterSheet } from '@/features/feed/components/MasterSheet';
+import { MessagesPanel } from '@/features/feed/components/MessagesPanel';
 import { MoreSheet } from '@/features/feed/components/MoreSheet';
 import { SearchSheet } from '@/features/feed/components/SearchSheet';
 import { ShareSheet } from '@/features/feed/components/ShareSheet';
 import { useFeed, useFeedPost, useToggleFollow, useToggleLike, useToggleSave } from '@/features/feed/hooks';
-import type { FeedFilters, FeedPost, FeedTab } from '@/features/feed/types';
+import type { FeedFilters, FeedPost } from '@/features/feed/types';
 import { t } from '@/i18n';
 import '@/features/feed/feed.css';
 
-const TABS: Array<{ id: FeedTab; label: () => string }> = [
-  { id: 'foryou', label: () => t('Siz uchun') },
-  { id: 'following', label: () => t('Kuzatilmoqda') },
-  { id: 'trend', label: () => t('Trend') },
-];
 const HINT_KEY = 'gm-feed-hint';
 
 /** Professional ish lentasi: to‘liq ekranli vertikal video, ish natijasi, usta profili va xizmat buyurtmasi. */
@@ -44,6 +42,7 @@ export function FeedPage() {
   const save = useToggleSave();
   const follow = useToggleFollow();
   const openChat = useOpenMasterChat();
+  const unread = useQuery({ queryKey: ['conversations', 'unread'], queryFn: () => communicationService.unreadCount(), refetchInterval: 15_000 });
   const listed = useMemo(() => feed.data?.pages.flatMap((page) => page.items) ?? [], [feed.data]);
   // Ulashilgan/ochilgan post ro‘yxatda bo‘lmasa, uni birinchi qilib alohida yuklaymiz.
   const single = useFeedPost(focusId && !listed.some((post) => post.id === focusId) && !feed.isLoading ? focusId : null);
@@ -70,7 +69,9 @@ export function FeedPage() {
   const [commentsFor, setCommentsFor] = useState<FeedPost | null>(null);
   const [shareFor, setShareFor] = useState<FeedPost | null>(null);
   const [moreFor, setMoreFor] = useState<FeedPost | null>(null);
+  const [moreAnchor, setMoreAnchor] = useState<DOMRect | null>(null);
   const [masterFor, setMasterFor] = useState<FeedPost | null>(null);
+  const [messagesOpen, setMessagesOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -166,13 +167,7 @@ export function FeedPage() {
     <section className={cx('gf', items.length === 0 && !feed.isLoading && 'gf--bare')} aria-label={t('Ish lentasi')}>
       <header className="gf-top">
         <h1 className="gf-sr">{t('Ish lentasi')}</h1>
-        <nav className="gf-tabs-top" role="tablist" aria-label={t('Lenta bo‘limlari')}>
-          {TABS.map((item) => (
-            <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} className={cx(tab === item.id && 'is-on')} onClick={() => update({ bolim: item.id === 'foryou' ? null : item.id, post: null })}>
-              {item.label()}
-            </button>
-          ))}
-        </nav>
+        <span aria-hidden="true" />
         <div className="gf-top__tools">
           <button type="button" className="gf-iconbtn gf-iconbtn--glass" onClick={() => setSearchOpen(true)} aria-label={t('Qidirish')}>
             <Search size={21} aria-hidden="true" />
@@ -233,7 +228,10 @@ export function FeedPage() {
             onFollow={onFollow}
             onComments={setCommentsFor}
             onShare={setShareFor}
-            onMore={setMoreFor}
+            onMore={(post, rect) => {
+              setMoreAnchor(rect);
+              setMoreFor(post);
+            }}
             onMaster={setMasterFor}
             onOrder={order}
             onTag={(tag) => update({ q: tag, post: null })}
@@ -266,11 +264,16 @@ export function FeedPage() {
           <ArrowUp size={16} aria-hidden="true" /> {t('Keyingi ish uchun yuqoriga suring')}
         </div>
       )}
+      <button type="button" className="gf-msg" onClick={() => setMessagesOpen((value) => !value)} aria-expanded={messagesOpen}>
+        <Send size={20} aria-hidden="true" /> {t('Xabarlar')}
+        {(unread.data?.count ?? 0) > 0 && <em>{unread.data?.count}</em>}
+      </button>
+      <MessagesPanel open={messagesOpen} onClose={() => setMessagesOpen(false)} />
       {openChat.isPending && <div className="gf-toast" role="status">{t('Chat ochilmoqda…')}</div>}
 
       <CommentsSheet post={commentsFor ? (items.find((post) => post.id === commentsFor.id) ?? commentsFor) : null} onClose={() => setCommentsFor(null)} />
       <ShareSheet post={shareFor} onClose={() => setShareFor(null)} />
-      <MoreSheet post={moreFor ? (items.find((post) => post.id === moreFor.id) ?? moreFor) : null} base={base} onClose={() => setMoreFor(null)} onMaster={setMasterFor} />
+      <MoreSheet anchor={moreAnchor} onShare={setShareFor} post={moreFor ? (items.find((post) => post.id === moreFor.id) ?? moreFor) : null} base={base} onClose={() => setMoreFor(null)} onMaster={setMasterFor} />
       <MasterSheet
         post={masterFor ? (items.find((post) => post.id === masterFor.id) ?? masterFor) : null}
         canOrder={!isMaster && !masterFor?.viewer.own}

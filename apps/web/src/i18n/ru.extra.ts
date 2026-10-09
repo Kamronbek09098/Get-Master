@@ -2463,4 +2463,6 @@ export const ruExtra: Record<string, string> = {
   "🎬 Ish videosi": "🎬 Видео работы",
   "Oldingi ish": "Предыдущая работа",
   "Keyingi ish": "Следующая работа",
+  "Suhbatlar yo‘q": "Нет диалогов",
+  "Ustaga yozsangiz, suhbat shu yerda chiqadi.": "Напишите мастеру, и диалог появится здесь.",
 };

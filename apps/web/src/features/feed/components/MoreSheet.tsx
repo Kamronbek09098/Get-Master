@@ -1,22 +1,28 @@
-import { Bookmark, Link2, Trash2, UserRound } from 'lucide-react';
+import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { Link2, Send, Trash2, UserRound } from 'lucide-react';
 import { useAppStore } from '@/store/app.store';
 import { t } from '@/i18n';
 import { postLink } from '../format';
-import { useRemovePost, useToggleSave } from '../hooks';
+import { useRemovePost } from '../hooks';
 import type { FeedPost } from '../types';
 import { Sheet } from './Sheet';
 
-export function MoreSheet({ post, base, onClose, onMaster }: { post: FeedPost | null; base: string; onClose: () => void; onMaster: (post: FeedPost) => void }) {
+export function MoreSheet({ post, base, anchor, onClose, onMaster, onShare }: { post: FeedPost | null; base: string; anchor: DOMRect | null; onClose: () => void; onMaster: (post: FeedPost) => void; onShare: (post: FeedPost) => void }) {
   const toast = useAppStore((state) => state.pushToast);
-  const save = useToggleSave();
   const remove = useRemovePost();
-  return (
-    <Sheet open={!!post} onClose={onClose} title={t('Yana')}>
-      {post && (
+  const wide = typeof window !== 'undefined' && window.innerWidth >= 1280 && !!anchor;
+  useEffect(() => {
+    if (!wide || !post) return;
+    const key = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
+    document.addEventListener('keydown', key);
+    return () => document.removeEventListener('keydown', key);
+  }, [wide, post, onClose]);
+  const menu = post && (
         <ul className="gf-menu">
           <li>
-            <button type="button" onClick={() => { save.mutate({ id: post.id, on: !post.viewer.saved }); onClose(); }}>
-              <Bookmark size={20} fill={post.viewer.saved ? 'currentColor' : 'none'} aria-hidden="true" /> {post.viewer.saved ? t('Saqlanganlardan olib tashlash') : t('Saqlash')}
+            <button type="button" onClick={() => { onClose(); onShare(post); }}>
+              <Send size={20} aria-hidden="true" /> {t('Ulashish')}
             </button>
           </li>
           <li>
@@ -43,7 +49,20 @@ export function MoreSheet({ post, base, onClose, onMaster }: { post: FeedPost | 
             </li>
           )}
         </ul>
-      )}
+  );
+  if (wide && post && anchor) {
+    return createPortal(
+      <div className="gf-pop-bg" onMouseDown={onClose}>
+        <div className="gf-pop" role="menu" style={{ left: Math.min(anchor.left - 8, window.innerWidth - 280), bottom: Math.max(12, window.innerHeight - anchor.top + 6) }} onMouseDown={(event) => event.stopPropagation()}>
+          {menu}
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+  return (
+    <Sheet open={!!post} onClose={onClose} title={t('Yana')}>
+      {menu}
     </Sheet>
   );
 }
