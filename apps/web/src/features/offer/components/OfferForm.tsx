@@ -1,9 +1,10 @@
-import { cx, formatMinutes, groupDigits, sanitizeMoney } from '@/lib/utils';
+import { cx, formatMinutes, groupDigits } from '@/lib/utils';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { MoneyInput } from '@/components/ui/MoneyInput';
 import { Textarea } from '@/components/ui/Textarea';
 import { getErrorMessage } from '@/lib/error-messages';
 import { useCreateOffer } from '../hooks/useOffers';
@@ -52,17 +53,7 @@ export function OfferForm({
   return (
     <form className="gm-form gm-offer-form" onSubmit={handleSubmit}>
       {create.isError && <Alert tone="danger">{getErrorMessage(create.error)}</Alert>}
-      <Input
-        label={t('Narx (so‘m)')}
-        type="text"
-        inputMode="numeric"
-        required
-        placeholder="0"
-        suffix={t('so‘m')}
-        value={groupDigits(price)}
-        formatValue={groupDigits}
-        onChange={(e) => setPrice(sanitizeMoney(e.target.value))}
-      />
+      <MoneyInput label={t('Narx (so‘m)')} required value={price} onValueChange={setPrice} />
       <div className="gm-offer-form__duration">
         <Input
           label={t('Taxminiy davomiylik (daqiqa, ixtiyoriy)')}

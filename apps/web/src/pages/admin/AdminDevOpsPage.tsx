@@ -159,7 +159,9 @@ export function AdminDevOpsPage() {
                 <InfoRow label={t('CPU vaqti')} value={`${data.process.cpuUserMs} ms user · ${data.process.cpuSystemMs} ms sys`} />
               </div>
               <p className="gm-devops-note">
-                <strong>{t('Nazoratchi:')}</strong>{' '}{t('yo‘q — Docker konteynerida to‘g‘ridan-to‘g‘ri jarayon sifatida ishlaydi (PM2/systemd ishlatilmaydi).')}</p>
+                <strong>{t('Nazoratchi:')}</strong>{' '}
+                {{ pm2: t('PM2 boshqaradi.'), systemd: t('systemd boshqaradi.'), docker: t('Docker konteynerida ishlayapti.'), none: t('yo‘q — to‘g‘ridan-to‘g‘ri jarayon sifatida ishlaydi (PM2/systemd/Docker aniqlanmadi).') }[data.process.supervisor]}
+              </p>
             </section>
 
             <section className="gm-detail-section">

@@ -1,12 +1,13 @@
 import { useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, BarChart3, Banknote, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, CreditCard, Download, Eye, MoreVertical, RefreshCw, Search, Undo2, Wallet, X, XCircle } from 'lucide-react';
+import { AlertTriangle, Ban, Clock, ArrowDown, ArrowUp, ArrowUpDown, BarChart3, Banknote, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, CreditCard, Download, Eye, MoreVertical, RefreshCw, Search, Undo2, Wallet, X, XCircle } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { InfoTip } from '@/components/ui/InfoTip';
 import { Input } from '@/components/ui/Input';
+import { MoneyInput } from '@/components/ui/MoneyInput';
 import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { accountName } from '@/lib/account-name';
@@ -171,7 +172,7 @@ function RefundDialog({ payment, onClose }: { payment: ReportPaymentRow; onClose
             <div className="is-strong"><dt>{t('Qaytarish mumkin')}</dt><dd>{formatMoney(max, payment.currency)}</dd></div>
           </dl>
           {refund.isError && <Alert tone="danger">{getErrorMessage(refund.error)} {t('Qayta urinsangiz, takroriy qaytarish yaratilmaydi.')}</Alert>}
-          <Input label={t('Qaytariladigan summa')} type="number" inputMode="numeric" min={1} max={max} step="1" value={amount} error={invalid ?? undefined} onChange={(e) => setAmount(e.target.value)} autoFocus />
+          <MoneyInput label={t('Qaytariladigan summa')} suffix={payment.currency === 'UZS' ? t('so‘m') : payment.currency} value={amount} max={max} onValueChange={setAmount} autoFocus />
           <div className="gm-refund__quick" role="group" aria-label={t('Tez tanlash')}>
             <button type="button" onClick={() => quick(0.25)}>25%</button>
             <button type="button" onClick={() => quick(0.5)}>50%</button>
@@ -283,14 +284,14 @@ export function AdminReportsPage() {
 
   const chartPoints = series.map((p) => ({ date: p.date, value: tab === 'revenue' ? p.revenue : tab === 'payments' ? p.payments : p.refunded }));
   const ps = data?.paymentStatus;
-  const otherCount = ps ? ps.failed + ps.cancelled : 0;
-  const psTotal = ps ? ps.succeeded + ps.pending + ps.refunded + otherCount : 0;
-  const statusRows: Array<{ key: StatusKey; label: string; count: number; tone: string; icon: ReactNode }> = ps
+  const other = ps ? { count: ps.failed.count + ps.cancelled.count, amount: ps.failed.amount + ps.cancelled.amount } : { count: 0, amount: 0 };
+  const psTotal = ps ? ps.succeeded.count + ps.pending.count + ps.refunded.count + other.count : 0;
+  const statusRows: Array<{ key: StatusKey; label: string; count: number; amount: number; tone: string; icon: ReactNode; hint: string }> = ps
     ? [
-        { key: 'succeeded', label: t('Muvaffaqiyatli'), count: ps.succeeded, tone: 'ok', icon: <CheckCircle2 size={14} /> },
-        { key: 'pending', label: t('Kutilmoqda'), count: ps.pending, tone: 'warn', icon: <CalendarDays size={14} /> },
-        { key: 'refunded', label: t('Qaytarilgan'), count: ps.refunded, tone: 'bad', icon: <Undo2 size={14} /> },
-        { key: 'other', label: t('Bekor qilingan / xato'), count: otherCount, tone: 'off', icon: <XCircle size={14} /> },
+        { key: 'succeeded', label: t('Muvaffaqiyatli'), count: ps.succeeded.count, amount: ps.succeeded.amount, tone: 'ok', icon: <CheckCircle2 size={18} />, hint: t('To‘lov qabul qilingan') },
+        { key: 'pending', label: t('Kutilmoqda'), count: ps.pending.count, amount: ps.pending.amount, tone: 'warn', icon: <Clock size={18} />, hint: t('Hali yakunlanmagan') },
+        { key: 'refunded', label: t('Qaytarilgan'), count: ps.refunded.count, amount: ps.refunded.amount, tone: 'bad', icon: <Undo2 size={18} />, hint: t('To‘liq yoki qisman qaytarilgan') },
+        { key: 'other', label: t('Bekor qilingan / xato'), count: other.count, amount: other.amount, tone: 'off', icon: <Ban size={18} />, hint: t('Bekor qilingan yoki muvaffaqiyatsiz') },
       ]
     : [];
   const maxStatus = Math.max(1, ...statusRows.map((r) => r.count));
@@ -333,8 +334,13 @@ export function AdminReportsPage() {
         </Alert>
       )}
       {data && data.reconciliation.mismatchCount > 0 && (
-        <Alert tone="warning" title={t('Moliyaviy tafovut aniqlandi')}>
-          <p style={{ margin: 0 }}>{t('{n} ta to‘lovda yozilgan qaytarilgan summa qaytarishlar jurnali bilan mos kelmaydi. Hisobotdagi «Qaytarilgan» summa jurnalga asoslangan.', { n: data.reconciliation.mismatchCount })}</p>
+        <details className="gm-recon-bar">
+          <summary>
+            <AlertTriangle size={15} aria-hidden="true" />
+            <strong>{t('Moliyaviy tafovut: {n} ta to‘lov', { n: data.reconciliation.mismatchCount })}</strong>
+            <span>{t('Tafsilot')}</span>
+          </summary>
+          <p>{t('To‘lovda yozilgan qaytarilgan summa qaytarishlar jurnali bilan mos kelmaydi. Hisobotdagi «Qaytarilgan» summa jurnalga asoslangan.')}</p>
           <ul className="gm-recon">
             {data.reconciliation.items.map((item) => (
               <li key={item.paymentId}>
@@ -343,7 +349,7 @@ export function AdminReportsPage() {
               </li>
             ))}
           </ul>
-        </Alert>
+        </details>
       )}
 
       {overview.isLoading && (
@@ -412,18 +418,27 @@ export function AdminReportsPage() {
               {psTotal === 0 ? (
                 <div className="gm-dpanel__empty">{t('Bu davrda to‘lovlar yo‘q')}</div>
               ) : (
-                <ul className="gm-ostat gm-pstat">
+                <ul className="gm-ostat gm-ostat--fill gm-pstat">
                   {statusRows.map((row) => (
                     <li key={row.key} className={`gm-ostat__row gm-ostat__row--${row.tone}`}>
-                      <button type="button" className="gm-pstat__btn" onClick={() => goTable({ status: row.key })} aria-label={`${row.label}: ${row.count}`}>
+                      <button type="button" className="gm-pstat__btn" onClick={() => goTable({ status: row.key })} aria-label={`${row.label}: ${row.count} ${t('ta')}, ${formatMoney(row.amount)}`} title={row.hint}>
                         <span className="gm-pstat__ico" aria-hidden="true">{row.icon}</span>
-                        <span className="gm-pstat__name">{row.label}</span>
-                        <b>{row.count} <small>({Math.round((row.count / psTotal) * 100)}%)</small></b>
+                        <span className="gm-pstat__txt">
+                          <span className="gm-pstat__name">{row.label}</span>
+                          <small>{formatMoney(row.amount)}</small>
+                        </span>
+                        <b>{row.count} <small>({psTotal ? Math.round((row.count / psTotal) * 100) : 0}%)</small></b>
                       </button>
                       <div className="gm-ostat__bar" aria-hidden="true"><span style={{ width: `${row.count ? Math.max(4, (row.count / maxStatus) * 100) : 0}%` }} /></div>
                     </li>
                   ))}
                 </ul>
+              )}
+              {psTotal > 0 && (
+                <div className="gm-ostat__total">
+                  <span>{t('Jami to‘lovlar')}</span>
+                  <b>{psTotal} <small>· {formatMoney(ps ? ps.succeeded.amount + ps.pending.amount + ps.refunded.amount + other.amount : 0)}</small></b>
+                </div>
               )}
             </section>
           </div>

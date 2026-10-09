@@ -34,9 +34,10 @@ const niceMax = (value: number) => {
   return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * pow;
 };
 
-const dayLabel = (iso: string) => {
-  const date = new Date(iso);
-  return `${date.getDate()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+/** «2026-10-09» → «9.10» (brauzer vaqt mintaqasiga bog‘liq emas). */
+const dayLabel = (day: string) => {
+  const [, month, date] = day.split('-').map(Number);
+  return `${date}.${String(month).padStart(2, '0')}`;
 };
 
 /** Buyurtmalar dinamikasi: yaratilgan (ko‘k, to‘ldirilgan) va yakunlangan (yashil) buyurtmalar, kunma-kun. */

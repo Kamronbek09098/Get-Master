@@ -98,6 +98,7 @@ export class AdminDevopsService {
         disk,
       },
       process: {
+        supervisor: this.supervisor(),
         pid: process.pid,
         nodeVersion: process.version,
         uptimeSeconds: Math.round(process.uptime()),
@@ -152,6 +153,14 @@ export class AdminDevopsService {
     } catch {
       return { configured: false, stale: false, ageHours: null, lastAt: null, sizeMB: null, file: null, count: 0, message: 'Avtomatik zaxira nusxa topilmadi. infrastructure/backup/backup.sh ni cron orqali kuniga bir marta ishga tushiring (docs/runbooks/backup-restore.md).' };
     }
+  }
+
+  /** Jarayonni kim boshqaradi: haqiqiy muhitdan aniqlanadi (PM2, systemd, Docker yoki oddiy jarayon). */
+  private supervisor(): 'pm2' | 'systemd' | 'docker' | 'none' {
+    if (process.env.pm_id !== undefined || process.env.PM2_HOME !== undefined) return 'pm2';
+    if (process.env.INVOCATION_ID || process.env.JOURNAL_STREAM) return 'systemd';
+    if (fs.existsSync('/.dockerenv')) return 'docker';
+    return 'none';
   }
 
   private async cpuUsagePercent(sampleMs = 200): Promise<number> {

@@ -94,9 +94,14 @@ export class AdminService {
     const byStatus = await this.db.payment.groupBy({
       by: ['status'],
       _count: true,
+      _sum: { amount: true },
       where: hasRange ? { createdAt: { ...(query.dateFrom ? { gte: from } : {}), lte: to } } : {},
     });
-    const count = (...statuses: PaymentStatus[]) => byStatus.filter((row) => statuses.includes(row.status)).reduce((total, row) => total + row._count, 0);
+    // Har bir guruh: to'lovlar soni va ularning umumiy summasi (haqiqiy bazadagi summalar).
+    const bucket = (...statuses: PaymentStatus[]) => {
+      const rows = byStatus.filter((row) => statuses.includes(row.status));
+      return { count: rows.reduce((total, row) => total + row._count, 0), amount: rows.reduce((total, row) => total + Number(row._sum.amount ?? 0), 0) };
+    };
 
     const mismatches = await this.db.$queryRaw<Array<{ id: string; recorded: unknown; ledger: unknown }>>`
       SELECT p.id, p.refunded_amount AS recorded, COALESCE(SUM(r.amount) FILTER (WHERE r.status = 'SUCCEEDED'), 0) AS ledger
@@ -121,11 +126,11 @@ export class AdminService {
         cancelled: Number(row.cancelled),
       })),
       paymentStatus: {
-        succeeded: count(PaymentStatus.SUCCEEDED),
-        pending: count(PaymentStatus.PENDING, PaymentStatus.PROCESSING),
-        refunded: count(PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED),
-        failed: count(PaymentStatus.FAILED),
-        cancelled: count(PaymentStatus.CANCELLED),
+        succeeded: bucket(PaymentStatus.SUCCEEDED),
+        pending: bucket(PaymentStatus.PENDING, PaymentStatus.PROCESSING),
+        refunded: bucket(PaymentStatus.REFUNDED, PaymentStatus.PARTIALLY_REFUNDED),
+        failed: bucket(PaymentStatus.FAILED),
+        cancelled: bucket(PaymentStatus.CANCELLED),
       },
       reconciliation: {
         mismatchCount: mismatches.length,
@@ -217,6 +222,7 @@ export class AdminService {
       mastersByStatus,
       mastersByVerification,
       requestsByStatus,
+      requestsSubmitted,
       bookingsCount,
       ordersByStatus,
       paymentsByStatus,
@@ -228,10 +234,12 @@ export class AdminService {
       feed,
       recentOrders,
     ] = await Promise.all([
-      this.db.user.groupBy({ by: ['status'], _count: true, where }),
+      // «Foydalanuvchilar» = mijoz va ustalar (admin akkauntlari hisobga kirmaydi) — «Foydalanuvchilar» sahifasi bilan bir xil.
+      this.db.user.groupBy({ by: ['status'], _count: true, where: { ...where, userRoles: { some: { role: { in: [Role.CUSTOMER, Role.MASTER] } } } } }),
       this.db.masterProfile.groupBy({ by: ['status'], _count: true, where }),
       this.db.masterProfile.groupBy({ by: ['verification'], _count: true, where }),
       this.db.problemRequest.groupBy({ by: ['status'], _count: true, where }),
+      this.db.problemRequest.count({ where: { ...where, status: { not: 'DRAFT' } } }),
       this.db.booking.count({ where }),
       this.db.order.groupBy({ by: ['status'], _count: true, where }),
       this.db.payment.groupBy({ by: ['status'], _count: true, _sum: { amount: true }, where }),
@@ -251,7 +259,7 @@ export class AdminService {
         byStatus: countMap(mastersByStatus, 'status'),
         byVerification: countMap(mastersByVerification, 'verification'),
       },
-      requests: { total: sum(requestsByStatus), byStatus: countMap(requestsByStatus, 'status') },
+      requests: { total: sum(requestsByStatus), submitted: requestsSubmitted, byStatus: countMap(requestsByStatus, 'status') },
       bookings: { total: bookingsCount },
       orders: { total: sum(ordersByStatus), byStatus: countMap(ordersByStatus, 'status') },
       payments: {
@@ -272,7 +280,11 @@ export class AdminService {
   /** E'tibor talab qiladigan navbatlar: admin birinchi shularni ko'radi. */
   private async attentionCounts() {
     const [pendingVerifications, openCases, pendingSubscriptions, activeOrders, errors24h] = await Promise.all([
-      this.db.masterProfile.count({ where: { verification: 'PENDING' } }),
+      // Tasdiqlash navbati: ko'rib chiqilishi kutilayotgan hujjat arizalari va portfolio ishlari («Ustalarni tasdiqlash» sahifasi va menyu belgisi bilan bir xil).
+      Promise.all([
+        this.db.masterVerification.count({ where: { status: { in: ['PENDING', 'UNDER_REVIEW'] } } }),
+        this.db.masterPortfolio.count({ where: { status: 'PENDING' } }),
+      ]).then(([documents, portfolio]) => documents + portfolio),
       this.db.case.count({ where: { status: { in: [CaseStatus.REPORTED, CaseStatus.UNDER_REVIEW] } } }),
       this.db.subscription.count({ where: { status: 'PENDING' } }),
       this.db.order.count({ where: { status: { in: [OrderStatus.CONFIRMED, OrderStatus.ON_THE_WAY, OrderStatus.ARRIVED, OrderStatus.IN_PROGRESS, OrderStatus.WAITING_CONFIRMATION] } } }),
@@ -283,12 +295,13 @@ export class AdminService {
 
   /** Bugungi (server vaqti bilan, 00:00 dan) yangi yozuvlar va tushum. */
   private async todayCounts() {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
+    // «Bugun» — Toshkent (UTC+5) kunining boshidan; server vaqt mintaqasiga bog'liq emas.
+    const TZ_MS = 5 * 3_600_000;
+    const start = new Date(Math.floor((Date.now() + TZ_MS) / 86_400_000) * 86_400_000 - TZ_MS);
     const gte = { createdAt: { gte: start } };
     const [newUsers, newRequests, newOrders, completedOrders, revenue] = await Promise.all([
-      this.db.user.count({ where: gte }),
-      this.db.problemRequest.count({ where: gte }),
+      this.db.user.count({ where: { ...gte, userRoles: { some: { role: { in: [Role.CUSTOMER, Role.MASTER] } } } } }),
+      this.db.problemRequest.count({ where: { ...gte, status: { not: 'DRAFT' } } }),
       this.db.order.count({ where: gte }),
       this.db.order.count({ where: { status: OrderStatus.COMPLETED, completedAt: { gte: start } } }),
       this.db.payment.aggregate({ where: { status: { in: SETTLED_PAYMENT_STATUSES }, succeededAt: { gte: start } }, _sum: { amount: true } }),
@@ -355,26 +368,30 @@ export class AdminService {
     }));
   }
 
-  /** Buyurtmalar dinamikasi: oxirgi `days` kun, har kun uchun yaratilgan va yakunlangan buyurtmalar (bo'sh kunlar 0). */
+  /** Buyurtmalar dinamikasi: oxirgi `days` Toshkent kuni, har kun uchun yaratilgan va yakunlangan buyurtmalar (bo'sh kunlar 0). */
   async getOrdersSeries(days: number) {
     const span = [7, 30, 90].includes(days) ? days : 7;
-    const rows = await this.db.$queryRaw<Array<{ day: Date; created: bigint; completed: bigint }>>`
-      WITH d AS (SELECT generate_series(date_trunc('day', now()) - (${span - 1} * interval '1 day'), date_trunc('day', now()), interval '1 day') AS day)
-      SELECT d.day,
-             (SELECT count(*) FROM orders o WHERE o."createdAt" >= d.day AND o."createdAt" < d.day + interval '1 day') AS created,
-             (SELECT count(*) FROM orders o WHERE o.status = 'COMPLETED' AND o.completed_at >= d.day AND o.completed_at < d.day + interval '1 day') AS completed
+    const tz = 'Asia/Tashkent';
+    const rows = await this.db.$queryRaw<Array<{ day: string; created: bigint; completed: bigint }>>`
+      WITH d AS (SELECT generate_series(date_trunc('day', now() AT TIME ZONE ${tz}) - (${span - 1} * interval '1 day'), date_trunc('day', now() AT TIME ZONE ${tz}), interval '1 day') AS day)
+      SELECT to_char(d.day, 'YYYY-MM-DD') AS day,
+             (SELECT count(*) FROM orders o WHERE (o."createdAt" AT TIME ZONE ${tz}) >= d.day AND (o."createdAt" AT TIME ZONE ${tz}) < d.day + interval '1 day') AS created,
+             (SELECT count(*) FROM orders o WHERE o.status = 'COMPLETED' AND (o.completed_at AT TIME ZONE ${tz}) >= d.day AND (o.completed_at AT TIME ZONE ${tz}) < d.day + interval '1 day') AS completed
       FROM d ORDER BY d.day`;
-    return { days: span, points: rows.map((row) => ({ date: row.day.toISOString(), created: Number(row.created), completed: Number(row.completed) })) };
+    return { days: span, points: rows.map((row) => ({ date: row.day, created: Number(row.created), completed: Number(row.completed) })) };
   }
 
   /** Ish lentasi: postlar, ko'rishlar, izohlar. */
   private async feedOverview() {
-    const [posts, totals, comments] = await Promise.all([
+    // Yoqtirish va izohlar — haqiqiy yozuvlar soni (hisoblagich ustunlari emas); ko'rish va ulashish uchun yozuv yo'q, hisoblagich olinadi.
+    const published = { post: { status: 'PUBLISHED' as const } };
+    const [posts, totals, likes, comments] = await Promise.all([
       this.db.workPost.count({ where: { status: 'PUBLISHED' } }),
-      this.db.workPost.aggregate({ where: { status: 'PUBLISHED' }, _sum: { viewCount: true, likeCount: true, shareCount: true } }),
-      this.db.workPostComment.count(),
+      this.db.workPost.aggregate({ where: { status: 'PUBLISHED' }, _sum: { viewCount: true, shareCount: true } }),
+      this.db.workPostLike.count({ where: published }),
+      this.db.workPostComment.count({ where: published }),
     ]);
-    return { posts, views: totals._sum.viewCount ?? 0, likes: totals._sum.likeCount ?? 0, shares: totals._sum.shareCount ?? 0, comments };
+    return { posts, views: totals._sum.viewCount ?? 0, likes, shares: totals._sum.shareCount ?? 0, comments };
   }
 
   async getRevenueReport(query: RevenueReportQueryDto) {

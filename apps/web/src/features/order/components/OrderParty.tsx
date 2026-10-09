@@ -31,29 +31,35 @@ export function OrderParty({ order }: { order: OrderDetailsData }) {
       )}
       <dl className="gm-oparty__facts">
         {order.service && (
-          <>
+          <div>
             <dt>{t('Xizmat')}</dt>
             <dd>{order.service.name}</dd>
-          </>
+          </div>
         )}
-        <dt>{t('Kelishilgan narx')}</dt>
-        <dd>{formatMoney(order.originalAmount, order.currency)}</dd>
+        <div>
+          <dt>{t('Kelishilgan narx')}</dt>
+          <dd className="gm-oparty__money">{formatMoney(order.originalAmount, order.currency)}</dd>
+        </div>
         {Number(order.additionalAmount) > 0 && (
-          <>
+          <div>
             <dt>{t('Qo‘shimcha ishlar')}</dt>
-            <dd>+ {formatMoney(order.additionalAmount, order.currency)}</dd>
-          </>
+            <dd className="gm-oparty__money">+{formatMoney(order.additionalAmount, order.currency)}</dd>
+          </div>
         )}
-        <dt>{t('Jami')}</dt>
-        <dd className="gm-oparty__total">{formatMoney(order.finalAmount, order.currency)}</dd>
+        <div className="gm-oparty__sum">
+          <dt>{t('Jami')}</dt>
+          <dd className="gm-oparty__money gm-oparty__total">{formatMoney(order.finalAmount, order.currency)}</dd>
+        </div>
         {order.scheduledStartAt && (
-          <>
+          <div>
             <dt>{t('Boshlanish vaqti')}</dt>
-            <dd>{formatDateTime(order.scheduledStartAt)}</dd>
-          </>
+            <dd className="gm-oparty__date">{formatDateTime(order.scheduledStartAt)}</dd>
+          </div>
         )}
-        <dt>{t('Yaratildi')}</dt>
-        <dd>{formatDateTime(order.createdAt)}</dd>
+        <div>
+          <dt>{t('Yaratildi')}</dt>
+          <dd className="gm-oparty__date">{formatDateTime(order.createdAt)}</dd>
+        </div>
       </dl>
     </aside>
   );

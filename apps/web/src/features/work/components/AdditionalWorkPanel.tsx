@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatMoney, sanitizeMoney } from '@/lib/utils';
+import { formatMoney } from '@/lib/utils';
+import { MoneyInput } from '@/components/ui/MoneyInput';
 import { useAdditionalWork, useAnswerAdditionalWork, useCreateAdditionalWork } from '../hooks/useAdditionalWork';
 import type { AdditionalWorkStatus } from '../types';
 import { t } from '@/i18n';
@@ -105,16 +106,12 @@ export function AdditionalWorkPanel({
               if (create.isError) create.reset();
             }}
           />
-          <Input
+          <MoneyInput
             label={t('Summa (so‘m)')}
-            type="number"
-            min={1}
             required
-            inputMode="numeric"
-            autoComplete="off"
             value={amount}
-            onChange={(event) => {
-              setAmount(sanitizeMoney(event.target.value));
+            onValueChange={(digits) => {
+              setAmount(digits);
               if (create.isError) create.reset();
             }}
           />

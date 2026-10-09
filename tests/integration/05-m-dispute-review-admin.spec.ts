@@ -269,7 +269,8 @@ describe('M08/M09 — admin dashboard & revenue report', () => {
 
   it('dashboard counts equal what is really in the database', async () => {
     const dash = (await h.get('/admin/dashboard', admin.token)).data;
-    expect(dash.users.total).toBe(await h.db.user.count());
+    // «Foydalanuvchilar» = mijoz va ustalar; admin akkauntlari hisobga kirmaydi («Foydalanuvchilar» sahifasi bilan bir xil).
+    expect(dash.users.total).toBe(await h.db.user.count({ where: { userRoles: { some: { role: { in: ['CUSTOMER', 'MASTER'] } } } } }));
     expect(dash.masters.total).toBe(await h.db.masterProfile.count());
     expect(dash.requests.total).toBe(await h.db.problemRequest.count());
     expect(dash.orders.total).toBe(await h.db.order.count());

@@ -20,18 +20,6 @@ import { toRange } from '@/features/admin/range';
 import './AdminDashboardPage.css';
 import { t } from '@/i18n';
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
-  return (
-    <section className="gm-dash-section">
-      <header className="gm-dash-section__head">
-        <h2>{title}</h2>
-        {hint && <p>{hint}</p>}
-      </header>
-      {children}
-    </section>
-  );
-}
-
 function MiniStat({ icon, tone, value, label, long = false }: { icon: ReactNode; tone: string; value: string | number; label: string; long?: boolean }) {
   return (
     <div className={cx('gm-mini', `gm-mini--${tone}`, long && 'gm-mini--long')}>
@@ -124,8 +112,10 @@ function StatusCard({ icon, title, counts, good, accent }: { icon: ReactNode; ti
           ))}
         </ul>
       </div>
-      <div className="gm-sc__bar" aria-hidden="true"><span style={{ width: `${Math.max(percent, total ? 3 : 0)}%` }} /></div>
-      <span className="gm-sc__pct">{percent}%</span>
+      <div className="gm-sc__meter">
+        <div className="gm-sc__bar" aria-hidden="true"><span style={{ width: `${Math.max(percent, total ? 3 : 0)}%` }} /></div>
+        <span className="gm-sc__pct">{percent}%</span>
+      </div>
     </div>
   );
 }
@@ -181,7 +171,7 @@ export function AdminDashboardPage() {
             <div className="gm-attn__grid">
               {[
                 { to: '/admin/tasdiqlash', icon: <BadgeCheck size={22} />, tone: 'info', title: t('Ustalarni tasdiqlash'), sub: t('Yangi arizalar va hujjatlar'), count: data.attention.pendingVerifications },
-                { to: '/admin/shikoyatlar', icon: <AlertTriangle size={22} />, tone: 'warn', title: t('Ochiq nizolar'), sub: t('Mijozlar va ustalar o‘rtasida'), count: data.attention.openCases },
+                { to: '/admin/shikoyatlar', icon: <AlertTriangle size={22} />, tone: 'warn', title: t('Shikoyat va nizolar'), sub: t('Ko‘rib chiqilmagan ochiq arizalar'), count: data.attention.openCases },
                 { to: '/admin/obunalar', icon: <Crown size={22} />, tone: 'info', title: t('Obunalar'), sub: t('Tasdiq kutayotgan to‘lovlar'), count: data.attention.pendingSubscriptions },
                 { to: '/admin/errorlar', icon: <ServerCrash size={22} />, tone: 'bad', title: t('Server xatolari'), sub: t('Oxirgi 24 soat · tizim jurnali'), count: data.attention.errors24h },
               ].map((item) => (
@@ -199,7 +189,7 @@ export function AdminDashboardPage() {
             {[
               { icon: <Users size={24} />, tone: 'blue', label: t('Faol foydalanuvchilar'), value: data.users.byStatus.ACTIVE ?? 0 },
               { icon: <Wrench size={24} />, tone: 'green', label: t('Faol ustalar'), value: data.masters.byStatus.ACTIVE ?? 0 },
-              { icon: <ClipboardList size={24} />, tone: 'violet', label: t('Yangi so‘rovlar'), value: data.requests.total },
+              { icon: <ClipboardList size={24} />, tone: 'violet', label: t('Yangi so‘rovlar'), value: data.requests.submitted },
               { icon: <PackageCheck size={24} />, tone: 'teal', label: t('Buyurtmalar'), value: data.orders.total },
             ].map((kpi) => (
               <div key={kpi.label} className={`gm-kpi gm-kpi--${kpi.tone}`}>
@@ -233,7 +223,7 @@ export function AdminDashboardPage() {
               {orderCounts.length === 0 ? (
                 <div className="gm-dpanel__empty">{t('Ma’lumot yo‘q')}</div>
               ) : (
-                <ul className="gm-ostat">
+                <ul className="gm-ostat gm-ostat--fill">
                   {orderCounts.slice(0, 6).map(([status, count]) => (
                     <li key={status} className={`gm-ostat__row gm-ostat__row--${toneOf(status)}`}>
                       <div>
@@ -302,7 +292,8 @@ export function AdminDashboardPage() {
             </Panel>
           </div>
 
-          <Section title={t('Holatlar bo‘yicha')} hint={periodNote}>
+          <section className="gm-dpanel gm-hbp" aria-label={t('Holatlar bo‘yicha')}>
+            <header className="gm-dpanel__head"><h2>{t('Holatlar bo‘yicha')}</h2><span className="gm-dsec__hint">{periodNote}</span></header>
             <div className="gm-scs">
               <StatusCard icon={<Users size={20} />} title={t('Foydalanuvchilar')} counts={data.users.byStatus} good="ACTIVE" accent="#2f6bff" />
               <StatusCard icon={<Wrench size={20} />} title={t('Ustalar')} counts={data.masters.byVerification} good="VERIFIED" accent="#10b981" />
@@ -311,7 +302,7 @@ export function AdminDashboardPage() {
               <StatusCard icon={<Wallet size={20} />} title={t('To‘lovlar')} counts={data.payments.byStatus} good="SUCCEEDED" accent="#f59e0b" />
               <StatusCard icon={<Scale size={20} />} title={t('Nizolar')} counts={data.disputes.byStatus} good="RESOLVED" accent="#e5384f" />
             </div>
-          </Section>
+          </section>
 
           <Panel className="gm-dsec" title={t('Bugun')} badge={<span className="gm-dsec__hint">{t('Bugungi 00:00 dan boshlab')}</span>} action={{ to: '/admin/hisobot', label: t('Hisobotlar') }}>
             <div className="gm-mini-grid gm-mini-grid--5">

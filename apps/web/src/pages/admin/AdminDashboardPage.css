@@ -274,7 +274,7 @@ a.gm-otable__row:hover { background: var(--gm-color-surface-muted); color: inher
 .gm-mini-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 @media (min-width: 1100px) {
   .gm-mini-grid--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
-  .gm-mini-grid--feed { grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: stretch; }
+  .gm-mini-grid--feed { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .gm-mini-grid--sub { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
 }
 .gm-mini { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 12px 14px; border: 1px solid var(--gm-color-border); border-radius: 14px; background: var(--gm-color-surface-muted); }
@@ -314,3 +314,48 @@ a.gm-otable__row:hover { background: var(--gm-color-surface-muted); color: inher
 :root[data-theme='dark'] .gm-sub__rows dd.is-warn { color: #fbbf24; }
 .gm-sub__foot { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--gm-color-text-muted); }
 .gm-sub__foot strong { color: var(--gm-color-text); font-size: 15px; font-variant-numeric: tabular-nums; }
+
+/* ═══════ «Holatlar bo‘yicha» — rasmdagidek: bitta panel ichida 6 ta ixcham karta ═══════ */
+.gm-hbp { margin-bottom: 12px; padding: 16px 18px 18px; }
+.gm-hbp .gm-dpanel__head { margin-bottom: 12px; }
+.gm-hbp .gm-dsec__hint { flex: 0 0 auto; }
+.gm-hbp .gm-scs { gap: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.gm-hbp .gm-sc { gap: 12px; padding: 14px 16px; border-radius: 14px; box-shadow: none; background: var(--gm-color-surface); }
+.gm-hbp .gm-sc__top { grid-template-columns: auto minmax(0, 1fr) auto; align-items: flex-start; gap: 12px; }
+.gm-hbp .gm-sc__icon { grid-row: auto; width: 40px; height: 40px; border-radius: 11px; }
+.gm-hbp .gm-sc__main { gap: 2px; }
+.gm-hbp .gm-sc__title { font-size: 13px; font-weight: 700; line-height: 1.2; }
+.gm-hbp .gm-sc__total { font-size: 28px; line-height: 1; }
+.gm-hbp .gm-sc__list { grid-column: auto; display: grid; gap: 4px; min-width: 88px; margin: 0; padding-top: 2px; text-align: left; }
+.gm-hbp .gm-sc__list li { display: flex; justify-content: space-between; gap: 12px; font-size: 11.5px; color: var(--gm-color-text-muted); white-space: nowrap; }
+.gm-hbp .gm-sc__list b { font-weight: 700; color: var(--gm-color-text); }
+.gm-hbp .gm-sc__meter { display: flex; align-items: center; gap: 10px; }
+.gm-hbp .gm-sc__meter .gm-sc__bar { flex: 1; height: 8px; }
+.gm-hbp .gm-sc__pct { justify-self: auto; margin: 0; min-width: 34px; text-align: right; font-size: 12.5px; font-weight: 700; color: var(--gm-color-text); }
+@media (min-width: 1100px) {
+  .gm-hbp { padding: 12px 14px 14px; }
+  .gm-hbp .gm-scs { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+  .gm-hbp .gm-sc { padding: 12px; gap: 10px; }
+  .gm-hbp .gm-sc__top { gap: 10px; }
+  .gm-hbp .gm-sc__icon { width: 36px; height: 36px; }
+  .gm-hbp .gm-sc__total { font-size: 24px; }
+  .gm-hbp .gm-sc__list { min-width: 0; }
+  .gm-hbp .gm-sc__list li { font-size: 11px; gap: 8px; }
+}
+@media (max-width: 639px) { .gm-hbp .gm-scs { grid-template-columns: 1fr; } }
+.gm-hbp .gm-sc__main { min-width: 0; }
+.gm-hbp .gm-sc__title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-hbp .gm-sc__list { flex: none; }
+
+/* Holat ro'yxati karta balandligini to'ldiradi: bo'sh joy qolmaydi, qatorlar teng taqsimlanadi */
+.gm-ostat--fill { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; gap: 10px; }
+.gm-ostat__total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gm-color-border); font-size: 13.5px; color: var(--gm-color-text-muted); }
+.gm-ostat__total b { color: var(--gm-color-text); font-size: 16px; font-variant-numeric: tabular-nums; }
+
+/* Ish lentasi / Obunalar: juft kartalar bir xil balandlikda — ichidagi kartochkalar bo'sh joyni to'ldiradi */
+.gm-dgrid--pair > .gm-dsec { display: flex; flex-direction: column; }
+.gm-dgrid--pair .gm-mini-grid, .gm-dgrid--pair .gm-subs { flex: 1; align-content: stretch; grid-auto-rows: 1fr; }
+.gm-dgrid--pair .gm-mini { align-items: center; padding: 14px 18px; }
+.gm-dgrid--pair .gm-mini__icon { width: 46px; height: 46px; border-radius: 14px; }
+.gm-dgrid--pair .gm-mini__body strong { font-size: 26px; }
+.gm-dgrid--pair .gm-mini__body small { font-size: 13px; }

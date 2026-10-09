@@ -489,3 +489,16 @@
 .gm-ocard.gm-oparty .gm-oparty__facts dd:last-of-type { border-bottom: 0; padding-bottom: 2px; }
 .gm-ocard.gm-oparty .gm-oparty__total { font-size: 1.15rem; font-weight: 800; color: var(--gm-color-primary); font-variant-numeric: tabular-nums; }
 .gm-ocard.gm-oparty .gm-oparty__facts dt:has(+ .gm-oparty__total) { color: var(--gm-color-text); font-weight: 700; }
+
+/* ═══ Buyurtma yon kartasi: summalar hech qachon bo'linmaydi, qatorlar sig'masa qiymat pastga tushadi ═══ */
+.gm-ocard.gm-oparty .gm-oparty__facts { display: grid; grid-template-columns: 1fr; gap: 0; margin-top: 2px; padding-top: 4px; border-top: 1px solid var(--gm-color-border); }
+.gm-ocard.gm-oparty .gm-oparty__facts > div { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 16px; padding: 11px 0; border-bottom: 1px dashed var(--gm-color-border); }
+.gm-ocard.gm-oparty .gm-oparty__facts > div:last-child { border-bottom: 0; padding-bottom: 2px; }
+.gm-ocard.gm-oparty .gm-oparty__facts dt { display: block; padding: 0; border: 0; font-size: 13.5px; white-space: nowrap; color: var(--gm-color-text-muted); }
+.gm-ocard.gm-oparty .gm-oparty__facts dd { display: block; flex: 1 1 auto; min-width: 0; margin: 0; padding: 0; border: 0; text-align: right; font-weight: 700; overflow-wrap: break-word; text-wrap: pretty; }
+.gm-ocard.gm-oparty .gm-oparty__money { white-space: nowrap; font-variant-numeric: tabular-nums; overflow-wrap: normal; }
+.gm-ocard.gm-oparty .gm-oparty__date { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.gm-ocard.gm-oparty .gm-oparty__sum { margin-block: 2px; padding-block: 13px; }
+.gm-ocard.gm-oparty .gm-oparty__sum dt { color: var(--gm-color-text); font-weight: 800; font-size: 14.5px; }
+.gm-ocard.gm-oparty .gm-oparty__total { font-size: clamp(1rem, 4.6cqi, 1.2rem); font-weight: 800; color: var(--gm-color-primary); }
+.gm-ocard.gm-oparty { container-type: inline-size; }

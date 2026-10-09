@@ -1,9 +1,9 @@
-import { sanitizeMoney } from '@/lib/utils';
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { Plus } from 'lucide-react';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
+import { MoneyInput } from '@/components/ui/MoneyInput';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { getErrorMessage } from '@/lib/error-messages';
@@ -52,16 +52,7 @@ export function ServiceForm() {
         value={serviceId}
         onChange={(event) => setServiceId(event.target.value)}
       />
-      <Input
-        label={t('Narx (so‘m)')}
-        type="number"
-        inputMode="numeric"
-        min={0}
-        placeholder={t('Masalan: 150000')}
-        hint={t('Bo‘sh qoldirsangiz, narx mijoz bilan kelishiladi.')}
-        value={price}
-        onChange={(event) => setPrice(sanitizeMoney(event.target.value))}
-      />
+      <MoneyInput label={t('Narx (so‘m)')} hint={t('Bo‘sh qoldirsangiz, narx mijoz bilan kelishiladi.')} placeholder={t('Masalan: 150 000')} value={price} onValueChange={setPrice} />
       <Input
         label={t('Izoh')}
         placeholder={t('Qisqacha tavsif (ixtiyoriy)')}

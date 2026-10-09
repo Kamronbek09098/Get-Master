@@ -77,7 +77,13 @@ describe('admin reports — numbers match the database', () => {
     expect(sum('completed')).toBe(current.completed);
     expect(sum('cancelled')).toBe(current.cancelled);
     // To'lovlar holati taqsimoti jami to'lovlar soniga teng.
-    expect(paymentStatus.succeeded + paymentStatus.pending + paymentStatus.refunded + paymentStatus.failed + paymentStatus.cancelled).toBe(current.payments);
+    const groups = ['succeeded', 'pending', 'refunded', 'failed', 'cancelled'] as const;
+    expect(groups.reduce((total, key) => total + paymentStatus[key].count, 0)).toBe(current.payments);
+    // Summalar ham bazadagi to'lovlar summasiga teng.
+    const all = await h.db.payment.aggregate({ where: { createdAt: { gte: from, lte: to } }, _sum: { amount: true } });
+    expect(groups.reduce((total, key) => total + paymentStatus[key].amount, 0)).toBe(Number(all._sum.amount ?? 0));
+    const succeeded = await h.db.payment.aggregate({ where: { status: 'SUCCEEDED', createdAt: { gte: from, lte: to } }, _sum: { amount: true }, _count: true });
+    expect(paymentStatus.succeeded).toEqual({ count: succeeded._count, amount: Number(succeeded._sum.amount ?? 0) });
   });
 
   it('compares with the previous equal period using the same definitions', async () => {

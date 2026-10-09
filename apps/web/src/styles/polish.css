@@ -316,3 +316,7 @@ input[type='checkbox']:not([role='switch']):disabled {
   .gm-card .gm-action-row { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; }
   .gm-card .gm-action-row > .gm-button { width: 100%; justify-content: center; }
 }
+
+/* Qoldirilgan sharh bloki: yulduzlar, izoh va sana bir xil chap chiziqda (markazlashgan kartada ham) */
+.gm-review-done__body { align-items: flex-start; text-align: left; }
+.gm-review-done__body p, .gm-review-done__body small { width: 100%; text-align: left; }

@@ -30,6 +30,7 @@ export interface DevOpsSnapshot {
     disk: { totalGB: number; usedGB: number; freeGB: number; usedPercent: number } | null;
   };
   process: {
+    supervisor: 'pm2' | 'systemd' | 'docker' | 'none';
     pid: number;
     nodeVersion: string;
     uptimeSeconds: number;
@@ -72,7 +73,7 @@ export interface SubscriptionAudienceStats {
 export interface Dashboard {
   users: { total: number; byStatus: Record<string, number> };
   masters: { total: number; byStatus: Record<string, number>; byVerification: Record<string, number> };
-  requests: { total: number; byStatus: Record<string, number> };
+  requests: { total: number; submitted: number; byStatus: Record<string, number> };
   bookings: { total: number };
   orders: { total: number; byStatus: Record<string, number> };
   payments: { byStatus: Record<string, unknown> };
@@ -136,7 +137,7 @@ export interface ReportsOverview {
   current: ReportTotals;
   previous: ReportTotals | null;
   series: Array<{ date: string; revenue: number; refunded: number; payments: number; orders: number; completed: number; cancelled: number }>;
-  paymentStatus: { succeeded: number; pending: number; refunded: number; failed: number; cancelled: number };
+  paymentStatus: Record<'succeeded' | 'pending' | 'refunded' | 'failed' | 'cancelled', { count: number; amount: number }>;
   reconciliation: { mismatchCount: number; items: Array<{ paymentId: string; recorded: number; ledger: number; difference: number }> };
 }
 
