@@ -247,3 +247,5 @@
   font-size: 13px;
   line-height: 1.45;
 }
+.gm-mappicker__acc { display: block; margin-bottom: 2px; font-size: 0.78rem; font-weight: 600; color: var(--gm-color-text-muted); }
+.gm-mappicker__locate:disabled { opacity: 0.6; cursor: progress; }

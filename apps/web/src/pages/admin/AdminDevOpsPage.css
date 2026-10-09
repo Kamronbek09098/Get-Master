@@ -146,3 +146,7 @@ section.gm-detail-section > h2 {
 .gm-devops-note strong {
   color: var(--gm-color-text);
 }
+
+.gm-devops-prov { display: grid; gap: 2px; padding-bottom: 8px; border-bottom: 1px solid var(--gm-color-border); }
+.gm-devops-prov .gm-card__meta { margin: 0; overflow-wrap: anywhere; }
+.gm-detail-section .gm-alert + .gm-devops-rows { margin-top: 12px; }

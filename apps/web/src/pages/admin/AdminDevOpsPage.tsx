@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Bell, Database, GitCommit, RefreshCw, Server, Tag, Timer } from 'lucide-react';
+import { Bell, Database, Plug, GitCommit, RefreshCw, Server, Tag, Timer } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -184,11 +184,42 @@ export function AdminDevOpsPage() {
             </section>
           </div>
 
-          <section className="gm-detail-section">
-            <h2>
-              <Database size={18} />{' '}{t('Zaxira nusxa')}</h2>
-            <Alert tone={data.backup.configured ? 'success' : 'warning'}>{data.backup.message}</Alert>
-          </section>
+          <div className="gm-devops-cols">
+            <section className="gm-detail-section">
+              <h2>
+                <Database size={18} />{' '}{t('Zaxira nusxa')}</h2>
+              <Alert tone={!data.backup.configured ? 'warning' : data.backup.stale ? 'danger' : 'success'}>{data.backup.message}</Alert>
+              {data.backup.configured && (
+                <div className="gm-devops-rows">
+                  <InfoRow label={t('Oxirgi zaxira')} value={data.backup.lastAt ? formatDateTime(data.backup.lastAt) : '—'} />
+                  <InfoRow label={t('Hajmi')} value={data.backup.sizeMB != null ? `${data.backup.sizeMB} MB` : '—'} />
+                  <InfoRow label={t('Saqlangan nusxalar')} value={data.backup.count} />
+                </div>
+              )}
+            </section>
+
+            <section className="gm-detail-section">
+              <h2>
+                <Plug size={18} />{' '}{t('Tashqi xizmatlar')}</h2>
+              <div className="gm-devops-rows">
+                {data.providers.map((item) => (
+                  <div key={item.key} className="gm-devops-prov">
+                    <div className="gm-devops-row">
+                      <span className="gm-devops-row__label">{item.label} · {item.provider}</span>
+                      <Badge tone={item.state === 'OPEN' ? 'danger' : item.state === 'HALF_OPEN' ? 'warning' : 'success'}>
+                        {item.state === 'OPEN' ? t('O‘chirilgan') : item.state === 'HALF_OPEN' ? t('Tekshirilmoqda') : t('Ishlayapti')}
+                      </Badge>
+                    </div>
+                    <p className="gm-card__meta">
+                      {t('Muvaffaqiyatli: {ok} · xato: {fail} · to‘xtatilgan: {open}', { ok: item.success, fail: item.failure, open: item.circuitOpen })}
+                      {item.lastError && ` · ${t('oxirgi xato')}: ${item.lastError}`}
+                    </p>
+                  </div>
+                ))}
+                <InfoRow label={t('Server xatolari (1 soat / 24 soat)')} value={`${data.errors.lastHour} / ${data.errors.last24h}`} />
+              </div>
+            </section>
+          </div>
 
           <section className="gm-detail-section">
             <div className="gm-devops-traffic-head">

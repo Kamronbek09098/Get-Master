@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import type { FormEvent } from 'react';
-import { MessageCircle, SendHorizontal, Trash2 } from 'lucide-react';
+import { MessageCircle, SendHorizontal, Trash2, X } from 'lucide-react';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatRelativeTime } from '@/lib/utils';
 import { useMe } from '@/features/session/hooks/useMe';
@@ -8,6 +8,21 @@ import { t } from '@/i18n';
 import { useAddComment, useComments, useRemoveComment } from '../hooks';
 import type { FeedPost } from '../types';
 import { Sheet } from './Sheet';
+
+const WIDE = '(min-width: 1280px)';
+
+/** Veb (≥1280px) Reels maketi: izohlar videoning yonida suzuvchi panelda ochiladi. */
+export function useWideFeed(): boolean {
+  return useSyncExternalStore(
+    (notify) => {
+      const query = window.matchMedia(WIDE);
+      query.addEventListener('change', notify);
+      return () => query.removeEventListener('change', notify);
+    },
+    () => window.matchMedia(WIDE).matches,
+    () => false,
+  );
+}
 
 export function CommentsSheet({ post, onClose }: { post: FeedPost | null; onClose: () => void }) {
   const id = post?.id ?? '';
@@ -25,21 +40,19 @@ export function CommentsSheet({ post, onClose }: { post: FeedPost | null; onClos
     add.mutate(value, { onSuccess: () => setText('') });
   }
 
-  return (
-    <Sheet open={!!post} onClose={onClose} title={t('Izohlar')} subtitle={post ? t('{count} ta izoh', { count: post.counts.comments }) : undefined}
-      tall
-      footer={
-        <>
-          <form className="gf-compose" onSubmit={submit}>
+  const wide = useWideFeed();
+  const composer = (
+    <>
+      <form className="gf-compose" onSubmit={submit}>
         <input value={text} onChange={(event) => setText(event.target.value)} maxLength={500} placeholder={t('Izoh yozing…')} aria-label={t('Izoh yozing')} />
         <button type="submit" className="gf-iconbtn gf-iconbtn--accent" disabled={!text.trim() || add.isPending} aria-label={t('Yuborish')}>
           <SendHorizontal size={20} aria-hidden="true" />
         </button>
       </form>
-          {add.isError && <p className="gf-note gf-note--err" role="alert">{getErrorMessage(add.error)}</p>}
-        </>
-      }
-    >
+      {add.isError && <p className="gf-note gf-note--err" role="alert">{getErrorMessage(add.error)}</p>}
+    </>
+  );
+  const list = (
       <div className="gf-comments">
         {comments.isLoading && (
           <ul className="gf-skel-list" aria-hidden="true">
@@ -75,6 +88,31 @@ export function CommentsSheet({ post, onClose }: { post: FeedPost | null; onClos
           ))}
         </ul>
       </div>
+  );
+
+  if (wide) {
+    if (!post) return null;
+    return (
+      <aside className="gf-cp" role="complementary" aria-label={t('Izohlar')}>
+        <header className="gf-cp__head">
+          <button type="button" className="gf-iconbtn" onClick={onClose} aria-label={t('Yopish')}>
+            <X size={20} aria-hidden="true" />
+          </button>
+          <h2>{t('Izohlar')}</h2>
+          <span aria-hidden="true" />
+        </header>
+        <div className="gf-cp__body">{list}</div>
+        <footer className="gf-cp__foot">{composer}</footer>
+      </aside>
+    );
+  }
+
+  return (
+    <Sheet open={!!post} onClose={onClose} title={t('Izohlar')} subtitle={post ? t('{count} ta izoh', { count: post.counts.comments }) : undefined}
+      tall
+      footer={composer}
+    >
+      {list}
     </Sheet>
   );
 }

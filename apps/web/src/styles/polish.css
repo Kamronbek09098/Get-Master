@@ -303,3 +303,16 @@ input[type='checkbox']:not([role='switch']):disabled {
 .gm-app-layout__content > .gm-alert { margin-bottom: var(--gm-space-5); }
 .gm-chooser__search input::placeholder { text-overflow: ellipsis; }
 .gm-chooser__search input { text-overflow: ellipsis; }
+
+/* ——— Yozuv va tugmalar hech qachon chetga yopishmasin ——— */
+/* Matnli ochiluvchi tugmalar (til, «Menyu»): chekkadan bo‘sh joy; avatarli tugmada avatar chetga tegmaydi. */
+.gm-dropdown__trigger:not(:has(.gm-avatar)) { padding: 6px 12px; }
+
+@media (max-width: 899px) {
+  /* Tablar: telefonda yon tomonga yashirinib, chetda kesilib qolmaydi — qatorlarga o‘raladi va chiroyli to‘ladi */
+  .gm-app-layout .gm-tabs { flex-wrap: wrap; overflow: visible; justify-content: center; gap: 4px; width: 100%; }
+  .gm-app-layout .gm-tabs > * { flex: 1 1 auto; }
+  /* Kartadagi amal tugmalari: teng kenglikdagi to‘r — bitta tugma yolg‘iz qatorda qolmaydi */
+  .gm-card .gm-action-row { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; }
+  .gm-card .gm-action-row > .gm-button { width: 100%; justify-content: center; }
+}

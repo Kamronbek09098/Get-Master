@@ -9,10 +9,11 @@ import { AdminBadgesService } from './admin-badges.service';
 import { AdminOrdersService } from './admin-orders.service';
 import { OrderModule } from '../order/order.module';
 import { AdminAuditNotifierService } from './admin-audit-notifier.service';
+import { GeoModule } from '../geo/geo.module';
 import { AdminDevopsService } from './admin-devops.service';
 
 @Module({
-  imports: [NotificationModule, OrderModule],
+  imports: [NotificationModule, OrderModule, GeoModule],
   controllers: [AdminController],
   providers: [
     AdminService,

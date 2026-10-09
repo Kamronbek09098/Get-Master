@@ -51,7 +51,9 @@ export interface DevOpsSnapshot {
     redis: DevOpsPing;
     telegramAlerting: boolean;
   };
-  backup: { configured: boolean; message: string };
+  backup: { configured: boolean; message: string; stale: boolean; ageHours: number | null; lastAt: string | null; sizeMB: number | null; file: string | null; count: number };
+  providers: Array<{ key: string; label: string; provider: string; state: 'CLOSED' | 'OPEN' | 'HALF_OPEN'; success: number; failure: number; circuitOpen: number; lastOkAt: string | null; lastFailureAt: string | null; lastError: string | null }>;
+  errors: { lastHour: number; last24h: number };
   traffic: Array<{ at: string; count: number }>;
 }
 
@@ -64,6 +66,10 @@ export interface Dashboard {
   payments: { byStatus: Record<string, unknown> };
   disputes: { total: number; byStatus: Record<string, number> };
   reviews: { total: number; averageRating: number | string };
+  attention: { pendingVerifications: number; openCases: number; pendingSubscriptions: number; activeOrders: number; errors24h: number };
+  today: { newUsers: number; newRequests: number; newOrders: number; completedOrders: number; revenue: string | number };
+  subscriptions: { activeByPlan: Record<string, number>; activeTotal: number; purchasedCount: number; purchasedAmount: string | number };
+  feed: { posts: number; views: number; likes: number; shares: number; comments: number };
 }
 
 export interface RevenueSummary {

@@ -91,7 +91,7 @@ export function WorkAreaEditor({ profile }: { profile: MasterProfile }) {
         <h3>{t('Ish hududlari')}</h3>
         <p className="gm-workarea__note">{t('Manzilni yozing, xaritadan tanlang yoki joriy joylashuvingizni aniqlang — ish radiusi shu nuqtadan hisoblanadi.')}</p>
 
-        <AddressPicker label={t('Ish hududi manzili')} value={base} onChange={pickBase} />
+        <AddressPicker label={t('Ish hududi manzili')} value={base} onChange={pickBase} autoLocate />
 
         <div className="gm-workedit__sub">
           <Input

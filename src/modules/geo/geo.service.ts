@@ -2,6 +2,8 @@ import { join } from 'node:path';
 import https from 'node:https';
 import { BadRequestException, Injectable, Logger, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { GeoIndex } from './geo-index';
+import { CircuitBreaker, CircuitBreakerOpenError } from '../../common/utils/circuit-breaker';
+import { MetricsService } from '../../infrastructure/metrics/metrics.service';
 
 export interface GeoPlace {
   /** Ro‘yxatda ko‘rinadigan sarlavha (masalan, «Amir Temur ko‘chasi 15»). */
@@ -60,6 +62,50 @@ type Cached = { at: number; value: unknown };
 @Injectable()
 export class GeoService implements OnModuleInit {
   private readonly logger = new Logger(GeoService.name);
+  private readonly geocoderBreaker = new CircuitBreaker({ failureThreshold: 5, resetTimeoutMs: 30_000 });
+  private readonly osrmBreaker = new CircuitBreaker({ failureThreshold: 5, resetTimeoutMs: 20_000 });
+
+  constructor(private readonly metrics: MetricsService) {
+    metrics.registerBreaker('geocoder', this.geocoderBreaker);
+    metrics.registerBreaker('osrm', this.osrmBreaker);
+  }
+
+  /** Tashqi chaqiruvni breaker va metrikalar bilan o‘raydi; breaker ochiq bo‘lsa, 503 qaytaradi. */
+  private async guarded<T>(provider: string, breaker: CircuitBreaker, message: string, call: () => Promise<T>): Promise<T> {
+    const stat = this.stats[provider]!;
+    try {
+      const value = await breaker.execute(call);
+      this.metrics.providerCall(provider, 'success');
+      stat.success += 1;
+      stat.lastOkAt = new Date().toISOString();
+      return value;
+    } catch (error) {
+      if (error instanceof CircuitBreakerOpenError) {
+        this.metrics.providerCall(provider, 'circuit_open');
+        stat.circuitOpen += 1;
+        throw new ServiceUnavailableException(message);
+      }
+      this.metrics.providerCall(provider, 'failure');
+      stat.failure += 1;
+      stat.lastFailureAt = new Date().toISOString();
+      stat.lastError = String(error instanceof Error ? error.message : error).slice(0, 200);
+      throw error;
+    }
+  }
+
+  private readonly stats: Record<string, ProviderStat> = {
+    geocoder: { success: 0, failure: 0, circuitOpen: 0, lastOkAt: null, lastFailureAt: null, lastError: null },
+    osrm: { success: 0, failure: 0, circuitOpen: 0, lastOkAt: null, lastFailureAt: null, lastError: null },
+  };
+
+  /** Admin «DevOps» sahifasi uchun: tashqi xarita xizmatlarining holati (jarayon ishga tushgandan beri). */
+  health(): Array<{ key: string; label: string; provider: string; state: string } & ProviderStat> {
+    const provider = this.provider();
+    return [
+      { key: 'geocoder', label: 'Manzil qidiruvi (geokoder)', provider: provider.geocoder, state: this.geocoderBreaker.getState(), ...this.stats.geocoder! },
+      { key: 'osrm', label: 'Marshrut serveri (OSRM)', provider: 'osrm', state: this.osrmBreaker.getState(), ...this.stats.osrm! },
+    ];
+  }
   private readonly cache = new Map<string, Cached>();
   private readonly index = new GeoIndex();
 
@@ -117,7 +163,11 @@ export class GeoService implements OnModuleInit {
     });
   }
 
-  private async fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
+  private fetchJson(url: string, headers: Record<string, string> = {}): Promise<unknown> {
+    return this.guarded('geocoder', this.geocoderBreaker, 'Xarita xizmati vaqtincha ishlamayapti', () => this.fetchJsonRaw(url, headers));
+  }
+
+  private async fetchJsonRaw(url: string, headers: Record<string, string>): Promise<unknown> {
     let result: { status: number; body: string } | undefined;
     for (let attempt = 1; attempt <= 2 && !result; attempt += 1) {
       try {
@@ -279,9 +329,12 @@ export class GeoService implements OnModuleInit {
     const url = `${base}/route/v1/driving/${from.lon},${from.lat};${to.lon},${to.lat}?alternatives=3&steps=true&geometries=geojson&overview=full`;
     let body: OsrmResponse;
     try {
-      const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
-      body = (await response.json()) as OsrmResponse;
+      body = await this.guarded('osrm', this.osrmBreaker, 'Marshrut xizmati hozir ishlamayapti', async () => {
+        const response = await fetch(url, { signal: AbortSignal.timeout(8000) });
+        return (await response.json()) as OsrmResponse;
+      });
     } catch (error) {
+      if (error instanceof ServiceUnavailableException) throw error;
       this.logger.warn(`Marshrut serveri javob bermadi: ${String(error)}`);
       throw new ServiceUnavailableException('Marshrut xizmati hozir ishlamayapti');
     }
@@ -304,6 +357,15 @@ export class GeoService implements OnModuleInit {
     this.cache.set(key, { at: Date.now(), value: routes });
     return routes;
   }
+}
+
+export interface ProviderStat {
+  success: number;
+  failure: number;
+  circuitOpen: number;
+  lastOkAt: string | null;
+  lastFailureAt: string | null;
+  lastError: string | null;
 }
 
 interface YandexGeoObject {

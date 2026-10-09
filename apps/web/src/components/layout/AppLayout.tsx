@@ -7,6 +7,7 @@ import { MobileNavigation } from './MobileNavigation';
 import { Footer } from './Footer';
 import { useCurrentRole } from '@/features/session/hooks/useCurrentRole';
 import { useAutoReadNotifications } from '@/features/notification/hooks/useAutoReadNotifications';
+import { OfflineBanner } from '@/components/common/OfflineBanner';
 import { Alert } from '@/components/ui/Alert';
 import { VerificationBanner } from '@/features/trust/components/VerificationBanner';
 import { PhoneRequiredBanner } from '@/features/session/components/PhoneRequiredBanner';
@@ -28,6 +29,7 @@ export function AppLayout() {
       <a href="#gm-main-content" className="gm-skip-link">
         {t('Asosiy kontentga o‘tish')}
       </a>
+      <OfflineBanner />
       <Header />
       <div className="gm-app-layout__body">
         <Sidebar />

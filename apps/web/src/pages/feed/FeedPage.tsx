@@ -8,7 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import { communicationService } from '@/features/communication/services/communication.service';
 import { useServiceCategories } from '@/features/service/hooks/useServices';
 import { useAppStore } from '@/store/app.store';
-import { CommentsSheet } from '@/features/feed/components/CommentsSheet';
+import { CommentsSheet, useWideFeed } from '@/features/feed/components/CommentsSheet';
 import { FeedItem } from '@/features/feed/components/FeedItem';
 import { FeedEmpty, FeedError, FeedSkeleton, PostGone } from '@/features/feed/components/FeedStates';
 import { FilterSheet } from '@/features/feed/components/FilterSheet';
@@ -161,10 +161,11 @@ export function FeedPage() {
 
   const categoryName = categories.data?.find((item) => item.id === filters.category)?.name;
   const hasFilter = !!filters.category || !!filters.master;
+  const wide = useWideFeed();
   const gone = !!focusId && single.isError && !listed.some((post) => post.id === focusId);
 
   return (
-    <section className={cx('gf', items.length === 0 && !feed.isLoading && 'gf--bare')} aria-label={t('Ish lentasi')}>
+    <section className={cx('gf', items.length === 0 && !feed.isLoading && 'gf--bare', wide && commentsFor && 'gf--cp')} aria-label={t('Ish lentasi')}>
       <header className="gf-top">
         <h1 className="gf-sr">{t('Ish lentasi')}</h1>
         <span aria-hidden="true" />

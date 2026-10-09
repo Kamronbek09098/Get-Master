@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend — prisma, type-check, lint, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm db:validate
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm build
+
+  web:
+    name: Web — type-check, lint, unit tests, build (customer/master/admin)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - name: Build all panels
+        run: |
+          for mode in customer master admin; do
+            npx vite build --mode "$mode" --outDir "dist-$mode"
+          done
+
+  dependency-audit:
+    name: Dependency audit (high/critical blocks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Backend — production dependencies
+        run: pnpm audit --prod --audit-level high
+      - name: Web — production dependencies
+        working-directory: apps/web
+        run: npm audit --omit=dev --audit-level=high
+
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
+  migration-safety:
+    name: Destructive migrations need an acknowledgment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check changed migrations
+        run: bash scripts/check-migrations.sh "${{ github.event.pull_request.base.sha || github.event.before }}"

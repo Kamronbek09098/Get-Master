@@ -57,3 +57,12 @@
   .gm-footer { box-sizing: border-box; display: flex; align-items: center; justify-content: center; height: var(--gm-footer-h); min-height: var(--gm-footer-h); padding: 0 16px; }
   .gm-sidebar { height: calc(var(--gm-vh, 100vh) - var(--gm-header-height) - var(--gm-safe-top, 0px) - var(--gm-footer-h)); }
 }
+
+/* Superadmin paneli (kompyuter): yana 10% ixchamroq — jami 0.9 × 0.9 = 0.81. */
+@media (min-width: 1100px) and (hover: hover) and (pointer: fine) {
+  :root[data-panel='ADMIN'] .gm-app-layout {
+    --gm-vh: calc(100vh / 0.81);
+    --gm-dvh: calc(100dvh / 0.81);
+    zoom: 0.81;
+  }
+}

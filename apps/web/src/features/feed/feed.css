@@ -364,7 +364,7 @@
    video yonida yalang (doirasiz) harakat tugmalari, chap tepada bo‘limlar, o‘ng tepada qidiruv/filtr.
    Sahnadan tashqaridagi hamma narsa sahifa mavzusida (ochiq/qorong‘i).
    ============================================================ */
-@media (min-width: 1280px) {
+@media (min-width: 1024px) {
   .gf {
     --gf-w: calc(100vw - var(--gm-sidebar-width, 288px));
     background: radial-gradient(ellipse 65% 85% at 50% 45%, #ffffff 0%, #f1f4f9 70%, #e8edf5 100%);
@@ -472,3 +472,48 @@
 .gf-stats dd { font-size: 1.3rem; }
 .gf-stats dt { justify-content: center; }
 .gf-profile__actions .gf-cta { width: 100%; }
+
+/* ——— Veb: izohlar suzuvchi panelda (Reels uslubi) ——— */
+@media (min-width: 1280px) {
+  .gf { --gf-cp-w: 360px; --gf-cp-shift: max(0px, calc(var(--gf-stage-w) / 2 + var(--gf-cp-w) + 150px - var(--gf-w) / 2)); }
+  .gf-scroller, .gf-top { transition: transform 0.28s cubic-bezier(0.3, 0.7, 0.2, 1); }
+  .gf--cp .gf-scroller, .gf--cp .gf-top { transform: translateX(calc(-1 * var(--gf-cp-shift))); }
+  .gf--cp .gf-nav-btns, .gf--cp .gf-msg, .gf--cp .gf-hint { display: none; }
+  .gf-cp { position: absolute; z-index: 60; top: 16px; right: 20px; bottom: 16px; display: flex; flex-direction: column; width: var(--gf-cp-w); overflow: hidden; border-radius: 22px; background: var(--gf-t-panel); color: var(--gf-t-text); box-shadow: 0 0 0 1px var(--gf-t-line), 0 24px 60px -24px var(--gf-t-shadow); animation: gf-fade 0.2s ease-out; --gf-text: var(--gf-t-text); --gf-muted: var(--gf-t-muted); --gf-faint: var(--gf-t-faint); --gf-line: var(--gf-t-line); --gf-line-strong: var(--gf-t-line-strong); --gf-panel-2: var(--gf-t-panel-2); }
+  .gf-cp__head { flex: none; display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; padding: 10px 12px; }
+  .gf-cp__head h2 { margin: 0; text-align: center; font-size: 1.05rem; font-weight: 700; color: var(--gf-t-text); }
+  .gf-cp .gf-iconbtn { color: var(--gf-t-text); }
+  .gf-cp .gf-iconbtn:hover { background: var(--gf-t-line); }
+  .gf-cp__body { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 18px 12px; overscroll-behavior: contain; scrollbar-width: thin; }
+  .gf-cp__foot { flex: none; padding: 10px 14px 14px; display: grid; gap: 6px; border-top: 1px solid var(--gf-t-line); }
+  .gf-cp .gf-comments__list { gap: 18px; }
+  .gf-cp .gf-comments__list li { grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; }
+  .gf-cp .gf-avatar--sm { width: 36px; height: 36px; }
+  .gf-cp .gf-comments__list p:first-child strong { font-size: 0.9rem; }
+  .gf-cp .gf-empty--sm, .gf-cp .gf-empty strong { color: var(--gf-t-text); }
+  .gf-cp .gf-empty p { color: var(--gf-t-muted); }
+  .gf-cp .gf-compose input { border-radius: 999px; background: var(--gf-t-panel-2); border-color: var(--gf-t-line); }
+}
+@media (max-width: 1279px) { .gf-cp { display: none; } }
+@media (min-width: 1280px) and (max-width: 1499px) { .gf--cp .gf-info { opacity: 0; pointer-events: none; } }
+.gf-cp .gf-iconbtn--accent { background: #2f6bff; color: #fff; }
+.gf-cp .gf-iconbtn--accent:disabled { background: var(--gf-t-line); color: var(--gf-t-faint); opacity: 1; }
+
+/* Veb, o‘rta kenglik (1024–1279px): Reels sahnasi, harakat tugmalari tashqarida, usta va tavsif video ustida */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .gf-scrim--bottom { height: 46%; }
+  .gf-info { right: auto; left: 0; width: 100%; padding: 0 16px 20px; gap: 10px; color: #f6f8fc; --gf-text: #f6f8fc; --gf-muted: rgba(246, 248, 252, 0.76); --gf-faint: rgba(246, 248, 252, 0.54); --gf-line: rgba(255, 255, 255, 0.14); --gf-line-strong: rgba(255, 255, 255, 0.26); --gf-inv: #0a0f1c; --gf-accent: #ffb020; }
+  .gf-info .gf-creator { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; }
+  .gf-info .gf-follow { min-height: 34px; padding: 0 16px; border: 1px solid #f6f8fc; border-radius: 999px; color: #f6f8fc; font-size: 0.84rem; }
+  .gf-info .gf-follow::before { content: none; }
+  .gf-info .gf-follow:hover { background: rgba(255, 255, 255, 0.14); text-decoration: none; }
+  .gf-info .gf-follow.is-on { color: var(--gf-muted); border-color: var(--gf-line-strong); }
+  .gf-info .gf-avatar { border-color: rgba(255, 255, 255, 0.4); }
+  .gf-info .gf-creator__id strong, .gf-info .gf-caption { color: #f6f8fc; text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6); }
+  .gf-info .gf-tag { background: rgba(14, 18, 30, 0.58); color: #f6f8fc; backdrop-filter: blur(8px); box-shadow: none; }
+  .gf-info .gf-tag--svc { background: color-mix(in srgb, #ffb020 26%, rgba(14, 18, 30, 0.58)); color: #ffb020; }
+  .gf-info .gf-more { color: var(--gf-muted); }
+  .gf-info .gf-cta { max-width: none; }
+  .gf-topright { top: 16px; right: 14px; bottom: auto; flex-direction: row; }
+  .gf-topright .gf-chip { position: static; }
+}

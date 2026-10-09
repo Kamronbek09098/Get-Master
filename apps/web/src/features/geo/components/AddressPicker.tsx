@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { geoService } from '../geo.service';
 import type { GeoPlace } from '../geo.service';
 import { MapPicker } from './MapPicker';
+import { accuracyText, getPreciseLocation, locationErrorText, locationPermission, WEAK_ACCURACY } from '../precise-location';
 import './geo.css';
 import { t } from '@/i18n';
 
@@ -19,6 +20,8 @@ export interface AddressPickerProps {
   value: PickedAddress;
   onChange: (next: PickedAddress) => void;
   label?: string;
+  /** Joylashuv yo‘q bo‘lsa, ochilganda GPS ruxsatini so‘rab avtomatik aniqlaydi. */
+  autoLocate?: boolean;
 }
 
 const toPicked = (place: GeoPlace, fallbackLine = ''): PickedAddress => ({
@@ -30,7 +33,7 @@ const toPicked = (place: GeoPlace, fallbackLine = ''): PickedAddress => ({
 });
 
 /** Manzil kiritish: yozib qidirish (takliflar bilan), xaritadan tanlash va joriy joylashuv. */
-export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPickerProps) {
+export function AddressPicker({ value, onChange, label = 'Manzil', autoLocate = false }: AddressPickerProps) {
   const [text, setText] = useState(value.addressLine);
   const [items, setItems] = useState<GeoPlace[]>([]);
   const [open, setOpen] = useState(false);
@@ -138,34 +141,34 @@ export function AddressPicker({ value, onChange, label = 'Manzil' }: AddressPick
 
   function locateMe() {
     setNote(null);
-    if (!navigator.geolocation) {
-      setNote(t('Bu qurilmada joylashuvni aniqlab bo‘lmaydi.'));
-      return;
-    }
     setBusy(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        geoService
-          .reverse(latitude, longitude)
-          .then(({ place }) => {
-            const next: PickedAddress = place
-              ? { ...toPicked(place), latitude, longitude }
-              : { addressLine: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`, city: '', district: '', latitude, longitude };
-            skipNext.current = true;
-            setText(next.addressLine);
-            onChange(next);
-          })
-          .catch(() => setNote(t('Manzilni aniqlab bo‘lmadi.')))
-          .finally(() => setBusy(false));
-      },
-      () => {
-        setBusy(false);
-        setNote(t('Joylashuvga ruxsat berilmadi.'));
-      },
-      { enableHighAccuracy: true, timeout: 10000 },
-    );
+    getPreciseLocation({ onProgress: (fix) => setNote(`${t('Aniq joylashuv aniqlanmoqda…')} ${accuracyText(fix.accuracy)}`) })
+      .then(async ({ latitude, longitude, accuracy }) => {
+        const { place } = await geoService.reverse(latitude, longitude).catch(() => ({ place: null }));
+        const next: PickedAddress = place
+          ? { ...toPicked(place), latitude, longitude }
+          : { addressLine: `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`, city: '', district: '', latitude, longitude };
+        skipNext.current = true;
+        setText(next.addressLine);
+        onChange(next);
+        setNote(accuracy > WEAK_ACCURACY ? `${accuracyText(accuracy)}. ${t('Joylashuv aniq emas — ochiq joyga chiqing yoki xaritada nuqtani to‘g‘rilang.')}` : accuracyText(accuracy));
+      })
+      .catch((error) => setNote(locationErrorText(error)))
+      .finally(() => setBusy(false));
   }
+
+  // Joylashuv hali yo‘q bo‘lsa (masalan, ustaning ish hududi), ochilganda ruxsat so‘raymiz.
+  useEffect(() => {
+    if (!autoLocate || value.latitude != null) return;
+    let alive = true;
+    void locationPermission().then((state) => {
+      if (alive && state !== 'denied') locateMe();
+    });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const located = value.latitude != null && value.longitude != null;
 

@@ -7,6 +7,7 @@ import * as path from 'node:path';
 import { promisify } from 'node:util';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { RedisService } from '../../infrastructure/redis/redis.service';
+import { GeoService } from '../geo/geo.service';
 import { RequestRateService, TrafficWindow } from '../../infrastructure/metrics/request-rate.service';
 
 const execFileAsync = promisify(execFile);
@@ -33,6 +34,7 @@ export class AdminDevopsService {
     private readonly redis: RedisService,
     private readonly config: ConfigService,
     private readonly requestRate: RequestRateService,
+    private readonly geo: GeoService,
   ) {}
 
   async snapshot(window: TrafficWindow) {
@@ -57,15 +59,23 @@ export class AdminDevopsService {
     const mem = process.memoryUsage();
     const cpuUsage = process.cpuUsage();
 
-    const backup = {
-      configured: false,
-      message: 'Avtomatik zaxira nusxalash hali sozlanmagan. PostgreSQL uchun kunlik pg_dump va masofaviy saqlash tavsiya etiladi.',
-    };
+    const backup = this.backupStatus();
+    const since = (ms: number) => new Date(Date.now() - ms);
+    const [errors1h, errors24h] = await Promise.all([
+      this.db.errorLog.count({ where: { severity: 'ERROR', createdAt: { gte: since(3_600_000) } } }).catch(() => 0),
+      this.db.errorLog.count({ where: { severity: 'ERROR', createdAt: { gte: since(86_400_000) } } }).catch(() => 0),
+    ]);
+    const providers = this.geo.health();
 
     const issues: Array<{ level: 'warning' | 'danger'; message: string }> = [];
     if (usedMemPercent >= 90) issues.push({ level: 'warning', message: `Xotira (RAM) ${usedMemPercent}% band` });
     if (disk && disk.usedPercent >= 90) issues.push({ level: 'warning', message: `Disk ${disk.usedPercent}% to‘lgan` });
     if (!backup.configured) issues.push({ level: 'warning', message: 'Zaxira nusxa sozlanmagan' });
+    else if (backup.stale) issues.push({ level: 'danger', message: `Oxirgi zaxira nusxa ${backup.ageHours} soat oldin olingan` });
+    for (const provider of providers) {
+      if (provider.state === 'OPEN') issues.push({ level: 'danger', message: `${provider.label} vaqtincha o‘chirilgan (ketma-ket xatolar)` });
+    }
+    if (errors1h >= 20) issues.push({ level: 'warning', message: `Oxirgi 1 soatda ${errors1h} ta server xatosi` });
     if (environment === 'production' && !metricsTokenSet) {
       issues.push({ level: 'danger', message: 'Production muhitida METRICS_TOKEN o‘rnatilmagan — /metrics ochiq qolishi mumkin' });
     }
@@ -110,8 +120,38 @@ export class AdminDevopsService {
         telegramAlerting: telegramConfigured,
       },
       backup,
+      providers,
+      errors: { lastHour: errors1h, last24h: errors24h },
       traffic: this.requestRate.series(window),
     };
+  }
+
+  /** `infrastructure/backup/backup.sh` yaratgan eng yangi `getmaster-*.dump` faylini topadi (BACKUP_DIR, standart ./backups). */
+  private backupStatus(): { configured: boolean; message: string; stale: boolean; ageHours: number | null; lastAt: string | null; sizeMB: number | null; file: string | null; count: number } {
+    const dir = process.env.BACKUP_DIR?.trim() || path.join(process.cwd(), 'backups');
+    try {
+      const files = fs
+        .readdirSync(dir)
+        .filter((name) => /^getmaster-.*\.dump$/.test(name))
+        .map((name) => ({ name, stat: fs.statSync(path.join(dir, name)) }))
+        .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs);
+      const latest = files[0];
+      if (!latest) throw new Error('empty');
+      const ageHours = Math.round((Date.now() - latest.stat.mtimeMs) / 3_600_000);
+      const stale = ageHours > 26;
+      return {
+        configured: true,
+        stale,
+        ageHours,
+        lastAt: latest.stat.mtime.toISOString(),
+        sizeMB: Math.round((latest.stat.size / 1024 / 1024) * 10) / 10,
+        file: latest.name,
+        count: files.length,
+        message: stale ? `Oxirgi zaxira ${ageHours} soat oldin olingan — kunlik zaxira ishlamayotgan bo‘lishi mumkin.` : `Oxirgi zaxira ${ageHours} soat oldin olingan (${latest.name}).`,
+      };
+    } catch {
+      return { configured: false, stale: false, ageHours: null, lastAt: null, sizeMB: null, file: null, count: 0, message: 'Avtomatik zaxira nusxa topilmadi. infrastructure/backup/backup.sh ni cron orqali kuniga bir marta ishga tushiring (docs/runbooks/backup-restore.md).' };
+    }
   }
 
   private async cpuUsagePercent(sampleMs = 200): Promise<number> {

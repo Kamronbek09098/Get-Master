@@ -127,7 +127,7 @@ export function AdminOrdersPage() {
       <section className="gm-aord__filters" aria-label={t('Filtrlar')}>
         <div className="gm-aord__search">
           <Search size={16} aria-hidden="true" />
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Buyurtma raqami (№), mijoz yoki usta ID/ismi/telefoni, so‘rov nomi')} aria-label={t('Qidirish')} />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Buyurtma №, mijoz yoki usta')} title={t('Buyurtma raqami (№), mijoz yoki usta ID/ismi/telefoni, so‘rov nomi')} aria-label={t('Qidirish')} />
         </div>
         <div className="gm-aord__tabs" role="group" aria-label={t('Holat')}>
           {TABS.map((tab) => (

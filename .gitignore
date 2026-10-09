@@ -18,3 +18,4 @@ uploads/
 tmp/
 /apps/web/.env*
 data/
+backups/

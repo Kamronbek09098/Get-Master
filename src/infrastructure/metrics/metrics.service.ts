@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { CircuitBreaker } from '../../common/utils/circuit-breaker';
 import { Counter, Gauge, Histogram, Registry, collectDefaultMetrics } from 'prom-client';
 
 @Injectable()
@@ -41,7 +42,31 @@ export class MetricsService {
     registers: [this.registry],
   });
 
+  private readonly providerCalls = new Counter({
+    name: 'provider_requests_total',
+    help: 'Tashqi xizmatlarga so‘rovlar (outcome: success | failure | circuit_open)',
+    labelNames: ['provider', 'outcome'] as const,
+    registers: [this.registry],
+  });
+
+  private readonly breakers = new Map<string, CircuitBreaker>();
+
   constructor() {
+    // 0 = CLOSED, 1 = HALF_OPEN, 2 = OPEN: scrape paytida har bir breaker'ning haqiqiy holati o‘qiladi.
+    const breakers = this.breakers;
+    new Gauge({
+      name: 'circuit_breaker_state',
+      help: 'Circuit breaker holati: 0 yopiq (normal), 1 yarim ochiq, 2 ochiq',
+      labelNames: ['provider'] as const,
+      registers: [this.registry],
+      collect() {
+        this.reset();
+        for (const [provider, breaker] of breakers) {
+          const state = breaker.getState();
+          this.set({ provider }, state === 'OPEN' ? 2 : state === 'HALF_OPEN' ? 1 : 0);
+        }
+      },
+    });
     collectDefaultMetrics({ register: this.registry });
   }
 
@@ -63,5 +88,14 @@ export class MetricsService {
 
   paymentFailed(provider: string): void {
     this.paymentFailures.inc({ provider });
+  }
+
+  /** Breaker holatini `circuit_breaker_state` gauge'iga ulaydi. */
+  registerBreaker(provider: string, breaker: CircuitBreaker): void {
+    this.breakers.set(provider, breaker);
+  }
+
+  providerCall(provider: string, outcome: 'success' | 'failure' | 'circuit_open'): void {
+    this.providerCalls.inc({ provider, outcome });
   }
 }
