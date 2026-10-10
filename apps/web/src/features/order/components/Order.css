@@ -502,3 +502,14 @@
 .gm-ocard.gm-oparty .gm-oparty__sum dt { color: var(--gm-color-text); font-weight: 800; font-size: 14.5px; }
 .gm-ocard.gm-oparty .gm-oparty__total { font-size: clamp(1rem, 4.6cqi, 1.2rem); font-weight: 800; color: var(--gm-color-primary); }
 .gm-ocard.gm-oparty { container-type: inline-size; }
+
+.gm-oeta { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; padding: 12px 14px; border-radius: 12px; background: var(--gm-color-primary-soft); }
+.gm-oeta--wait { color: var(--gm-color-text-muted); font-size: 13.5px; }
+.gm-oeta__label { font-size: 12.5px; color: var(--gm-color-text-muted); font-weight: 600; }
+.gm-oeta strong { font-size: 24px; line-height: 1.15; color: var(--gm-color-primary); font-family: var(--gm-font-display); }
+.gm-oeta__meta { font-size: 13px; color: var(--gm-color-text-muted); }
+
+.gm-arrive { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 13px; color: var(--gm-color-text-muted); }
+.gm-arrive--ok { color: var(--gm-color-success); font-weight: 600; }
+.gm-arrive--warn { color: var(--gm-color-warning); }
+.gm-arrive__retry { padding: 0; border: none; background: none; color: var(--gm-color-primary); font: inherit; font-weight: 700; cursor: pointer; text-decoration: underline; }

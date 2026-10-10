@@ -33,7 +33,10 @@ function useOrderMutation(id: string, mutationFn: (id: string) => Promise<unknow
 
 export const useConfirmOrder = (id: string) => useOrderMutation(id, orderService.confirm);
 export const useStartTravel = (id: string) => useOrderMutation(id, orderService.startTravel);
-export const useArrive = (id: string) => useOrderMutation(id, orderService.arrive);
+export function useArrive(id: string) {
+  const refresh = useRefreshOrder(id);
+  return useMutation({ mutationFn: (position?: { latitude: number; longitude: number; accuracy?: number; fixedAt?: number }) => orderService.arrive(id, position), onSuccess: refresh });
+}
 export const useStartWork = (id: string) => useOrderMutation(id, orderService.startWork);
 export const useSubmitCompletion = (id: string) => useOrderMutation(id, orderService.submitCompletion);
 export function useConfirmCompletion(id: string) {
@@ -84,4 +87,9 @@ export function useCreateDirectOrder(conversationId: string) {
       void queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
+}
+
+/** Ustaning navigatori hisoblagan taxminiy yetib borish vaqti (faqat usta yo‘lda bo‘lganda; har 5 soniyada yangilanadi). */
+export function useOrderEta(id: string, enabled: boolean) {
+  return useQuery({ queryKey: ['orders', id, 'eta'], queryFn: () => orderService.getEta(id), enabled: !!id && enabled, refetchInterval: 5_000, staleTime: 3_000 });
 }

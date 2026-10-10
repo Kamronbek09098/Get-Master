@@ -10,6 +10,9 @@ import { CreateDirectOrderDto } from './dto/create-direct-order.dto';
 import { CreateWorkProofDto } from './dto/create-work-proof.dto';
 import { ReasonDto } from './dto/reason.dto';
 import { OrderHistoryQueryDto } from './dto/order-history-query.dto';
+import { ArriveDto } from './dto/arrive.dto';
+import { ReportEtaDto } from './dto/report-eta.dto';
+import { RateLimit } from '../../common/decorators/rate-limit.decorator';
 import { ProposeRescheduleDto } from './dto/propose-reschedule.dto';
 
 @Controller('orders')
@@ -50,9 +53,20 @@ export class OrderController {
     return this.orderService.startTravel(userId, id, panelOf(req));
   }
 
+  @RateLimit({ scope: 'user', limit: 30, windowSeconds: 60 })
+  @Post(':id/eta')
+  reportEta(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Body() dto: ReportEtaDto, @Req() req: Request) {
+    return this.orderService.reportEta(userId, id, dto, panelOf(req));
+  }
+
+  @Get(':id/eta')
+  getEta(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    return this.orderService.getEta(userId, id, panelOf(req));
+  }
+
   @Post(':id/arrive')
-  arrive(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
-    return this.orderService.arrive(userId, id, panelOf(req));
+  arrive(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Body() dto: ArriveDto, @Req() req: Request) {
+    return this.orderService.arrive(userId, id, panelOf(req), dto);
   }
 
   @Post(':id/work-proofs')

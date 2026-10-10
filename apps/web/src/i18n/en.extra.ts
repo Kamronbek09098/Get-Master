@@ -1,5 +1,16 @@
 /** Автогенерация: переводы 2-го этапа (en). Ключ — исходный узбекский текст. */
 export const enExtra: Record<string, string> = {
+  "Oxirgi marta {count} daqiqa oldin yangilangan": "Last updated {count} minutes ago",
+  "Siz manzildasiz — yetib kelganingizni belgilashingiz mumkin.": "You are at the address — you can mark that you have arrived.",
+  "Manzilgacha taxminan {distance} qoldi. Manzilga yetib borgach tugma faollashadi.": "About {distance} left to the address. The button becomes active once you arrive.",
+  "Yetib kelganingizni belgilash uchun joylashuvga (GPS) ruxsat bering.": "Allow location access (GPS) to mark that you have arrived.",
+  "Taxminiy yetib kelish vaqti": "Estimated arrival time",
+  "Taxminiy yetib kelish vaqti hisoblanmoqda…": "Estimated arrival time is being calculated…",
+  "Bir daqiqadan kam": "Less than a minute",
+  "Soat {time} atrofida": "Around {time}",
+  "{distance} qoldi": "{distance} left",
+  "Usta yo‘lga chiqdi.": "The master is on the way.",
+  "Yuklanmoqda…": "Loading…",
   "{count} kun oldin": "{count} day(s) ago",
   "{count} oy oldin": "{count} month(s) ago",
   "{count} yil oldin": "{count} year(s) ago",

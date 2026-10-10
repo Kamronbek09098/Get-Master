@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Banknote, CheckCircle2, ExternalLink, Hammer, MapPinned, Navigation, PackageCheck, XCircle } from 'lucide-react';
+import { TravelEtaReporter } from '@/features/order/components/TravelEtaReporter';
+import { useArrivalCheck } from '@/features/order/arrival';
+import { formatDistance } from '@/features/navigation/geometry';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
@@ -24,6 +27,11 @@ import { t } from '@/i18n';
  */
 export function ChatOrderCard({ orderId }: { orderId: string }) {
   const query = useOrder(orderId, 8_000);
+  const chatPlace = query.data?.location;
+  const chatLat = chatPlace?.latitude != null ? Number(chatPlace.latitude) : NaN;
+  const chatLon = chatPlace?.longitude != null ? Number(chatPlace.longitude) : NaN;
+  const arrivalDest = query.data?.request?.serviceMode !== 'AT_MASTER' && Number.isFinite(chatLat) && Number.isFinite(chatLon) ? { lat: chatLat, lon: chatLon } : null;
+  const arrival = useArrivalCheck(arrivalDest, query.data?.viewerRole === 'MASTER' && query.data?.status === 'ON_THE_WAY');
   const confirm = useConfirmOrder(orderId);
   const travel = useStartTravel(orderId);
   const arrive = useArrive(orderId);
@@ -65,8 +73,10 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
       hint = t('Buyurtma qabul qilindi. Tayyor bo‘lgach, yo‘lga chiqing.');
       actions.push({ label: t('Yo‘lga chiqdim'), icon: <Navigation size={15} />, run: () => travel.mutate(), primary: true });
     } else if (status === 'ON_THE_WAY') {
-      hint = t('Mijoz sizni kutmoqda.');
-      actions.push({ label: t('Yetib keldim'), icon: <MapPinned size={15} />, run: () => arrive.mutate(), primary: true });
+      hint = arrivalDest
+        ? arrival.state === 'near' ? t('Mijoz sizni kutmoqda.') : arrival.state === 'far' ? t('Manzilgacha taxminan {distance} qoldi. Manzilga yetib borgach tugma faollashadi.', { distance: formatDistance(arrival.distanceM ?? 0) }) : arrival.state === 'locating' ? t('Joylashuvingiz aniqlanmoqda…') : t('Yetib kelganingizni belgilash uchun joylashuvga (GPS) ruxsat bering.')
+        : t('Mijoz sizni kutmoqda.');
+      actions.push({ label: t('Yetib keldim'), icon: <MapPinned size={15} />, run: () => arrive.mutate(arrival.coords ?? undefined), primary: true, disabled: !!arrivalDest && arrival.state !== 'near' });
     } else if (status === 'ARRIVED') {
       const tooEarly = !!order.scheduledStartAt && new Date(order.scheduledStartAt).getTime() > Date.now();
       hint = tooEarly ? t('Ish belgilangan vaqtdan ({dateTime}) oldin boshlanmaydi.', { dateTime: formatDateTime(order.scheduledStartAt!) }) : t('Ishni boshlash uchun tayyor bo‘lsangiz, boshlang.');
@@ -116,6 +126,7 @@ export function ChatOrderCard({ orderId }: { orderId: string }) {
       {status === 'CANCELLED' ? <p className="gm-ochat__hint gm-ochat__hint--bad">{t('Buyurtma bekor qilindi')}{order.cancellationReason ? `: ${order.cancellationReason}` : ''}</p> : hint && <p className="gm-ochat__hint">{hint}</p>}
 
       {error && <Alert tone="danger">{getErrorMessage(error)}</Alert>}
+      {master && status === 'ON_THE_WAY' && arrivalDest && <TravelEtaReporter orderId={orderId} dest={arrivalDest} />}
 
       <div className="gm-ochat__actions">
         {!master && status === 'WAITING_CONFIRMATION' && !isPaymentSettled(payment) && (

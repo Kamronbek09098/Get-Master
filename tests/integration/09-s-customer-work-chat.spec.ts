@@ -71,7 +71,7 @@ describe('S07 — work lifecycle, proofs, timeline', () => {
     expect((await h.post(`${O}/confirm`, master.token)).status).toBe(201);
     expect((await h.post(`${O}/confirm`, master.token)).status).toBe(409);
     await h.post(`${O}/start-travel`, master.token);
-    await h.post(`${O}/arrive`, master.token);
+    await h.post(`${O}/arrive`, master.token, { latitude: 41.311, longitude: 69.279, accuracy: 5 });
 
     const rivalUpload = new FormData();
     rivalUpload.set('kind', 'WORK_PROOF'); rivalUpload.set('linkType', 'Order'); rivalUpload.set('linkId', order.orderId);

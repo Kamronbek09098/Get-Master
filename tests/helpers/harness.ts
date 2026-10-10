@@ -254,6 +254,9 @@ export async function openRequest(h: Harness, customer: TestUser, serviceId: str
   return created.data.id;
 }
 
+/** Test buyurtmalarining manzili (openRequest koordinatasi) — «Yetib keldim» uchun joylashuv. */
+export const AT_ADDRESS = { latitude: 41.311, longitude: 69.279, accuracy: 5 };
+
 export interface BookedOrder {
   requestId: string;
   offerId: string;
@@ -278,7 +281,7 @@ export async function bookOrder(
 
 export async function runWork(h: Harness, order: BookedOrder, customer: TestUser, master: TestMaster, confirm = true): Promise<void> {
   const step = async (path: string, token: string) => {
-    const res = await h.post(`/orders/${order.orderId}/${path}`, token);
+    const res = await h.post(`/orders/${order.orderId}/${path}`, token, path === 'arrive' ? AT_ADDRESS : undefined);
     if (res.status >= 300) throw new Error(`${path} failed: ${res.status} ${JSON.stringify(res.body)}`);
   };
   await step('confirm', master.token);

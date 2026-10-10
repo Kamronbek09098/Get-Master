@@ -1,5 +1,16 @@
 /** Автогенерация: переводы 2-го этапа (ru). Ключ — исходный узбекский текст. */
 export const ruExtra: Record<string, string> = {
+  "Oxirgi marta {count} daqiqa oldin yangilangan": "Обновлено {count} мин. назад",
+  "Siz manzildasiz — yetib kelganingizni belgilashingiz mumkin.": "Вы на месте — можно отметить прибытие.",
+  "Manzilgacha taxminan {distance} qoldi. Manzilga yetib borgach tugma faollashadi.": "До адреса примерно {distance}. Кнопка станет активной, когда вы приедете.",
+  "Yetib kelganingizni belgilash uchun joylashuvga (GPS) ruxsat bering.": "Разрешите доступ к местоположению (GPS), чтобы отметить прибытие.",
+  "Taxminiy yetib kelish vaqti": "Ожидаемое время прибытия",
+  "Taxminiy yetib kelish vaqti hisoblanmoqda…": "Ожидаемое время прибытия рассчитывается…",
+  "Bir daqiqadan kam": "Меньше минуты",
+  "Soat {time} atrofida": "Около {time}",
+  "{distance} qoldi": "Осталось {distance}",
+  "Usta yo‘lga chiqdi.": "Мастер выехал.",
+  "Yuklanmoqda…": "Загрузка…",
   "{count} kun oldin": "{count} дн. назад",
   "{count} oy oldin": "{count} мес. назад",
   "{count} yil oldin": "{count} г. назад",

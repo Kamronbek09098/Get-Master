@@ -16,6 +16,10 @@ import { ERRORS } from '../../common/constants/error-messages';
 import { PaymentRequiredException, RescheduleNotAllowedException, RescheduleNotPendingException, RescheduleOwnProposalException, WorkTooEarlyException } from '../../common/exceptions/business.exception';
 import { formatUzDateTime } from '../../common/utils/format-date';
 import type { Panel } from '../../common/utils/panel';
+import { RedisService } from '../../infrastructure/redis/redis.service';
+import { ReportEtaDto } from './dto/report-eta.dto';
+import { ArriveDto } from './dto/arrive.dto';
+import { haversineKm } from '../../common/utils/geo';
 
 const MAX_WORK_PROOFS_PER_STAGE = 10;
 /** Ish hali boshlanmagan bosqichlarda — mijoz va usta kelishib vaqtni o'zgartirishi mumkin. */
@@ -57,6 +61,13 @@ interface Actor {
   type: OrderActor;
 }
 
+/** Oxirgi hisob shu muddat saqlanadi (yetib borish vaqti mutlaq vaqt bo‘lgani uchun usta ilovani yopsa ham ma’noli qoladi). */
+const ETA_TTL_SECONDS = 3 * 3600;
+/** Usta «yetib keldim» ni faqat mijoz manzilidan shu masofada (GPS xatosi hisobga olinib) bosa oladi. */
+const ARRIVE_RADIUS_M = 150;
+/** GPS nuqtasi shundan eski bo‘lmasligi kerak. */
+const ARRIVE_FIX_MAX_AGE_MS = 90_000;
+
 @Injectable()
 export class OrderService {
   constructor(
@@ -64,6 +75,7 @@ export class OrderService {
     private readonly outbox: OutboxService,
     private readonly masterStats: MasterStatsService,
     private readonly metrics: MetricsService,
+    private readonly redis: RedisService,
   ) {}
 
   async findOne(userId: string, orderId: string, panel: Panel | null = null) {
@@ -232,8 +244,46 @@ export class OrderService {
     return this.transition(orderId, 'ON_THE_WAY', actor, {});
   }
 
-  async arrive(userId: string, orderId: string, panel: Panel | null = null) {
+  /** Usta mijoz manzilida (koordinatali bo‘lsa) bo‘lishi shart: mijoz ustaning oldiga boradigan buyurtmada tekshirilmaydi. */
+  private async assertAtDestination(orderId: string, position: ArriveDto) {
+    const order = await this.db.order.findUnique({ where: { id: orderId }, select: { status: true, booking: { select: { locationSnapshot: true } } } });
+    if (order?.status !== 'ON_THE_WAY') return; // AT_MASTER («Mijoz keldi») va boshqa holatlar — GPS talab qilinmaydi
+    const place = order.booking?.locationSnapshot as { latitude?: unknown; longitude?: unknown; atMaster?: boolean } | null;
+    if (!place || place.atMaster) return;
+    const lat = Number(place.latitude);
+    const lon = Number(place.longitude);
+    if (place.latitude == null || place.longitude == null || !Number.isFinite(lat) || !Number.isFinite(lon)) return; // manzil koordinatasi yo‘q — tekshirib bo‘lmaydi
+    if (position.latitude === undefined || position.longitude === undefined) throw new BadRequestException(ERRORS.ARRIVE_LOCATION_REQUIRED);
+    // Joylashuv jonli (hozirgi) bo‘lishi shart: eski GPS nuqtasi bilan «yetib keldim» bosib bo‘lmaydi.
+    if (position.fixedAt !== undefined && Math.abs(Date.now() - position.fixedAt) > ARRIVE_FIX_MAX_AGE_MS) throw new BadRequestException(ERRORS.ARRIVE_LOCATION_STALE);
+    const meters = haversineKm(position.latitude, position.longitude, lat, lon) * 1000;
+    const slack = Math.min(position.accuracy ?? 0, 50);
+    if (meters > ARRIVE_RADIUS_M + slack) throw new ForbiddenException(ERRORS.ARRIVE_TOO_FAR(Math.round(meters)));
+  }
+
+  /** Usta navigatori hisoblagan taxminiy yetib borish vaqti (qisqa muddat saqlanadi: usta ilovani yopsa — eskirib yo‘qoladi). */
+  async reportEta(userId: string, orderId: string, dto: ReportEtaDto, panel: Panel | null = null) {
+    await this.resolveActor(userId, orderId, ['MASTER'], panel);
+    const order = await this.db.order.findUnique({ where: { id: orderId }, select: { status: true } });
+    if (order?.status !== 'ON_THE_WAY') throw new ConflictException(ERRORS.ETA_ONLY_ON_THE_WAY);
+    const payload = { remainingS: dto.remainingS, remainingM: dto.remainingM, updatedAt: new Date().toISOString() };
+    await this.redis.set(`order:eta:${orderId}`, JSON.stringify(payload), ETA_TTL_SECONDS);
+    return payload;
+  }
+
+  async getEta(userId: string, orderId: string, panel: Panel | null = null) {
+    await this.resolveActor(userId, orderId, ['CUSTOMER', 'MASTER'], panel);
+    const order = await this.db.order.findUnique({ where: { id: orderId }, select: { status: true } });
+    if (order?.status !== 'ON_THE_WAY') return { eta: null };
+    const raw = await this.redis.get(`order:eta:${orderId}`);
+    if (!raw) return { eta: null };
+    const data = JSON.parse(raw) as { remainingS: number; remainingM: number; updatedAt: string };
+    return { eta: { ...data, arriveAt: new Date(new Date(data.updatedAt).getTime() + data.remainingS * 1000).toISOString() } };
+  }
+
+  async arrive(userId: string, orderId: string, panel: Panel | null = null, position: ArriveDto = {}) {
     const actor = await this.resolveActor(userId, orderId, ['MASTER'], panel);
+    await this.assertAtDestination(orderId, position);
     return this.transition(orderId, 'ARRIVED', actor, {});
   }
 

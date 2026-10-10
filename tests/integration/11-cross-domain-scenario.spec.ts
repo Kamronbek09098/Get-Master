@@ -97,7 +97,7 @@ describe('end-to-end: request → … → review → statistics', () => {
 
   it('6. master travels, arrives, uploads BEFORE proof, starts work, uploads AFTER proof, submits', async () => {
     const O = `/orders/${ids.order}`;
-    for (const path of ['confirm', 'start-travel', 'arrive']) expect((await h.post(`${O}/${path}`, master.token)).status).toBe(201);
+    for (const path of ['confirm', 'start-travel', 'arrive']) expect((await h.post(`${O}/${path}`, master.token, path === 'arrive' ? { latitude: 41.311, longitude: 69.279, accuracy: 5 } : undefined)).status).toBe(201);
     const before = await uploadImage(h, master.token, 'WORK_PROOF', 'Order', ids.order, 101);
     expect((await h.post(`${O}/work-proofs`, master.token, { stage: 'BEFORE', mediaAssetId: before })).status).toBe(201);
     // Ish "ertaga" (2 kundan keyin) belgilangan edi — real hayotda usta shu vaqt kelgach boshlaydi; testda vaqtni simulyatsiya qilamiz.

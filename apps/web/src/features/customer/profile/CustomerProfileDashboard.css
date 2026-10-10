@@ -210,3 +210,15 @@
 .gm-cp-sec li { padding: 8px 0; }
 .gm-cp-c .gm-cp-card { padding-bottom: 16px; }
 .gm-cp-progress { padding: 12px 14px; }
+
+/* Joylashuv: ko‘rsatkich paneli o‘ngda ixcham, pastki qator ustunlari bir xil balandlikda */
+@media (min-width: 900px) {
+  .gm-cp-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 54%); }
+  .gm-cp-hero__stats { grid-column: 2; justify-self: stretch; }
+  .gm-cp-hero__who { min-width: 0; }
+}
+@media (min-width: 1280px) {
+  .gm-cp-grid { grid-template-areas: 'a b c' 'd d .'; }
+  .gm-cp-c { height: 100%; }
+  .gm-cp-c > .gm-cp-card:last-child { flex: 1; }
+}

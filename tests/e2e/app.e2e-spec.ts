@@ -71,7 +71,7 @@ describe('E2E — so‘rovdan sharhgacha to‘liq oqim', () => {
 
     await h.post(`/orders/${order.orderId}/confirm`, master.token);
     await h.post(`/orders/${order.orderId}/start-travel`, master.token);
-    await h.post(`/orders/${order.orderId}/arrive`, master.token);
+    await h.post(`/orders/${order.orderId}/arrive`, master.token, { latitude: 41.311, longitude: 69.279, accuracy: 5 });
 
     const work = await h.post(`/orders/${order.orderId}/additional-work`, master.token, {
       reason: 'Quvur almashtirish',

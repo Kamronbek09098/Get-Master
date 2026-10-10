@@ -28,11 +28,16 @@ import {
   useConfirmOrder,
   useDisputeOrder,
   useOrder,
+  useOrderEta,
   useStartTravel,
   useStartWork,
   useSubmitCompletion,
   useWorkProofs,
 } from '@/features/order/hooks/useOrders';
+import { formatDistance, formatDuration } from '@/features/navigation/geometry';
+import { useArrivalCheck } from '@/features/order/arrival';
+import { TravelEtaReporter } from '@/features/order/components/TravelEtaReporter';
+import { ArrivalHint } from '@/features/order/components/ArrivalHint';
 import '@/features/order/components/Order.css';
 import { t } from '@/i18n';
 
@@ -54,10 +59,32 @@ function StepCard({ tone, icon, title, lead, children }: { tone: Tone; icon: Rea
   );
 }
 
+/** Ustaning navigatori hisoblagan taxminiy yetib borish vaqti (ustada ko‘rinadigan bilan bir xil qiymat). */
+function ArrivalEta({ eta, loading }: { eta: { remainingS: number; remainingM: number; arriveAt: string; updatedAt: string } | null; loading: boolean }) {
+  if (!eta) return <p className="gm-oeta gm-oeta--wait">{loading ? t('Yuklanmoqda…') : t('Taxminiy yetib kelish vaqti hisoblanmoqda…')}</p>;
+  const leftS = Math.max(0, (new Date(eta.arriveAt).getTime() - Date.now()) / 1000);
+  const ageMin = Math.floor((Date.now() - new Date(eta.updatedAt).getTime()) / 60_000);
+  const clock = new Date(eta.arriveAt).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+  return (
+    <div className="gm-oeta" role="status">
+      <span className="gm-oeta__label">{t('Taxminiy yetib kelish vaqti')}</span>
+      <strong>{leftS < 60 ? t('Bir daqiqadan kam') : formatDuration(leftS)}</strong>
+      <span className="gm-oeta__meta">{t('Soat {time} atrofida', { time: clock })} · {t('{distance} qoldi', { distance: formatDistance(eta.remainingM) })}</span>
+      {ageMin >= 5 && <span className="gm-oeta__meta">{t('Oxirgi marta {count} daqiqa oldin yangilangan', { count: ageMin })}</span>}
+    </div>
+  );
+}
+
 export function OrderDetailsPage() {
   const { id = '' } = useParams<{ id: string }>();
   const order = useOrder(id);
+  const etaQuery = useOrderEta(id, order.data?.status === 'ON_THE_WAY' && order.data?.viewerRole === 'CUSTOMER');
   const proofs = useWorkProofs(id);
+  const place = order.data?.location;
+  const placeLat = place?.latitude != null ? Number(place.latitude) : NaN;
+  const placeLon = place?.longitude != null ? Number(place.longitude) : NaN;
+  const arrivalDest = order.data?.request?.serviceMode !== 'AT_MASTER' && Number.isFinite(placeLat) && Number.isFinite(placeLon) ? { lat: placeLat, lon: placeLon } : null;
+  const arrival = useArrivalCheck(arrivalDest, order.data?.viewerRole === 'MASTER' && order.data?.status === 'ON_THE_WAY');
   const confirmOrder = useConfirmOrder(id);
   const paused = usePaused();
   const startTravel = useStartTravel(id);
@@ -137,8 +164,10 @@ export function OrderDetailsPage() {
         <StepCard tone="next" icon={<MapPinned size={22} />} title={t('Manzilga yetib keldingizmi?')} lead={t('Yetib kelganingizni belgilang, so‘ng ishni boshlashdan oldin rasmga oling.')}>
           <div className="gm-oactions">
             {dest && <Link to={`/usta/buyurtmalar/${id}/navigatsiya`} className="gm-button gm-button--secondary"><Navigation size={16} aria-hidden="true" /> {t('Navigatsiya')}</Link>}
-            <Button loading={arrive.isPending} onClick={() => arrive.mutate()}>{t('Yetib keldim')}</Button>
+            <Button loading={arrive.isPending} disabled={!!arrivalDest && arrival.state !== 'near'} onClick={() => arrive.mutate(arrival.coords ?? undefined)}>{t('Yetib keldim')}</Button>
           </div>
+          <ArrivalHint check={arrival} />
+          {arrivalDest && <TravelEtaReporter orderId={id} dest={arrivalDest} />}
         </StepCard>
       );
     else if (status === 'ARRIVED')
@@ -175,7 +204,11 @@ export function OrderDetailsPage() {
     else if (status === 'CONFIRMED')
       step = <StepCard tone="wait" icon={<Clock size={22} />} title={t('Usta tasdiqladi')} lead={atMaster ? t('Belgilangan vaqtda ustaning joyiga boring. Chat orqali kelishuv qilishingiz mumkin.') : t('Usta yo‘lga chiqqanda xabar olasiz. Chat orqali kelishuv qilishingiz mumkin.')} />;
     else if (status === 'ON_THE_WAY')
-      step = <StepCard tone="wait" icon={<Navigation size={22} />} title={t('Usta yo‘lda')} lead={t('Usta manzilingizga qarab yo‘lga chiqdi.')} />;
+      step = (
+        <StepCard tone="wait" icon={<Navigation size={22} />} title={t('Usta yo‘lda')} lead={atMaster ? t('Usta yo‘lga chiqdi.') : t('Usta manzilingizga qarab yo‘lga chiqdi.')}>
+          {!atMaster && <ArrivalEta eta={etaQuery.data?.eta ?? null} loading={etaQuery.isLoading} />}
+        </StepCard>
+      );
     else if (status === 'ARRIVED')
       step = <StepCard tone="wait" icon={<MapPinned size={22} />} title={atMaster ? t('Siz yetib keldingiz') : t('Usta yetib keldi')} lead={atMaster ? t('Usta ishni boshlashga tayyorlanmoqda.') : t('Usta ishni boshlashga tayyorlanmoqda.')}>
         <WorkProofPanel orderId={id} stage="BEFORE" />

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { bookOrder, bootHarness, createMaster, createUser, firstService, type Harness, type TestMaster, type TestUser, uploadImage, waitFor } from '../helpers/harness';
+import { AT_ADDRESS, bookOrder, bootHarness, createMaster, createUser, firstService, type Harness, type TestMaster, type TestUser, uploadImage, waitFor } from '../helpers/harness';
 import { OrderReminderService } from '../../src/modules/order/order-reminder.service';
 
 let h: Harness;
@@ -24,7 +24,7 @@ const notified = (userId: string, template: string) =>
 /** Ishni "Ishni boshlash"gacha ARRIVED holatiga olib boradi va BEFORE isbotini yuklaydi (start-work chaqirmasdan). */
 async function readyToStartWork(pro: TestMaster, orderId: string) {
   const step = async (path: string) => {
-    const res = await h.post(`/orders/${orderId}/${path}`, pro.token);
+    const res = await h.post(`/orders/${orderId}/${path}`, pro.token, path === 'arrive' ? AT_ADDRESS : undefined);
     if (res.status >= 300) throw new Error(`${path} failed: ${res.status} ${JSON.stringify(res.body)}`);
   };
   await step('confirm');

@@ -23,8 +23,14 @@ export const orderService = {
   startTravel(id: string) {
     return apiPost<Order>(`/orders/${id}/start-travel`);
   },
-  arrive(id: string) {
-    return apiPost<Order>(`/orders/${id}/arrive`);
+  reportEta(id: string, input: { remainingS: number; remainingM: number }) {
+    return apiPost<{ remainingS: number; remainingM: number; updatedAt: string }>(`/orders/${id}/eta`, input);
+  },
+  getEta(id: string) {
+    return apiGet<{ eta: { remainingS: number; remainingM: number; updatedAt: string; arriveAt: string } | null }>(`/orders/${id}/eta`);
+  },
+  arrive(id: string, position?: { latitude: number; longitude: number; accuracy?: number; fixedAt?: number }) {
+    return apiPost<Order>(`/orders/${id}/arrive`, position);
   },
   addWorkProof(id: string, input: CreateWorkProofInput) {
     return apiPost<WorkProof>(`/orders/${id}/work-proofs`, input);

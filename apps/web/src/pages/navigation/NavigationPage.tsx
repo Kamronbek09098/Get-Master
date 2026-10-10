@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getErrorMessage } from '@/lib/error-messages';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, ChevronDown, ChevronRight, ChevronUp, Compass, ExternalLink, Globe, MapPinOff, MessageCircle, Moon, Navigation, RefreshCw, Route as RouteIcon, Settings, Volume2, VolumeX, WifiOff, Gauge, Eye, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
@@ -9,6 +10,7 @@ import { geoService } from '@/features/geo/geo.service';
 import type { NavRoute } from '@/features/geo/geo.service';
 import { useArrive, useStartTravel } from '@/features/order/hooks/useOrders';
 import { useOrder } from '@/features/order/hooks/useOrders';
+import { orderService } from '@/features/order/services/order.service';
 import { NavMap } from '@/features/navigation/components/NavMap';
 import { Choice, MANEUVER_ICON, ManeuverSign, RoundBtn, RouteBar, SOUND_OPTIONS, THEME_OPTIONS, Toggle, VOLUME_OPTIONS } from '@/features/navigation/components/NavUi';
 import { formatDistance, formatDuration, maneuverOf, progressOn } from '@/features/navigation/geometry';
@@ -22,8 +24,12 @@ import type { Tier } from '@/features/navigation/voice';
 import { t } from '@/i18n';
 import '@/features/navigation/components/navigation.css';
 
-const OFF_ROUTE_M = 70;
+const OFF_ROUTE_M = 50;
 const ARRIVED_M = 45;
+/** Shu aniqlikdan (metr) yaxshi GPS nuqtasi marshrut boshlanishi uchun yetarli. */
+const ACCURATE_FIX_M = 80;
+/** Bitta nuqta shu masofadan uzoq bo‘lsa — kutmasdan qayta marshrut. */
+const FAR_OFF_ROUTE_M = 250;
 const num = (value: unknown): number | null => {
   const n = typeof value === 'string' ? Number(value) : (value as number);
   return typeof n === 'number' && Number.isFinite(n) ? n : null;
@@ -75,17 +81,33 @@ export function NavigationPage() {
   const position = live.position;
   const compass = useDeviceHeading(!!dest);
 
-  // Marshrutni birinchi aniq joylashuvdan boshlab quramiz (yoki yo‘ldan chiqilganda qayta quramiz).
+  // Marshrutni ANIQ joylashuvdan boshlaymiz: dastlabki noaniq (tarmoq/IP) nuqta marshrutni noto‘g‘ri joydan boshlab yubormasin.
+  // Aniqlik yaxshilanmasa ham 6 soniyadan keyin mavjud nuqtadan boshlanadi.
+  const firstFixAt = useRef<number | null>(null);
+  const [waitedForFix, setWaitedForFix] = useState(false);
   useEffect(() => {
-    if (!origin && position) setOrigin({ lat: position.lat, lon: position.lon });
-  }, [origin, position]);
+    if (position && firstFixAt.current == null) firstFixAt.current = Date.now();
+  }, [position]);
+  useEffect(() => {
+    if (!position || origin) return;
+    const accurate = position.accuracy <= ACCURATE_FIX_M;
+    if (accurate || waitedForFix) {
+      setOrigin({ lat: position.lat, lon: position.lon });
+      return;
+    }
+    const left = Math.max(0, 6000 - (Date.now() - (firstFixAt.current ?? Date.now())));
+    const timer = window.setTimeout(() => setWaitedForFix(true), left);
+    return () => window.clearTimeout(timer);
+  }, [origin, position, waitedForFix]);
 
   const routes = useQuery({
-    queryKey: ['nav-route', origin?.lat.toFixed(3), origin?.lon.toFixed(3), dest?.lat, dest?.lon, origin?.lat],
+    // Kalit ~1 m aniqlikda: qayta marshrut har doim ustaning HOZIRGI nuqtasidan quriladi (eski keshdagi marshrut qaytmasin).
+    queryKey: ['nav-route', origin?.lat.toFixed(5), origin?.lon.toFixed(5), dest?.lat, dest?.lon],
     queryFn: () => geoService.route(origin as LatLon, dest as LatLon),
     enabled: !!origin && !!dest,
     retry: 1,
-    staleTime: 30_000,
+    staleTime: 5_000,
+    placeholderData: keepPreviousData,
   });
   const list: NavRoute[] = routes.data?.routes ?? [];
   const route = list[Math.min(routeIndex, Math.max(0, list.length - 1))] ?? null;
@@ -96,16 +118,35 @@ export function NavigationPage() {
   }, [demo, route, simPath]);
 
   const progress = useMemo(() => (route && position ? progressOn(route, position, hint.current) : null), [route, position]);
+
+  // Mijoz ham aynan shu taxminiy vaqtni ko‘rishi uchun: navigator hisoblagan qolgan vaqt/masofa serverga yuboriladi (har 15 soniyada va dastlab darhol).
+  const etaNow = useRef<{ s: number; m: number } | null>(null);
+  etaNow.current = route ? { s: Math.round(progress?.remainingS ?? route.durationS), m: Math.round(progress?.remainingM ?? route.distanceM) } : null;
+  const onTheWay = order.data?.status === 'ON_THE_WAY';
+  const hasRoute = !!route;
+  useEffect(() => {
+    if (!onTheWay || !hasRoute || demo) return;
+    const send = () => {
+      const value = etaNow.current;
+      if (value && navigator.onLine) orderService.reportEta(id, { remainingS: value.s, remainingM: value.m }).catch(() => undefined);
+    };
+    send();
+    const timer = window.setInterval(send, 10_000);
+    return () => window.clearInterval(timer);
+  }, [onTheWay, hasRoute, demo, id]);
   useEffect(() => {
     if (progress) hint.current = progress.index;
   }, [progress]);
 
-  // Yo‘ldan chiqish: ketma-ket 3 ta nuqta 70 m dan uzoq bo‘lsa — qayta marshrut.
+  // Yo‘ldan chiqish: 2 ta ketma-ket nuqta 50 m dan uzoq bo‘lsa (yoki bir nuqta 250 m dan uzoq bo‘lsa) — darhol HOZIRGI joylashuvdan qayta marshrut.
   useEffect(() => {
-    if (!progress || !position) return;
-    if (progress.offRouteM > OFF_ROUTE_M) offCount.current += 1;
+    if (!progress || !position || routes.isFetching || routes.isPlaceholderData) return;
+    // Noaniq GPS nuqtasi (katta xato doirasi) soxta «yo‘ldan chiqish» bermasin.
+    const reliable = position.accuracy <= 60 || progress.offRouteM > position.accuracy * 1.5;
+    if (progress.offRouteM > OFF_ROUTE_M && reliable) offCount.current += 1;
     else offCount.current = 0;
-    if (offCount.current >= 3 && Date.now() - lastReroute.current > 15_000) {
+    const far = progress.offRouteM > FAR_OFF_ROUTE_M;
+    if ((offCount.current >= 2 || far) && Date.now() - lastReroute.current > 4_000) {
       lastReroute.current = Date.now();
       offCount.current = 0;
       hint.current = 0;
@@ -114,7 +155,7 @@ export function NavigationPage() {
       setOrigin({ lat: position.lat, lon: position.lon });
       engine.current?.event('reroute', 'Yo‘ldan chiqdingiz. Marshrut qayta hisoblanmoqda');
     }
-  }, [progress, position]);
+  }, [progress, position, routes.isFetching, routes.isPlaceholderData]);
 
   useEffect(() => {
     const on = () => setOnline(true);
@@ -239,8 +280,8 @@ export function NavigationPage() {
           {t('Yo‘lga chiqdim')}
         </Button>
       )}
-      {status === 'ON_THE_WAY' && (
-        <Button size="lg" fullWidth variant={arrived ? 'primary' : 'secondary'} loading={arrive.isPending} onClick={() => arrive.mutate(undefined, { onSuccess: () => undefined })}>
+      {status === 'ON_THE_WAY' && arrived && position && (
+        <Button size="lg" fullWidth variant="primary" loading={arrive.isPending} onClick={() => arrive.mutate({ latitude: position.lat, longitude: position.lon, accuracy: Math.round(position.accuracy), fixedAt: position.at })}>
           {t('Yetib keldim')}
         </Button>
       )}
@@ -249,6 +290,7 @@ export function NavigationPage() {
           {t('Buyurtmaga o‘tish')}
         </Link>
       )}
+      {arrive.isError && <p className="gn-err" role="alert">{getErrorMessage(arrive.error)}</p>}
       {startTravel.isError && <p className="gn-err" role="alert">{t('Holatni o‘zgartirib bo‘lmadi. Qayta urinib ko‘ring.')}</p>}
     </>
   );

@@ -82,11 +82,11 @@ export function useLiveLocation(enabled: boolean, sim?: Array<[number, number]> 
             watchWith(false);
           }
         },
-        { enableHighAccuracy: high, maximumAge: high ? 1000 : 30_000, timeout: high ? 15_000 : 30_000 },
+        { enableHighAccuracy: high, maximumAge: high ? 0 : 5_000, timeout: high ? 15_000 : 30_000 },
       );
     };
     // Tezkor birinchi nuqta (brauzer ruxsat so‘rovi ham shu yerda chiqadi).
-    navigator.geolocation.getCurrentPosition(onFix, (error) => void fail(error, false), { enableHighAccuracy: false, maximumAge: 300_000, timeout: 10_000 });
+    navigator.geolocation.getCurrentPosition(onFix, (error) => void fail(error, false), { enableHighAccuracy: false, maximumAge: 5_000, timeout: 10_000 });
     watchWith(true);
   }, [accept, stop]);
 

@@ -213,6 +213,10 @@ export const ERRORS = {
   MASTER_TIME_UNAVAILABLE: 'Usta so‘ralgan vaqtda band',
 
   ORDER_NOT_FOUND: 'Buyurtma topilmadi',
+  ARRIVE_LOCATION_REQUIRED: 'Yetib kelganingizni belgilash uchun joylashuvingizga (GPS) ruxsat bering',
+  ARRIVE_LOCATION_STALE: 'Joylashuvingiz eskirgan. GPS yangilanishini kuting va qayta urinib ko‘ring',
+  ARRIVE_TOO_FAR: (meters: number) => `Siz manzildan taxminan ${meters} m uzoqdasiz. Manzilga yetib borgach belgilang`,
+  ETA_ONLY_ON_THE_WAY: 'Yetib borish vaqtini faqat usta yo‘lda bo‘lganda yangilash mumkin',
   NOT_ORDER_OWNER: 'Bu buyurtma sizga tegishli emas',
   NOT_ORDER_PARTICIPANT: 'Siz bu buyurtma ishtirokchisi emassiz',
   NOT_AUTHORIZED_ORDER_ACTION: 'Bu buyurtmada ushbu amalni bajarishga ruxsat yo‘q',
