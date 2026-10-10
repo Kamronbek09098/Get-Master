@@ -46,7 +46,59 @@ export interface PriceCategory {
   services: Array<{ id: string; name: string; minPrice: number | null; masters: number }>;
 }
 
+export interface CatalogService {
+  id: string;
+  name: string;
+  description: string | null;
+  category: { id: string; name: string };
+  masters: number;
+  minPrice: number | null;
+  maxPrice: number | null;
+  rating: number | null;
+  ratingCount: number;
+}
+
+export interface CatalogPage {
+  items: CatalogService[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+  facets: {
+    categories: Array<{ id: string; name: string; count: number }>;
+    price: { min: number; max: number };
+    masters: { one: number; few: number; many: number };
+    ratings: { r45: number; r40: number; r35: number };
+    available: number;
+  };
+}
+
+export interface CatalogFilters {
+  q?: string;
+  categories?: string[];
+  region?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  masters?: '1' | '2-3' | '4+';
+  minRating?: number;
+  available?: boolean;
+  sort?: 'popular' | 'price_asc' | 'price_desc' | 'rating' | 'name';
+}
+
 export const publicService = {
+  services(filters: CatalogFilters, page: number, limit: number) {
+    const search = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (filters.q?.trim()) search.set('q', filters.q.trim());
+    if (filters.categories?.length) search.set('categories', filters.categories.join(','));
+    if (filters.region) search.set('region', filters.region);
+    if (filters.minPrice !== undefined) search.set('minPrice', String(filters.minPrice));
+    if (filters.maxPrice !== undefined) search.set('maxPrice', String(filters.maxPrice));
+    if (filters.masters) search.set('masters', filters.masters);
+    if (filters.minRating !== undefined) search.set('minRating', String(filters.minRating));
+    if (filters.available) search.set('available', 'true');
+    if (filters.sort) search.set('sort', filters.sort);
+    return apiGet<CatalogPage>(`/public/services?${search.toString()}`);
+  },
   masters(params: { categoryId?: string; q?: string; mode?: string; region?: string; page: number }) {
     const search = new URLSearchParams({ page: String(params.page), limit: '12' });
     if (params.categoryId) search.set('categoryId', params.categoryId);

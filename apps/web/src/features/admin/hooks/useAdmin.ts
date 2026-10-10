@@ -316,6 +316,10 @@ export function useAdminAccounts(enabled = true) {
   return useQuery({ queryKey: ['admin', 'users', 'admins'], queryFn: () => adminService.admins(), enabled });
 }
 
+export function useAdminMyProfile() {
+  return useQuery({ queryKey: ['admin', 'my-profile'], queryFn: () => adminService.myProfile(), refetchInterval: 60_000 });
+}
+
 export function useAdminAccountDetails(id: string | null) {
   return useQuery({ queryKey: ['admin', 'users', 'admin-details', id], queryFn: () => adminService.adminDetails(id as string), enabled: !!id });
 }

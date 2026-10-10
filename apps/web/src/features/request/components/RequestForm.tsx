@@ -90,6 +90,14 @@ export function RequestForm({ onCreated }: { onCreated: (request: ProblemRequest
   const [serviceId, title, description, addressId, serviceMode, preferredStartAt] = watch(['serviceId', 'title', 'description', 'addressId', 'serviceMode', 'preferredStartAt']);
   const addressList = useMemo(() => addresses.data ?? [], [addresses.data]);
 
+  // «Xizmatlar» sahifasidan kelganda (?xizmat=<id>) xizmat oldindan tanlanadi.
+  const presetService = new URLSearchParams(window.location.search).get('xizmat');
+  useEffect(() => {
+    if (!presetService || serviceId) return;
+    const exists = (categories.data ?? []).some((category) => (category.services ?? []).some((service) => service.id === presetService));
+    if (exists) setValue('serviceId', presetService, { shouldValidate: true });
+  }, [presetService, categories.data, serviceId, setValue]);
+
   useEffect(() => {
     if (addressId || addressList.length === 0) return;
     const preferred = addressList.find((address) => address.isDefault) ?? addressList[0];

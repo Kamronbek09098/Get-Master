@@ -70,6 +70,7 @@ function rawNavItems(role: Role | null, options: { superAdmin?: boolean; permiss
       { to: '/admin/obunalar', label: t('Obunalar'), icon: Crown, group: 'Boshqaruv', permission: 'SUBSCRIPTIONS' },
       { to: '/admin/audit', label: t('Audit jurnali'), icon: ScrollText, group: 'Kontent', permission: 'AUDIT' },
       ...(options.superAdmin ? [{ to: '/admin/errorlar', label: t('Errorlar'), icon: Bug, group: 'Kontent' } satisfies NavItem] : []),
+      { to: '/admin/profil', label: t('Profil'), icon: UserRound, group: ACCOUNT },
       { to: '/bildirishnomalar', label: t('Bildirishnomalar'), icon: Bell, group: ACCOUNT },
       { to: '/sozlamalar', label: t('Sozlamalar'), icon: Settings, group: ACCOUNT },
     ].filter(allowed);

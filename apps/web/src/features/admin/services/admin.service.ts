@@ -27,6 +27,7 @@ import type {
   ReportPaymentsPage,
   ReportsOverview,
   AdminAccountDetails,
+  AdminMyProfile,
   AdminConversationDetail,
   AdminConversationEvent,
   AdminConversationFile,
@@ -113,6 +114,9 @@ export const adminService = {
 
   admins() {
     return apiGet<{ items: AdminAccount[]; scope: AdminScope; stats: AdminAccountsStats }>('/admin/admins');
+  },
+  myProfile() {
+    return apiGet<AdminMyProfile>('/admin/me/profile');
   },
   adminDetails(id: string) {
     return apiGet<AdminAccountDetails>(`/admin/admins/${id}/details`);

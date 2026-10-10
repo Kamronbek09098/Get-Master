@@ -703,6 +703,34 @@ export interface AdminAccount {
   lastLoginAt?: string | null;
 }
 
+export interface AdminMyProfile {
+  user: {
+    id: string;
+    accountNumber: number;
+    phone: string;
+    email: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    avatar?: string | null;
+    adminAvatarAllowed: boolean;
+    status: ManagedStatus;
+    isSuperAdmin: boolean;
+    twoFactorEnabled: boolean;
+    phoneVerifiedAt: string | null;
+    adminPermissions: string[];
+    canCreateAdmins: boolean;
+    grantablePermissions: string[];
+    createdAt: string;
+    lastLoginAt: string | null;
+    hasPassword: boolean;
+    googleLinked: boolean;
+    googleEmail: string | null;
+    createdBy: { accountNumber: number; firstName: string | null; lastName: string | null } | null;
+  };
+  stats: { actionsTotal: number; actions30d: number; logins30d: number; adminsCreated: number; activeDevices: number; firstActionAt: string | null; passwordChangedAt: string | null };
+  activity: Array<{ id: string; action: string; targetType: string | null; reason: string | null; ipAddress: string | null; createdAt: string }>;
+}
+
 export interface AdminAccountsStats {
   total: number;
   totalWeekAgo: number;

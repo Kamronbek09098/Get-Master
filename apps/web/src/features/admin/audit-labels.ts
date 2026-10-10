@@ -153,6 +153,7 @@ export const AUDIT_ACTIONS: Record<string, AuditActionInfo> = {
   AUTH_GOOGLE_LINKED: { label: t('Google ulandi'), verb: t('akkauntiga Google’ni ulashdi'), group: 'auth', tone: 'primary' },
   AUTH_GOOGLE_UNLINKED: { label: t('Google uzildi'), verb: t('akkauntidan Google’ni uzdi'), group: 'auth', tone: 'warning' },
   USER_EMAIL_CHANGED: { label: t('Email o‘zgartirildi'), verb: t('email manzilini o‘zgartirdi'), group: 'auth', tone: 'neutral' },
+  USER_PASSWORD_CHANGED: { label: t('Parol almashtirildi'), verb: t('parolini almashtirdi'), group: 'auth', tone: 'warning' },
   USER_PASSWORD_SET: { label: t('Parol o‘rnatildi'), verb: t('parol o‘rnatdi'), group: 'auth', tone: 'warning' },
   USER_PHONE_VERIFIED: { label: t('Telefon tasdiqlandi'), verb: t('telefon raqamini tasdiqladi'), group: 'auth', tone: 'success' },
   USER_TWO_FACTOR_ENABLED: { label: t('Ikki bosqichli himoya yoqildi'), verb: t('ikki bosqichli himoyani yoqdi'), group: 'auth', tone: 'success' },

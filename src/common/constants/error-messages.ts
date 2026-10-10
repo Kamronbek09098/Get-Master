@@ -45,6 +45,8 @@ export const ERRORS = {
   GOOGLE_UNLINK_NEEDS_PASSWORD: 'Google akkauntni uzishdan oldin akkauntingizga parol o‘rnatishingiz kerak: parolsiz Google uzilsa, akkauntingizga qayta kirib bo‘lmay qoladi',
   GOOGLE_UNLINK_NEEDS_PHONE: 'Google akkauntni uzishdan oldin telefon raqamingizni kiriting va tasdiqlang: aks holda akkauntga kirib bo‘lmay qoladi',
   GOOGLE_NOT_LINKED: 'Google akkaunt ulanmagan',
+  PASSWORD_NOT_SET: 'Akkauntda parol hali o‘rnatilmagan',
+  PASSWORD_SAME_AS_CURRENT: 'Yangi parol joriy paroldan farq qilishi kerak',
   PASSWORD_ALREADY_SET: 'Akkauntda parol allaqachon o‘rnatilgan',
   GOOGLE_NOT_CONFIGURED: 'Google orqali kirish hozircha sozlanmagan',
   GOOGLE_TOKEN_INVALID: 'Google tasdiqlashi muvaffaqiyatsiz tugadi. Qaytadan urinib ko‘ring',

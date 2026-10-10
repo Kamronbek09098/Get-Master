@@ -5,7 +5,7 @@ import { panelOf } from '../../common/utils/panel';
 import { RateLimit } from '../../common/decorators/rate-limit.decorator';
 import { RequestPhoneDto, VerifyPhoneDto } from './dto/phone.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { SetPasswordDto } from './dto/set-password.dto';
+import { ChangePasswordDto, SetPasswordDto } from './dto/set-password.dto';
 import { SetTwoFactorDto } from './dto/two-factor.dto';
 import { SetEmailDto } from './dto/set-email.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
@@ -41,6 +41,13 @@ export class UsersController {
   @Post('me/password')
   setPassword(@CurrentUser('sub') userId: string, @Body() dto: SetPasswordDto) {
     return this.usersService.setInitialPassword(userId, dto.password);
+  }
+
+  /** Joriy parolni yangisiga almashtirish (joriy qurilmadan boshqa barcha qurilmalar tizimdan chiqariladi). */
+  @RateLimit({ policy: 'login', scope: 'ip', escalate: true })
+  @Post('me/password/change')
+  changePassword(@CurrentUser('sub') userId: string, @CurrentUser('deviceId') deviceId: string | undefined, @Body() dto: ChangePasswordDto) {
+    return this.usersService.changePassword(userId, deviceId, dto.currentPassword, dto.newPassword);
   }
 
   @Patch('me/name')

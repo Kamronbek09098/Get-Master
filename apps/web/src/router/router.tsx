@@ -63,6 +63,7 @@ const AdminCatalogPage = lazy(() => import('@/pages/admin/AdminCatalogPage').the
 const AdminPoliciesPage = lazy(() => import('@/pages/admin/AdminPoliciesPage').then((m) => ({ default: m.AdminPoliciesPage })));
 const AdminAuditPage = lazy(() => import('@/pages/admin/AdminAuditPage').then((m) => ({ default: m.AdminAuditPage })));
 const AdminSubscriptionsPage = lazy(() => import('@/pages/admin/AdminSubscriptionsPage').then((m) => ({ default: m.AdminSubscriptionsPage })));
+const AdminProfilePage = lazy(() => import('@/pages/admin/AdminProfilePage').then((m) => ({ default: m.AdminProfilePage })));
 const AdminErrorsPage = lazy(() => import('@/pages/admin/AdminErrorsPage').then((m) => ({ default: m.AdminErrorsPage })));
 const AdminDevOpsPage = lazy(() => import('@/pages/admin/AdminDevOpsPage').then((m) => ({ default: m.AdminDevOpsPage })));
 const AdminChatsPage = lazy(() => import('@/pages/admin/AdminChatsPage').then((m) => ({ default: m.AdminChatsPage })));
@@ -189,6 +190,7 @@ const panelRouter = createBrowserRouter([
           { path: '/admin/siyosatlar', element: admin(<AdminPoliciesPage />) },
           { path: '/admin/audit', element: admin(<AdminAuditPage />) },
           { path: '/admin/errorlar', element: admin(<AdminErrorsPage />) },
+          { path: '/admin/profil', element: admin(<AdminProfilePage />) },
           { path: '/admin/obunalar', element: admin(<AdminSubscriptionsPage />) },
           { path: '/admin/devops', element: admin(<AdminDevOpsPage />) },
           { path: '/admin/suhbatlar', element: admin(<AdminChatsPage />) },

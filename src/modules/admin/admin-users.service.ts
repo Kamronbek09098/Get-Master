@@ -613,6 +613,37 @@ export class AdminUsersService {
     };
   }
 
+  /** Administratorning o‘z profili: akkaunt ma’lumotlari, xavfsizlik holati, faoliyat ko‘rsatkichlari, qurilmalar va so‘nggi amallari. */
+  async myProfile(adminId: string) {
+    const user = await this.db.user.findUnique({
+      where: { id: adminId },
+      select: {
+        id: true, accountNumber: true, phone: true, email: true, firstName: true, lastName: true, avatarAssetId: true, adminAvatarAllowed: true, status: true, isSuperAdmin: true, twoFactorEnabled: true,
+        phoneVerifiedAt: true, adminPermissions: true, canCreateAdmins: true, grantablePermissions: true, createdAt: true, lastLoginAt: true, googleId: true, googleEmail: true, passwordHash: true,
+        createdByAdmin: { select: { accountNumber: true, firstName: true, lastName: true } },
+      },
+    });
+    if (!user) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    const since30 = new Date(Date.now() - 30 * 86_400_000);
+    const notTechnical = { action: { not: 'AUTH_REFRESH_ROTATED' } };
+    const [actionsTotal, actions30d, logins30d, adminsCreated, activeDevices, firstAction, passwordChanged, activity] = await Promise.all([
+      this.db.auditLog.count({ where: { actorId: adminId, ...notTechnical } }),
+      this.db.auditLog.count({ where: { actorId: adminId, ...notTechnical, createdAt: { gte: since30 } } }),
+      this.db.auditLog.count({ where: { actorId: adminId, action: 'AUTH_LOGIN_COMPLETED', createdAt: { gte: since30 } } }),
+      this.db.user.count({ where: { createdByAdminId: adminId, deletedAt: null } }),
+      this.db.deviceSession.count({ where: { userId: adminId, status: SessionStatus.ACTIVE } }),
+      this.db.auditLog.findFirst({ where: { actorId: adminId, ...notTechnical }, orderBy: { createdAt: 'asc' }, select: { createdAt: true } }),
+      this.db.auditLog.findFirst({ where: { OR: [{ actorId: adminId, action: { in: ['USER_PASSWORD_CHANGED', 'USER_PASSWORD_SET'] } }, { targetId: adminId, action: 'ADMIN_USER_PASSWORD_RESET' }] }, orderBy: { createdAt: 'desc' }, select: { createdAt: true, action: true } }),
+      this.db.auditLog.findMany({ where: { actorId: adminId, ...notTechnical }, orderBy: { createdAt: 'desc' }, take: 15, select: { id: true, action: true, targetType: true, reason: true, ipAddress: true, createdAt: true } }),
+    ]);
+    const { googleId, googleEmail, passwordHash, createdByAdmin, ...rest } = user;
+    return {
+      user: { ...rest, hasPassword: !!passwordHash, googleLinked: !!googleId, googleEmail, createdBy: createdByAdmin },
+      stats: { actionsTotal, actions30d, logins30d, adminsCreated, activeDevices, firstActionAt: firstAction?.createdAt ?? null, passwordChangedAt: passwordChanged?.createdAt ?? null },
+      activity,
+    };
+  }
+
   /** Admin haqida qo‘shimcha ma’lumot (drawer uchun): qurilma sessiyalari, so‘nggi amallari va oxirgi parol yangilanishi. */
   async adminDetails(actorId: string, targetId: string) {
     const scope = await this.adminScope(actorId);

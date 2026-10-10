@@ -82,6 +82,26 @@ export class UsersService {
     return this.findMe(userId);
   }
 
+  /** Joriy parolni bilgan foydalanuvchi uni almashtiradi; boshqa qurilmalar tizimdan chiqariladi (joriy qurilma qoladi). */
+  async changePassword(userId: string, currentDeviceId: string | undefined, currentPassword: string, newPassword: string) {
+    const user = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, passwordHash: true } });
+    if (!user) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    if (!user.passwordHash) throw new ConflictException(ERRORS.PASSWORD_NOT_SET);
+    if (!(await verifySecret(currentPassword, user.passwordHash))) throw new UnauthorizedException(ERRORS.CURRENT_PASSWORD_INVALID);
+    if (await verifySecret(newPassword, user.passwordHash)) throw new BadRequestException(ERRORS.PASSWORD_SAME_AS_CURRENT);
+    const passwordHash = await hashSecret(newPassword, 12);
+    const revokedAt = new Date();
+    const others = currentDeviceId ? { deviceId: { not: currentDeviceId } } : {};
+    const revoked = await this.db.$transaction(async (tx) => {
+      await tx.user.update({ where: { id: userId }, data: { passwordHash } });
+      await tx.refreshToken.updateMany({ where: { userId, status: SessionStatus.ACTIVE, ...others }, data: { status: SessionStatus.REVOKED, revokedAt } });
+      const sessions = await tx.deviceSession.updateMany({ where: { userId, status: SessionStatus.ACTIVE, ...others }, data: { status: SessionStatus.REVOKED, revokedAt } });
+      await tx.auditLog.create({ data: { actorId: userId, action: 'USER_PASSWORD_CHANGED', targetType: 'User', targetId: userId, after: { revokedSessions: sessions.count } } });
+      return sessions.count;
+    });
+    return { changed: true, revokedSessions: revoked };
+  }
+
   /** Faqat parol hali yo‘q akkauntga: birinchi parol o‘rnatiladi (mavjud parolni almashtirish boshqa yo‘l bilan). */
   async setInitialPassword(userId: string, password: string) {
     const user = await this.db.user.findUnique({ where: { id: userId }, select: { id: true, passwordHash: true } });

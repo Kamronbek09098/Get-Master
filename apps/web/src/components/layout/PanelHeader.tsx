@@ -36,7 +36,7 @@ export function PanelHeader({ role }: { role: Role | null }) {
   const roleText = isAdmin ? (isSuper ? t('Superadmin') : t('Administrator')) : panelRole === 'MASTER' ? t('Usta') : t('Mijoz');
   const count = unread.data?.count ?? 0;
   const home = getNavItems(panelRole, { superAdmin: true })[0]?.to ?? '/';
-  const profilePath = isAdmin ? '/sozlamalar' : panelRole === 'MASTER' ? '/usta/profil' : '/mijoz/profil';
+  const profilePath = isAdmin ? '/admin/profil' : panelRole === 'MASTER' ? '/usta/profil' : '/mijoz/profil';
 
   const setTheme = (next: ThemeMode) => {
     setThemeMode(next);

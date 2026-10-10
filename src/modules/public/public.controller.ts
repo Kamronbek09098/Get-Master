@@ -1,7 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { Public } from '../../common/decorators/public.decorator';
 import { RateLimit } from '../../common/decorators/rate-limit.decorator';
-import { PublicMasterQueryDto } from './dto/public-master-query.dto';
+import { PublicMasterQueryDto, PublicServiceQueryDto } from './dto/public-master-query.dto';
 import { SubscriptionService } from '../subscription/subscription.service';
 import { PublicService } from './public.service';
 
@@ -32,6 +32,13 @@ export class PublicController {
   @Get('stats')
   stats() {
     return this.publicService.stats();
+  }
+
+  @Public()
+  @RateLimit({ scope: 'ip', limit: 90, windowSeconds: 60 })
+  @Get('services')
+  services(@Query() query: PublicServiceQueryDto) {
+    return this.publicService.services(query);
   }
 
   @Public()

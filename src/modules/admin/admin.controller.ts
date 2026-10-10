@@ -39,6 +39,12 @@ export class AdminController {
     private readonly devops: AdminDevopsService,
   ) {}
 
+  /** Administratorning o‘z profili (qo‘shimcha huquq talab qilinmaydi). */
+  @Get('me/profile')
+  myProfile(@CurrentUser('sub') adminId: string) {
+    return this.users.myProfile(adminId);
+  }
+
   @RequiresPermission('DEVOPS')
   @Get('devops')
   getDevops(@Query() query: DevopsQueryDto) {

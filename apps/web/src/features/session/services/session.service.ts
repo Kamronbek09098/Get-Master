@@ -14,6 +14,9 @@ export const sessionService = {
   deleteAccount(password?: string) {
     return apiPost<{ deleted: true }>('/users/me/delete-account', { password });
   },
+  changePassword(input: { currentPassword: string; newPassword: string }) {
+    return apiPost<{ changed: true; revokedSessions: number }>('/users/me/password/change', input);
+  },
   setPassword(password: string) {
     return apiPost<Me>('/users/me/password', { password });
   },

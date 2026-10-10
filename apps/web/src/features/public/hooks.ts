@@ -1,5 +1,6 @@
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { publicService } from './public.service';
+import type { CatalogFilters } from './public.service';
 
 export function usePublicMasters(categoryId: string, q: string, mode = '', region = '') {
   return useInfiniteQuery({
@@ -22,6 +23,10 @@ export function usePublicPlans() {
 
 export function usePublicPrices() {
   return useQuery({ queryKey: ['public', 'prices'], queryFn: () => publicService.prices(), staleTime: 5 * 60_000 });
+}
+
+export function usePublicServices(filters: CatalogFilters, page: number, limit: number) {
+  return useQuery({ queryKey: ['public', 'services', filters, page, limit], queryFn: () => publicService.services(filters, page, limit), staleTime: 30_000, placeholderData: keepPreviousData });
 }
 
 export function usePublicRegions() {
