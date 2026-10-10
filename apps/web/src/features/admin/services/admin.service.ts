@@ -23,6 +23,10 @@ import type {
   OrdersSeries,
   ReportPaymentsPage,
   ReportsOverview,
+  AdminAccountDetails,
+  AdminOrderFacets,
+  AdminOrdersPage,
+  AdminAccountsStats,
   AdminUserStats,
   AdminUsersPage,
   DevOpsSnapshot,
@@ -100,7 +104,10 @@ export const adminService = {
   },
 
   admins() {
-    return apiGet<{ items: AdminAccount[]; scope: AdminScope }>('/admin/admins');
+    return apiGet<{ items: AdminAccount[]; scope: AdminScope; stats: AdminAccountsStats }>('/admin/admins');
+  },
+  adminDetails(id: string) {
+    return apiGet<AdminAccountDetails>(`/admin/admins/${id}/details`);
   },
   createAdmin(input: CreateAdminInput) {
     return apiPost<AdminAccount>('/admin/admins', input);
@@ -147,6 +154,15 @@ export const adminService = {
   },
   orders(filters: AdminOrderFilters, cursor?: string) {
     return apiGet<CursorPage<AdminOrderRow>>(`/admin/orders${qs({ limit: '25', ...filters, cursor })}`);
+  },
+  ordersPage(filters: AdminOrderFilters, page: number, limit = 20) {
+    return apiGet<AdminOrdersPage>(`/admin/orders${qs({ ...filters, page: String(page), limit: String(limit) })}`);
+  },
+  orderFacets() {
+    return apiGet<AdminOrderFacets>('/admin/orders/facets');
+  },
+  bulkCancelOrders(ids: string[], reason: string) {
+    return apiPost<{ cancelled: number; failed: Array<{ id: string; message: string }> }>('/admin/orders/bulk-cancel', { ids, reason });
   },
   ordersSummary() {
     return apiGet<AdminOrdersSummary>('/admin/orders/summary');

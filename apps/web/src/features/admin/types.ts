@@ -199,6 +199,9 @@ export interface AdminUserSubscription {
   planCode: string;
   planName: string;
   endsAt: string;
+  startsAt?: string | null;
+  source?: string;
+  months?: number;
   daysLeft: number;
 }
 
@@ -356,7 +359,17 @@ export interface AdminUserDetail {
   stats: { orders: number; requests: number; messages: number; reviews: number; activeDevices: number };
   lastSession: { lastSeenAt: string; ipAddress: string | null; userAgent: string | null; panel: string | null } | null;
   subscription?: AdminUserSubscription | null;
-  subscriptionHistory?: Array<{ id: string; planCode: string; planName: string; months: number; amount: string; currency: string; status: string; source: string; startsAt: string | null; endsAt: string | null; createdAt: string }>;
+  subscriptionHistory?: Array<{ id: string; planCode: string; planName: string; months: number; amount: string; currency: string; status: string; source: string; method: string | null; note: string | null; startsAt: string | null; endsAt: string | null; createdAt: string }>;
+  subscriptionSummary?: { everSubscribed: boolean; total: number; purchased: number; gifted: number; totalPaid: number; firstAt: string | null; lastAt: string | null };
+  activity?: {
+    ordersAsCustomer: Record<string, number>;
+    ordersAsMaster: Record<string, number>;
+    spent: number;
+    earned: number | null;
+    firstOrderAt: string | null;
+    lastOrderAt: string | null;
+  };
+  account?: { googleLinked: boolean; googleEmail: string | null; hasPassword: boolean; createdByAdmin: boolean };
   recentActivity: Array<{ id: string; action: string; reason: string | null; actorId: string | null; actor?: { accountNumber: number } | null; createdAt: string }>;
   addresses?: Array<{ id: string; title: string | null; addressLine: string; city: string | null; district: string | null; isDefault: boolean }>;
   recentOrders?: Array<{ id: string; orderNumber: number; status: string; finalAmount: string; currency: string; createdAt: string; side: 'CUSTOMER' | 'MASTER' }>;
@@ -447,6 +460,7 @@ export interface AdminOrderPerson {
   firstName: string | null;
   lastName: string | null;
   phone: string;
+  avatar?: string | null;
 }
 
 export interface AdminOrderRow {
@@ -459,9 +473,15 @@ export interface AdminOrderRow {
   completedAt: string | null;
   cancelledAt: string | null;
   title: string;
+  category?: { id: string; name: string } | null;
+  city?: string | null;
+  district?: string | null;
+  originalAmount?: string;
+  additionalAmount?: string;
+  platformFee?: string | null;
   scheduledStartAt: string | null;
   customer: AdminOrderPerson;
-  master: { id: string; profession: string | null; user: AdminOrderPerson };
+  master: { id: string; profession: string | null; ratingAvg?: string; ratingCount?: number; user: AdminOrderPerson };
   payment: { provider: PaymentProvider; status: PaymentStatus } | null;
   _count: { workProofs: number; cases: number; payments: number };
 }
@@ -473,6 +493,21 @@ export interface AdminOrdersSummary {
   flagged: number;
   completedAmount: string | number;
   platformFee: string | number;
+  weekAgoTotal: number;
+  trends: Record<'created' | 'active' | 'flagged' | 'completed' | 'amount', { current: number; previous: number; changePercent: number | null }>;
+}
+
+export interface AdminOrdersPage {
+  items: AdminOrderRow[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+export interface AdminOrderFacets {
+  categories: Array<{ id: string; name: string; count: number }>;
+  cities: Array<{ name: string; count: number }>;
 }
 
 export interface AdminOrderFilters {
@@ -482,6 +517,11 @@ export interface AdminOrderFilters {
   to?: string;
   flagged?: 'true';
   ongoing?: 'true';
+  payment?: PaymentStatus | 'NONE';
+  category?: string;
+  city?: string;
+  sort?: 'createdAt' | 'amount';
+  dir?: 'asc' | 'desc';
 }
 
 export interface AdminMediaInfo {
@@ -552,6 +592,9 @@ export interface AdminAccount {
   phone: string;
   firstName: string | null;
   lastName: string | null;
+  email?: string | null;
+  phoneVerifiedAt?: string | null;
+  activeDevices?: number;
   avatar?: string | null;
   adminAvatarAllowed?: boolean;
   status: ManagedStatus;
@@ -565,6 +608,26 @@ export interface AdminAccount {
   twoFactorEnabled?: boolean;
   createdAt: string;
   lastLoginAt?: string | null;
+}
+
+export interface AdminAccountsStats {
+  total: number;
+  totalWeekAgo: number;
+  active: number;
+  blocked: number;
+  suspended: number;
+  pending: number;
+  mfaOn: number;
+  mfaOff: number;
+  superAdmins: number;
+}
+
+export interface AdminAccountDetails {
+  sessions: Array<{ id: string; status: 'ACTIVE' | 'REVOKED' | string; panel: string | null; ipAddress: string | null; userAgent: string | null; lastSeenAt: string; createdAt: string; revokedAt: string | null }>;
+  activity: Array<{ id: string; action: string; targetType: string | null; reason: string | null; createdAt: string }>;
+  actions30d: number;
+  passwordResetAt: string | null;
+  createdBy: { accountNumber: number; firstName: string | null; lastName: string | null } | null;
 }
 
 export interface CreateAdminInput {

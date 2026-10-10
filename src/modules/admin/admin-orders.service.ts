@@ -23,6 +23,10 @@ export class AdminOrdersService {
     const where: Prisma.OrderWhereInput = {
       ...(query.ongoing ? { status: { in: ACTIVE } } : { status: query.status }),
       createdAt: dateRangeWhere(query),
+      ...(query.payment ? (query.payment === 'NONE' ? { payments: { none: {} } } : { payments: { some: { status: query.payment } } }) : {}),
+      ...(query.category || query.city
+        ? { booking: { request: { ...(query.category ? { categoryId: query.category } : {}), ...(query.city ? { address: { city: { equals: query.city, mode: 'insensitive' as const } } } : {}) } } }
+        : {}),
       ...(query.flagged ? { OR: [{ status: 'DISPUTED' }, { cases: { some: { status: { in: ['REPORTED', 'UNDER_REVIEW'] } } } }] } : {}),
       ...(search
         ? {
@@ -39,39 +43,76 @@ export class AdminOrdersService {
           }
         : {}),
     };
-    const rows = await this.db.order.findMany({
-      where,
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      select: {
-        id: true,
-        orderNumber: true,
-        status: true,
-        finalAmount: true,
-        currency: true,
-        createdAt: true,
-        completedAt: true,
-        cancelledAt: true,
-        customer: { select: PERSON },
-        master: { select: { id: true, profession: true, user: { select: PERSON } } },
-        booking: { select: { scheduledStartAt: true, request: { select: { title: true } } } },
-        payments: { orderBy: { createdAt: 'desc' }, take: 5, select: { provider: true, status: true } },
-        _count: { select: { workProofs: true, cases: true, payments: true } },
-      },
-      ...cursorArgs(query),
+    const dir = query.dir ?? 'desc';
+    const orderBy: Prisma.OrderOrderByWithRelationInput[] = query.sort === 'amount' ? [{ finalAmount: dir }, { id: 'desc' }] : [{ createdAt: dir }, { id: 'desc' }];
+    const select = {
+      id: true,
+      orderNumber: true,
+      status: true,
+      originalAmount: true,
+      additionalAmount: true,
+      finalAmount: true,
+      platformFee: true,
+      currency: true,
+      createdAt: true,
+      completedAt: true,
+      cancelledAt: true,
+      customer: { select: PERSON },
+      master: { select: { id: true, profession: true, ratingAvg: true, ratingCount: true, user: { select: PERSON } } },
+      booking: { select: { scheduledStartAt: true, request: { select: { title: true, category: { select: { id: true, name: true } }, address: { select: { city: true, district: true } } } } } },
+      payments: { orderBy: { createdAt: 'desc' as const }, take: 5, select: { provider: true, status: true } },
+      _count: { select: { workProofs: true, cases: true, payments: true } },
+    } satisfies Prisma.OrderSelect;
+    const shape = ({ master, booking, payments, ...order }: Prisma.OrderGetPayload<{ select: typeof select }>) => ({
+      ...order,
+      payment: payments.find((row) => row.status === 'SUCCEEDED') ?? payments[0] ?? null,
+      master,
+      title: booking.request.title,
+      category: booking.request.category,
+      city: booking.request.address?.city ?? null,
+      district: booking.request.address?.district ?? null,
+      scheduledStartAt: booking.scheduledStartAt,
     });
+
+    if (query.page) {
+      const limit = query.limit ?? 20;
+      const [total, rows] = await Promise.all([
+        this.db.order.count({ where }),
+        this.db.order.findMany({ where, orderBy, select, skip: (query.page - 1) * limit, take: limit }),
+      ]);
+      return { items: rows.map(shape), total, page: query.page, limit, pages: Math.max(1, Math.ceil(total / limit)) };
+    }
+    const rows = await this.db.order.findMany({ where, orderBy, select, ...cursorArgs(query) });
     const page = toCursorPage(rows, query);
-    return { ...page, items: page.items.map(({ master, booking, payments, ...order }) => ({ ...order, payment: payments.find((row) => row.status === 'SUCCEEDED') ?? payments[0] ?? null, master: { ...master, user: master.user }, title: booking.request.title, scheduledStartAt: booking.scheduledStartAt })) };
+    return { ...page, items: page.items.map(shape) };
   }
 
-  /** Holatlar bo‘yicha umumiy sonlar va daromad ko‘rsatkichlari (filtrlar bilan bog‘liq emas). */
+  /** Holatlar bo‘yicha umumiy sonlar va daromad ko‘rsatkichlari (filtrlar bilan bog‘liq emas) + oxirgi 7 kunning oldingi 7 kunga nisbatan o‘zgarishi. */
   async summary() {
-    const [byStatus, revenue, flagged] = await Promise.all([
+    const day = 86_400_000;
+    const now = Date.now();
+    const last7 = new Date(now - 7 * day);
+    const prev7 = new Date(now - 14 * day);
+    const flaggedWhere: Prisma.OrderWhereInput = { OR: [{ status: 'DISPUTED' }, { cases: { some: { status: { in: ['REPORTED', 'UNDER_REVIEW'] } } } }] };
+    const [byStatus, revenue, flagged, created7, createdPrev7, active7, activePrev7, flagged7, flaggedPrev7, done7, donePrev7, amount7, amountPrev7, weekAgoTotal] = await Promise.all([
       this.db.order.groupBy({ by: ['status'], _count: { _all: true } }),
       this.db.order.aggregate({ where: { status: 'COMPLETED' }, _sum: { finalAmount: true, platformFee: true } }),
-      this.db.order.count({ where: { OR: [{ status: 'DISPUTED' }, { cases: { some: { status: { in: ['REPORTED', 'UNDER_REVIEW'] } } } }] } }),
+      this.db.order.count({ where: flaggedWhere }),
+      this.db.order.count({ where: { createdAt: { gte: last7 } } }),
+      this.db.order.count({ where: { createdAt: { gte: prev7, lt: last7 } } }),
+      this.db.order.count({ where: { status: { in: ACTIVE }, createdAt: { gte: last7 } } }),
+      this.db.order.count({ where: { status: { in: ACTIVE }, createdAt: { gte: prev7, lt: last7 } } }),
+      this.db.order.count({ where: { AND: [flaggedWhere, { createdAt: { gte: last7 } }] } }),
+      this.db.order.count({ where: { AND: [flaggedWhere, { createdAt: { gte: prev7, lt: last7 } }] } }),
+      this.db.order.count({ where: { status: 'COMPLETED', completedAt: { gte: last7 } } }),
+      this.db.order.count({ where: { status: 'COMPLETED', completedAt: { gte: prev7, lt: last7 } } }),
+      this.db.order.aggregate({ where: { status: 'COMPLETED', completedAt: { gte: last7 } }, _sum: { finalAmount: true } }),
+      this.db.order.aggregate({ where: { status: 'COMPLETED', completedAt: { gte: prev7, lt: last7 } }, _sum: { finalAmount: true } }),
+      this.db.order.count({ where: { createdAt: { lt: last7 } } }),
     ]);
     const counts = Object.fromEntries(byStatus.map((row) => [row.status, row._count._all]));
     const total = byStatus.reduce((sum, row) => sum + row._count._all, 0);
+    const pair = (current: number, previous: number) => ({ current, previous, changePercent: previous > 0 ? Math.round(((current - previous) / previous) * 100) : null });
     return {
       total,
       counts,
@@ -79,7 +120,57 @@ export class AdminOrdersService {
       flagged,
       completedAmount: revenue._sum.finalAmount ?? 0,
       platformFee: revenue._sum.platformFee ?? 0,
+      weekAgoTotal,
+      trends: {
+        created: pair(created7, createdPrev7),
+        active: pair(active7, activePrev7),
+        flagged: pair(flagged7, flaggedPrev7),
+        completed: pair(done7, donePrev7),
+        amount: pair(Number(amount7._sum.finalAmount ?? 0), Number(amountPrev7._sum.finalAmount ?? 0)),
+      },
     };
+  }
+
+  /** Filtr ro‘yxatlari uchun: buyurtmalarda uchraydigan xizmat turlari va hududlar (soni bilan). */
+  async facets() {
+    const [categories, cities] = await Promise.all([
+      this.db.$queryRaw<Array<{ id: string; name: string; count: number }>>`
+        SELECT c.id::text AS id, c.name AS name, COUNT(o.id)::int AS count
+        FROM orders o
+        JOIN bookings b ON b.id = o."bookingId"
+        JOIN problem_requests r ON r.id = b."requestId"
+        JOIN service_categories c ON c.id = r."categoryId"
+        GROUP BY c.id, c.name
+        ORDER BY count DESC, c.name ASC
+      `,
+      this.db.$queryRaw<Array<{ name: string; count: number }>>`
+        SELECT a.city AS name, COUNT(o.id)::int AS count
+        FROM orders o
+        JOIN bookings b ON b.id = o."bookingId"
+        JOIN problem_requests r ON r.id = b."requestId"
+        JOIN addresses a ON a.id = r."addressId"
+        WHERE a.city IS NOT NULL AND a.city <> ''
+        GROUP BY a.city
+        ORDER BY count DESC, a.city ASC
+      `,
+    ]);
+    return { categories, cities };
+  }
+
+  /** Bir nechta buyurtmani birdan bekor qiladi (faqat band qilingan/tasdiqlanganlar); har biri uchun audit yoziladi. */
+  async bulkCancel(adminId: string, ids: string[], reason: string) {
+    const unique = [...new Set(ids)].slice(0, 100);
+    const failed: Array<{ id: string; message: string }> = [];
+    let cancelled = 0;
+    for (const id of unique) {
+      try {
+        await this.cancel(adminId, id, reason);
+        cancelled += 1;
+      } catch (error) {
+        failed.push({ id, message: error instanceof Error ? error.message : String(error) });
+      }
+    }
+    return { cancelled, failed };
   }
 
   async findOne(orderId: string) {

@@ -13,7 +13,7 @@ import { AdminBadgesQueryDto } from './dto/badges-query.dto';
 import { AdminOrdersService } from './admin-orders.service';
 import { AdminDevopsService } from './admin-devops.service';
 import { DevopsQueryDto } from './dto/devops-query.dto';
-import { AdminOrderActionDto, AdminOrderQueryDto, AdminOrderResolveDto } from './dto/order-query.dto';
+import { AdminOrderActionDto, AdminOrderBulkCancelDto, AdminOrderQueryDto, AdminOrderResolveDto } from './dto/order-query.dto';
 import { AdminConversationQueryDto } from './dto/chat-query.dto';
 import { CursorQueryDto } from '../../common/dto/cursor-query.dto';
 import { PortfolioQueryDto, ReviewPortfolioDto } from './dto/portfolio-review.dto';
@@ -49,6 +49,18 @@ export class AdminController {
   @Get('orders')
   findOrders(@Query() query: AdminOrderQueryDto) {
     return this.orders.findAll(query);
+  }
+
+  @RequiresPermission('ORDERS')
+  @Get('orders/facets')
+  ordersFacets() {
+    return this.orders.facets();
+  }
+
+  @RequiresPermission('ORDERS')
+  @Post('orders/bulk-cancel')
+  bulkCancelOrders(@CurrentUser('sub') adminId: string, @Body() dto: AdminOrderBulkCancelDto) {
+    return this.orders.bulkCancel(adminId, dto.ids, dto.reason);
   }
 
   @RequiresPermission('ORDERS')
@@ -182,6 +194,11 @@ export class AdminController {
   @Get('admins')
   listAdmins(@CurrentUser('sub') adminId: string) {
     return this.users.listAdmins(adminId);
+  }
+
+  @Get('admins/:id/details')
+  adminDetails(@CurrentUser('sub') adminId: string, @Param('id', ParseUUIDPipe) id: string) {
+    return this.users.adminDetails(adminId, id);
   }
 
   @Post('admins')

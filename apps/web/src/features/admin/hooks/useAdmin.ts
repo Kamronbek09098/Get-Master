@@ -231,6 +231,22 @@ export function useAdminOrders(filters: AdminOrderFilters) {
   });
 }
 
+export function useAdminOrdersPage(filters: AdminOrderFilters, page: number, limit = 20) {
+  return useQuery({ queryKey: ['admin', 'orders', 'page', filters, page, limit], queryFn: () => adminService.ordersPage(filters, page, limit), placeholderData: keepPreviousData, refetchInterval: 30_000 });
+}
+
+export function useAdminOrderFacets() {
+  return useQuery({ queryKey: ['admin', 'orders-facets'], queryFn: () => adminService.orderFacets(), staleTime: 60_000 });
+}
+
+export function useBulkCancelOrders() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ids, reason }: { ids: string[]; reason: string }) => adminService.bulkCancelOrders(ids, reason),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
+  });
+}
+
 export function useAdminOrdersSummary() {
   return useQuery({ queryKey: ['admin', 'orders-summary'], queryFn: () => adminService.ordersSummary(), refetchInterval: 30_000 });
 }
@@ -267,6 +283,10 @@ export function useAdminUserByNumber(accountNumber: number | null) {
 /** Adminlar ro‘yxati (faqat superadmin). Kalit ['admin','users',…] ostida: foydalanuvchi amallari (muzlatish/o‘chirish/parol) ro‘yxatni avtomatik yangilaydi. */
 export function useAdminAccounts(enabled = true) {
   return useQuery({ queryKey: ['admin', 'users', 'admins'], queryFn: () => adminService.admins(), enabled });
+}
+
+export function useAdminAccountDetails(id: string | null) {
+  return useQuery({ queryKey: ['admin', 'users', 'admin-details', id], queryFn: () => adminService.adminDetails(id as string), enabled: !!id });
 }
 
 export function useCreateAdmin() {

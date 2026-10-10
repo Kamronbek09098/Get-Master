@@ -387,7 +387,7 @@ export function AdminUsersPage() {
                           <ChatAvatar name={name} seed={user.id} size="md" src={user.avatar} />
                           <div>
                             <strong>{name}</strong>
-                            <small>{user.email ?? user.masterProfile?.profession ?? '—'}</small>
+                            <small>{user.email ?? user.masterProfile?.profession ?? `ID ${user.accountNumber}`}</small>
                           </div>
                         </div>
                       </td>

@@ -43,6 +43,16 @@ function present({ userRoles, ...user }: UserRow) {
   return { ...user, phone: user.phone ? user.phone.replace(TOMBSTONE, '') : null, roles: userRoles.map((item) => item.role) };
 }
 
+export interface ActiveSub {
+  planCode: string;
+  planName: string;
+  endsAt: Date;
+  startsAt: Date | null;
+  source: string;
+  months: number;
+  daysLeft: number;
+}
+
 const LIST_SELECT = {
   ...USER_SELECT,
   lastLoginAt: true,
@@ -56,7 +66,7 @@ const LIST_SELECT = {
 
 type ListRow = Prisma.UserGetPayload<{ select: typeof LIST_SELECT }>;
 
-function presentListRow({ userRoles, _count, masterProfile, ...user }: ListRow, subscription: { planCode: string; planName: string; endsAt: Date; daysLeft: number } | null) {
+function presentListRow({ userRoles, _count, masterProfile, ...user }: ListRow, subscription: ActiveSub | null) {
   return {
     ...user,
     phone: user.phone ? user.phone.replace(TOMBSTONE, '') : null,
@@ -128,17 +138,17 @@ export class AdminUsersService {
 
   /** Faol obunalar (bir nechta foydalanuvchi uchun) — ro‘yxat va panel uchun. */
   private async activeSubscriptions(userIds: string[]) {
-    if (userIds.length === 0) return new Map<string, { planCode: string; planName: string; endsAt: Date; daysLeft: number }>();
+    if (userIds.length === 0) return new Map<string, ActiveSub>();
     const now = new Date();
     const rows = await this.db.subscription.findMany({
       where: { userId: { in: userIds }, status: 'ACTIVE', startsAt: { lte: now }, endsAt: { gt: now } },
       orderBy: { endsAt: 'desc' },
-      select: { userId: true, planCode: true, endsAt: true },
+      select: { userId: true, planCode: true, endsAt: true, startsAt: true, source: true, months: true },
     });
-    const map = new Map<string, { planCode: string; planName: string; endsAt: Date; daysLeft: number }>();
+    const map = new Map<string, ActiveSub>();
     for (const row of rows) {
       if (map.has(row.userId) || !row.endsAt) continue;
-      map.set(row.userId, { planCode: row.planCode, planName: planByCode(row.planCode)?.name ?? row.planCode, endsAt: row.endsAt, daysLeft: Math.max(0, Math.ceil((row.endsAt.getTime() - now.getTime()) / 86_400_000)) });
+      map.set(row.userId, { planCode: row.planCode, planName: planByCode(row.planCode)?.name ?? row.planCode, endsAt: row.endsAt, startsAt: row.startsAt, source: row.source, months: row.months, daysLeft: Math.max(0, Math.ceil((row.endsAt.getTime() - now.getTime()) / 86_400_000)) });
     }
     return map;
   }
@@ -227,7 +237,8 @@ export class AdminUsersService {
     if (!user) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
     const base = await this.findOne(user.id);
     // Admin profil sahifasi uchun qo‘shimcha ma’lumotlar: manzillar, oxirgi buyurtmalar, usta ko‘rsatkichlari va xizmatlari.
-    const [addresses, orders, master, activeSubs, subHistory] = await Promise.all([
+    const masterId = base.masterProfile?.id ?? null;
+    const [addresses, orders, master, activeSubs, subHistory, custByStatus, masterByStatus, spent, earned, subAgg, account] = await Promise.all([
       this.db.address.findMany({
         where: { userId: user.id },
         orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
@@ -259,12 +270,39 @@ export class AdminUsersService {
       this.db.subscription.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
-        take: 5,
-        select: { id: true, planCode: true, months: true, amount: true, currency: true, status: true, source: true, startsAt: true, endsAt: true, createdAt: true },
+        take: 10,
+        select: { id: true, planCode: true, months: true, amount: true, currency: true, status: true, source: true, method: true, note: true, startsAt: true, endsAt: true, createdAt: true },
       }),
+      this.db.order.groupBy({ by: ['status'], where: { customerId: user.id }, _count: { _all: true } }),
+      masterId ? this.db.order.groupBy({ by: ['status'], where: { masterId }, _count: { _all: true } }) : Promise.resolve([]),
+      this.db.payment.aggregate({ where: { order: { customerId: user.id }, status: { in: ['SUCCEEDED', 'PARTIALLY_REFUNDED'] } }, _sum: { amount: true, refundedAmount: true } }),
+      masterId ? this.db.order.aggregate({ where: { masterId, status: 'COMPLETED' }, _sum: { finalAmount: true, platformFee: true } }) : Promise.resolve(null),
+      this.db.subscription.findMany({ where: { userId: user.id, status: { in: ['ACTIVE', 'EXPIRED', 'CANCELED'] } }, select: { source: true, amount: true, startsAt: true, createdAt: true } }),
+      this.db.user.findUnique({ where: { id: user.id }, select: { googleId: true, googleEmail: true, passwordHash: true, createdByAdminId: true, lastLoginAt: true } }),
     ]);
+    const countMap = (rows: Array<{ status: string; _count: { _all: number } }>) => Object.fromEntries(rows.map((row) => [row.status, row._count._all]));
+    const orderTimes = await this.db.order.aggregate({ where: { OR: [{ customerId: user.id }, ...(masterId ? [{ masterId }] : [])] }, _min: { createdAt: true }, _max: { createdAt: true } });
+    const purchased = subAgg.filter((row) => row.source === 'PURCHASE');
     return {
       ...base,
+      activity: {
+        ordersAsCustomer: countMap(custByStatus),
+        ordersAsMaster: countMap(masterByStatus),
+        spent: Math.max(0, Number(spent._sum.amount ?? 0) - Number(spent._sum.refundedAmount ?? 0)),
+        earned: earned ? Math.max(0, Number(earned._sum.finalAmount ?? 0) - Number(earned._sum.platformFee ?? 0)) : null,
+        firstOrderAt: orderTimes._min.createdAt,
+        lastOrderAt: orderTimes._max.createdAt,
+      },
+      account: { googleLinked: !!account?.googleId, googleEmail: account?.googleEmail ?? null, hasPassword: !!account?.passwordHash, createdByAdmin: !!account?.createdByAdminId },
+      subscriptionSummary: {
+        everSubscribed: subAgg.length > 0,
+        total: subAgg.length,
+        purchased: purchased.length,
+        gifted: subAgg.length - purchased.length,
+        totalPaid: purchased.reduce((sum, row) => sum + Number(row.amount), 0),
+        firstAt: subAgg.map((row) => row.startsAt ?? row.createdAt).sort((a, b) => a.getTime() - b.getTime())[0] ?? null,
+        lastAt: subAgg.map((row) => row.startsAt ?? row.createdAt).sort((a, b) => b.getTime() - a.getTime())[0] ?? null,
+      },
       subscription: activeSubs.get(user.id) ?? null,
       subscriptionHistory: subHistory.map((row) => ({ ...row, planName: planByCode(row.planCode)?.name ?? row.planCode })),
       addresses,
@@ -545,15 +583,53 @@ export class AdminUsersService {
 
   async listAdmins(actorId: string) {
     const scope = await this.adminScope(actorId);
+    const where: Prisma.UserWhereInput = { userRoles: { some: { role: Role.ADMIN } }, deletedAt: null, ...(scope.superAdmin ? {} : { createdByAdminId: actorId }) };
     const rows = await this.db.user.findMany({
-      where: { userRoles: { some: { role: Role.ADMIN } }, deletedAt: null, ...(scope.superAdmin ? {} : { createdByAdminId: actorId }) },
+      where,
       orderBy: [{ isSuperAdmin: 'desc' }, { createdAt: 'asc' }],
       select: {
-        id: true, accountNumber: true, phone: true, firstName: true, lastName: true, avatarAssetId: true, adminAvatarAllowed: true, status: true, isSuperAdmin: true, twoFactorEnabled: true,
-        adminPermissions: true, canCreateAdmins: true, grantablePermissions: true, createdByAdminId: true, createdAt: true, lastLoginAt: true,
+        id: true, accountNumber: true, phone: true, email: true, firstName: true, lastName: true, avatarAssetId: true, adminAvatarAllowed: true, status: true, isSuperAdmin: true, twoFactorEnabled: true,
+        phoneVerifiedAt: true, adminPermissions: true, canCreateAdmins: true, grantablePermissions: true, createdByAdminId: true, createdAt: true, lastLoginAt: true,
       },
     });
-    return { items: rows.map((row) => ({ ...row, isSelf: row.id === actorId })), scope: { superAdmin: scope.superAdmin, grantable: scope.grantable } };
+    const devices = await this.db.deviceSession.groupBy({ by: ['userId'], where: { userId: { in: rows.map((row) => row.id) }, status: SessionStatus.ACTIVE }, _count: { _all: true } });
+    const deviceCount = new Map(devices.map((row) => [row.userId, row._count._all]));
+    const weekAgo = new Date(Date.now() - 7 * 86_400_000);
+    const count = (status?: UserStatus) => rows.filter((row) => (status ? row.status === status : true)).length;
+    return {
+      items: rows.map((row) => ({ ...row, activeDevices: deviceCount.get(row.id) ?? 0, isSelf: row.id === actorId })),
+      stats: {
+        total: rows.length,
+        totalWeekAgo: rows.filter((row) => row.createdAt <= weekAgo).length,
+        active: count(UserStatus.ACTIVE),
+        blocked: count(UserStatus.BLOCKED),
+        suspended: count(UserStatus.SUSPENDED),
+        pending: count(UserStatus.PENDING),
+        mfaOn: rows.filter((row) => row.twoFactorEnabled).length,
+        mfaOff: rows.filter((row) => !row.twoFactorEnabled).length,
+        superAdmins: rows.filter((row) => row.isSuperAdmin).length,
+      },
+      scope: { superAdmin: scope.superAdmin, grantable: scope.grantable },
+    };
+  }
+
+  /** Admin haqida qo‘shimcha ma’lumot (drawer uchun): qurilma sessiyalari, so‘nggi amallari va oxirgi parol yangilanishi. */
+  async adminDetails(actorId: string, targetId: string) {
+    const scope = await this.adminScope(actorId);
+    const target = await this.db.user.findFirst({
+      where: { id: targetId, deletedAt: null, userRoles: { some: { role: Role.ADMIN } }, ...(scope.superAdmin ? {} : { createdByAdminId: actorId }) },
+      select: { id: true },
+    });
+    if (!target) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
+    const since = new Date(Date.now() - 30 * 86_400_000);
+    const [sessions, activity, actions30d, passwordReset, createdBy] = await Promise.all([
+      this.db.deviceSession.findMany({ where: { userId: targetId }, orderBy: { lastSeenAt: 'desc' }, take: 20, select: { id: true, status: true, panel: true, ipAddress: true, userAgent: true, lastSeenAt: true, createdAt: true, revokedAt: true } }),
+      this.db.auditLog.findMany({ where: { actorId: targetId, action: { not: 'AUTH_REFRESH_ROTATED' } }, orderBy: { createdAt: 'desc' }, take: 15, select: { id: true, action: true, targetType: true, reason: true, createdAt: true } }),
+      this.db.auditLog.count({ where: { actorId: targetId, action: { not: 'AUTH_REFRESH_ROTATED' }, createdAt: { gte: since } } }),
+      this.db.auditLog.findFirst({ where: { targetId, action: 'ADMIN_USER_PASSWORD_RESET' }, orderBy: { createdAt: 'desc' }, select: { createdAt: true } }),
+      this.db.user.findUnique({ where: { id: targetId }, select: { createdByAdmin: { select: { accountNumber: true, firstName: true, lastName: true } } } }),
+    ]);
+    return { sessions, activity, actions30d, passwordResetAt: passwordReset?.createdAt ?? null, createdBy: createdBy?.createdByAdmin ?? null };
   }
 
   /** Yangi admin yaratish (faqat superadmin). Akkaunt darhol faol; parol bcrypt xesh sifatida saqlanadi. */
