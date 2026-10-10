@@ -35,7 +35,7 @@ export class PublicController {
   }
 
   @Public()
-  @RateLimit({ scope: 'ip', limit: 90, windowSeconds: 60 })
+  @RateLimit({ scope: 'ip', limit: 240, windowSeconds: 60 })
   @Get('services')
   services(@Query() query: PublicServiceQueryDto) {
     return this.publicService.services(query);

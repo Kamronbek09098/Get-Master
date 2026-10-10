@@ -26,7 +26,7 @@ export function usePublicPrices() {
 }
 
 export function usePublicServices(filters: CatalogFilters, page: number, limit: number) {
-  return useQuery({ queryKey: ['public', 'services', filters, page, limit], queryFn: () => publicService.services(filters, page, limit), staleTime: 30_000, placeholderData: keepPreviousData });
+  return useQuery({ queryKey: ['public', 'services', filters, page, limit], queryFn: () => publicService.services(filters, page, limit), staleTime: 60_000, placeholderData: keepPreviousData, refetchOnWindowFocus: false, retry: false });
 }
 
 export function usePublicRegions() {

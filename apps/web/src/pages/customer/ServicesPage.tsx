@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BadgeCheck, ChevronDown, ChevronLeft, ChevronRight, Clock, Filter, LayoutGrid, MapPin, Search, ShieldCheck, Star, Tag, Users, X } from 'lucide-react';
+import { ArrowRight, BadgeCheck, ChevronDown, ChevronLeft, ChevronRight, Clock, Filter, Heart, LayoutGrid, MapPin, MoreHorizontal, Search, ShieldCheck, Star, Tag, User, Users, X } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
@@ -8,14 +9,30 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { cx, formatMoney, formatNumber } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import { RegionSelect } from '@/features/public/RegionSelect';
-import { usePublicRegions, usePublicServices, usePublicStats } from '@/features/public/hooks';
+import { usePublicRegions, usePublicServices } from '@/features/public/hooks';
 import type { CatalogFilters } from '@/features/public/public.service';
-import { ServiceArt, categoryIcon, categoryPalette } from '@/features/catalog/service-art';
+import { ServiceArt, ServiceCover, categoryIcon, categoryPalette } from '@/features/catalog/service-art';
 import { pageNumbers } from '@/features/admin/users/users-ui';
 import { t } from '@/i18n';
 import './ServicesPage.css';
 
-const PAGE_SIZE = 9;
+const PAGE_SIZE = 6;
+const TILE_COUNT = 6;
+const FAV_KEY = 'gm-service-favorites';
+
+function readFavorites(): string[] {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(FAV_KEY) ?? '[]');
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function CategoryGlyph({ id, name }: { id: string; name: string }) {
+  const Icon = categoryIcon(name);
+  return <i className="gm-svc__glyph" style={{ background: categoryPalette(id).a, color: categoryPalette(id).fg }}><Icon size={11} strokeWidth={2.2} /></i>;
+}
 type Sort = NonNullable<CatalogFilters['sort']>;
 const SORTS: Array<{ value: Sort; label: string }> = [
   { value: 'popular', label: t('Omabop') },
@@ -50,27 +67,44 @@ export function ServicesPage() {
   const [sort, setSort] = useState<Sort>('popular');
   const [page, setPage] = useState(1);
   const [panelOpen, setPanelOpen] = useState(false);
+  const panelRef = useRef<HTMLElement>(null);
+  const [favorites, setFavorites] = useState<string[]>(readFavorites);
+  const toggleFavorite = (id: string) => setFavorites((current) => {
+    const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch { /* saqlash imkonsiz — ro‘yxat faqat sessiya uchun */ }
+    return next;
+  });
   const [categorySearch, setCategorySearch] = useState('');
   const [allCategories, setAllCategories] = useState(false);
   const debouncedSearch = useDebounce(search, 350);
+  // Slayderni sudrash har qadamda so‘rov yubormasin: narx faqat to‘xtagach so‘rovga o‘tadi.
+  const debouncedPrice = useDebounce(price, 450);
 
   const filters = useMemo<CatalogFilters>(
-    () => ({ q: debouncedSearch || undefined, categories: selected.length ? selected : undefined, region: region || undefined, minPrice: price.min, maxPrice: price.max, masters: masters || undefined, minRating: rating, available: available || undefined, sort }),
-    [debouncedSearch, selected, region, price, masters, rating, available, sort],
+    () => ({ q: debouncedSearch || undefined, categories: selected.length ? selected : undefined, region: region || undefined, minPrice: debouncedPrice.min, maxPrice: debouncedPrice.max, masters: masters || undefined, minRating: rating, available: available || undefined, sort }),
+    [debouncedSearch, selected, region, debouncedPrice, masters, rating, available, sort],
   );
   const catalog = usePublicServices(filters, page, PAGE_SIZE);
   // Kategoriyalar qatori filtrdan mustaqil: har doim barcha kategoriyalar ko‘rinib turadi.
   const everything = usePublicServices({}, 1, 1);
-  const stats = usePublicStats();
   const regions = usePublicRegions();
   const data = catalog.data;
   const facets = data?.facets;
   const allFacetCategories = everything.data?.facets.categories ?? [];
+  const tileCategories = useMemo(() => [...(everything.data?.facets.categories ?? [])].sort((a, b) => b.count - a.count).slice(0, TILE_COUNT), [everything.data]);
+  const openPanel = () => {
+    setPanelOpen(true);
+    panelRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  };
+  const showOtherCategories = () => {
+    setAllCategories(true);
+    openPanel();
+  };
 
   useEffect(() => setPage(1), [filters]);
 
-  const priceBounds = facets?.price ?? { min: 0, max: 0 };
-  const hasBounds = priceBounds.max > priceBounds.min;
+  const priceBounds = { min: 0, max: Math.max(100000, Math.ceil((facets?.price?.max ?? 0) / 100000) * 100000) };
+  const hasBounds = true;
   const sliderMin = price.min ?? priceBounds.min;
   const sliderMax = price.max ?? priceBounds.max;
   const categoryName = (id: string) => allFacetCategories.find((item) => item.id === id)?.name ?? id;
@@ -115,7 +149,10 @@ export function ServicesPage() {
         </div>
       </div>
 
+      <div className="gm-svc__layout">
+        <div className="gm-svc__main">
       <section className="gm-svc__hero">
+        <img className="gm-svc__herophoto" src="/services/hero.jpg" alt="" decoding="async" aria-hidden="true" />
         <div>
           <span className="gm-svc__brand">GetMaster</span>
           <h2>{t('Ishingizni ishonchli ustalarga topshiring')}</h2>
@@ -127,15 +164,9 @@ export function ServicesPage() {
             <li><ShieldCheck size={15} aria-hidden="true" /> {t('Kafolat')}</li>
           </ul>
         </div>
-        <div className="gm-svc__heroart" aria-hidden="true">
-          {allFacetCategories.slice(0, 4).map((item, index) => {
-            const Icon = categoryIcon(item.name);
-            const palette = categoryPalette(item.id);
-            return <span key={item.id} className={`is-${index}`} style={{ background: palette.a, color: palette.fg }}><Icon size={30} strokeWidth={1.8} /></span>;
-          })}
-          {stats.data && stats.data.completedOrders > 0 && (
-            <div className="gm-svc__proof"><strong>{formatNumber(stats.data.completedOrders)}+</strong><small>{t('Bajarilgan buyurtmalar')}</small></div>
-          )}
+        <div className="gm-svc__proof">
+          <span className="gm-svc__faces" aria-hidden="true"><i><User size={13} /></i><i><User size={13} /></i><i><User size={13} /></i></span>
+          <span><strong>1000+</strong><small>{t('Mamnun mijozlar')}</small></span>
         </div>
       </section>
 
@@ -144,22 +175,26 @@ export function ServicesPage() {
           <span className="gm-svc__tileicon gm-svc__tileicon--all"><LayoutGrid size={22} /></span>
           <b>{t('Barchasi')}</b>
         </button>
-        {allFacetCategories.map((item) => (
+        {tileCategories.map((item) => (
           <button key={item.id} type="button" aria-pressed={selected.length === 1 && selected[0] === item.id} className={cx(selected.includes(item.id) && 'is-active')} onClick={() => setSelected(selected.length === 1 && selected[0] === item.id ? [] : [item.id])}>
             <ServiceArt categoryId={item.id} categoryName={item.name} size="tile" />
             <b>{item.name}</b>
           </button>
         ))}
+        {allFacetCategories.length > TILE_COUNT && (
+          <button type="button" className={cx(selected.some((id) => !tileCategories.some((c) => c.id === id)) && 'is-active')} onClick={showOtherCategories}>
+            <span className="gm-svc__tileicon gm-svc__tileicon--more"><MoreHorizontal size={22} /></span>
+            <b>{t('Boshqa')}</b>
+          </button>
+        )}
       </div>
 
-      <div className="gm-svc__layout">
-        <div className="gm-svc__main">
           <div className="gm-svc__bar">
             <label className="gm-svc__search">
               <Search size={17} aria-hidden="true" />
               <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Xizmat nomi yoki kalit so‘z bo‘yicha qidirish...')} aria-label={t('Qidirish')} autoComplete="off" />
             </label>
-            <RegionSelect value={region} onChange={setRegion} className="gm-svc__region" />
+            <RegionSelect value={region} onChange={setRegion} className="gm-svc__region" allLabel={t('Barcha hududlar')} />
             <label className="gm-svc__select">
               <span className="gm-visually-hidden">{t('Narx oralig‘i')}</span>
               <select value={presetKey ?? 'custom'} onChange={(event) => { const preset = PRICE_PRESETS.find((item) => item.key === event.target.value); setPrice(preset ? { min: preset.min, max: preset.max } : price); }} aria-label={t('Narx oralig‘i')}>
@@ -171,8 +206,8 @@ export function ServicesPage() {
             <label className="gm-svc__select">
               <span className="gm-visually-hidden">{t('Mavjud ustalar')}</span>
               <select value={available ? 'yes' : ''} onChange={(event) => setAvailable(event.target.value === 'yes')} aria-label={t('Mavjud ustalar')}>
-                <option value="">{t('Barcha xizmatlar')}</option>
-                <option value="yes">{t('Mavjud ustalar')}{facets ? ` (${facets.available})` : ''}</option>
+                <option value="">{t('Mavjud ustalar')}</option>
+                <option value="yes">{t('Faqat ustasi borlar')}{facets ? ` (${facets.available})` : ''}</option>
               </select>
               <ChevronDown size={15} aria-hidden="true" />
             </label>
@@ -183,7 +218,7 @@ export function ServicesPage() {
               </select>
               <ChevronDown size={15} aria-hidden="true" />
             </label>
-            <button type="button" className="gm-svc__filterbtn" onClick={() => setPanelOpen((open) => !open)} aria-expanded={panelOpen}>
+            <button type="button" className="gm-svc__filterbtn" onClick={openPanel} aria-expanded={panelOpen}>
               <Filter size={16} aria-hidden="true" /> {t('Filtrlar')}{filterCount > 0 && <span>{filterCount}</span>}
             </button>
           </div>
@@ -198,8 +233,9 @@ export function ServicesPage() {
             {data?.items.map((service) => (
               <article key={service.id} className="gm-svc__card">
                 <div className="gm-svc__art">
-                  <ServiceArt categoryId={service.category.id} categoryName={service.category.name} />
-                  <span className="gm-svc__tag">{service.category.name}</span>
+                  <ServiceCover serviceId={service.id} serviceName={service.name} categoryId={service.category.id} categoryName={service.category.name} />
+                  <button type="button" className={cx('gm-svc__fav', favorites.includes(service.id) && 'is-on')} onClick={() => toggleFavorite(service.id)} aria-pressed={favorites.includes(service.id)} aria-label={favorites.includes(service.id) ? t('Sevimlilardan olib tashlash') : t('Sevimlilarga qo‘shish')}><Heart size={16} fill={favorites.includes(service.id) ? 'currentColor' : 'none'} /></button>
+                  <span className="gm-svc__tag"><CategoryGlyph id={service.category.id} name={service.category.name} />{service.category.name}</span>
                   <span className={cx('gm-svc__masters', service.masters === 0 && 'is-none')}><Users size={13} aria-hidden="true" /> {service.masters > 0 ? t('{count} ta usta', { count: service.masters }) : t('Usta yo‘q')}</span>
                 </div>
                 <div className="gm-svc__body">
@@ -236,7 +272,7 @@ export function ServicesPage() {
           )}
         </div>
 
-        <aside className={cx('gm-svc__panel', panelOpen && 'is-open')} aria-label={t('Filtrlar')}>
+        <aside ref={panelRef} className={cx('gm-svc__panel', panelOpen && 'is-open')} aria-label={t('Filtrlar')}>
           <header>
             <h2>{t('Tanlangan filtrlar')}</h2>
             <button type="button" onClick={reset} disabled={chips.length === 0}>{t('Tozalash')}</button>
@@ -270,7 +306,7 @@ export function ServicesPage() {
           {hasBounds && (
             <section>
               <h3>{t('Narx oralig‘i')}</h3>
-              <div className="gm-svc__range">
+              <div className="gm-svc__range" style={{ '--lo': `${(sliderMin / priceBounds.max) * 100}%`, '--hi': `${(sliderMax / priceBounds.max) * 100}%` } as React.CSSProperties}>
                 <input type="range" min={priceBounds.min} max={priceBounds.max} step={1000} value={sliderMin} onChange={(event) => setPrice({ ...price, min: Math.min(Number(event.target.value), sliderMax) <= priceBounds.min ? undefined : Math.min(Number(event.target.value), sliderMax) })} aria-label={t('Eng kam narx')} />
                 <input type="range" min={priceBounds.min} max={priceBounds.max} step={1000} value={sliderMax} onChange={(event) => setPrice({ ...price, max: Math.max(Number(event.target.value), sliderMin) >= priceBounds.max ? undefined : Math.max(Number(event.target.value), sliderMin) })} aria-label={t('Eng ko‘p narx')} />
               </div>

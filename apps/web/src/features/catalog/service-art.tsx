@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import './service-art.css';
 import { Brush, Droplets, Flower2, Hammer, HardHat, Lamp, PaintRoller, Palette, Refrigerator, Sofa, Sparkles, Truck, Wind, Wrench, Zap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -45,6 +46,7 @@ export function categoryPalette(id: string) {
 export function ServiceArt({ categoryId, categoryName, size = 'card' }: { categoryId: string; categoryName: string; size?: 'card' | 'tile' }) {
   const palette = categoryPalette(categoryId);
   const Icon = categoryIcon(categoryName);
+  if (size === 'tile') return <span className="gm-sart gm-sart--tile gm-sart--plain" aria-hidden="true"><span className="gm-sart__icon"><Icon size={20} strokeWidth={1.7} /></span></span>;
   return (
     <span className={`gm-sart gm-sart--${size}`} style={{ background: `linear-gradient(135deg, ${palette.a}, ${palette.b})`, color: palette.fg }} aria-hidden="true">
       <i className="gm-sart__ring gm-sart__ring--1" style={{ borderColor: palette.fg }} />
@@ -52,4 +54,44 @@ export function ServiceArt({ categoryId, categoryName, size = 'card' }: { catego
       <span className="gm-sart__icon"><Icon size={size === 'card' ? 44 : 22} strokeWidth={1.8} /></span>
     </span>
   );
+}
+
+/** Xizmat nomi (aniqroq) va kategoriya bo‘yicha foto havolalari (public/services). Mos foto yo‘q bo‘lsa — bo‘sh. */
+const PHOTO_RULES: Array<[RegExp, string[]]> = [
+  [/massaj/i, ['massage-1', 'massage-2']],
+  [/manikyur|pedikyur|qosh|kiprik|makiyaj/i, ['nails-1', 'nails-2']],
+  [/soch|soqol|mo.ylov|sartarosh/i, ['hair', 'hair-salon']],
+  [/telefon|ekran|batareya/i, ['phone']],
+  [/kompyuter|noutbuk|dastur/i, ['computer']],
+  [/avto|dvigatel|shina|yurish qismi|evakuator|avtomobil/i, ['car']],
+  [/enaga|repetitor|til o.rgat|bola/i, ['kids-books', 'study']],
+  [/bo.yoq|suvoq|pardoz/i, ['build-roller', 'build-paint']],
+  [/kafel|plitka|laminat|pol |gipso|eshik|deraza|tom /i, ['build-tools', 'build-hammer', 'build-site']],
+  [/quvur/i, ['plumb-pipes']],
+  [/unitaz|vanna/i, ['plumb-bath']],
+  [/kran|santex|armatura/i, ['plumb-faucet', 'plumb-pipes']],
+  [/elektr|rozetka|yoritgich|sim/i, ['elec-1', 'elec-2']],
+  [/tozalash|tozala|ximchistka|uy tozala/i, ['clean-window', 'clean-vacuum', 'clean-spray']],
+  [/oshxona/i, ['home-kitchen']],
+  [/mebel|shkaf/i, ['home-living', 'home-dining', 'home-modern']],
+  [/muzlatgich|gaz plita|duxovka|kir yuv|changyutgich|televizor|maishiy/i, ['home-appl']],
+  [/qurilish|ta.mir/i, ['build-site', 'build-tools']],
+  [/dizayn|interyer/i, ['home-modern', 'home-living']],
+  [/bog|hovli/i, ['home-exterior', 'home-house']],
+];
+
+export function servicePhoto(serviceName: string, categoryName: string, id: string): string | null {
+  const rule = PHOTO_RULES.find(([pattern]) => pattern.test(serviceName)) ?? PHOTO_RULES.find(([pattern]) => pattern.test(categoryName));
+  if (!rule) return null;
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return `/services/${rule[1][hash % rule[1].length]}.jpg`;
+}
+
+/** Karta fonidagi haqiqiy foto; foto topilmasa yoki yuklanmasa — kategoriya rangidagi tasvirga qaytadi. */
+export function ServiceCover({ serviceId, serviceName, categoryId, categoryName }: { serviceId: string; serviceName: string; categoryId: string; categoryName: string }) {
+  const [failed, setFailed] = useState(false);
+  const src = servicePhoto(serviceName, categoryName, serviceId);
+  if (!src || failed) return <ServiceArt categoryId={categoryId} categoryName={categoryName} />;
+  return <img className="gm-sphoto" src={src} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} />;
 }

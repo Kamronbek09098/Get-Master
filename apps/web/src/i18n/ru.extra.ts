@@ -1,5 +1,9 @@
 /** Автогенерация: переводы 2-го этапа (ru). Ключ — исходный узбекский текст. */
 export const ruExtra: Record<string, string> = {
+  "Mamnun mijozlar": "Довольных клиентов",
+  "Faqat ustasi borlar": "Только с мастерами",
+  "Sevimlilardan olib tashlash": "Убрать из избранного",
+  "Sevimlilarga qo‘shish": "Добавить в избранное",
   "1 ta usta": "1 мастер",
   "100 000 so‘mgacha": "До 100 000 сум",
   "100 000 — 300 000": "100 000 — 300 000",
