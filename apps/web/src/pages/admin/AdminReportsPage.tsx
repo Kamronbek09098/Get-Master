@@ -12,7 +12,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
-import { cx, formatDateTime, formatMoney, newIdempotencyKey } from '@/lib/utils';
+import { cx, formatDateTime, formatMoney, formatNumber, newIdempotencyKey } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import { providerLabel } from '@/features/payment/labels';
 import { ProviderLogo } from '@/features/payment/components/ProviderLogo';
@@ -75,12 +75,11 @@ function rangeText(from: string, to: string, all: boolean): string {
   return sameMonth ? `${a.getDate()} – ${b.getDate()} ${MONTHS_FULL[b.getMonth()]}, ${b.getFullYear()}` : `${a.getDate()} ${MONTHS_FULL[a.getMonth()]} – ${b.getDate()} ${MONTHS_FULL[b.getMonth()]}, ${b.getFullYear()}`;
 }
 
-const nf = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 
 function Money({ value }: { value: number }) {
   return (
-    <span className="gm-rmoney" title={`${nf.format(value)} UZS`}>
-      {nf.format(Math.round(value))} <small>UZS</small>
+    <span className="gm-rmoney" title={`${formatNumber(value)} UZS`}>
+      {formatNumber(Math.round(value))} <small>UZS</small>
     </span>
   );
 }
@@ -110,6 +109,22 @@ function Delta({ now, before, inverse = false, format }: { now: number; before: 
       </b>
       <small>({t('oldingi davr')}: {format(before)})</small>
     </span>
+  );
+}
+
+/** Katta ko‘rsatkich kartasi: bosilganda tegishli ma’lumotga (to‘lovlar jadvali yoki buyurtmalar ro‘yxati) olib boradi. */
+function KpiShell({ children, label, go, onStatus }: { children: ReactNode; label: string; go: { status: StatusKey } | { to: string }; onStatus: (status: StatusKey) => void }) {
+  if ('to' in go) {
+    return (
+      <Link to={go.to} className="gm-rkpi gm-rkpi--link" aria-label={label} title={label}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" className="gm-rkpi gm-rkpi--link" aria-label={label} title={label} onClick={() => onStatus(go.status)}>
+      {children}
+    </button>
   );
 }
 
@@ -219,6 +234,11 @@ export function AdminReportsPage() {
   const series = useMemo(() => data?.series ?? [], [data]);
   const net = (x: ReportTotals) => x.revenue - x.refunded;
   const hasFilters = !!(debounced || provider || status);
+  /** Buyurtmalar sahifasiga o‘tish: shu davr (yaratilgan sana) va tegishli holat filtri bilan, ro‘yxat karta sonlariga mos chiqadi. */
+  const ordersLink = (params: Record<string, string>) => {
+    const query = new URLSearchParams({ ...params, ...(range.from ? { from: range.from } : {}), ...(range.to ? { to: range.to } : {}) });
+    return `/admin/buyurtmalar?${query.toString()}`;
+  };
 
   function goTable(next: Partial<{ status: '' | StatusKey; search: string }>) {
     if (next.status !== undefined) setStatus(next.status);
@@ -260,13 +280,13 @@ export function AdminReportsPage() {
   }
 
   const periodHint = prev ? t('Oldingi shunday davr bilan solishtirildi') : t('Butun davr uchun solishtirish yo‘q');
-  const cards: Array<{ key: string; label: string; icon: ReactNode; tone: string; value: number; before?: number; inverse?: boolean; spark: number[]; color: string; tip: string; note?: ReactNode }> = cur
+  const cards: Array<{ key: string; label: string; icon: ReactNode; tone: string; value: number; before?: number; inverse?: boolean; spark: number[]; color: string; tip: string; note?: ReactNode; open: string; go: { status: StatusKey } | { to: string } }> = cur
     ? [
-        { key: 'rev', label: t('Jami tushum'), icon: <Wallet size={22} />, tone: 'green', value: cur.revenue, before: prev?.revenue, spark: series.map((p) => p.revenue), color: '#10b981', tip: t('Muvaffaqiyatli to‘lovlar summasi (to‘lov bajarilgan kun bo‘yicha). {hint}.', { hint: periodHint }) },
-        { key: 'ref', label: t('Qaytarilgan'), icon: <Undo2 size={22} />, tone: 'red', value: cur.refunded, before: prev?.refunded, inverse: true, spark: series.map((p) => p.refunded), color: '#e5384f', tip: t('Qaytarishlar jurnalidagi muvaffaqiyatli qaytarishlar (qaytarilgan kun bo‘yicha).') },
-        { key: 'net', label: t('Sof tushum'), icon: <Banknote size={22} />, tone: 'blue', value: net(cur), before: prev ? net(prev) : undefined, spark: series.map((p) => p.revenue - p.refunded), color: '#2f6bff', tip: t('Jami tushum − qaytarilgan.') },
+        { key: 'rev', label: t('Jami tushum'), icon: <Wallet size={22} />, tone: 'green', value: cur.revenue, before: prev?.revenue, spark: series.map((p) => p.revenue), color: '#10b981', open: t('Muvaffaqiyatli to‘lovlarni ko‘rish'), go: { status: 'succeeded' }, tip: t('Muvaffaqiyatli to‘lovlar summasi (to‘lov bajarilgan kun bo‘yicha). {hint}.', { hint: periodHint }) },
+        { key: 'ref', label: t('Qaytarilgan'), icon: <Undo2 size={22} />, tone: 'red', value: cur.refunded, before: prev?.refunded, inverse: true, spark: series.map((p) => p.refunded), color: '#e5384f', open: t('Qaytarilgan to‘lovlarni ko‘rish'), go: { status: 'refunded' }, tip: t('Qaytarishlar jurnalidagi muvaffaqiyatli qaytarishlar (qaytarilgan kun bo‘yicha).') },
+        { key: 'net', label: t('Sof tushum'), icon: <Banknote size={22} />, tone: 'blue', value: net(cur), before: prev ? net(prev) : undefined, spark: series.map((p) => p.revenue - p.refunded), color: '#2f6bff', open: t('Muvaffaqiyatli to‘lovlarni ko‘rish'), go: { status: 'succeeded' }, tip: t('Jami tushum − qaytarilgan.') },
         {
-          key: 'pro', label: t('Platforma daromadi'), icon: <BarChart3 size={22} />, tone: 'violet', value: cur.platformFee, before: prev?.platformFee, spark: [], color: '#8b5cf6',
+          key: 'pro', label: t('Platforma daromadi'), icon: <BarChart3 size={22} />, tone: 'violet', value: cur.platformFee, before: prev?.platformFee, spark: [], color: '#8b5cf6', open: t('Yakunlangan buyurtmalarni ko‘rish'), go: { to: ordersLink({ status: 'COMPLETED' }) },
           tip: t('Yakunlangan buyurtmalarda saqlangan haqiqiy komissiya ({rate}%). Taxminiy hisob emas.', { rate: ((data?.commissionRate ?? 0.05) * 100).toFixed(0) }),
           note: cur.completedWithoutFee > 0 ? <span className="gm-rkpi__warn"><AlertTriangle size={12} aria-hidden="true" /> {t('{n} ta buyurtmada komissiya saqlanmagan', { n: cur.completedWithoutFee })}</span> : undefined,
         },
@@ -276,9 +296,9 @@ export function AdminReportsPage() {
   const small = cur
     ? [
         { label: t('To‘lovlar'), icon: <CreditCard size={20} />, tone: 'blue', value: cur.payments, before: prev?.payments, hint: t('shundan {n} ta muvaffaqiyatli', { n: cur.settledPayments }), onClick: () => goTable({ status: '' }) },
-        { label: t('Buyurtmalar'), icon: <ClipboardList size={20} />, tone: 'blue', value: cur.orders, before: prev?.orders, to: '/admin/buyurtmalar' },
-        { label: t('Yakunlangan'), icon: <CheckCircle2 size={20} />, tone: 'blue', value: cur.completed, before: prev?.completed, to: '/admin/buyurtmalar' },
-        { label: t('Bekor qilingan'), icon: <XCircle size={20} />, tone: 'red', value: cur.cancelled, before: prev?.cancelled, inverse: true, to: '/admin/buyurtmalar' },
+        { label: t('Faol buyurtmalar'), icon: <ClipboardList size={20} />, tone: 'blue', value: cur.active, before: prev?.active, hint: t('davrda yaratilganlar ichida'), to: ordersLink({ ongoing: 'true' }) },
+        { label: t('Yakunlangan buyurtmalar'), icon: <CheckCircle2 size={20} />, tone: 'green', value: cur.completed, before: prev?.completed, hint: t('davrda yaratilganlar ichida'), to: ordersLink({ status: 'COMPLETED' }) },
+        { label: t('Bekor qilingan buyurtmalar'), icon: <XCircle size={20} />, tone: 'red', value: cur.cancelled, before: prev?.cancelled, inverse: true, hint: t('davrda yaratilganlar ichida'), to: ordersLink({ status: 'CANCELLED' }) },
       ]
     : [];
 
@@ -363,16 +383,16 @@ export function AdminReportsPage() {
         <div className={cx('gm-rep__body', overview.isFetching && 'is-busy')} aria-busy={overview.isFetching}>
           <div className="gm-rkpis">
             {cards.map((card) => (
-              <div key={card.key} className="gm-rkpi">
+              <KpiShell key={card.key} label={card.open} go={card.go} onStatus={(next) => goTable({ status: next })}>
                 <span className={`gm-rkpi__icon gm-rkpi__icon--${card.tone}`} aria-hidden="true">{card.icon}</span>
                 <div className="gm-rkpi__body">
                   <span className="gm-rkpi__label">{card.label} <InfoTip text={card.tip} label={card.label} /></span>
                   <strong><Money value={card.value} /></strong>
-                  <Delta now={card.value} before={card.before} inverse={card.inverse} format={(v) => `${nf.format(Math.round(v))} UZS`} />
+                  <Delta now={card.value} before={card.before} inverse={card.inverse} format={(v) => `${formatNumber(Math.round(v))} UZS`} />
                   {card.note}
                 </div>
                 {card.spark.length > 0 && <Sparkline values={card.spark} color={card.color} />}
-              </div>
+              </KpiShell>
             ))}
           </div>
 
@@ -383,9 +403,9 @@ export function AdminReportsPage() {
                   <span className={`gm-rkpi__icon gm-rkpi__icon--${card.tone}`} aria-hidden="true">{card.icon}</span>
                   <div className="gm-rkpi__body">
                     <span className="gm-rkpi__label">{card.label}</span>
-                    <strong className="gm-rsmall__n">{nf.format(card.value)}</strong>
+                    <strong className="gm-rsmall__n">{formatNumber(card.value)}</strong>
                     {'hint' in card && card.hint && <span className="gm-rsmall__hint">{card.hint}</span>}
-                    <Delta now={card.value} before={card.before} inverse={card.inverse} format={(v) => nf.format(v)} />
+                    <Delta now={card.value} before={card.before} inverse={card.inverse} format={(v) => formatNumber(v)} />
                   </div>
                   <ChevronRight size={16} aria-hidden="true" className="gm-rsmall__go" />
                 </>
@@ -408,7 +428,7 @@ export function AdminReportsPage() {
                   ))}
                 </div>
               </header>
-              <AreaChart points={chartPoints} unit={t('Tushum dinamikasi')} integer={tab === 'payments'} format={tab === 'payments' ? (v) => `${nf.format(v)} ${t('ta')}` : (v) => `${nf.format(v)} UZS`} />
+              <AreaChart points={chartPoints} unit={t('Tushum dinamikasi')} integer={tab === 'payments'} format={tab === 'payments' ? (v) => `${formatNumber(v)} ${t('ta')}` : (v) => `${formatNumber(v)} UZS`} />
             </section>
 
             <section className="gm-dpanel">

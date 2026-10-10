@@ -70,8 +70,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               formatValue
                 ? (event) => {
                     const el = event.currentTarget;
-                    // Bo‘shliqdan keyin Backspace bosilsa, bo‘shliqni emas, undan oldingi raqamni o‘chiramiz.
-                    if (event.key === 'Backspace' && el.selectionStart === el.selectionEnd && el.selectionStart && el.value.charAt(el.selectionStart - 1) === ' ') {
+                    // Ajratgichdan (bo‘shliq/vergul) keyin Backspace bosilsa, ajratgichni emas, undan oldingi raqamni o‘chiramiz.
+                    if (event.key === 'Backspace' && el.selectionStart === el.selectionEnd && el.selectionStart && /\D/.test(el.value.charAt(el.selectionStart - 1))) {
                       el.setSelectionRange(el.selectionStart - 1, el.selectionStart - 1);
                     }
                     onKeyDown?.(event);

@@ -292,7 +292,11 @@ export async function runWork(h: Harness, order: BookedOrder, customer: TestUser
   const a = await h.post(`/orders/${order.orderId}/work-proofs`, master.token, { stage: 'AFTER', mediaAssetId: after });
   if (a.status !== 201) throw new Error(`AFTER proof failed: ${JSON.stringify(a.body)}`);
   await step('submit-completion', master.token);
-  if (confirm) await step('confirm-completion', customer.token);
+  if (confirm) {
+    // Ishni tasdiqlash uchun to'lov to'liq amalga oshgan bo'lishi shart: avval onlayn to'lov muvaffaqiyatli yakunlanadi.
+    await payOrder(h, customer, order.orderId);
+    await step('confirm-completion', customer.token);
+  }
 }
 
 export function sendWebhook(h: Harness, payload: Record<string, unknown>, opts: { secret?: string; provider?: string } = {}): Promise<ApiResult> {

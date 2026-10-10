@@ -1,7 +1,8 @@
-import { IsNotEmpty, IsUUID } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
+import { IsNotEmpty } from 'class-validator';
 
 export class UpdateClassificationDto {
-  @IsUUID('4')
+  @IsUUID()
   @IsNotEmpty()
   serviceId!: string;
 }

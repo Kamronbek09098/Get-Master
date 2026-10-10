@@ -20,7 +20,7 @@ const POST_INCLUDE = {
       experienceYears: true,
       isPro: true,
       verification: true,
-      user: { select: { id: true, accountNumber: true, firstName: true, lastName: true } },
+      user: { select: { id: true, accountNumber: true, firstName: true, lastName: true, avatarAssetId: true } },
     },
   },
 } satisfies Prisma.WorkPostInclude;
@@ -225,7 +225,7 @@ export class FeedService {
       where: { postId: id },
       orderBy: { createdAt: 'desc' },
       take: 100,
-      select: { id: true, text: true, createdAt: true, userId: true, user: { select: { firstName: true, lastName: true, accountNumber: true } } },
+      select: { id: true, text: true, createdAt: true, userId: true, user: { select: { firstName: true, lastName: true, avatarAssetId: true, accountNumber: true } } },
     });
     return {
       items: rows.map((row) => ({

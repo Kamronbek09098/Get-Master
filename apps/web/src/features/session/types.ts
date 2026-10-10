@@ -7,6 +7,10 @@ export interface Me {
   email: string | null;
   firstName: string | null;
   lastName: string | null;
+  /** Profil rasmi manzili (yuklangan rasm yoki Google rasmi). */
+  avatar?: string | null;
+  /** Shu akkaunt o‘ziga profil rasmi qo‘ya oladimi (admin uchun superadmin ruxsatiga bog‘liq). */
+  canSetAvatar?: boolean;
   status: UserStatus;
   roles: Role[];
   createdAt?: string;

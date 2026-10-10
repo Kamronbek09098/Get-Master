@@ -1,10 +1,11 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
 import { ServiceMode } from '@prisma/client';
-import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsPositive, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsPositive, IsString, MaxLength, MinLength } from 'class-validator';
 
 /** Mijoz suhbat ichidan ustaga to‘g‘ridan-to‘g‘ri buyurtma yuboradi. */
 export class CreateDirectOrderDto {
-  @IsUUID('4')
+  @IsUUID()
   conversationId!: string;
 
   @IsString()
@@ -30,7 +31,7 @@ export class CreateDirectOrderDto {
   scheduledStartAt!: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   addressId?: string;
 
   @IsOptional()

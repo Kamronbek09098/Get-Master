@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Ip, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { ParseUUIDPipe } from '../../common/validators/any-uuid';
+import { Body, Controller, Get, Ip, Param, Patch, Post, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';

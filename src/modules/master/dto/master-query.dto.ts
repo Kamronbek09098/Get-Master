@@ -1,8 +1,9 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
 import { ServiceMode } from '@prisma/client';
 import { IsIn } from 'class-validator';
 import { REGION_KEYS } from '../../../common/constants/regions';
-import { IsEnum, IsNumber, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { CursorQueryDto } from '../../../common/dto/cursor-query.dto';
 
 export class MasterQueryDto extends CursorQueryDto {

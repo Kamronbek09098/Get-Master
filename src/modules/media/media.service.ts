@@ -238,6 +238,11 @@ export class MediaService {
         if (subscription.status !== 'PENDING' || subscription.method !== 'CARD') throw new ForbiddenException(ERRORS.SUBSCRIPTION_NOT_PENDING);
         return;
       }
+      case 'USER_AVATAR': {
+        // Faqat profil egasining o‘zi nomidan (admin yuklasa ham, fayl egasi — shu foydalanuvchi) va faqat AvatarService orqali.
+        if (link.type !== 'User' || link.id !== uploaderId) throw new ForbiddenException(ERRORS.MEDIA_INVALID_TARGET);
+        return;
+      }
       case 'MASTER_PORTFOLIO':
       case 'MASTER_VERIFICATION_DOCUMENT': {
         const masterProfile = await this.db.masterProfile.findUnique({ where: { userId: uploaderId } });

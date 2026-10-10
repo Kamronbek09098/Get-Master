@@ -7,8 +7,8 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { OrderService } from '../order/order.service';
 import { AdminOrderQueryDto } from './dto/order-query.dto';
 
-const PERSON = { id: true, accountNumber: true, firstName: true, lastName: true, phone: true } as const;
-const ACTIVE: OrderStatus[] = ['BOOKED', 'CONFIRMED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'WAITING_CONFIRMATION', 'DISPUTED'];
+const PERSON = { id: true, accountNumber: true, firstName: true, lastName: true, avatarAssetId: true, phone: true } as const;
+export const ACTIVE: OrderStatus[] = ['BOOKED', 'CONFIRMED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'WAITING_CONFIRMATION', 'DISPUTED'];
 
 @Injectable()
 export class AdminOrdersService {

@@ -1,14 +1,15 @@
-import { IsEnum, IsIn, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
+import { IsEnum, IsIn, IsNotEmpty } from 'class-validator';
 import { MediaAssetKind } from '@prisma/client';
 
 export class InitiateUploadDto {
   @IsEnum(MediaAssetKind)
   kind!: MediaAssetKind;
 
-  @IsIn(['ProblemRequest', 'Order', 'Conversation', 'MasterProfile', 'Subscription'])
-  linkType!: 'ProblemRequest' | 'Order' | 'Conversation' | 'MasterProfile' | 'Subscription';
+  @IsIn(['ProblemRequest', 'Order', 'Conversation', 'MasterProfile', 'Subscription', 'User'])
+  linkType!: 'ProblemRequest' | 'Order' | 'Conversation' | 'MasterProfile' | 'Subscription' | 'User';
 
-  @IsUUID('4')
+  @IsUUID()
   @IsNotEmpty()
   linkId!: string;
 }

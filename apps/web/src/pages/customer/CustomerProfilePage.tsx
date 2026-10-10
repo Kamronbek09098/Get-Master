@@ -16,6 +16,8 @@ import { CustomerForm } from '@/features/customer/components/CustomerForm';
 import { LogoutDialog } from '@/features/auth/components/LogoutDialog';
 import { useMyOrders } from '@/features/order/hooks/useOrders';
 import { useMyRequests } from '@/features/request/hooks/useRequests';
+import { AvatarEditor } from '@/features/profile/AvatarEditor';
+import { useMe } from '@/features/session/hooks/useMe';
 import { ProfileHero } from '@/features/profile/ProfileHero';
 import { InfoRows } from '@/features/profile/ProfileCard';
 import { ProfileMenuList, ProfileSubPage } from '@/features/profile/ProfileMenu';
@@ -28,6 +30,7 @@ const BASE = '/mijoz/profil';
 /** Mijoz profili: asosiy sahifada menyu, har bir qator — alohida ichki bo‘lim (ilova uslubi). */
 export function CustomerProfilePage() {
   const { section } = useParams();
+  const me = useMe();
   const profile = useCustomerProfile();
   const addresses = useAddresses();
   const orders = useMyOrders();
@@ -89,6 +92,7 @@ export function CustomerProfilePage() {
       <ProfileHero
         name={name}
         seed={data.id}
+        avatar={<AvatarEditor name={name} seed={data.id} size="lg" src={me.data?.avatar} canEdit={me.data?.canSetAvatar !== false} />}
         accountNumber={data.accountNumber}
         subtitle={data.phone}
         badges={

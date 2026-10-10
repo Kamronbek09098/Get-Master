@@ -1,5 +1,6 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, ValidateNested } from 'class-validator';
 import { EvidenceType } from '@prisma/client';
 
 export class DisputeEvidenceDto {
@@ -18,7 +19,7 @@ export class DisputeEvidenceDto {
 }
 
 export class CreateDisputeDto {
-  @IsUUID('4')
+  @IsUUID()
   orderId!: string;
 
   @IsString()

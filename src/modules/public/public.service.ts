@@ -64,7 +64,7 @@ export class PublicService {
           serviceModes: true,
           placeAddress: true,
           region: true,
-          user: { select: { accountNumber: true, firstName: true, lastName: true } },
+          user: { select: { accountNumber: true, firstName: true, lastName: true, avatarAssetId: true } },
           services: { where: { isActive: true, service: { isActive: true } }, take: 3, orderBy: { basePrice: 'asc' }, select: { basePrice: true, service: { select: { name: true } } } },
           _count: { select: { portfolio: { where: { status: 'APPROVED' } } } },
         },

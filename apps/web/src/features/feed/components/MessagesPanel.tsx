@@ -70,7 +70,7 @@ export function MessagesPanel({ open, onClose }: { open: boolean; onClose: () =>
             return (
               <li key={conversation.id}>
                 <button type="button" className={cx('gf-mp__row', conversation.unreadCount > 0 && 'is-unread')} onClick={() => setActiveId(conversation.id)}>
-                  <ChatAvatar name={label} seed={conversation.counterpart?.id ?? conversation.id} size="lg" admin={conversation.type === 'SUPPORT'} />
+                  <ChatAvatar name={label} seed={conversation.counterpart?.id ?? conversation.id} src={conversation.counterpart?.avatar} size="lg" admin={conversation.type === 'SUPPORT'} />
                   <span className="gf-mp__body">
                     <strong>{label}</strong>
                     <span>

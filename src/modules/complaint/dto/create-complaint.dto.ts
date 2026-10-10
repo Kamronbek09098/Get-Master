@@ -1,12 +1,13 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateComplaintDto {
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   orderId?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   targetUserId?: string;
 
   @IsString()

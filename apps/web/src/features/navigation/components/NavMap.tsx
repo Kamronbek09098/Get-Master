@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { Compass, Minus, Plus } from 'lucide-react';
 import type { LatLon } from '../geometry';
+import type { ReactNode } from 'react';
 import type { LivePosition } from '../useLiveLocation';
 import { t } from '@/i18n';
 import './navigation.css';
@@ -22,11 +23,23 @@ export interface NavMapProps {
   followZoom?: number;
   /** Xarita harakat yo‘nalishi tepada bo‘lib buriladi va 3D qiyalik oladi (kuzatuv yoqilganda). */
   headingUp?: boolean;
-  onToggleHeadingUp?: () => void;
   /** Marker qaragan yo‘nalish: harakatda — yo‘l bo‘yicha, turganda — telefon kompasi. */
   markerHeading?: number | null;
   /** Marker kompas bo‘yicha burilgan (nur konusi ko‘rinadi). */
   compassActive?: boolean;
+  /** Xarita mavzusi: «auto» — ilova mavzusiga qarab. */
+  mapTheme?: 'auto' | 'light' | 'dark';
+  /** Keyingi burilish nuqtasi (xaritada ko‘k belgi shu joyda turadi) va belgi ichidagi tarkib. */
+  maneuverAt?: LatLon | null;
+  maneuverSign?: ReactNode;
+  /** Burilish nuqtasi ekranda ko‘rinyaptimi (ko‘rinmasa, tepada belgi chiqadi). */
+  onManeuverVisible?: (visible: boolean) => void;
+  /** Xarita burilish burchagi (kompas tugmasi uchun). */
+  onBearing?: (deg: number) => void;
+  /** Pastki panel balandligi (px): xarita shu qismni hisobga olib joylashadi. */
+  bottomInset?: number;
+  /** Qiymat o‘zgarganda butun marshrutni ko‘rsatadi («Marshrut sharhi»). */
+  overviewKey?: number;
 }
 
 /** OpenFreeMap (bepul, kalitsiz, OpenStreetMap ma’lumoti): vektor xarita — burilganda yozuvlar to‘g‘ri o‘qiladi. */
@@ -36,10 +49,11 @@ const FOLLOW_PITCH = 55;
 const empty = (): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: [] });
 const line = (coords: Array<[number, number]>): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: coords.length > 1 ? [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords } }] : [] });
 const lines = (list: Array<Array<[number, number]>>): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: list.filter((c) => c.length > 1).map((c) => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: c } })) });
-const themeOf = () => (document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+const appTheme = () => (document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+const resolveTheme = (pref: 'auto' | 'light' | 'dark') => (pref === 'auto' ? appTheme() : pref);
 
 /** Navigatsiya xaritasi (MapLibre): marshrut, o‘tilgan qism, strelka, manzil, yo‘nalish bo‘yicha burilish va 3D qiyalik. */
-export function NavMap({ route, passed, alternatives, position, destination, follow, onUserMove, fitKey, followZoom = 17, headingUp = true, onToggleHeadingUp, markerHeading = null, compassActive = false }: NavMapProps) {
+export function NavMap({ route, passed, alternatives, position, destination, follow, onUserMove, fitKey, followZoom = 17, headingUp = true, markerHeading = null, compassActive = false, mapTheme = 'auto', maneuverAt = null, maneuverSign = null, onManeuverVisible, onBearing, bottomInset = 0, overviewKey = 0 }: NavMapProps) {
   const holder = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const ready = useRef(false);
@@ -47,8 +61,23 @@ export function NavMap({ route, passed, alternatives, position, destination, fol
   const me = useRef<maplibregl.Marker | null>(null);
   const glide = useRef(0);
   const headingRef = useRef(0);
-  const [zoomOffset, setZoomOffset] = useState(0);
-  const [heading, setHeading] = useState(0);
+  const signMarker = useRef<maplibregl.Marker | null>(null);
+  const [signEl] = useState(() => {
+    const el = document.createElement('div');
+    el.className = 'gn-sign';
+    return el;
+  });
+  const inset = useRef(bottomInset);
+  inset.current = bottomInset;
+  const visibleCb = useRef(onManeuverVisible);
+  visibleCb.current = onManeuverVisible;
+  const bearingCb = useRef(onBearing);
+  bearingCb.current = onBearing;
+  const signAt = useRef<LatLon | null>(maneuverAt);
+  signAt.current = maneuverAt;
+  const themePref = useRef(mapTheme);
+  themePref.current = mapTheme;
+  const themeApply = useRef<() => void>(() => undefined);
   const onMove = useRef(onUserMove);
   onMove.current = onUserMove;
   const rotated = headingUp && follow && !!position && position.heading != null;
@@ -79,7 +108,7 @@ export function NavMap({ route, passed, alternatives, position, destination, fol
     if (!holder.current) return;
     const instance = new maplibregl.Map({
       container: holder.current,
-      style: STYLE[themeOf()],
+      style: STYLE[resolveTheme(mapTheme)],
       center: [destination.lon, destination.lat],
       zoom: 14,
       maxPitch: 70,
@@ -90,7 +119,17 @@ export function NavMap({ route, passed, alternatives, position, destination, fol
     instance.on('style.load', addLayers);
     // Atribut (litsenziya talabi) ixcham: bosilganda ochiladi.
     void instance.once('load', () => holder.current?.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show'));
-    instance.on('rotate', () => setHeading(instance.getBearing()));
+    instance.on('rotate', () => bearingCb.current?.(instance.getBearing()));
+    const checkSign = () => {
+      const at = signAt.current;
+      if (!at || !visibleCb.current) return;
+      const point = instance.project([at.lon, at.lat]);
+      const box = instance.getContainer().getBoundingClientRect();
+      const inside = point.x > 24 && point.x < box.width - 24 && point.y > 96 && point.y < box.height - inset.current - 24;
+      visibleCb.current(inside);
+    };
+    instance.on('move', checkSign);
+    instance.on('moveend', checkSign);
     // Foydalanuvchi o‘zi surganda (barmoq/sichqoncha) kuzatuv o‘chadi; dastur harakati (easeTo) hisobga olinmaydi.
     instance.on('dragstart', (event) => {
       if ((event as { originalEvent?: unknown }).originalEvent) onMove.current();
@@ -101,14 +140,16 @@ export function NavMap({ route, passed, alternatives, position, destination, fol
     new maplibregl.Marker({ element: dest }).setLngLat([destination.lon, destination.lat]).addTo(instance);
     map.current = instance;
     // Mavzu almashsa xarita uslubi ham almashadi.
-    let theme = themeOf();
-    const observer = new MutationObserver(() => {
-      const next = themeOf();
+    let theme = resolveTheme(themePref.current);
+    const applyTheme = () => {
+      const next = resolveTheme(themePref.current);
       if (next === theme) return;
       theme = next;
       ready.current = false;
       instance.setStyle(STYLE[next]);
-    });
+    };
+    themeApply.current = applyTheme;
+    const observer = new MutationObserver(applyTheme);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     const resize = new ResizeObserver(() => instance.resize());
     resize.observe(holder.current);
@@ -133,7 +174,7 @@ export function NavMap({ route, passed, alternatives, position, destination, fol
     const m = map.current;
     if (!m || !route || route.length < 2 || follow) return;
     const bounds = route.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(route[0], route[0]));
-    m.fitBounds(bounds, { padding: { top: 120, bottom: 300, left: 40, right: 40 }, maxZoom: 17, duration: 700, bearing: 0, pitch: 0 });
+    m.fitBounds(bounds, { padding: { top: 120, bottom: inset.current + 60, left: 40, right: 40 }, maxZoom: 17, duration: 700, bearing: 0, pitch: 0 });
   }, [fitKey, route, follow]);
 
   // Joriy joylashuv va kuzatuv
@@ -146,7 +187,7 @@ export function NavMap({ route, passed, alternatives, position, destination, fol
       el.innerHTML =
         '<span class="gn-me__acc"></span>' +
         '<span class="gn-me__dir"><svg class="gn-me__cone" viewBox="0 0 100 100" width="100" height="100" aria-hidden="true"><defs><radialGradient id="gnc" cx="50%" cy="100%" r="100%"><stop offset="0" stop-color="#2563eb" stop-opacity=".55"/><stop offset="1" stop-color="#2563eb" stop-opacity="0"/></radialGradient></defs><path d="M50 50 22 6A60 60 0 0 1 78 6Z" fill="url(#gnc)"/></svg>' +
-        '<svg class="gn-me__arrow" viewBox="0 0 40 40" width="34" height="34" aria-hidden="true"><path d="M20 3 33 34 20 27 7 34Z" fill="#2563eb" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg></span>';
+        '<svg class="gn-me__arrow" viewBox="0 0 44 48" width="40" height="44" aria-hidden="true"><defs><linearGradient id="gny" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd84d"/><stop offset="1" stop-color="#f5a800"/></linearGradient></defs><path d="M22 3 40 43 22 34 4 43Z" fill="url(#gny)" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><path d="M22 3 22 34 4 43Z" fill="#fff2b0" opacity=".55"/><path d="M22 34 40 43 22 3Z" fill="#d98e00" opacity=".55"/></svg></span>';
       me.current = new maplibregl.Marker({ element: el, rotationAlignment: 'map', pitchAlignment: 'map' }).setLngLat([position.lon, position.lat]).addTo(m);
     }
     // Marker joyi tekis siljiydi (GPS 1 s da bir marta keladi): oldingi nuqtadan yangisiga ~0.9 s da interpolyatsiya.
@@ -171,10 +212,10 @@ export function NavMap({ route, passed, alternatives, position, destination, fol
       acc.style.width = acc.style.height = `${px}px`;
     }
     if (follow) {
-      const zoom = Math.min(19, Math.max(12, followZoom + zoomOffset));
+      const zoom = Math.min(19, Math.max(12, followZoom));
       const h = holder.current?.clientHeight ?? 700;
-      // Telefonda pastki panel xaritani yopadi: ko‘rinadigan qismning pastki uchdan bir qismida turish uchun shu balandlik hisobga olinadi.
-      const panel = window.innerWidth < 900 ? (holder.current?.closest('.gn')?.querySelector<HTMLElement>('.gn-panel')?.offsetHeight ?? 0) : 0;
+      // Pastki panel xaritani yopadi: ko‘rinadigan qismning pastki uchdan bir qismida turish uchun shu balandlik hisobga olinadi.
+      const panel = window.innerWidth < 900 ? inset.current : 0;
       const visible = h - panel;
       m.easeTo({
         center: [position.lon, position.lat],
@@ -188,7 +229,7 @@ export function NavMap({ route, passed, alternatives, position, destination, fol
         essential: true,
       });
     }
-  }, [position, follow, followZoom, zoomOffset, rotated, compassActive]);
+  }, [position, follow, followZoom, rotated, compassActive]);
 
   // Marker yo‘nalishi: eng qisqa yo‘l bilan silliq buriladi (0° ↔ 360° sakramaydi)
   useEffect(() => {
@@ -198,24 +239,40 @@ export function NavMap({ route, passed, alternatives, position, destination, fol
     me.current.setRotation(headingRef.current);
   }, [markerHeading, position]);
 
-  const zoomBy = (delta: number) => {
-    if (follow) setZoomOffset((value) => Math.max(-4, Math.min(2, value + delta)));
-    else if (delta > 0) map.current?.zoomIn();
-    else map.current?.zoomOut();
-  };
+  // Mavzu sozlamasi o‘zgarsa, xarita uslubi ham o‘zgaradi.
+  useEffect(() => {
+    themeApply.current();
+  }, [mapTheme]);
+
+  // Burilish belgisi: burilish nuqtasida turadi.
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    if (!maneuverAt) {
+      signMarker.current?.remove();
+      signMarker.current = null;
+      visibleCb.current?.(false);
+      return;
+    }
+    if (!signMarker.current) signMarker.current = new maplibregl.Marker({ element: signEl, anchor: 'bottom-right', offset: [14, -6], rotationAlignment: 'viewport', pitchAlignment: 'viewport' }).setLngLat([maneuverAt.lon, maneuverAt.lat]).addTo(m);
+    else signMarker.current.setLngLat([maneuverAt.lon, maneuverAt.lat]);
+    const point = m.project([maneuverAt.lon, maneuverAt.lat]);
+    const box = m.getContainer().getBoundingClientRect();
+    visibleCb.current?.(point.x > 24 && point.x < box.width - 24 && point.y > 96 && point.y < box.height - inset.current - 24);
+  }, [maneuverAt?.lat, maneuverAt?.lon, signEl]);
+
+  // «Marshrut sharhi»: butun yo‘lni ko‘rsatadi.
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !overviewKey || !route || route.length < 2) return;
+    const bounds = route.reduce((b, c) => b.extend(c), new maplibregl.LngLatBounds(route[0], route[0]));
+    m.fitBounds(bounds, { padding: { top: 110, bottom: inset.current + 40, left: 40, right: 40 }, maxZoom: 17, duration: 800, bearing: 0, pitch: 0 });
+  }, [overviewKey]);
 
   return (
     <div className="gn-mapbox">
       <div ref={holder} className="gn-map" role="application" aria-label={t('Xarita')} />
-      <div className="gn-zoom" role="group" aria-label={t('Masshtab')}>
-        <button type="button" onClick={() => zoomBy(1)} aria-label={t('Yaqinlashtirish')}><Plus size={20} aria-hidden="true" /></button>
-        <button type="button" onClick={() => zoomBy(-1)} aria-label={t('Uzoqlashtirish')}><Minus size={20} aria-hidden="true" /></button>
-        {onToggleHeadingUp && (
-          <button type="button" className={headingUp ? 'is-on' : undefined} onClick={onToggleHeadingUp} aria-pressed={headingUp} aria-label={headingUp ? t('Shimol tepada') : t('Yo‘nalish tepada')}>
-            <Compass size={20} style={{ transform: `rotate(${-heading}deg)` }} aria-hidden="true" />
-          </button>
-        )}
-      </div>
+      {maneuverSign && createPortal(maneuverSign, signEl)}
     </div>
   );
 }

@@ -1,8 +1,9 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
 import { ServiceMode } from '@prisma/client';
 import { IsIn } from 'class-validator';
 import { REGION_KEYS } from '../../../common/constants/regions';
-import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class PublicMasterQueryDto {
   @IsOptional()

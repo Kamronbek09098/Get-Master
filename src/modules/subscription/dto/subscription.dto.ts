@@ -1,5 +1,6 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min, MinLength } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min, MinLength } from 'class-validator';
 import { PAYMENT_METHODS, PLAN_MONTHS } from '../plans.config';
 
 export class RequestSubscriptionDto {
@@ -37,7 +38,7 @@ export class GrantSubscriptionDto {
 }
 
 export class AttachReceiptDto {
-  @IsUUID('4')
+  @IsUUID()
   mediaAssetId!: string;
 }
 
@@ -70,7 +71,7 @@ export class AdminSubscriptionQueryDto {
 }
 
 export class SubscriptionIdParam {
-  @IsUUID('4')
+  @IsUUID()
   id!: string;
 }
 

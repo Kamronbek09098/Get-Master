@@ -1,16 +1,17 @@
-import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
+import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { RestrictionType, UserActionType } from '@prisma/client';
 
 export class CreateUserActionDto {
-  @IsUUID('4')
+  @IsUUID()
   userId!: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   caseId?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   policyId?: string;
 
   @IsEnum(UserActionType)

@@ -1,18 +1,5 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Param,
-  Query,
-  Req,
-  Res,
-  ParseEnumPipe,
-  ParseUUIDPipe,
-  Post,
-  UploadedFile,
-  UseInterceptors,
-} from '@nestjs/common';
+import { ParseUUIDPipe } from '../../common/validators/any-uuid';
+import { BadRequestException, Body, Controller, Get, Param, Query, Req, Res, ParseEnumPipe, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { pipeline, type Readable } from 'node:stream';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';

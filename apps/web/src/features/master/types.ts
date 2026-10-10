@@ -56,7 +56,7 @@ export interface PublicMaster {
   responseRate?: string | number | null;
   /** Eng yaqin bo‘sh vaqt (ish jadvali bo‘lsa): dayOffset 0 — bugun, 1 — ertaga. */
   nextAvailable?: { dayOffset: number; time: string; now: boolean } | null;
-  user: { accountNumber?: number; firstName: string | null; lastName: string | null };
+  user: { accountNumber?: number; firstName: string | null; lastName: string | null; avatar?: string | null };
   /** Ish rejimlari: mijoz manzilida va/yoki o‘z joyida (o‘z joyida bo‘lsa — `placeAddress`). */
   serviceModes?: ServiceMode[];
   placeAddress?: string | null;

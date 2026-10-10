@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import type { BadgeTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, formatNumber } from '@/lib/utils';
 import { useDevOps } from '@/features/admin/hooks/useAdmin';
 import { TrafficChart } from '@/features/admin/components/TrafficChart';
 import type { DevOpsWindow } from '@/features/admin/types';
@@ -114,7 +114,7 @@ export function AdminDevOpsPage() {
               <UsageBar
                 label={t('Xotira (RAM)')}
                 percent={data.system.usedMemPercent}
-                hint={t('{toLocaleString} MB bo‘sh / {toLocaleString2} MB', { toLocaleString: data.system.freeMemMB.toLocaleString('ru-RU'), toLocaleString2: data.system.totalMemMB.toLocaleString('ru-RU') })}
+                hint={t('{toLocaleString} MB bo‘sh / {toLocaleString2} MB', { toLocaleString: formatNumber(data.system.freeMemMB), toLocaleString2: formatNumber(data.system.totalMemMB) })}
               />
             </div>
             <div className="gm-card">

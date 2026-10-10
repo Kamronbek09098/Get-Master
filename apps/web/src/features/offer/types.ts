@@ -19,7 +19,7 @@ export interface Offer {
     id: string;
     ratingAvg: string;
     ratingCount: number;
-    user: { accountNumber?: number; firstName: string | null; lastName: string | null };
+    user: { accountNumber?: number; firstName: string | null; lastName: string | null; avatar?: string | null };
   };
 }
 

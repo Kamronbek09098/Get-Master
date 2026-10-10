@@ -38,8 +38,9 @@ export const orderService = {
   createDirect(input: { conversationId: string; title: string; description: string; price: number; scheduledStartAt: string; addressId?: string }) {
     return apiPost<{ order: Order; messageId: string }>('/orders/direct', input);
   },
-  confirmCompletion(id: string, paymentMethod?: string) {
-    return apiPost<Order>(`/orders/${id}/confirm-completion`, paymentMethod ? { paymentMethod } : {});
+  /** Ishni tasdiqlaydi. Server to‘lov to‘liq amalga oshganini tekshiradi (aks holda 409 PAYMENT_REQUIRED). */
+  confirmCompletion(id: string) {
+    return apiPost<Order>(`/orders/${id}/confirm-completion`, {});
   },
   dispute(id: string, reason: string) {
     return apiPost<Order>(`/orders/${id}/dispute`, { reason });

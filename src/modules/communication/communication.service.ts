@@ -23,7 +23,7 @@ const EDIT_WINDOW_MS = 48 * 60 * 60_000;
 
 const CLOSED_ORDER_STATUSES: OrderStatus[] = ['CANCELLED', 'EXPIRED'];
 
-const USER_NAME_SELECT = { id: true, accountNumber: true, firstName: true, lastName: true } as const;
+const USER_NAME_SELECT = { id: true, accountNumber: true, firstName: true, lastName: true, avatarAssetId: true } as const;
 
 const holdsPanel = (roles: string[], panel: Panel | null): boolean =>
   !panel || panel === 'ADMIN' || roles.length === 0 || roles.includes(panel);

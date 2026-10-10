@@ -1,24 +1,6 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
-import {
-  ArrayNotEmpty,
-  ArrayUnique,
-  IsArray,
-  IsEmail,
-  IsLatitude,
-  IsLongitude,
-  IsNumber,
-  IsNotEmpty,
-  IsOptional,
-  IsPhoneNumber,
-  IsString,
-  IsUUID,
-  Matches,
-  MaxLength,
-  Max,
-  Min,
-  MinLength,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayNotEmpty, ArrayUnique, IsArray, IsEmail, IsLatitude, IsLongitude, IsNumber, IsNotEmpty, IsOptional, IsPhoneNumber, IsString, Matches, MaxLength, Max, Min, MinLength, ValidateNested } from 'class-validator';
 
 /** Qurilma GPS joylashuvi: foydalanuvchi brauzer so‘rovida ruxsat bergan taqdirdagina yuboriladi. */
 export class DeviceLocationDto {

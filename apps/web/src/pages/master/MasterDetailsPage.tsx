@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { Award, BadgeCheck, Briefcase, CalendarClock, MapPin, MessageCircle, Star, Info, LayoutGrid, MessageSquareText } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { ReviewList } from '@/features/review/components/ReviewList';
+import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
@@ -200,23 +200,16 @@ export function MasterDetailsPage() {
         </>
       )}
       {tab === 'works' && (
-        <>
-      {(data.portfolio ?? []).length > 0 && (
         <section className="gm-mp-section">
-          <h2>{t('Portfolio')}</h2>
-          <PublicPortfolio items={data.portfolio ?? []} />
+          <h2>{t('Bajarilgan ishlar')}{(data.portfolio ?? []).length > 0 && <small className="gm-mp-count"> · {(data.portfolio ?? []).length}</small>}</h2>
+          {(data.portfolio ?? []).length > 0 ? (
+            <PublicPortfolio items={data.portfolio ?? []} />
+          ) : (
+            <EmptyState title={t('Hali ish namunalari qo‘shilmagan')} description={t('Usta bajargan ishlarining rasmlarini portfolioga qo‘shgach, shu yerda ko‘rinadi.')} />
+          )}
         </section>
       )}
-
-      <CompletedJobs masterId={data.id} completedOrders={data.completedOrders} />
-        </>
-      )}
-      {tab === 'reviews' && (
-        <section className="gm-mp-section">
-          <h2>{t('Sharhlar')}</h2>
-          <ReviewList masterId={data.id} />
-        </section>
-      )}
+      {tab === 'reviews' && <CompletedJobs masterId={data.id} completedOrders={data.completedOrders} />}
 
       {/* 9 · Chaqiruv: sahifa oxirida (DOM da oxirgi), skrollda pastda yopishib turadi */}
       <div className="gm-mp-cta gm-action-row">

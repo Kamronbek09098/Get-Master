@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, formatDayMonth, formatTime } from '@/lib/utils';
 import type { DevOpsSnapshot, DevOpsWindow } from '../types';
 import './TrafficChart.css';
 import { t } from '@/i18n';
@@ -13,10 +13,7 @@ const PAD_BOTTOM = 22;
 const GAP = 2;
 
 function bucketLabel(at: string, window: DevOpsWindow): string {
-  const date = new Date(at);
-  if (window === '1h') return date.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
-  if (window === '24h') return date.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
-  return date.toLocaleDateString('uz-UZ', { day: '2-digit', month: '2-digit' });
+  return window === '7d' ? formatDayMonth(at) : formatTime(at);
 }
 
 export function TrafficChart({ data, window }: { data: DevOpsSnapshot['traffic']; window: DevOpsWindow }) {

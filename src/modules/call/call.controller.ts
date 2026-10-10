@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, Req, Res } from '@nestjs/common';
+import { ParseUUIDPipe } from '../../common/validators/any-uuid';
+import { Body, Controller, Get, Param, Post, Query, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RateLimit } from '../../common/decorators/rate-limit.decorator';

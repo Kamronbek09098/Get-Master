@@ -1,4 +1,5 @@
-import { Controller, ForbiddenException, Get, NotFoundException, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import { ParseUUIDPipe } from '../../common/validators/any-uuid';
+import { Controller, ForbiddenException, Get, NotFoundException, Param, Query } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';

@@ -1,4 +1,5 @@
-import { Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
+import { ParseUUIDPipe } from '../../common/validators/any-uuid';
+import { Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { NotificationQueryDto } from './dto/notification-query.dto';
 import { NotificationService } from './notification.service';

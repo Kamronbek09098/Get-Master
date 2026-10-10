@@ -105,7 +105,7 @@ export function ConversationList({ selectedId, onSelect }: { selectedId: string 
                     setToDelete({ id: conversation.id, name, support: conversation.type === 'SUPPORT' });
                   }}
                 >
-                  <ChatAvatar name={name} seed={conversation.counterpart?.id ?? conversation.id} admin={conversation.type === 'SUPPORT' && !isAdmin} />
+                  <ChatAvatar name={name} seed={conversation.counterpart?.id ?? conversation.id} src={conversation.counterpart?.avatar} admin={conversation.type === 'SUPPORT' && !isAdmin} />
                   <span className="gm-convo__body">
                     <span className="gm-convo__top">
                       <strong>{name}</strong>

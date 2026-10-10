@@ -125,6 +125,7 @@ export interface ReportTotals {
   settledPayments: number;
   payments: number;
   orders: number;
+  active: number;
   completed: number;
   cancelled: number;
   platformFee: number;
@@ -136,7 +137,7 @@ export interface ReportsOverview {
   range: { from: string; to: string; all: boolean };
   current: ReportTotals;
   previous: ReportTotals | null;
-  series: Array<{ date: string; revenue: number; refunded: number; payments: number; orders: number; completed: number; cancelled: number }>;
+  series: Array<{ date: string; revenue: number; refunded: number; payments: number; orders: number; active: number; completed: number; cancelled: number }>;
   paymentStatus: Record<'succeeded' | 'pending' | 'refunded' | 'failed' | 'cancelled', { count: number; amount: number }>;
   reconciliation: { mismatchCount: number; items: Array<{ paymentId: string; recorded: number; ledger: number; difference: number }> };
 }
@@ -276,6 +277,9 @@ export interface AdminUserDetail {
   firstName: string | null;
   lastName: string | null;
   avatarUrl: string | null;
+  /** Yuklangan profil rasmi (yoki Google rasmi) manzili. */
+  avatar?: string | null;
+  adminAvatarAllowed?: boolean;
   status: 'PENDING' | 'ACTIVE' | 'BLOCKED' | 'SUSPENDED' | 'DELETED';
   createdAt: string;
   deletedAt: string | null;
@@ -493,6 +497,8 @@ export interface AdminAccount {
   phone: string;
   firstName: string | null;
   lastName: string | null;
+  avatar?: string | null;
+  adminAvatarAllowed?: boolean;
   status: ManagedStatus;
   isSuperAdmin: boolean;
   adminPermissions?: string[];

@@ -17,14 +17,16 @@ interface ProfileHeroProps {
   subtitle?: string | null;
   badges?: ReactNode;
   stats: ProfileStat[];
+  /** Tayyor avatar (masalan, yuklash tugmali AvatarEditor). Berilmasa — oddiy avatar. */
+  avatar?: ReactNode;
 }
 
-export function ProfileHero({ name, seed, accountNumber, subtitle, badges, stats }: ProfileHeroProps) {
+export function ProfileHero({ name, seed, accountNumber, subtitle, badges, stats, avatar }: ProfileHeroProps) {
   return (
     <section className="gm-phero">
       <div className="gm-phero__cover" aria-hidden="true" />
       <div className="gm-phero__body">
-        <ChatAvatar name={name} seed={seed} size="lg" />
+        {avatar ?? <ChatAvatar name={name} seed={seed} size="lg" />}
         <div className="gm-phero__who">
           <div className="gm-phero__name">
             <h2>{name}</h2>

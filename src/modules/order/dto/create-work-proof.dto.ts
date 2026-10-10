@@ -1,10 +1,11 @@
-import { IsIn, IsUUID } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
+import { IsIn } from 'class-validator';
 import { WorkStage } from '@prisma/client';
 
 export class CreateWorkProofDto {
   @IsIn(['BEFORE', 'DURING', 'AFTER'])
   stage!: WorkStage;
 
-  @IsUUID('4')
+  @IsUUID()
   mediaAssetId!: string;
 }

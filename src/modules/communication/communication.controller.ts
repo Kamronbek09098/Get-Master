@@ -1,4 +1,5 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query, Req } from '@nestjs/common';
+import { ParseUUIDPipe } from '../../common/validators/any-uuid';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import type { Request } from 'express';
 import { Roles } from '../../common/decorators/roles.decorator';

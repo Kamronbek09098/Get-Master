@@ -18,6 +18,7 @@ const USER_SELECT = {
   email: true,
   firstName: true,
   lastName: true,
+  avatarAssetId: true,
   status: true,
   twoFactorEnabled: true,
   createdAt: true,
@@ -140,6 +141,8 @@ export class AdminUsersService {
         firstName: true,
         lastName: true,
         avatarUrl: true,
+        avatarAssetId: true,
+        adminAvatarAllowed: true,
         status: true,
         createdAt: true,
         deletedAt: true,
@@ -400,7 +403,7 @@ export class AdminUsersService {
       where: { userRoles: { some: { role: Role.ADMIN } }, deletedAt: null, ...(scope.superAdmin ? {} : { createdByAdminId: actorId }) },
       orderBy: [{ isSuperAdmin: 'desc' }, { createdAt: 'asc' }],
       select: {
-        id: true, accountNumber: true, phone: true, firstName: true, lastName: true, status: true, isSuperAdmin: true, twoFactorEnabled: true,
+        id: true, accountNumber: true, phone: true, firstName: true, lastName: true, avatarAssetId: true, adminAvatarAllowed: true, status: true, isSuperAdmin: true, twoFactorEnabled: true,
         adminPermissions: true, canCreateAdmins: true, grantablePermissions: true, createdByAdminId: true, createdAt: true, lastLoginAt: true,
       },
     });

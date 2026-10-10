@@ -27,6 +27,8 @@ export class UsersService {
         firstName: true,
         lastName: true,
         avatarUrl: true,
+        avatarAssetId: true,
+        adminAvatarAllowed: true,
         status: true,
         phoneVerifiedAt: true,
         twoFactorEnabled: true,
@@ -46,14 +48,16 @@ export class UsersService {
       throw new NotFoundException(ERRORS.USER_NOT_FOUND);
     }
 
+    const roles = user.userRoles.map((item) => item.role);
     return {
       ...user,
       googleId: undefined,
       passwordHash: undefined,
       hasPassword: user.passwordHash !== null,
       googleLinked: user.googleId !== null,
-      roles: user.userRoles.map((item) => item.role),
+      roles,
       userRoles: undefined,
+      canSetAvatar: !roles.includes(Role.ADMIN) || user.isSuperAdmin || user.adminAvatarAllowed,
     };
   }
 

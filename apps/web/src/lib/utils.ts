@@ -1,4 +1,4 @@
-import { MONTHS, NUMBER_LOCALE, lang, t } from '@/i18n';
+import { MONTHS, lang, t } from '@/i18n';
 
 export function cx(...values: Array<string | false | null | undefined>): string {
   return values.filter(Boolean).join(' ');
@@ -11,17 +11,22 @@ export function sanitizeMoney(value: string): string {
   return digits.length > 10 || Number(digits) > 1_000_000_000 ? '1000000000' : digits;
 }
 
+/** Minglarga ajratgich: uz/ru — bo‘shliq, en — vergul. Brauzerdagi ICU ma’lumotiga bog‘liq emas, shuning uchun hamma joyda bir xil chiqadi. */
+const THOUSANDS: Record<string, string> = { uz: ' ', 'uz-Cyrl': ' ', ru: ' ', en: ',' };
+
+/** 31000000 → «31 000 000» (en: «31,000,000»). `joiner` — ajratgichni almashtirish (ko‘rsatishda uzilmaydigan bo‘shliq). */
+export function formatNumber(value: number, joiner?: string): string {
+  if (!Number.isFinite(value)) return '—';
+  const rounded = Math.round(Math.abs(value));
+  const grouped = String(rounded).replace(/\B(?=(\d{3})+(?!\d))/g, joiner ?? THOUSANDS[lang] ?? ' ');
+  return value < 0 && rounded !== 0 ? `−${grouped}` : grouped;
+}
+
 export function formatMoney(amount: string | number, currency = 'UZS'): string {
   const value = typeof amount === 'string' ? Number(amount) : amount;
   if (!Number.isFinite(value)) return '—';
-  return (
-    new Intl.NumberFormat(NUMBER_LOCALE[lang], {
-      style: 'decimal',
-      maximumFractionDigits: 0,
-    }).format(value) +
-    ' ' +
-    currency
-  );
+  // Uzilmaydigan bo‘shliq: summa va «UZS» alohida qatorga bo‘linib ketmaydi.
+  return `${formatNumber(value, THOUSANDS[lang] === ',' ? ',' : '\u00A0')}\u00A0${currency}`;
 }
 
 const MONTH_NAMES = MONTHS[lang];
@@ -51,6 +56,22 @@ export function formatDateTime(value: string | Date | null | undefined): string 
   if (!date) return '—';
   const p = parts(date);
   return `${Number(p.day)} ${MONTH_NAMES[Number(p.month) - 1]} ${p.year}, ${p.hour}:${p.minute}`;
+}
+
+/** Faqat vaqt: «16:11» (Toshkent vaqti). */
+export function formatTime(value: string | Date | null | undefined): string {
+  const date = toDate(value);
+  if (!date) return '—';
+  const p = parts(date);
+  return `${p.hour}:${p.minute}`;
+}
+
+/** Qisqa sana: «9.10» (Toshkent vaqti). */
+export function formatDayMonth(value: string | Date | null | undefined): string {
+  const date = toDate(value);
+  if (!date) return '—';
+  const p = parts(date);
+  return `${Number(p.day)}.${p.month}`;
 }
 
 export function formatDate(value: string | Date | null | undefined): string {
@@ -128,6 +149,12 @@ export function initials(name: string | null | undefined): string {
 }
 
 /** Raqamlarni minglik guruhlaydi: «200000» → «200 000» (kiritish maydoni uchun). */
+/** Pul maydoni uchun raqamlarni minglarga ajratadi — ko‘rsatiladigan summalar (formatMoney) bilan bir xil ajratgich bilan. */
+export function groupAmount(value: string): string {
+  const digits = value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+  return digits ? formatNumber(Number(digits)) : '';
+}
+
 export function groupDigits(value: string): string {
   return value.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 }

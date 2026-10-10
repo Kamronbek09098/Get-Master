@@ -12,9 +12,9 @@ import { useErrorGroups, useErrorList, useErrorSummary, useResolveErrors } from 
 import type { ErrorFilters, ErrorGroup, ErrorKind, ErrorLogItem, ErrorSummary } from '@/features/errors/types';
 import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
-import { cx, formatDateTime, formatRelativeTime } from '@/lib/utils';
+import { cx, formatDate, formatDateTime, formatRelativeTime } from '@/lib/utils';
 import { useAppStore } from '@/store/app.store';
-import { lang, NUMBER_LOCALE, t } from '@/i18n';
+import { lang, t } from '@/i18n';
 import './AdminErrorsPage.css';
 
 const KIND_LABEL: Record<ErrorKind, string> = {
@@ -157,7 +157,7 @@ function Daily({ rows }: { rows: ErrorSummary['daily'] }) {
         {days.map((day) => {
           const warn = day.total - day.errors;
           return (
-            <div key={day.date.toISOString()} className={cx('gm-errs__bar', day.today && 'is-today', day.total === 0 && 'is-empty')} title={`${day.date.toLocaleDateString(NUMBER_LOCALE[lang])}: ${day.total} (${day.errors} ${t('jiddiy')})`}>
+            <div key={day.date.toISOString()} className={cx('gm-errs__bar', day.today && 'is-today', day.total === 0 && 'is-empty')} title={`${formatDate(day.date)}: ${day.total} (${day.errors} ${t('jiddiy')})`}>
               <em>{day.total}</em>
               <span className="gm-errs__bar-col">
                 <i className="gm-errs__seg gm-errs__seg--warn" style={{ height: `${(warn / max) * 100}%` }} />

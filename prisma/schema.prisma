@@ -120,6 +120,7 @@ enum MediaAssetKind {
   MASTER_VERIFICATION_DOCUMENT
   MASTER_PORTFOLIO
   SUBSCRIPTION_RECEIPT
+  USER_AVATAR
 }
 
 enum MatchingStatus {
@@ -370,6 +371,12 @@ model User {
   firstName                String?                   @map("first_name") @db.VarChar(100)
   lastName                 String?                   @map("last_name") @db.VarChar(100)
   avatarUrl                String?                   @map("avatar_url")
+  /// Profil rasmi (yuklangan fayl). Google rasmi bo‘lsa `avatarUrl` da; yuklangan rasm doim ustun.
+  avatarAssetId            String?                   @unique @map("avatar_asset_id") @db.Uuid
+  avatarUpdatedAt          DateTime?                 @map("avatar_updated_at")
+  /// Admin akkaunt o‘ziga rasm qo‘ya oladimi: faqat superadmin yoqadi (standart — yo‘q).
+  adminAvatarAllowed       Boolean                   @default(false) @map("admin_avatar_allowed")
+  avatarAsset              MediaAsset?               @relation("UserAvatar", fields: [avatarAssetId], references: [id], onDelete: SetNull)
   userRoles                UserRole[]
   status                   UserStatus                @default(PENDING)
   phoneVerifiedAt          DateTime?                 @map("phone_verified_at")
@@ -1439,6 +1446,7 @@ model MediaAsset {
   portfolioBeforeItem  MasterPortfolio?    @relation("PortfolioBefore")
   verificationDocument MasterVerification?
   subscriptionReceipts Subscription[]      @relation("SubscriptionReceipt")
+  avatarOf             User?               @relation("UserAvatar")
 
   @@index([uploaderId, status])
   @@index([linkedResourceType, linkedResourceId])

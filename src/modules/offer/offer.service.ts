@@ -38,7 +38,7 @@ const OFFER_SELECT = {
   status: true,
   expiresAt: true,
   createdAt: true,
-  master: { select: { id: true, ratingAvg: true, ratingCount: true, user: { select: { accountNumber: true, firstName: true, lastName: true } } } },
+  master: { select: { id: true, ratingAvg: true, ratingCount: true, user: { select: { accountNumber: true, firstName: true, lastName: true, avatarAssetId: true } } } },
 } satisfies Prisma.OfferSelect;
 
 @Injectable()

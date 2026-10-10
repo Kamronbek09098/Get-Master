@@ -16,8 +16,8 @@ export function CompletedJobs({ masterId, completedOrders }: { masterId: string;
   if (!data || (data.items.length === 0 && data.summary.reviews === 0)) {
     return (
       <section className="gm-mp-section">
-        <h2>{t('Bajarilgan ishlar natijasi')}</h2>
-        <EmptyState title={t('Hali yakunlangan ish yo‘q')} />
+        <h2>{t('Reyting va sharhlar')}</h2>
+        <EmptyState title={t('Hali sharh yo‘q')} description={t('Yakunlangan ishlarga mijozlar qoldirgan sharhlar shu yerda ko‘rinadi.')} />
       </section>
     );
   }
@@ -26,8 +26,8 @@ export function CompletedJobs({ masterId, completedOrders }: { masterId: string;
   const positive = summary.reviews > 0 ? Math.round(((summary.distribution['5'] + summary.distribution['4']) / summary.reviews) * 100) : null;
 
   return (
-    <section className="gm-mp-section gm-cj" aria-label={t('Bajarilgan ishlar natijasi')}>
-      <h2>{t('Bajarilgan ishlar natijasi')}</h2>
+    <section className="gm-mp-section gm-cj" aria-label={t('Reyting va sharhlar')}>
+      <h2>{t('Reyting va sharhlar')}</h2>
 
       <div className="gm-cj__summary">
         <div className="gm-cj__score">

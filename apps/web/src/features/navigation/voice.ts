@@ -34,6 +34,10 @@ export class NavVoice {
   private current: HTMLAudioElement | null = null;
   private unlocked = false;
   enabled = true;
+  /** «Faqat muhim»: uzoq ogohlantirishlar (3 km, 1 km) aytilmaydi; yaqin burilish va hodisalar aytiladi. */
+  importantOnly = false;
+  /** Ovoz balandligi (0–1). */
+  volume = 0.7;
   private cache = new Map<string, HTMLAudioElement>();
 
   /** Brauzer avtomatik ijroni foydalanuvchi bosishidan keyin ruxsat beradi: birinchi bosishda chaqiriladi. */
@@ -70,8 +74,17 @@ export class NavVoice {
 
   /** Burilish: bosqichga qarab «<masofa> dan keyin, <manevr>» yoki faqat manevr. Ko‘cha nomi aytilmaydi (ekranda ko‘rinadi). */
   announce(maneuver: Maneuver, tier: Tier, street = '') {
+    if (this.importantOnly && (tier === 3000 || tier === 1000)) return;
     const clips = tier === 0 ? [`${BASE}/m-${maneuver}.mp3`] : [clipOf(tier), `${BASE}/m-${maneuver}.mp3`];
     this.say(clips, `${tier === 0 ? '' : `${tier >= 1000 ? tier / 1000 + ' kilometr' : tier + ' metr'}dan keyin, `}${maneuverText(maneuver, street)}`);
+  }
+
+  /** Sozlamalarda ovozni sinab ko‘rish. */
+  sample() {
+    const was = this.enabled;
+    this.enabled = true;
+    this.say([`${BASE}/m-left.mp3`], 'Chapga buriling');
+    this.enabled = was;
   }
 
   event(name: VoiceEvent, fallback: string) {
@@ -97,6 +110,7 @@ export class NavVoice {
       for (const src of clips) {
         const a = this.audio(src);
         this.current = a;
+        a.volume = this.volume;
         a.currentTime = 0;
         await new Promise<void>((resolve, reject) => {
           a.onended = () => resolve();
@@ -108,6 +122,7 @@ export class NavVoice {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window && this.fallback) {
         const utterance = new SpeechSynthesisUtterance(this.fallback);
         utterance.lang = 'uz-UZ';
+        utterance.volume = this.volume;
         window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
       }

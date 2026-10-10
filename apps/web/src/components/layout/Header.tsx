@@ -11,6 +11,7 @@ import { currentPanelLabel } from '@/lib/panel';
 import { t } from '@/i18n';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { initials } from '@/lib/utils';
+import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { getNavItems } from './nav-items';
 import { ThemeToggle } from './ThemeToggle';
 import './Header.css';
@@ -46,9 +47,13 @@ export function Header() {
         <Dropdown
           trigger={
             <>
-              <span className="gm-avatar" aria-hidden="true">
-                {initials(name)}
-              </span>
+              {me.data?.avatar ? (
+                <ChatAvatar name={name} seed={me.data.id} size="sm" src={me.data.avatar} />
+              ) : (
+                <span className="gm-avatar" aria-hidden="true">
+                  {initials(name)}
+                </span>
+              )}
               <span className="gm-header__user">{name || t('Menyu')}</span>
             </>
           }

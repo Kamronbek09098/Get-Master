@@ -20,15 +20,21 @@ import { toRange } from '@/features/admin/range';
 import './AdminDashboardPage.css';
 import { t } from '@/i18n';
 
-function MiniStat({ icon, tone, value, label, long = false }: { icon: ReactNode; tone: string; value: string | number; label: string; long?: boolean }) {
+/** KPI karta: manzil bo‘lsa — havola, bo‘lmasa — oddiy blok. */
+function KpiBox({ to, className, children }: { to?: string; className: string; children: ReactNode }) {
+  return to ? <Link to={to} className={`${className} gm-kpi--link`}>{children}</Link> : <div className={className}>{children}</div>;
+}
+
+function MiniStat({ icon, tone, value, label, long = false, to }: { icon: ReactNode; tone: string; value: string | number; label: string; long?: boolean; to?: string }) {
+  const Shell = ({ children }: { children: ReactNode }) => (to ? <Link to={to} className={cx('gm-mini gm-mini--link', `gm-mini--${tone}`, long && 'gm-mini--long')}>{children}</Link> : <div className={cx('gm-mini', `gm-mini--${tone}`, long && 'gm-mini--long')}>{children}</div>);
   return (
-    <div className={cx('gm-mini', `gm-mini--${tone}`, long && 'gm-mini--long')}>
+    <Shell>
       <span className="gm-mini__icon" aria-hidden="true">{icon}</span>
       <span className="gm-mini__body">
         <strong>{value}</strong>
         <small>{label}</small>
       </span>
-    </div>
+    </Shell>
   );
 }
 
@@ -91,15 +97,16 @@ const toneOf = (status: string) => ORDER_TONE[status] ?? 'off';
 
 
 /** Pastdagi «Holatlar bo‘yicha» kartasi: jami, eng ko‘p ikki holat va «yaxshi» holatlar ulushi. */
-function StatusCard({ icon, title, counts, good, accent }: { icon: ReactNode; title: string; counts: Record<string, unknown>; good: string; accent: string }) {
+function StatusCard({ icon, title, counts, good, accent, to }: { icon: ReactNode; title: string; counts: Record<string, unknown>; good: string; accent: string; to?: string }) {
   const entries = Object.entries(counts)
     .map(([key, value]) => [key, typeof value === 'object' && value !== null ? Number((value as { count?: number }).count ?? 0) : Number(value ?? 0)] as const)
     .sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((sum, [, count]) => sum + count, 0);
   const goodCount = entries.filter(([key]) => key === good || (good === '*' && GOOD.has(key))).reduce((sum, [, count]) => sum + count, 0);
   const percent = total ? Math.round((goodCount / total) * 100) : 0;
+  const Wrap = ({ className, style, children }: { className: string; style: CSSProperties; children: ReactNode }) => (to ? <Link to={to} className={`${className} gm-sc--link`} style={style}>{children}</Link> : <div className={className} style={style}>{children}</div>);
   return (
-    <div className="gm-sc" style={{ '--gm-sc': accent } as CSSProperties}>
+    <Wrap className="gm-sc" style={{ '--gm-sc': accent } as CSSProperties}>
       <div className="gm-sc__top">
         <span className="gm-sc__icon" aria-hidden="true">{icon}</span>
         <div className="gm-sc__main">
@@ -116,7 +123,7 @@ function StatusCard({ icon, title, counts, good, accent }: { icon: ReactNode; ti
         <div className="gm-sc__bar" aria-hidden="true"><span style={{ width: `${Math.max(percent, total ? 3 : 0)}%` }} /></div>
         <span className="gm-sc__pct">{percent}%</span>
       </div>
-    </div>
+    </Wrap>
   );
 }
 
@@ -130,6 +137,13 @@ export function AdminDashboardPage() {
   const data = dashboard.data;
   const filtered = !!range.from || !!range.to;
   const periodNote = filtered ? t('Tanlangan davr') : t('Butun davr');
+  // Toshkent bugungi sanasi (YYYY-MM-DD) va buyurtmalar sahifasiga o‘tish havolasi (tanlangan davr bilan).
+  const todayIso = new Date(Date.now() + 5 * 3_600_000).toISOString().slice(0, 10);
+  const ordersLink = (params: Record<string, string>) => {
+    const query = new URLSearchParams({ ...params, ...(range.from ? { from: range.from } : {}), ...(range.to ? { to: range.to } : {}) });
+    const text = query.toString();
+    return text ? `/admin/buyurtmalar?${text}` : '/admin/buyurtmalar';
+  };
   const updated = dashboard.dataUpdatedAt ? formatDateTime(new Date(dashboard.dataUpdatedAt).toISOString()) : null;
   const orderCounts = data ? Object.entries(data.orders.byStatus).sort((a, b) => b[1] - a[1]) : [];
   const orderTotal = orderCounts.reduce((sum, [, count]) => sum + count, 0);
@@ -187,19 +201,19 @@ export function AdminDashboardPage() {
 
           <div className="gm-kpis">
             {[
-              { icon: <Users size={24} />, tone: 'blue', label: t('Faol foydalanuvchilar'), value: data.users.byStatus.ACTIVE ?? 0 },
-              { icon: <Wrench size={24} />, tone: 'green', label: t('Faol ustalar'), value: data.masters.byStatus.ACTIVE ?? 0 },
+              { icon: <Users size={24} />, tone: 'blue', label: t('Faol foydalanuvchilar'), value: data.users.byStatus.ACTIVE ?? 0, to: '/admin/foydalanuvchilar?status=ACTIVE' },
+              { icon: <Wrench size={24} />, tone: 'green', label: t('Faol ustalar'), value: data.masters.byStatus.ACTIVE ?? 0, to: '/admin/foydalanuvchilar?role=MASTER&status=ACTIVE' },
               { icon: <ClipboardList size={24} />, tone: 'violet', label: t('Yangi so‘rovlar'), value: data.requests.submitted },
-              { icon: <PackageCheck size={24} />, tone: 'teal', label: t('Buyurtmalar'), value: data.orders.total },
+              { icon: <PackageCheck size={24} />, tone: 'teal', label: t('Buyurtmalar'), value: data.orders.total, to: ordersLink({}) },
             ].map((kpi) => (
-              <div key={kpi.label} className={`gm-kpi gm-kpi--${kpi.tone}`}>
+              <KpiBox key={kpi.label} to={kpi.to} className={`gm-kpi gm-kpi--${kpi.tone}`}>
                 <span className="gm-kpi__icon" aria-hidden="true">{kpi.icon}</span>
                 <div>
                   <span className="gm-kpi__label">{kpi.label}</span>
                   <strong className="gm-kpi__value">{kpi.value}</strong>
                   <span className="gm-kpi__note">{periodNote}</span>
                 </div>
-              </div>
+              </KpiBox>
             ))}
           </div>
 
@@ -226,10 +240,10 @@ export function AdminDashboardPage() {
                 <ul className="gm-ostat gm-ostat--fill">
                   {orderCounts.slice(0, 6).map(([status, count]) => (
                     <li key={status} className={`gm-ostat__row gm-ostat__row--${toneOf(status)}`}>
-                      <div>
+                      <Link to={ordersLink({ status })} className="gm-ostat__link" aria-label={`${statusLabel(status)}: ${count}`}>
                         <span><i aria-hidden="true" />{statusLabel(status)}</span>
                         <b>{count} <small>({Math.round((count / orderTotal) * 100)}%)</small></b>
-                      </div>
+                      </Link>
                       <div className="gm-ostat__bar" aria-hidden="true"><span style={{ width: `${Math.max(4, (count / orderCounts[0]![1]) * 100)}%` }} /></div>
                     </li>
                   ))}
@@ -295,22 +309,22 @@ export function AdminDashboardPage() {
           <section className="gm-dpanel gm-hbp" aria-label={t('Holatlar bo‘yicha')}>
             <header className="gm-dpanel__head"><h2>{t('Holatlar bo‘yicha')}</h2><span className="gm-dsec__hint">{periodNote}</span></header>
             <div className="gm-scs">
-              <StatusCard icon={<Users size={20} />} title={t('Foydalanuvchilar')} counts={data.users.byStatus} good="ACTIVE" accent="#2f6bff" />
-              <StatusCard icon={<Wrench size={20} />} title={t('Ustalar')} counts={data.masters.byVerification} good="VERIFIED" accent="#10b981" />
+              <StatusCard icon={<Users size={20} />} title={t('Foydalanuvchilar')} counts={data.users.byStatus} good="ACTIVE" accent="#2f6bff" to="/admin/foydalanuvchilar" />
+              <StatusCard icon={<Wrench size={20} />} title={t('Ustalar')} counts={data.masters.byVerification} good="VERIFIED" accent="#10b981" to="/admin/foydalanuvchilar?role=MASTER" />
               <StatusCard icon={<ClipboardList size={20} />} title={t('So‘rovlar')} counts={data.requests.byStatus} good="BOOKED" accent="#8b5cf6" />
-              <StatusCard icon={<PackageCheck size={20} />} title={t('Buyurtmalar')} counts={data.orders.byStatus} good="COMPLETED" accent="#14b8a6" />
-              <StatusCard icon={<Wallet size={20} />} title={t('To‘lovlar')} counts={data.payments.byStatus} good="SUCCEEDED" accent="#f59e0b" />
-              <StatusCard icon={<Scale size={20} />} title={t('Nizolar')} counts={data.disputes.byStatus} good="RESOLVED" accent="#e5384f" />
+              <StatusCard icon={<PackageCheck size={20} />} title={t('Buyurtmalar')} counts={data.orders.byStatus} good="COMPLETED" accent="#14b8a6" to={ordersLink({})} />
+              <StatusCard icon={<Wallet size={20} />} title={t('To‘lovlar')} counts={data.payments.byStatus} good="SUCCEEDED" accent="#f59e0b" to="/admin/hisobot" />
+              <StatusCard icon={<Scale size={20} />} title={t('Nizolar')} counts={data.disputes.byStatus} good="RESOLVED" accent="#e5384f" to="/admin/shikoyatlar?kind=disputes" />
             </div>
           </section>
 
           <Panel className="gm-dsec" title={t('Bugun')} badge={<span className="gm-dsec__hint">{t('Bugungi 00:00 dan boshlab')}</span>} action={{ to: '/admin/hisobot', label: t('Hisobotlar') }}>
             <div className="gm-mini-grid gm-mini-grid--5">
-              <MiniStat icon={<Users size={20} />} tone="blue" value={data.today.newUsers} label={t('Yangi foydalanuvchilar')} />
+              <MiniStat icon={<Users size={20} />} tone="blue" value={data.today.newUsers} label={t('Yangi foydalanuvchilar')} to="/admin/foydalanuvchilar" />
               <MiniStat icon={<ClipboardList size={20} />} tone="violet" value={data.today.newRequests} label={t('Yangi so‘rovlar')} />
-              <MiniStat icon={<PackageCheck size={20} />} tone="teal" value={data.today.newOrders} label={t('Yangi buyurtmalar')} />
-              <MiniStat icon={<CalendarCheck size={20} />} tone="green" value={data.today.completedOrders} label={t('Yakunlangan buyurtmalar')} />
-              <MiniStat icon={<Wallet size={20} />} tone="amber" value={formatMoney(data.today.revenue)} label={t('Bugungi tushum')} long />
+              <MiniStat icon={<PackageCheck size={20} />} tone="teal" value={data.today.newOrders} label={t('Yangi buyurtmalar')} to={`/admin/buyurtmalar?from=${todayIso}&to=${todayIso}`} />
+              <MiniStat icon={<CalendarCheck size={20} />} tone="green" value={data.today.completedOrders} label={t('Yakunlangan buyurtmalar')} to={`/admin/buyurtmalar?status=COMPLETED&from=${todayIso}&to=${todayIso}`} />
+              <MiniStat icon={<Wallet size={20} />} tone="amber" value={formatMoney(data.today.revenue)} label={t('Bugungi tushum')} long to="/admin/hisobot" />
             </div>
           </Panel>
 

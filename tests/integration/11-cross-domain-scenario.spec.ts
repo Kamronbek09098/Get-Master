@@ -110,7 +110,14 @@ describe('end-to-end: request → … → review → statistics', () => {
     expect(proofs.map((p: any) => p.stage).sort()).toEqual(['AFTER', 'BEFORE']);
   });
 
-  it('7. customer confirms → COMPLETED; master statistics are derived from the real lifecycle', async () => {
+  it('7. customer pays in full, then confirms → COMPLETED; master statistics are derived from the real lifecycle', async () => {
+    // To'lovsiz tasdiqlab bo'lmaydi: faqat to'lov usulini tanlash yetarli emas.
+    const early = await h.post(`/orders/${ids.order}/confirm-completion`, customer.token);
+    expect(early.status).toBe(409);
+    expect(early.body.code).toBe('PAYMENT_REQUIRED');
+    const { payment, hook } = await payOrder(h, customer, ids.order);
+    expect(hook.status).toBe(201);
+    ids.payment = payment.id;
     expect((await h.post(`/orders/${ids.order}/confirm-completion`, customer.token)).data.status).toBe('COMPLETED');
     const stats = await h.db.masterProfile.findUniqueOrThrow({ where: { id: master.masterId } });
     expect(stats.completedOrders).toBe(1);
@@ -120,9 +127,6 @@ describe('end-to-end: request → … → review → statistics', () => {
   });
 
   it('8. payment: create → signed provider webhook → SUCCEEDED; earnings and history agree', async () => {
-    const { payment, hook } = await payOrder(h, customer, ids.order);
-    expect(hook.status).toBe(201);
-    ids.payment = payment.id;
     expect((await h.db.payment.findUniqueOrThrow({ where: { id: ids.payment } })).status).toBe('SUCCEEDED');
     const earnings = (await h.get('/payments/earnings', master.token)).data.summary;
     expect(Number(earnings.grossAmount)).toBe(180000);

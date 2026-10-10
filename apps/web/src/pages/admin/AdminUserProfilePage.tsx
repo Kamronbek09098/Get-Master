@@ -12,7 +12,7 @@ import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime, formatMoney, formatRelativeTime } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
-import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
+import { AvatarEditor } from '@/features/profile/AvatarEditor';
 import { TrustBadge } from '@/features/trust/components/TrustBadge';
 import { Switch } from '@/components/ui/Switch';
 import { useAdminUserByNumber, useSetUserTwoFactor } from '@/features/admin/hooks/useAdmin';
@@ -99,7 +99,7 @@ export function AdminUserProfilePage() {
       {data && status && !isAdminAccount && (
         <>
           <header className="gm-uprofile__hero">
-            <ChatAvatar name={accountName(data)} seed={data.id} size="lg" />
+            <AvatarEditor name={accountName(data)} seed={data.id} size="lg" src={data.avatar} targetUserId={data.id} canEdit={data.status !== 'DELETED'} />
             <div className="gm-uprofile__who">
               <h1>{accountName(data)}</h1>
               <p>

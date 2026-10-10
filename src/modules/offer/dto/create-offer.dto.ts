@@ -1,8 +1,9 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
-import { IsDateString, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, IsUUID, MaxLength, Min } from 'class-validator';
+import { IsDateString, IsInt, IsNotEmpty, IsOptional, IsPositive, IsString, MaxLength, Min } from 'class-validator';
 
 export class CreateOfferDto {
-  @IsUUID('4')
+  @IsUUID()
   requestId!: string;
 
   @Type(() => Number)

@@ -1,5 +1,6 @@
+import { ParseUUIDPipe } from '../../common/validators/any-uuid';
 import { ConfirmCompletionDto } from './dto/confirm-completion.dto';
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { panelOf } from '../../common/utils/panel';
@@ -95,8 +96,8 @@ export class OrderController {
   }
 
   @Post(':id/confirm-completion')
-  confirmCompletion(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request, @Body() dto: ConfirmCompletionDto) {
-    return this.orderService.confirmCompletion(userId, id, panelOf(req), dto?.paymentMethod);
+  confirmCompletion(@CurrentUser('sub') userId: string, @Param('id', ParseUUIDPipe) id: string, @Req() req: Request, @Body() _dto: ConfirmCompletionDto) {
+    return this.orderService.confirmCompletion(userId, id, panelOf(req));
   }
 
   @Post(':id/dispute')

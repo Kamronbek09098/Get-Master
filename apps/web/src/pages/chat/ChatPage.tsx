@@ -126,7 +126,7 @@ export function ChatPage() {
               </button>
               {profileHref ? (
                 <Link to={profileHref} className="gm-messenger__who-link" aria-label={t('{name} profilini ochish', { name })}>
-                  <ChatAvatar name={name} seed={selected.counterpart?.id ?? selected.id} />
+                  <ChatAvatar name={name} seed={selected.counterpart?.id ?? selected.id} src={selected.counterpart?.avatar} />
                   <div className="gm-messenger__who">
                     <strong>{name}</strong>
                     <span>{selected.type === 'DIRECT' ? t('Buyurtmadan oldingi suhbat') : t('Buyurtma suhbati')}</span>
@@ -134,7 +134,7 @@ export function ChatPage() {
                 </Link>
               ) : (
                 <>
-                  <ChatAvatar name={name} seed={selected.counterpart?.id ?? selected.id} admin={selected.type === 'SUPPORT' && !isAdmin} />
+                  <ChatAvatar name={name} seed={selected.counterpart?.id ?? selected.id} src={selected.counterpart?.avatar} admin={selected.type === 'SUPPORT' && !isAdmin} />
                   <div className="gm-messenger__who">
                     <strong>{name}</strong>
                     <span>{selected.type === 'SUPPORT' ? (isAdmin ? t('Administrator xabarlari') : t('Administrator')) : selected.type === 'DIRECT' ? t('Buyurtmadan oldingi suhbat') : t('Buyurtma suhbati')}</span>

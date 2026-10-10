@@ -56,7 +56,7 @@ describe('admin dashboard — every figure comes from the database', () => {
     expect(attention.pendingVerifications).toBe(documents + portfolio);
     expect(attention.openCases).toBe(await h.db.case.count({ where: { status: { in: ['REPORTED', 'UNDER_REVIEW'] } } }));
     expect(attention.pendingSubscriptions).toBe(await h.db.subscription.count({ where: { status: 'PENDING' } }));
-    expect(attention.activeOrders).toBe(await h.db.order.count({ where: { status: { in: ['CONFIRMED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'WAITING_CONFIRMATION'] } } }));
+    expect(attention.activeOrders).toBe(await h.db.order.count({ where: { status: { in: ['BOOKED', 'CONFIRMED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'WAITING_CONFIRMATION', 'DISPUTED'] } } }));
     expect(attention.errors24h).toBe(await h.db.errorLog.count({ where: { severity: 'ERROR', createdAt: { gte: new Date(Date.now() - 86_400_000) } } }));
   });
 

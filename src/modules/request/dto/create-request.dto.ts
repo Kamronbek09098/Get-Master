@@ -1,17 +1,7 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
 import { ServiceMode } from '@prisma/client';
-import {
-  IsDateString,
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class CreateRequestDto {
   @IsString()
@@ -24,15 +14,15 @@ export class CreateRequestDto {
   description!: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   categoryId?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   serviceId?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   addressId?: string;
 
   @IsOptional()

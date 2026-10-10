@@ -1,4 +1,5 @@
-import { ArrayNotEmpty, ArrayUnique, IsArray, IsNotEmpty, IsPhoneNumber, IsString, IsUUID, MaxLength, ValidateIf, IsOptional } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
+import { ArrayNotEmpty, ArrayUnique, IsArray, IsNotEmpty, IsPhoneNumber, IsString, MaxLength, ValidateIf, IsOptional } from 'class-validator';
 
 export class GoogleSignInDto {
   /** Google ID token (hisobni ulash va eski oqim uchun). */

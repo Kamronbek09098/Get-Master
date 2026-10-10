@@ -163,3 +163,5 @@
 .gm-mp-tabs button { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 16px; border: 1.5px solid var(--gm-color-border); border-radius: 999px; background: var(--gm-color-surface); color: var(--gm-color-text); font: inherit; font-size: 15px; font-weight: 700; white-space: nowrap; cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
 .gm-mp-tabs button.is-active { background: var(--gm-color-text); border-color: var(--gm-color-text); color: var(--gm-color-surface); }
 .gm-mp-tabs button:focus-visible { outline: 2px solid var(--gm-color-primary); outline-offset: 2px; }
+
+.gm-mp-count { font-size: 0.8em; font-weight: 600; color: var(--gm-color-text-muted); }

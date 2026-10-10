@@ -1,9 +1,10 @@
+import { IsUUID } from '../validators/any-uuid';
 import { Type } from 'class-transformer';
-import { IsDateString, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { IsDateString, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 export class CursorQueryDto {
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   cursor?: string;
 
   @IsOptional()

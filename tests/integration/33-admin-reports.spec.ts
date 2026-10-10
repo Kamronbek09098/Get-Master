@@ -55,8 +55,11 @@ describe('admin reports — numbers match the database', () => {
     expect(current.refunded).toBe(Number(refunds._sum.amount ?? 0));
     expect(current.payments).toBe(await h.db.payment.count({ where: { createdAt: { gte: from, lte: to } } }));
     expect(current.orders).toBe(await h.db.order.count({ where: { createdAt: { gte: from, lte: to } } }));
-    expect(current.completed).toBe(await h.db.order.count({ where: { status: 'COMPLETED', completedAt: { gte: from, lte: to } } }));
-    expect(current.cancelled).toBe(await h.db.order.count({ where: { status: 'CANCELLED', cancelledAt: { gte: from, lte: to } } }));
+    // Faol / yakunlangan / bekor qilingan — davrda yaratilgan buyurtmalarning hozirgi holati (buyurtmalar ro'yxati filtri bilan bir xil).
+    const created = { createdAt: { gte: from, lte: to } };
+    expect(current.active).toBe(await h.db.order.count({ where: { ...created, status: { in: ['BOOKED', 'CONFIRMED', 'ON_THE_WAY', 'ARRIVED', 'IN_PROGRESS', 'WAITING_CONFIRMATION', 'DISPUTED'] } } }));
+    expect(current.completed).toBe(await h.db.order.count({ where: { ...created, status: 'COMPLETED' } }));
+    expect(current.cancelled).toBe(await h.db.order.count({ where: { ...created, status: 'CANCELLED' } }));
     expect(current.revenue).toBeGreaterThanOrEqual(120000);
     expect(current.refunded).toBeGreaterThanOrEqual(20000);
   });
@@ -74,6 +77,7 @@ describe('admin reports — numbers match the database', () => {
     expect(sum('refunded')).toBe(current.refunded);
     expect(sum('payments')).toBe(current.payments);
     expect(sum('orders')).toBe(current.orders);
+    expect(sum('active')).toBe(current.active);
     expect(sum('completed')).toBe(current.completed);
     expect(sum('cancelled')).toBe(current.cancelled);
     // To'lovlar holati taqsimoti jami to'lovlar soniga teng.

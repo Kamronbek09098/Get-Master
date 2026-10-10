@@ -107,7 +107,7 @@ export function AddressMastersDialog({
                   return (
                     <li key={master.id}>
                       <Link to={`/mijoz/ustalar/${master.user.accountNumber ?? master.id}`} className="gm-addrm__item" onClick={onClose}>
-                        <ChatAvatar name={name} seed={master.id} size="md" />
+                        <ChatAvatar name={name} seed={master.id} size="md" src={master.user.avatar} />
                         <span className="gm-addrm__info">
                           <strong>{name}</strong>
                           <span>{master.profession ?? t('Kasb ko‘rsatilmagan')}</span>

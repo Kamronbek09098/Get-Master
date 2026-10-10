@@ -1,5 +1,6 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
-import { IsEnum, IsIn, IsInt, IsOptional, IsUUID, Max, Min } from 'class-validator';
+import { IsEnum, IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { RequestStatus } from '@prisma/client';
 
 export class RequestQueryDto {
@@ -12,7 +13,7 @@ export class RequestQueryDto {
   sort?: 'asc' | 'desc' = 'desc';
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   cursor?: string;
 
   @IsOptional()

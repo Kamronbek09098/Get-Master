@@ -51,7 +51,7 @@ const PUBLIC_MASTER_SELECT = {
   serviceModes: true,
   placeAddress: true,
   region: true,
-  user: { select: { accountNumber: true, firstName: true, lastName: true } },
+  user: { select: { accountNumber: true, firstName: true, lastName: true, avatarAssetId: true } },
   services: {
     where: { isActive: true, service: { isActive: true } },
     select: {
@@ -646,7 +646,7 @@ export class MasterService implements OnApplicationBootstrap {
       this.db.order.findMany({
         where: { masterId, status: 'COMPLETED' },
         orderBy: [{ completedAt: 'desc' }, { id: 'desc' }],
-        take: 12,
+        take: 30,
         select: {
           id: true,
           completedAt: true,

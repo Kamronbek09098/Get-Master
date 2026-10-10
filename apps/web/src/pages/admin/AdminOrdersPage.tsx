@@ -42,12 +42,13 @@ const dayEnd = (value: string) => (value ? new Date(`${value}T23:59:59.999`).toI
 
 export function AdminOrdersPage() {
   const [searchParams] = useSearchParams();
-  const [status, setStatus] = useState<AdminOrderStatus | ''>('');
+  const urlStatus = searchParams.get('status');
+  const [status, setStatus] = useState<AdminOrderStatus | ''>(TABS.some((tab) => tab.value && tab.value === urlStatus) ? (urlStatus as AdminOrderStatus) : '');
   const [search, setSearch] = useState(searchParams.get('q') ?? '');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [flagged, setFlagged] = useState(false);
-  const [ongoing, setOngoing] = useState(false);
+  const [from, setFrom] = useState(/^\d{4}-\d{2}-\d{2}$/.test(searchParams.get('from') ?? '') ? (searchParams.get('from') as string) : '');
+  const [to, setTo] = useState(/^\d{4}-\d{2}-\d{2}$/.test(searchParams.get('to') ?? '') ? (searchParams.get('to') as string) : '');
+  const [flagged, setFlagged] = useState(searchParams.get('flagged') === 'true');
+  const [ongoing, setOngoing] = useState(searchParams.get('ongoing') === 'true' && !urlStatus);
   const debounced = useDebounce(search, 400);
 
   /** Yuqoridagi statistik kartochkalar bir-birini istisno qiladi: biri tanlanganda qolganlari tozalanadi. */

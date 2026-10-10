@@ -51,8 +51,11 @@ export function OrderPaymentCard({
     if (completed) {
       tone = 'warning';
       hint = isMaster ? t('Mijoz hali to‘lov usulini tanlamagan.') : t('Buyurtma yakunlandi. To‘lov usulini tanlang va to‘lovni rasmiylashtiring.');
+    } else if (order.status === 'WAITING_CONFIRMATION') {
+      tone = 'warning';
+      hint = isMaster ? t('Mijoz to‘lovni amalga oshirishi kutilmoqda.') : t('Ishni tasdiqlash uchun to‘lovni hozir to‘liq amalga oshiring.');
     } else if (!isMaster) {
-      hint = t('Ish tugagach to‘lov usulini tanlaysiz. Hozirdan ham tanlab qo‘yishingiz mumkin.');
+      hint = t('Ish tugagach to‘lovni amalga oshirib, ishni tasdiqlaysiz. Usulni hozirdan tanlab qo‘yishingiz mumkin.');
     }
   } else if (payment.status === 'SUCCEEDED' || payment.status === 'PARTIALLY_REFUNDED' || payment.status === 'REFUNDED') {
     tone = 'success';
@@ -69,9 +72,9 @@ export function OrderPaymentCard({
     title = t('Naqd to‘lov kutilmoqda');
     Icon = Banknote;
     hint = isMaster
-      ? completed
-        ? t('Mijoz naqd pul bilan to‘laydi. Pulni olgach, pastdagi tugma bilan tasdiqlang.')
-        : t('Mijoz ishni tasdiqlagach, naqd pulni olganingizni shu yerdan tasdiqlaysiz.')
+      ? completed || order.status === 'WAITING_CONFIRMATION'
+        ? t('Mijoz naqd pul bilan to‘laydi. Pulni olgach, pastdagi tugma bilan tasdiqlang — shundan keyin mijoz ishni tasdiqlay oladi.')
+        : t('Ish tugagach, mijoz naqd pulni topshiradi va siz olganingizni shu yerdan tasdiqlaysiz.')
       : t('Pulni ustaga qo‘lda topshiring. Usta olganini tasdiqlagach, to‘lov yakunlanadi.');
   } else {
     tone = 'warning';
@@ -80,7 +83,7 @@ export function OrderPaymentCard({
     hint = isMaster ? t('Mijoz onlayn to‘lov qilishi kutilmoqda.') : t('To‘lov hali yakunlanmagan. To‘lovni davom ettiring yoki boshqa usulni tanlang.');
   }
 
-  const canConfirmCash = isMaster && payment?.provider === 'CASH' && payment.status === 'PENDING' && completed;
+  const canConfirmCash = isMaster && payment?.provider === 'CASH' && payment.status === 'PENDING' && (completed || order.status === 'WAITING_CONFIRMATION');
 
   // Mijoz to‘lov usulini shu kartaning o‘zida tanlaydi va to‘lovni shu yerda rasmiylashtiradi (alohida sahifasiz).
   const settled = !!payment && ['SUCCEEDED', 'PARTIALLY_REFUNDED', 'REFUNDED'].includes(payment.status);

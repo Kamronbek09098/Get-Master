@@ -13,7 +13,7 @@ import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
 import { ReasonDto } from './dto/reason.dto';
 import { MetricsService } from '../../infrastructure/metrics/metrics.service';
 import { ERRORS } from '../../common/constants/error-messages';
-import { RescheduleNotAllowedException, RescheduleNotPendingException, RescheduleOwnProposalException, WorkTooEarlyException } from '../../common/exceptions/business.exception';
+import { PaymentRequiredException, RescheduleNotAllowedException, RescheduleNotPendingException, RescheduleOwnProposalException, WorkTooEarlyException } from '../../common/exceptions/business.exception';
 import { formatUzDateTime } from '../../common/utils/format-date';
 import type { Panel } from '../../common/utils/panel';
 
@@ -42,8 +42,8 @@ const HISTORY_SELECT = {
       service: { select: { id: true, name: true } },
     },
   },
-  customer: { select: { id: true, firstName: true, lastName: true } },
-  master: { select: { id: true, user: { select: { id: true, firstName: true, lastName: true } } } },
+  customer: { select: { id: true, firstName: true, lastName: true, avatarAssetId: true } },
+  master: { select: { id: true, user: { select: { id: true, firstName: true, lastName: true, avatarAssetId: true } } } },
 } satisfies Prisma.OrderSelect;
 
 const WORK_PROOF_STAGE_STATUS: Record<WorkStage, OrderStatus> = {
@@ -80,12 +80,12 @@ export class OrderService {
             request: { select: { id: true, title: true, description: true, serviceMode: true } },
           },
         },
-        customer: { select: { id: true, accountNumber: true, firstName: true, lastName: true } },
+        customer: { select: { id: true, accountNumber: true, firstName: true, lastName: true, avatarAssetId: true } },
         master: {
           select: {
             id: true,
             profession: true,
-            user: { select: { id: true, accountNumber: true, firstName: true, lastName: true } },
+            user: { select: { id: true, accountNumber: true, firstName: true, lastName: true, avatarAssetId: true } },
           },
         },
         conversation: { select: { id: true } },
@@ -188,8 +188,8 @@ export class OrderService {
       take: 50,
       include: {
         booking: { select: { scheduledStartAt: true, service: { select: { id: true, name: true } }, request: { select: { title: true } } } },
-        customer: { select: { id: true, accountNumber: true, firstName: true, lastName: true } },
-        master: { select: { profession: true, status: true, verification: true, user: { select: { id: true, accountNumber: true, firstName: true, lastName: true } } } },
+        customer: { select: { id: true, accountNumber: true, firstName: true, lastName: true, avatarAssetId: true } },
+        master: { select: { profession: true, status: true, verification: true, user: { select: { id: true, accountNumber: true, firstName: true, lastName: true, avatarAssetId: true } } } },
       },
     });
     const [customerSeq, masterSeq] = await Promise.all([
@@ -351,30 +351,23 @@ export class OrderService {
     return this.transition(orderId, 'WAITING_CONFIRMATION', actor, { completionSubmittedAt: new Date() });
   }
 
-  async confirmCompletion(userId: string, orderId: string, panel: Panel | null = null, paymentMethod?: PaymentProvider) {
+  /**
+   * Mijoz ishni tasdiqlaydi. Tasdiqlash va buyurtmani yakunlash uchun to‘lov TO‘LIQ amalga oshgan bo‘lishi shart:
+   * onlayn usulda — to‘lov muvaffaqiyatli yakunlangan, naqd pulda — usta pulni olganini tasdiqlagan.
+   * Faqat usulni tanlab qo‘yish yetarli emas.
+   */
+  async confirmCompletion(userId: string, orderId: string, panel: Panel | null = null) {
     const actor = await this.resolveActor(userId, orderId, ['CUSTOMER'], panel);
-    const updated = await this.transition(orderId, 'COMPLETED', actor, { completedAt: new Date() });
-    if (paymentMethod) await this.recordPaymentMethod(updated, userId, paymentMethod);
-    return updated;
+    await this.assertPaidInFull(orderId);
+    return this.transition(orderId, 'COMPLETED', actor, { completedAt: new Date() });
   }
 
-  /** Mijoz tanlagan to‘lov usuli har doim yozib qo‘yiladi (naqd pul ham). Allaqachon to‘lov yozuvi bo‘lsa, ikkinchisi yaratilmaydi. */
-  private async recordPaymentMethod(order: { id: string; masterId: string; finalAmount: Prisma.Decimal; currency: string }, customerId: string, provider: PaymentProvider) {
-    const existing = await this.db.payment.findFirst({ where: { orderId: order.id, status: { in: ['PENDING', 'PROCESSING', 'SUCCEEDED', 'PARTIALLY_REFUNDED'] } } });
-    if (existing) return;
-    await this.db.$transaction(async (tx) => {
-      const payment = await tx.payment.create({
-        data: { orderId: order.id, customerId, provider, amount: order.finalAmount, currency: order.currency, status: 'PENDING', metadata: { chosenAt: 'ORDER_COMPLETION' } },
-      });
-      const master = await tx.masterProfile.findUniqueOrThrow({ where: { id: order.masterId }, select: { userId: true } });
-      await this.outbox.emit(tx, {
-        eventName: 'payment.method_chosen',
-        aggregateType: 'Payment',
-        aggregateId: payment.id,
-        payload: { paymentId: payment.id, orderId: order.id, masterUserId: master.userId, provider, amount: String(order.finalAmount), currency: order.currency },
-        createdById: customerId,
-      });
-    });
+  /** Muvaffaqiyatli to‘lovlarning (qaytarilganini ayirib) yig‘indisi buyurtmaning yakuniy summasini qoplashi kerak. */
+  private async assertPaidInFull(orderId: string): Promise<void> {
+    const order = await this.db.order.findUniqueOrThrow({ where: { id: orderId }, select: { finalAmount: true } });
+    const paid = await this.db.payment.findMany({ where: { orderId, status: { in: ['SUCCEEDED', 'PARTIALLY_REFUNDED'] } }, select: { amount: true, refundedAmount: true } });
+    const total = paid.reduce((sum, row) => sum.add(row.amount).sub(row.refundedAmount), new Prisma.Decimal(0));
+    if (total.lt(order.finalAmount)) throw new PaymentRequiredException();
   }
 
   async dispute(userId: string, orderId: string, dto: ReasonDto, panel: Panel | null = null) {

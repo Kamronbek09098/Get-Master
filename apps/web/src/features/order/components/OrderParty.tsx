@@ -15,7 +15,7 @@ export function OrderParty({ order }: { order: OrderDetailsData }) {
   return (
     <aside className="gm-ocard gm-oparty" aria-label={t('Buyurtma ma’lumotlari')}>
       <div className="gm-oparty__who">
-        <ChatAvatar name={name} seed={order.counterpart.id} size="lg" />
+        <ChatAvatar name={name} seed={order.counterpart.id} size="lg" src={order.counterpart.avatar} />
         <div>
           <small>{role}</small>
           <strong>{name}</strong>

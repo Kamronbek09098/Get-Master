@@ -18,6 +18,7 @@ import { ScheduleCard } from '@/features/order/components/ScheduleCard';
 import { WorkProofPanel } from '@/features/order/components/WorkProofPanel';
 import { OrderPaymentCard } from '@/features/order/components/OrderPaymentCard';
 import type { PaymentProvider } from '@/types/common';
+import { isPaymentSettled } from '@/features/order/payment-state';
 import { ReviewForm } from '@/features/review/components/ReviewForm';
 import { AdditionalWorkPanel } from '@/features/work/components/AdditionalWorkPanel';
 import {
@@ -185,18 +186,23 @@ export function OrderDetailsPage() {
         <WorkProofPanel orderId={id} stage="DURING" />
       </StepCard>;
     else if (status === 'WAITING_CONFIRMATION') {
-      // Mijoz to‘lov usulini avval tanlagan bo‘lsa (kutilayotgan to‘lov bor), o‘sha usul oldindan tanlangan turadi — qayta tanlash shart emas.
-      const existing = data.payment && data.payment.status !== 'FAILED' && data.payment.status !== 'CANCELLED' ? data.payment.provider : '';
-      const chosen: PaymentProvider | '' = method || existing;
+      // Ishni tasdiqlash va yakunlash uchun to‘lov TO‘LIQ amalga oshgan bo‘lishi shart (usulni tanlab qo‘yish yetarli emas).
+      const paid = isPaymentSettled(data.payment);
+      const cashWaiting = data.payment?.provider === 'CASH' && data.payment.status === 'PENDING';
       step = (
-        <StepCard tone="next" icon={<CheckCircle2 size={22} />} title={t('Ishni ko‘rib chiqing')} lead={t('Usta ishni tugatdi. Natijani tekshiring va tasdiqlang. Muammo bo‘lsa, nizo oching.')}>
+        <StepCard tone="next" icon={<CheckCircle2 size={22} />} title={t('Ishni ko‘rib chiqing')} lead={t('Usta ishni tugatdi. Natijani tekshiring, to‘lovni amalga oshiring va ishni tasdiqlang. Muammo bo‘lsa, nizo oching.')}>
           <WorkProofPanel orderId={id} stage="BEFORE" />
           <WorkProofPanel orderId={id} stage="AFTER" />
-          {!chosen && (
-            <p className="gm-ocard__lead">{t('Ishni tasdiqlash uchun avval pastdagi')}{' '}<a href="#tolov">{t('«To‘lov» kartasida')}</a>{' '}{t('to‘lov usulini tanlang.')}</p>
+          {paid ? (
+            <p className="gm-ocard__lead gm-ocard__lead--ok"><CheckCircle2 size={15} aria-hidden="true" /> {t('To‘lov to‘liq amalga oshirildi. Endi ishni tasdiqlashingiz mumkin.')}</p>
+          ) : (
+            <p className="gm-ocard__lead">
+              {cashWaiting ? t('Naqd to‘lov: pulni ustaga topshiring. Usta olganini tasdiqlagach, ishni tasdiqlash ochiladi.') : t('Ishni tasdiqlash uchun avval pastdagi')}{' '}
+              {!cashWaiting && (<><a href="#tolov">{t('«To‘lov» kartasida')}</a>{' '}{t('to‘lovni to‘liq amalga oshiring.')}</>)}
+            </p>
           )}
           <div className="gm-oactions">
-            <Button loading={confirmCompletion.isPending} disabled={!chosen} onClick={() => chosen && confirmCompletion.mutate(chosen)}>{t('Ishni tasdiqlash')}</Button>
+            <Button loading={confirmCompletion.isPending} disabled={!paid} title={paid ? undefined : t('Avval to‘lovni to‘liq amalga oshiring')} onClick={() => paid && confirmCompletion.mutate()}>{t('Ishni tasdiqlash')}</Button>
           </div>
         </StepCard>
       );

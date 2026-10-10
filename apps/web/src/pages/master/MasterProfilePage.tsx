@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/Badge';
 import { accountName } from '@/lib/account-name';
 import { formatDate } from '@/lib/utils';
 import { statusLabel } from '@/lib/labels';
+import { AvatarEditor } from '@/features/profile/AvatarEditor';
 import { useMe } from '@/features/session/hooks/useMe';
 import { useMyMasterProfile } from '@/features/master/hooks/useMaster';
 import { MasterForm } from '@/features/master/components/MasterForm';
@@ -19,7 +20,6 @@ import { TrustProfile } from '@/features/trust/components/TrustProfile';
 import { TrustBadge } from '@/features/trust/components/TrustBadge';
 import { FOCUS_VERIFICATION_EVENT } from '@/features/trust/components/VerificationBanner';
 import { LogoutDialog } from '@/features/auth/components/LogoutDialog';
-import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { InfoRows, ProfileCard } from '@/features/profile/ProfileCard';
 import { ProfileMenuList, ProfileSubPage } from '@/features/profile/ProfileMenu';
 import { GoogleLinkSettings } from '@/features/session/components/GoogleLinkSettings';
@@ -156,7 +156,7 @@ export function MasterProfilePage() {
 
       {user && (
         <section className="gm-mprof__card gm-mprof__id">
-          <ChatAvatar name={name} seed={user.id} size="lg" />
+          <AvatarEditor name={name} seed={user.id} size="lg" src={user.avatar} canEdit={user.canSetAvatar !== false} />
           <h2>{name}</h2>
           <p className="gm-mprof__role">{data.profession ?? t('Kasb ko‘rsatilmagan')}</p>
           <div className="gm-mprof__badges">

@@ -1,5 +1,6 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Transform, Type } from 'class-transformer';
-import { ArrayMaxSize, IsArray, IsEnum, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsEnum, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator';
 import { WorkPostKind } from '@prisma/client';
 
 export const FEED_TABS = ['foryou', 'following', 'trend', 'saved'] as const;
@@ -11,11 +12,11 @@ export class FeedQueryDto {
   tab?: FeedTab;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   category?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   master?: string;
 
   @IsOptional()
@@ -54,27 +55,27 @@ export class CreateWorkPostDto {
   tags?: string[];
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   categoryId?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   serviceId?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   videoAssetId?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   coverAssetId?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   beforeAssetId?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   afterAssetId?: string;
 
   @IsOptional()

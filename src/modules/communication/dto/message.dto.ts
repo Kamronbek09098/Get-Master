@@ -1,4 +1,5 @@
-import { ArrayMaxSize, ArrayUnique, IsArray, IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
+import { ArrayMaxSize, ArrayUnique, IsArray, IsIn, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export const MAX_MESSAGE_LENGTH = 2000;
 export const MAX_ATTACHMENTS_PER_MESSAGE = 5;

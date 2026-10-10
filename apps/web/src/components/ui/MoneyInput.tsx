@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 import type { ChangeEvent } from 'react';
 import { Input } from './Input';
 import type { InputProps } from './Input';
-import { groupDigits, sanitizeMoney } from '@/lib/utils';
+import { groupAmount, sanitizeMoney } from '@/lib/utils';
 import { t } from '@/i18n';
 
 export interface MoneyInputProps extends Omit<InputProps, 'value' | 'onChange' | 'type' | 'formatValue' | 'min' | 'max'> {
@@ -20,7 +20,7 @@ export interface MoneyInputProps extends Omit<InputProps, 'value' | 'onChange' |
  */
 export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(({ value, onValueChange, max, min, suffix, error, hint, placeholder, ...rest }, ref) => {
   const amount = value ? Number(value) : 0;
-  const range = value && max !== undefined && amount > max ? t('Summa {max} dan oshmasligi kerak.', { max: groupDigits(String(max)) }) : value && min !== undefined && amount < min ? t('Summa kamida {min} bo‘lishi kerak.', { min: groupDigits(String(min)) }) : undefined;
+  const range = value && max !== undefined && amount > max ? t('Summa {max} dan oshmasligi kerak.', { max: groupAmount(String(max)) }) : value && min !== undefined && amount < min ? t('Summa kamida {min} bo‘lishi kerak.', { min: groupAmount(String(min)) }) : undefined;
   return (
     <Input
       ref={ref}
@@ -28,8 +28,8 @@ export const MoneyInput = forwardRef<HTMLInputElement, MoneyInputProps>(({ value
       inputMode="numeric"
       suffix={suffix ?? t('so‘m')}
       placeholder={placeholder ?? '0'}
-      value={groupDigits(value)}
-      formatValue={groupDigits}
+      value={groupAmount(value)}
+      formatValue={groupAmount}
       error={error ?? range}
       hint={hint}
       onChange={(event: ChangeEvent<HTMLInputElement>) => onValueChange(sanitizeMoney(event.target.value))}

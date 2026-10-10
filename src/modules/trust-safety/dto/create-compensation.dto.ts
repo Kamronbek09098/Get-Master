@@ -1,13 +1,14 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { CompensationType } from '@prisma/client';
 
 export class CreateCompensationDto {
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   caseId?: string;
 
-  @IsUUID('4')
+  @IsUUID()
   recipientId!: string;
 
   @IsEnum(CompensationType)

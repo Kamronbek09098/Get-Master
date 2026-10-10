@@ -5,6 +5,7 @@ export interface ChatUser {
   accountNumber?: number;
   firstName: string | null;
   lastName: string | null;
+  avatar?: string | null;
 }
 
 export interface ChatAttachment {

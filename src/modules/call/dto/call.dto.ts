@@ -1,8 +1,9 @@
-import { IsEnum, IsIn, IsNotEmpty, IsObject, IsUUID } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
+import { IsEnum, IsIn, IsNotEmpty, IsObject } from 'class-validator';
 import { CallMode } from '@prisma/client';
 
 export class StartCallDto {
-  @IsUUID('4')
+  @IsUUID()
   conversationId!: string;
 
   @IsEnum(CallMode)

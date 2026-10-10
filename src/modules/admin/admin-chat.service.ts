@@ -6,7 +6,7 @@ import { CursorQueryDto } from '../../common/dto/cursor-query.dto';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { AdminConversationQueryDto } from './dto/chat-query.dto';
 
-const PERSON = { id: true, accountNumber: true, firstName: true, lastName: true, phone: true } as const;
+const PERSON = { id: true, accountNumber: true, firstName: true, lastName: true, avatarAssetId: true, phone: true } as const;
 
 @Injectable()
 export class AdminChatService {

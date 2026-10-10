@@ -10,7 +10,8 @@ import { Switch } from '@/components/ui/Switch';
 import { accountName } from '@/lib/account-name';
 import { describeDevice } from '@/lib/user-agent';
 import { formatDateTime, formatRelativeTime } from '@/lib/utils';
-import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
+import { AvatarEditor } from '@/features/profile/AvatarEditor';
+import { AdminAvatarPermission } from '@/features/admin/components/AdminAvatarPermission';
 import { AdminPermissionsDialog } from '@/features/admin/components/AdminPermissionsDialog';
 import { PasswordResetDialog } from '@/features/admin/components/PasswordResetDialog';
 import { accountPath } from '@/features/admin/account-path';
@@ -75,7 +76,7 @@ export function AdminAccountProfile({
   return (
     <div className="gm-acc">
       <header className="gm-acc__hero">
-        <ChatAvatar name={name} seed={data.id} size="lg" />
+        <AvatarEditor name={name} seed={data.id} size="lg" src={data.avatar} targetUserId={data.id !== viewerId ? data.id : undefined} canEdit={viewerIsSuper || (data.id === viewerId && !!data.adminAvatarAllowed)} lockedHint={t('Admin profil rasmini faqat superadmin qo‘ya oladi')} />
         <div className="gm-acc__who">
           <h1>{name}</h1>
           <div className="gm-acc__badges">
@@ -96,6 +97,8 @@ export function AdminAccountProfile({
           )}
         </div>
       </header>
+
+      {viewerIsSuper && !isSuper && data.id !== viewerId && <AdminAvatarPermission adminId={data.id} allowed={!!data.adminAvatarAllowed} className="gm-acc__card gm-adm__twofa" />}
 
       <section className="gm-acc__quick" aria-label={t('Qisqacha')}>
         <div><Smartphone size={18} aria-hidden="true" /><strong>{data.stats.activeDevices}</strong><small>{t('Faol qurilmalar')}</small></div>

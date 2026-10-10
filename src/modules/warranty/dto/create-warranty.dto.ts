@@ -1,9 +1,10 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { MAX_WARRANTY_DAYS } from '../../../common/constants/app.constants';
 
 export class CreateWarrantyDto {
-  @IsUUID('4')
+  @IsUUID()
   orderId!: string;
 
   @IsOptional()

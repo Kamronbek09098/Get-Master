@@ -98,10 +98,9 @@ describe('E2E — so‘rovdan sharhgacha to‘liq oqim', () => {
     const after = await uploadImage(h, master.token, 'WORK_PROOF', 'Order', order.orderId, 72);
     await h.post(`/orders/${order.orderId}/work-proofs`, master.token, { stage: 'AFTER', mediaAssetId: after });
     await h.post(`/orders/${order.orderId}/submit-completion`, master.token);
+    await payOrder(h, customer, order.orderId);
     const confirmed = await h.post(`/orders/${order.orderId}/confirm-completion`, customer.token);
     expect(confirmed.status).toBeLessThan(300);
-
-    await payOrder(h, customer, order.orderId);
 
     const warranty = await h.post('/warranties', master.token, { orderId: order.orderId, days: 30 });
     expect(warranty.status).toBe(201);

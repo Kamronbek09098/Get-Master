@@ -1,7 +1,8 @@
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
+import { IsOptional } from 'class-validator';
 
 export class UserActionQueryDto {
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   userId?: string;
 }

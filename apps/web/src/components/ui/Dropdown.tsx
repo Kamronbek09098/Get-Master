@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { cx } from '@/lib/utils';
 import './Dropdown.css';
@@ -8,9 +8,15 @@ export interface DropdownItem {
   onSelect: () => void;
   danger?: boolean;
   icon?: ReactNode;
+  /** O‘ng tomondagi qo‘shimcha element (masalan, almashtirgich). */
+  trailing?: ReactNode;
+  /** Tanlanganda menyu yopilmaydi. */
+  keepOpen?: boolean;
+  /** Elementdan oldin ajratuvchi chiziq. */
+  separator?: boolean;
 }
 
-export function Dropdown({ trigger, items }: { trigger: ReactNode; items: DropdownItem[] }) {
+export function Dropdown({ trigger, items, triggerClassName, menuClassName, label }: { trigger: ReactNode; items: DropdownItem[]; triggerClassName?: string; menuClassName?: string; label?: string }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -44,7 +50,8 @@ export function Dropdown({ trigger, items }: { trigger: ReactNode; items: Dropdo
     <div className="gm-dropdown" ref={rootRef}>
       <button
         type="button"
-        className="gm-dropdown__trigger"
+        className={cx('gm-dropdown__trigger', triggerClassName)}
+        aria-label={label}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
@@ -52,16 +59,17 @@ export function Dropdown({ trigger, items }: { trigger: ReactNode; items: Dropdo
         {trigger}
       </button>
       {open && (
-        <div className="gm-dropdown__menu" role="menu" ref={menuRef}>
+        <div className={cx('gm-dropdown__menu', menuClassName)} role="menu" ref={menuRef}>
           {items.map((item) => (
+            <Fragment key={item.label}>
+              {item.separator && <div className="gm-dropdown__sep" role="separator" />}
             <button
-              key={item.label}
               type="button"
               role="menuitem"
               tabIndex={-1}
               className={cx('gm-dropdown__item', item.danger && 'gm-dropdown__item--danger')}
               onClick={() => {
-                setOpen(false);
+                if (!item.keepOpen) setOpen(false);
                 item.onSelect();
               }}
               onKeyDown={(event) => {
@@ -75,8 +83,10 @@ export function Dropdown({ trigger, items }: { trigger: ReactNode; items: Dropdo
               }}
             >
               {item.icon && <span aria-hidden="true" className="gm-dropdown__icon">{item.icon}</span>}
-              {item.label}
+              <span className="gm-dropdown__text">{item.label}</span>
+              {item.trailing}
             </button>
+            </Fragment>
           ))}
         </div>
       )}

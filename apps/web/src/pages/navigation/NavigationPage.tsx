@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ArrowUp, ArrowUpLeft, ArrowUpRight, CornerUpLeft, CornerUpRight, ExternalLink, Flag, LocateFixed, MapPinOff, Navigation, RefreshCw, Route as RouteIcon, Undo2, Volume2, VolumeX, WifiOff } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, ChevronDown, ChevronRight, ChevronUp, Compass, ExternalLink, Globe, MapPinOff, MessageCircle, Moon, Navigation, RefreshCw, Route as RouteIcon, Settings, Volume2, VolumeX, WifiOff, Gauge, Eye, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { cx } from '@/lib/utils';
@@ -11,29 +10,17 @@ import type { NavRoute } from '@/features/geo/geo.service';
 import { useArrive, useStartTravel } from '@/features/order/hooks/useOrders';
 import { useOrder } from '@/features/order/hooks/useOrders';
 import { NavMap } from '@/features/navigation/components/NavMap';
+import { Choice, MANEUVER_ICON, ManeuverSign, RoundBtn, RouteBar, SOUND_OPTIONS, THEME_OPTIONS, Toggle, VOLUME_OPTIONS } from '@/features/navigation/components/NavUi';
 import { formatDistance, formatDuration, maneuverOf, progressOn } from '@/features/navigation/geometry';
 import type { LatLon, Maneuver } from '@/features/navigation/geometry';
 import { maneuverText } from '@/features/navigation/instructions';
 import { useLiveLocation } from '@/features/navigation/useLiveLocation';
 import { useDeviceHeading } from '@/features/navigation/useDeviceHeading';
+import { useNavSettings, VOLUME_GAIN } from '@/features/navigation/settings';
 import { NavVoice, tierFor } from '@/features/navigation/voice';
 import type { Tier } from '@/features/navigation/voice';
 import { t } from '@/i18n';
 import '@/features/navigation/components/navigation.css';
-
-const ICON: Record<Maneuver, LucideIcon> = {
-  straight: ArrowUp,
-  depart: Navigation,
-  left: CornerUpLeft,
-  right: CornerUpRight,
-  'slight-left': ArrowUpLeft,
-  'slight-right': ArrowUpRight,
-  'sharp-left': CornerUpLeft,
-  'sharp-right': CornerUpRight,
-  uturn: Undo2,
-  roundabout: RefreshCw,
-  arrive: Flag,
-};
 
 const OFF_ROUTE_M = 70;
 const ARRIVED_M = 45;
@@ -65,8 +52,15 @@ export function NavigationPage() {
   const [origin, setOrigin] = useState<LatLon | null>(null);
   const [routeIndex, setRouteIndex] = useState(0);
   const [follow, setFollow] = useState(true);
-  const [headingUp, setHeadingUp] = useState(true);
-  const [voice, setVoice] = useState(true);
+  const [prefs, setPrefs] = useNavSettings();
+  const headingUp = prefs.headingUp;
+  const voice = prefs.sound !== 'off';
+  const [showAlts, setShowAlts] = useState(false);
+  const [sheet, setSheet] = useState<'collapsed' | 'expanded' | 'settings'>('collapsed');
+  const [bearing, setBearing] = useState(0);
+  const [signVisible, setSignVisible] = useState(false);
+  const [overviewKey, setOverviewKey] = useState(0);
+  const [panelH, setPanelH] = useState(130);
   const engine = useRef<NavVoice | null>(null);
   if (!engine.current) engine.current = new NavVoice();
   const [online, setOnline] = useState(() => navigator.onLine);
@@ -135,11 +129,12 @@ export function NavigationPage() {
 
   // Ekran o‘chib qolmasin
   useEffect(() => {
+    if (!prefs.keepAwake) return;
     let lock: { release: () => Promise<void> } | null = null;
     const nav = navigator as Navigator & { wakeLock?: { request: (type: 'screen') => Promise<{ release: () => Promise<void> }> } };
     void nav.wakeLock?.request('screen').then((value) => (lock = value)).catch(() => undefined);
     return () => void lock?.release().catch(() => undefined);
-  }, []);
+  }, [prefs.keepAwake]);
 
   // Marker: yo‘lga yopishtiriladi (GPS xatosi bo‘lsa ham yo‘lda turadi); yo‘nalish — harakatda GPS/yo‘l bo‘yicha, turganda telefon kompasi bo‘yicha.
   const moving = (position?.speed ?? 0) > 1.5;
@@ -161,10 +156,12 @@ export function NavigationPage() {
   // O‘zbekcha ovozli ko‘rsatma (tayyor neyron ovoz fayllari): bosqichlar bo‘yicha — 3 km, 1 km, 500 m, 200 m va burilish paytida.
   useEffect(() => {
     engine.current!.enabled = voice;
+    engine.current!.importantOnly = prefs.sound === 'important';
+    engine.current!.volume = VOLUME_GAIN[prefs.volume];
     if (!voice) engine.current!.stop();
     else engine.current!.preload();
-    return () => engine.current?.stop();
-  }, [voice]);
+  }, [voice, prefs.sound, prefs.volume]);
+  useEffect(() => () => engine.current?.stop(), []);
   useEffect(() => {
     if (!voice || !progress || !next || !route || arrived) return;
     const stepLength = route.steps[progress.stepIndex]?.distanceM ?? progress.toNextM;
@@ -183,6 +180,17 @@ export function NavigationPage() {
   useEffect(() => {
     if (voice && arrived) engine.current!.announce('arrive', 0);
   }, [voice, arrived]);
+
+  // Pastki panel balandligi o‘lchanadi: xarita va suzuvchi tugmalar shunga qarab joylashadi.
+  const panelObserver = useRef<ResizeObserver | null>(null);
+  const panelRef = useCallback((el: HTMLElement | null) => {
+    panelObserver.current?.disconnect();
+    if (!el) return;
+    const apply = () => setPanelH(el.offsetHeight);
+    apply();
+    panelObserver.current = new ResizeObserver(apply);
+    panelObserver.current.observe(el);
+  }, []);
 
   const speedKmh = Math.max(0, Math.round((position?.speed ?? 0) * 3.6));
   const after = route && progress ? route.steps[Math.min(progress.stepIndex + 2, route.steps.length - 1)] : null;
@@ -207,11 +215,46 @@ export function NavigationPage() {
       </div>
     );
 
-  const gpsProblem = live.status === 'denied' || live.status === 'unavailable' || live.status === 'timeout';
+  const gpsProblem = !position && (live.status === 'denied' || live.status === 'unavailable' || live.status === 'timeout' || live.status === 'insecure');
+  const native = typeof window !== 'undefined' && !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
   const routeProblem = !!origin && routes.isError;
+  const total = route?.distanceM ?? 0;
+  const remainingM = progress?.remainingM ?? total;
+  const remainingS = progress?.remainingS ?? route?.durationS ?? 0;
+  const maneuverPoint: LatLon | null = arrived ? dest : next ? { lat: next.location[1], lon: next.location[0] } : null;
+  const showTopSign = !!next && !gpsProblem && !signVisible;
+  const status = order.data.status;
+  const expanded = sheet !== 'collapsed';
+  const mapRotated = Math.abs(((bearing + 540) % 360) - 180) > 4;
+
+  const compassButton = () => {
+    if (headingUp) setPrefs({ headingUp: false });
+    else setPrefs({ headingUp: true });
+    setFollow(true);
+  };
+  const orderActions = (
+    <>
+      {status === 'CONFIRMED' && (
+        <Button size="lg" fullWidth loading={startTravel.isPending} onClick={() => startTravel.mutate()}>
+          {t('Yo‘lga chiqdim')}
+        </Button>
+      )}
+      {status === 'ON_THE_WAY' && (
+        <Button size="lg" fullWidth variant={arrived ? 'primary' : 'secondary'} loading={arrive.isPending} onClick={() => arrive.mutate(undefined, { onSuccess: () => undefined })}>
+          {t('Yetib keldim')}
+        </Button>
+      )}
+      {status === 'ARRIVED' && (
+        <Link to={goBack} className="gm-button gm-button--primary gm-button--lg gm-button--full">
+          {t('Buyurtmaga o‘tish')}
+        </Link>
+      )}
+      {startTravel.isError && <p className="gn-err" role="alert">{t('Holatni o‘zgartirib bo‘lmadi. Qayta urinib ko‘ring.')}</p>}
+    </>
+  );
 
   return (
-    <div className="gn" onPointerDown={() => { engine.current?.unlock(); if (compass.needsPermission) compass.request(); }}>
+    <div className="gn" style={{ '--gn-panel-h': `${panelH}px` } as React.CSSProperties} onPointerDown={() => { engine.current?.unlock(); if (compass.needsPermission) compass.request(); }}>
       <NavMap
         route={route?.geometry ?? null}
         passed={progress?.index ?? 0}
@@ -223,50 +266,38 @@ export function NavigationPage() {
         follow={follow && !!position && !arrived}
         onUserMove={() => setFollow(false)}
         headingUp={headingUp}
-        onToggleHeadingUp={() => {
-          setHeadingUp((value) => !value);
-          setFollow(true);
-        }}
+        mapTheme={prefs.mapTheme}
+        maneuverAt={!gpsProblem ? maneuverPoint : null}
+        maneuverSign={maneuverPoint ? <ManeuverSign maneuver={maneuver} meters={progress?.toNextM ?? 0} arrived={arrived} label={instruction} /> : null}
+        onManeuverVisible={setSignVisible}
+        onBearing={setBearing}
+        bottomInset={panelH}
+        overviewKey={overviewKey}
         fitKey={`${routeIndex}:${list.length}`}
         followZoom={speedKmh < 20 ? 18 : speedKmh < 55 ? 17 : speedKmh < 90 ? 16 : 15}
       />
 
-      <header className="gn-top">
-        <Link to={goBack} className="gn-iconbtn" aria-label={t('Buyurtmaga qaytish')}>
-          <ArrowLeft size={22} aria-hidden="true" />
-        </Link>
-        {next && !gpsProblem ? (
-          <div className={cx('gn-turn', arrived && 'is-arrived')} role="status" aria-live="polite">
-            <span className="gn-turn__icon">{(() => { const Icon = ICON[arrived ? 'arrive' : maneuver]; return <Icon size={34} strokeWidth={2.4} aria-hidden="true" />; })()}</span>
-            <span className="gn-turn__body">
-              <strong>{arrived ? t('Manzilga yetdingiz') : formatDistance(progress?.toNextM ?? 0)}</strong>
-              <span>{instruction}</span>
-            </span>
-          </div>
-        ) : (
-          <div className="gn-turn gn-turn--idle" role="status">
-            <span className="gn-turn__body">
-              <strong>{t('Navigatsiya')}</strong>
-              <span>{address || t('Mijoz manzili')}</span>
-            </span>
-          </div>
-        )}
-        {(
-          <button type="button" className="gn-iconbtn" aria-pressed={voice} aria-label={voice ? t('Ovozni o‘chirish') : t('Ovozni yoqish')} onClick={() => setVoice(!voice)}>
-            {voice ? <Volume2 size={21} aria-hidden="true" /> : <VolumeX size={21} aria-hidden="true" />}
-          </button>
-        )}
-      </header>
-
-      {afterManeuver && !arrived && !gpsProblem && (
-        <p className="gn-then" aria-label={t('Keyingi burilish')}>
-          {t('Keyin')} {(() => { const Icon = ICON[afterManeuver]; return <Icon size={18} aria-hidden="true" />; })()}
-        </p>
+      {showTopSign && (
+        <div className="gn-topsign" aria-live="polite">
+          <ManeuverSign maneuver={maneuver} meters={progress?.toNextM ?? 0} arrived={arrived} label={instruction} />
+          <span className="gn-topsign__text">{instruction}</span>
+        </div>
       )}
-      {position && speedKmh > 0 && (
-        <p className="gn-speed" aria-label={t('Tezlik')}>
-          <strong>{speedKmh}</strong>
-          <span>km/soat</span>
+      {!next && !gpsProblem && (
+        <div className="gn-topsign gn-topsign--idle">
+          <span className="gn-topsign__text"><strong>{t('Navigatsiya')}</strong> {address || t('Mijoz manzili')}</span>
+        </div>
+      )}
+
+      <div className="gn-fabs gn-fabs--top">
+        <RoundBtn label={voice ? t('Ovozni o‘chirish') : t('Ovozni yoqish')} active={false} onClick={() => setPrefs({ sound: voice ? 'off' : 'all' })}>
+          {voice ? <Volume2 size={22} aria-hidden="true" /> : <VolumeX size={22} aria-hidden="true" />}
+        </RoundBtn>
+      </div>
+
+      {afterManeuver && !arrived && !gpsProblem && !showTopSign && (
+        <p className="gn-then" aria-label={t('Keyingi burilish')}>
+          {t('Keyin')} {(() => { const Icon = MANEUVER_ICON[afterManeuver]; return <Icon size={18} aria-hidden="true" />; })()}
         </p>
       )}
       {!online && (
@@ -276,7 +307,7 @@ export function NavigationPage() {
       )}
       {live.status === 'locating' && !position && !gpsProblem && (
         <p className="gn-banner" role="status">
-          <Spinner /> {t('Joylashuvingiz aniqlanmoqda…')}
+          <Spinner /> {t('Joylashuvingiz aniqlanmoqda… Ruxsat so‘ralsa, «Ruxsat berish»ni bosing.')}
         </p>
       )}
       {routes.isFetching && origin && list.length > 0 && (
@@ -289,8 +320,18 @@ export function NavigationPage() {
         <div className="gn-fail">
           <FailCard
             icon={<MapPinOff size={30} />}
-            title={live.status === 'denied' ? t('Joylashuvga ruxsat berilmagan') : t('Joylashuv aniqlanmadi')}
-            text={live.status === 'denied' ? t('Navigatsiya uchun telefon sozlamalarida GetMaster’ga joylashuvga ruxsat bering, so‘ng qayta urinib ko‘ring.') : t('GPS signali topilmadi. Ochiq joyga chiqing yoki joylashuv (GPS) yoqilganini tekshiring.')}
+            title={live.status === 'denied' ? t('Joylashuvga ruxsat berilmagan') : live.status === 'insecure' ? t('Joylashuv faqat xavfsiz (HTTPS) ulanishda ishlaydi') : t('Joylashuv aniqlanmadi')}
+            text={
+              live.status === 'denied'
+                ? native
+                  ? t('Telefon sozlamalari → Ilovalar → GetMaster → Ruxsatlar → Joylashuv bo‘limida «Ilova ishlatilayotganda ruxsat berish»ni tanlang, so‘ng bu yerga qaytib «Qayta urinish»ni bosing.')
+                  : t('Brauzer manzil satridagi qulf belgisini bosing → «Joylashuv» → «Ruxsat berish», so‘ng «Qayta urinish»ni bosing.')
+                : live.status === 'insecure'
+                  ? t('Brauzer xavfsizlik uchun joylashuvni faqat HTTPS manzilida beradi. Saytni https:// orqali oching yoki telefon ilovasidan foydalaning.')
+                  : native
+                    ? t('GPS signali topilmadi. Telefonda «Joylashuv» xizmati yoqilganini tekshiring va ochiq joyga chiqing.')
+                    : t('Qurilma joylashuvni aniqlay olmadi. Kompyuterda joylashuv Wi‑Fi orqali aniqlanadi: tizimdagi «Joylashuv xizmatlari» yoqilganini tekshiring yoki telefondan foydalaning.')
+            }
             actions={
               <>
                 <Button onClick={live.retry}>{t('Qayta urinish')}</Button>
@@ -327,71 +368,142 @@ export function NavigationPage() {
         </div>
       )}
 
-      {!follow && position && !arrived && (
-        <button type="button" className="gn-recenter" onClick={recenter}>
-          <LocateFixed size={18} aria-hidden="true" /> {t('Joyimga qaytish')}
-        </button>
-      )}
+      {/* Suzuvchi tugmalar: chapda — orqaga, o‘ngda — kompas va joyimga qaytish (panel balandligiga qarab) */}
+      <div className="gn-fabs gn-fabs--left">
+        <Link to={goBack} className="gn-round" aria-label={t('Buyurtmaga qaytish')} title={t('Buyurtmaga qaytish')}>
+          <ArrowLeft size={22} aria-hidden="true" />
+        </Link>
+      </div>
+      <div className="gn-fabs gn-fabs--right">
+        <RoundBtn label={headingUp ? t('Shimol tepada') : t('Yo‘nalish tepada')} onClick={compassButton} active={false}>
+          <Compass size={22} style={{ transform: `rotate(${mapRotated ? -bearing : 0}deg)`, color: mapRotated ? '#e5384f' : undefined }} aria-hidden="true" />
+        </RoundBtn>
+        <RoundBtn label={t('Joyimga qaytish')} active={follow && !!position} onClick={recenter}>
+          <Navigation size={22} aria-hidden="true" style={{ transform: 'rotate(-45deg)' }} />
+        </RoundBtn>
+      </div>
 
-      <section className="gn-panel" aria-label={t('Marshrut ma’lumoti')}>
-        {list.length > 1 && (
-          <div className="gn-alts" role="group" aria-label={t('Muqobil yo‘llar')}>
-            {list.map((item, index) => (
-              <button
-                key={index}
-                type="button"
-                className={cx('gn-alt', index === routeIndex && 'is-on')}
-                aria-pressed={index === routeIndex}
-                onClick={() => {
-                  hint.current = 0;
-                  spoken.current.clear();
-                  setRouteIndex(index);
-                }}
-              >
-                <strong>{formatDuration(item.durationS)}</strong>
-                <span>{formatDistance(item.distanceM)}{index === 0 ? ` · ${t('Tezkor')}` : ''}</span>
+      <section ref={panelRef} className={cx('gn-sheet', expanded && 'is-expanded', sheet === 'settings' && 'is-settings')} aria-label={t('Marshrut ma’lumoti')}>
+        {sheet !== 'settings' && (
+          <>
+            <div className="gn-sheet__bar">
+              <span className="gn-sheet__speed" aria-label={t('Tezlik')}>
+                <strong>{speedKmh}</strong>
+                <small>km/s</small>
+              </span>
+              <div className="gn-sheet__info" aria-live="off">
+                <strong>{route ? formatDuration(remainingS) : '…'}</strong>
+                <span>{route ? `${formatDistance(remainingM)} · ${eta ? eta.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : '—'}` : t('Marshrut tuzilmoqda…')}</span>
+              </div>
+              <button type="button" className="gn-sheet__toggle" aria-expanded={expanded} aria-label={expanded ? t('Panelni yig‘ish') : t('Panelni ochish')} onClick={() => setSheet(expanded ? 'collapsed' : 'expanded')}>
+                {expanded ? <ChevronDown size={24} aria-hidden="true" /> : <ChevronUp size={24} aria-hidden="true" />}
               </button>
-            ))}
+            </div>
+            <RouteBar done={Math.max(0, total - remainingM)} total={total} />
+            {!expanded && (status === 'CONFIRMED' || status === 'ON_THE_WAY' || status === 'ARRIVED') && <div className="gn-sheet__cta">{orderActions}</div>}
+          </>
+        )}
+
+        {sheet === 'expanded' && (
+          <div className="gn-sheet__body">
+            <h2 className="gn-dest"><span>{t('Manzil')}</span>{address || t('Mijoz manzili')}</h2>
+            <div className="gn-pair">
+              <button type="button" disabled={list.length < 2} onClick={() => setShowAlts((value) => !value)} aria-expanded={showAlts}>
+                <RouteIcon size={22} aria-hidden="true" />
+                <span>{t('Muqobil yo‘llar')}{list.length > 1 ? ` (${list.length})` : ''}</span>
+              </button>
+              <button type="button" onClick={() => { setFollow(false); setOverviewKey((k) => k + 1); setSheet('collapsed'); }}>
+                <Eye size={22} aria-hidden="true" />
+                <span>{t('Marshrut sharhi')}</span>
+              </button>
+            </div>
+            {showAlts && list.length > 1 && (
+              <div className="gn-alts" role="group" aria-label={t('Muqobil yo‘llar')}>
+                {list.map((item, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    className={cx('gn-alt', index === routeIndex && 'is-on')}
+                    aria-pressed={index === routeIndex}
+                    onClick={() => {
+                      hint.current = 0;
+                      spoken.current.clear();
+                      setRouteIndex(index);
+                    }}
+                  >
+                    <strong>{formatDuration(item.durationS)}</strong>
+                    <span>{formatDistance(item.distanceM)}{index === 0 ? ` · ${t('Tezkor')}` : ''}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <ul className="gn-menu">
+              {order.data.conversationId && (
+                <li>
+                  <Link to={`${order.data.viewerRole === 'CUSTOMER' ? '/mijoz' : '/usta'}/chat?suhbat=${order.data.conversationId}`}>
+                    <MessageCircle size={24} aria-hidden="true" />
+                    <span>{t('Mijoz bilan chat')}</span>
+                    <ChevronRight size={20} aria-hidden="true" />
+                  </Link>
+                </li>
+              )}
+              <li>
+                <a href={externalLinks(dest)[0]!.href} target="_blank" rel="noreferrer">
+                  <ExternalLink size={24} aria-hidden="true" />
+                  <span>{t('Boshqa xarita ilovasida ochish')}</span>
+                  <ChevronRight size={20} aria-hidden="true" />
+                </a>
+              </li>
+              <li>
+                <button type="button" onClick={() => setSheet('settings')}>
+                  <Settings size={24} aria-hidden="true" />
+                  <span>{t('Sozlamalar')}</span>
+                  <ChevronRight size={20} aria-hidden="true" />
+                </button>
+              </li>
+            </ul>
+            <div className="gn-actions">{orderActions}</div>
+            <Link to={goBack} className="gn-finish">{t('Yakunlash')}</Link>
           </div>
         )}
-        <div className="gn-stats">
-          <div>
-            <strong>{eta ? eta.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' }) : route ? '—' : '…'}</strong>
-            <span>{t('Yetib borish')}</span>
+
+        {sheet === 'settings' && (
+          <div className="gn-sheet__body gn-settings">
+            <h2>{t('Sozlamalar')}</h2>
+            <section className="gn-set">
+              <h3>{t('Ovozli ko‘rsatmalar')}</h3>
+              <Choice
+                label={t('Ovoz rejimi')}
+                value={prefs.sound}
+                onChange={(sound) => setPrefs({ sound })}
+                options={SOUND_OPTIONS({ off: <VolumeX size={22} aria-hidden="true" />, important: <AlertTriangle size={22} aria-hidden="true" />, all: <Volume2 size={22} aria-hidden="true" /> })}
+              />
+            </section>
+            <section className="gn-set">
+              <h3>{t('Ovoz balandligi')}</h3>
+              <Choice label={t('Ovoz balandligi')} value={prefs.volume} onChange={(volume) => setPrefs({ volume })} options={VOLUME_OPTIONS()} />
+            </section>
+            <section className="gn-set gn-set--row">
+              <span className="gn-toggle__icon" aria-hidden="true"><Globe size={22} /></span>
+              <div>
+                <strong>{t('Ovozli yordamchi')}</strong>
+                <small>{t('O‘zbekcha · Neyron ovoz')}</small>
+              </div>
+              <button type="button" className="gn-chipbtn" onClick={() => engine.current?.sample()} disabled={!voice}>{t('Sinab ko‘rish')}</button>
+            </section>
+            <h3 className="gn-set__group">{t('Xarita va ekran')}</h3>
+            <section className="gn-set">
+              <h3><Moon size={16} aria-hidden="true" /> {t('Xarita mavzusi')}</h3>
+              <Choice label={t('Xarita mavzusi')} value={prefs.mapTheme} onChange={(mapTheme) => setPrefs({ mapTheme })} options={THEME_OPTIONS()} />
+            </section>
+            <section className="gn-set gn-set--list">
+              <Toggle icon={<Navigation size={22} />} label={t('Yo‘nalish bo‘yicha burilish (3D)')} hint={t('Xarita harakat yo‘nalishiga qarab buriladi')} checked={prefs.headingUp} onChange={(headingUp) => setPrefs({ headingUp })} />
+              <Toggle icon={<Gauge size={22} />} label={t('Tezlikni ko‘rsatish')} checked={prefs.showSpeed} onChange={(showSpeed) => setPrefs({ showSpeed })} />
+              <Toggle icon={<Bell size={22} />} label={t('Ekranni o‘chirmaslik')} hint={t('Navigatsiya paytida ekran yoniq turadi')} checked={prefs.keepAwake} onChange={(keepAwake) => setPrefs({ keepAwake })} />
+            </section>
+            <Button size="lg" fullWidth onClick={() => setSheet('expanded')}>{t('Orqaga')}</Button>
           </div>
-          <div>
-            <strong>{progress ? formatDuration(progress.remainingS) : route ? formatDuration(route.durationS) : '…'}</strong>
-            <span>{t('Qolgan vaqt')}</span>
-          </div>
-          <div>
-            <strong>{progress ? formatDistance(progress.remainingM) : route ? formatDistance(route.distanceM) : '…'}</strong>
-            <span>{t('Qolgan masofa')}</span>
-          </div>
-        </div>
-        {address && <p className="gn-addr"><Flag size={14} aria-hidden="true" /> {address}</p>}
-        <div className="gn-actions">
-          {order.data.status === 'CONFIRMED' && (
-            <Button size="lg" fullWidth loading={startTravel.isPending} onClick={() => startTravel.mutate()}>
-              {t('Yo‘lga chiqdim')}
-            </Button>
-          )}
-          {(arrived || order.data.status === 'ON_THE_WAY') && order.data.status === 'ON_THE_WAY' && (
-            <Button size="lg" fullWidth variant={arrived ? 'primary' : 'secondary'} loading={arrive.isPending} onClick={() => arrive.mutate(undefined, { onSuccess: () => undefined })}>
-              {t('Yetib keldim')}
-            </Button>
-          )}
-          {order.data.status === 'ARRIVED' && (
-            <Link to={goBack} className="gm-button gm-button--primary gm-button--lg gm-button--full">
-              {t('Buyurtmaga o‘tish')}
-            </Link>
-          )}
-          {!gpsProblem && !routeProblem && (
-            <a className="gn-ext" href={externalLinks(dest)[0]!.href} target="_blank" rel="noreferrer">
-              <ExternalLink size={15} aria-hidden="true" /> {t('Boshqa xarita ilovasida ochish')}
-            </a>
-          )}
-        </div>
-        {startTravel.isError && <p className="gn-err" role="alert">{t('Holatni o‘zgartirib bo‘lmadi. Qayta urinib ko‘ring.')}</p>}
+        )}
       </section>
     </div>
   );

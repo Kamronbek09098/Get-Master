@@ -1,12 +1,13 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
 import { DateRangeQueryDto } from '../../../common/dto/cursor-query.dto';
 
 export type ActorRole = 'ADMIN' | 'MASTER' | 'CUSTOMER' | 'SYSTEM';
 
 export class AuditQueryDto extends DateRangeQueryDto {
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   actorId?: string;
 
   /** Bajaruvchining raqamli ID si (akkaunt raqami). */
@@ -34,7 +35,7 @@ export class AuditQueryDto extends DateRangeQueryDto {
   targetType?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   targetId?: string;
 
   /** Amalni kim bajargani: admin, usta, mijoz yoki tizim (bajaruvchisiz). */

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { CaseStatus, CaseType, OrderStatus, PaymentStatus, Prisma, ReviewStatus, Role } from '@prisma/client';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { cursorArgs, toCursorPage } from '../../common/utils/cursor';
+import { ACTIVE as ACTIVE_ORDER_STATUSES } from './admin-orders.service';
 import { PLANS } from '../subscription/plans.config';
 import { PaymentsReportQueryDto } from './dto/payments-report-query.dto';
 import { DashboardQueryDto } from './dto/dashboard-query.dto';
@@ -30,19 +31,21 @@ export class AdminService {
    *  - tushum: muvaffaqiyatli to'lovlar summasi, to'lov muvaffaqiyatli bo'lgan kun bo'yicha;
    *  - qaytarilgan: muvaffaqiyatli qaytarishlar (refunds jurnali), qaytarish yakunlangan kun bo'yicha;
    *  - to'lovlar: davrda yaratilgan barcha to'lovlar (jadvaldagi «Jami» bilan bir xil);
-   *  - buyurtmalar: yaratilgan; yakunlangan / bekor qilingan: shu holatga o'tgan kun bo'yicha;
+   *  - buyurtmalar: davrda yaratilgani; faol / yakunlangan / bekor qilingan — shu buyurtmalarning hozirgi holati (ro'yxat bilan bir xil);
    *  - platforma daromadi: yakunlangan buyurtmalarda SAQLANGAN komissiya summasi (taxmin emas).
    */
   private async periodTotals(from: Date | null, to: Date | null) {
     const range = (field: string): Record<string, Prisma.DateTimeFilter> | Record<string, never> => (from || to ? { [field]: { ...(from ? { gte: from } : {}), ...(to ? { lte: to } : {}) } } : {});
-    const [pay, refunds, createdPayments, orders, completed, cancelled, fee] = await Promise.all([
+    const [pay, refunds, createdPayments, orders, active, completed, cancelled, fee, feeOrders] = await Promise.all([
       this.db.payment.aggregate({ where: { status: { in: SETTLED_PAYMENT_STATUSES }, ...range('succeededAt') }, _sum: { amount: true }, _count: true }),
       this.db.refund.aggregate({ where: { status: 'SUCCEEDED', ...range('completedAt') }, _sum: { amount: true } }),
       this.db.payment.count({ where: range('createdAt') }),
       this.db.order.count({ where: range('createdAt') }),
-      this.db.order.count({ where: { status: OrderStatus.COMPLETED, ...range('completedAt') } }),
-      this.db.order.count({ where: { status: OrderStatus.CANCELLED, ...range('cancelledAt') } }),
+      this.db.order.count({ where: { status: { in: ACTIVE_ORDER_STATUSES }, ...range('createdAt') } }),
+      this.db.order.count({ where: { status: OrderStatus.COMPLETED, ...range('createdAt') } }),
+      this.db.order.count({ where: { status: OrderStatus.CANCELLED, ...range('createdAt') } }),
       this.db.order.aggregate({ where: { status: OrderStatus.COMPLETED, ...range('completedAt') }, _sum: { platformFee: true }, _count: { platformFee: true } }),
+      this.db.order.count({ where: { status: OrderStatus.COMPLETED, ...range('completedAt') } }),
     ]);
     return {
       revenue: Number(pay._sum.amount ?? 0),
@@ -50,10 +53,11 @@ export class AdminService {
       settledPayments: pay._count,
       payments: createdPayments,
       orders,
+      active,
       completed,
       cancelled,
       platformFee: Number(fee._sum.platformFee ?? 0),
-      completedWithoutFee: completed - fee._count.platformFee,
+      completedWithoutFee: feeOrders - fee._count.platformFee,
     };
   }
 
@@ -76,7 +80,7 @@ export class AdminService {
     const TZ_MS = 5 * 3_600_000; // Toshkent UTC+5 (yozgi vaqt yo'q)
     const localDay = (date: Date) => Math.floor((date.getTime() + TZ_MS) / 86_400_000);
     const days = Math.min(92, Math.max(1, localDay(to) - localDay(from) + 1));
-    const rows = await this.db.$queryRaw<Array<{ day: string; revenue: unknown; refunded: unknown; payments: bigint; orders: bigint; completed: bigint; cancelled: bigint }>>`
+    const rows = await this.db.$queryRaw<Array<{ day: string; revenue: unknown; refunded: unknown; payments: bigint; orders: bigint; active: bigint; completed: bigint; cancelled: bigint }>>`
       WITH d AS (
         SELECT generate_series(
           date_trunc('day', ${to}::timestamptz AT TIME ZONE ${tz}) - ((${days} - 1) * interval '1 day'),
@@ -87,8 +91,9 @@ export class AdminService {
         (SELECT COALESCE(sum(r.amount), 0) FROM refunds r WHERE r.status = 'SUCCEEDED' AND (r.completed_at AT TIME ZONE ${tz}) >= d.day AND (r.completed_at AT TIME ZONE ${tz}) < d.day + interval '1 day') AS refunded,
         (SELECT count(*) FROM payments p WHERE (p."createdAt" AT TIME ZONE ${tz}) >= d.day AND (p."createdAt" AT TIME ZONE ${tz}) < d.day + interval '1 day') AS payments,
         (SELECT count(*) FROM orders o WHERE (o."createdAt" AT TIME ZONE ${tz}) >= d.day AND (o."createdAt" AT TIME ZONE ${tz}) < d.day + interval '1 day') AS orders,
-        (SELECT count(*) FROM orders o WHERE o.status = 'COMPLETED' AND (o.completed_at AT TIME ZONE ${tz}) >= d.day AND (o.completed_at AT TIME ZONE ${tz}) < d.day + interval '1 day') AS completed,
-        (SELECT count(*) FROM orders o WHERE o.status = 'CANCELLED' AND (o.cancelled_at AT TIME ZONE ${tz}) >= d.day AND (o.cancelled_at AT TIME ZONE ${tz}) < d.day + interval '1 day') AS cancelled
+        (SELECT count(*) FROM orders o WHERE o.status::text = ANY(${ACTIVE_ORDER_STATUSES as string[]}) AND (o."createdAt" AT TIME ZONE ${tz}) >= d.day AND (o."createdAt" AT TIME ZONE ${tz}) < d.day + interval '1 day') AS active,
+        (SELECT count(*) FROM orders o WHERE o.status = 'COMPLETED' AND (o."createdAt" AT TIME ZONE ${tz}) >= d.day AND (o."createdAt" AT TIME ZONE ${tz}) < d.day + interval '1 day') AS completed,
+        (SELECT count(*) FROM orders o WHERE o.status = 'CANCELLED' AND (o."createdAt" AT TIME ZONE ${tz}) >= d.day AND (o."createdAt" AT TIME ZONE ${tz}) < d.day + interval '1 day') AS cancelled
       FROM d ORDER BY d.day`;
 
     const byStatus = await this.db.payment.groupBy({
@@ -122,6 +127,7 @@ export class AdminService {
         refunded: Number(row.refunded),
         payments: Number(row.payments),
         orders: Number(row.orders),
+        active: Number(row.active),
         completed: Number(row.completed),
         cancelled: Number(row.cancelled),
       })),
@@ -287,7 +293,7 @@ export class AdminService {
       ]).then(([documents, portfolio]) => documents + portfolio),
       this.db.case.count({ where: { status: { in: [CaseStatus.REPORTED, CaseStatus.UNDER_REVIEW] } } }),
       this.db.subscription.count({ where: { status: 'PENDING' } }),
-      this.db.order.count({ where: { status: { in: [OrderStatus.CONFIRMED, OrderStatus.ON_THE_WAY, OrderStatus.ARRIVED, OrderStatus.IN_PROGRESS, OrderStatus.WAITING_CONFIRMATION] } } }),
+      this.db.order.count({ where: { status: { in: ACTIVE_ORDER_STATUSES } } }),
       this.db.errorLog.count({ where: { severity: 'ERROR', createdAt: { gte: new Date(Date.now() - 86_400_000) } } }),
     ]);
     return { pendingVerifications, openCases, pendingSubscriptions, activeOrders, errors24h };

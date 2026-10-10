@@ -1,12 +1,13 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateAppealDto {
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   caseId?: string;
 
   @IsOptional()
-  @IsUUID('4')
+  @IsUUID()
   actionId?: string;
 
   @IsString()

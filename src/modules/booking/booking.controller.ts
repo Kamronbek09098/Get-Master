@@ -1,4 +1,5 @@
-import { Controller, Get, Param, ParseUUIDPipe } from '@nestjs/common';
+import { ParseUUIDPipe } from '../../common/validators/any-uuid';
+import { Controller, Get, Param } from '@nestjs/common';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { BookingService } from './booking.service';
 

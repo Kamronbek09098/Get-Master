@@ -1,4 +1,5 @@
-import { IsUUID } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
+
 
 export class OpenConversationDto {
   @IsUUID()

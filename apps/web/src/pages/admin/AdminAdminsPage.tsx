@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Switch';
 import { getErrorMessage } from '@/lib/error-messages';
 import { formatDateTime } from '@/lib/utils';
+import { AdminAvatarPermission } from '@/features/admin/components/AdminAvatarPermission';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { CreateAdminDialog } from '@/features/admin/components/CreateAdminDialog';
 import { AdminDelegationDialog } from '@/features/admin/components/AdminDelegationDialog';
@@ -96,7 +97,7 @@ export function AdminAdminsPage() {
           return (
             <article key={admin.id} className="gm-adm__card">
               <div className="gm-adm__who">
-                <ChatAvatar name={nameOf(admin)} seed={admin.id} size="md" />
+                <ChatAvatar name={nameOf(admin)} seed={admin.id} size="md" src={admin.avatar} />
                 <div className="gm-adm__info">
                   <h2>
                     <Link to={`/admin/foydalanuvchilar/${admin.accountNumber}`} className="gm-adm__open" aria-label={t('{name} profilini ochish', { name: nameOf(admin) })}>{nameOf(admin)}</Link>
@@ -138,6 +139,8 @@ export function AdminAdminsPage() {
                   ))}
                 </div>
               )}
+
+              {isSuper && !admin.isSuperAdmin && <AdminAvatarPermission adminId={admin.id} allowed={!!admin.adminAvatarAllowed} />}
 
               {isSuper && (
               <div className="gm-adm__twofa">

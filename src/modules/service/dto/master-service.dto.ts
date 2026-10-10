@@ -1,6 +1,7 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { PartialType, OmitType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsInt, IsNumber, IsOptional, IsPositive, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsNumber, IsOptional, IsPositive, IsString, Max, MaxLength, Min } from 'class-validator';
 
 export class CreateMasterServiceDto {
   @IsUUID()

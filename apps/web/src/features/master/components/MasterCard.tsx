@@ -41,7 +41,7 @@ export function MasterCard({ master }: { master: PublicMaster }) {
   return (
     <Link to={`/mijoz/ustalar/${master.user.accountNumber ?? master.id}`} className="gm-master" aria-label={fullName}>
       <div className="gm-master__top">
-        <ChatAvatar name={fullName} seed={master.id} size="lg" />
+        <ChatAvatar name={fullName} seed={master.id} size="lg" src={master.user.avatar} />
         <div className="gm-master__id">
           <h3 className="gm-master__name">
             {shortName(master)}

@@ -1,8 +1,9 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { NotificationChannel } from '@prisma/client';
-import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateNotificationDto {
-  @IsUUID('4')
+  @IsUUID()
   userId!: string;
 
   @IsEnum(NotificationChannel)

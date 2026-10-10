@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { bearing, distanceM } from './geometry';
 import type { LatLon } from './geometry';
 
-export type LocationStatus = 'idle' | 'locating' | 'ok' | 'denied' | 'unavailable' | 'timeout';
+export type LocationStatus = 'idle' | 'locating' | 'ok' | 'denied' | 'unavailable' | 'timeout' | 'insecure';
 
 export interface LivePosition extends LatLon {
   accuracy: number;
@@ -40,24 +40,75 @@ export function useLiveLocation(enabled: boolean, sim?: Array<[number, number]> 
     watch.current = null;
   }, []);
 
+  const received = useRef(false);
+
+  /**
+   * Joylashuvni ishonchli olish: avval tezkor (Wi‑Fi/tarmoq) joylashuv — birinchi nuqta darhol chiqadi; so‘ng aniq GPS kuzatuvi.
+   * Kompyuterda GPS yo‘q, shuning uchun yuqori aniqlik xato bersa, past aniqlikdagi kuzatuvga o‘tiladi — faqat ikkalasi ham ishlamasa xato ko‘rsatiladi.
+   */
   const start = useCallback(() => {
     stop();
+    if (typeof window !== 'undefined' && window.isSecureContext === false) {
+      setStatus('insecure');
+      return;
+    }
     if (!navigator.geolocation) {
       setStatus('unavailable');
       return;
     }
+    received.current = false;
     setStatus('locating');
-    watch.current = navigator.geolocation.watchPosition(
-      (p) => accept(p.coords.latitude, p.coords.longitude, p.coords.accuracy, p.coords.heading, p.coords.speed),
-      (error) => setStatus(error.code === error.PERMISSION_DENIED ? 'denied' : error.code === error.TIMEOUT ? 'timeout' : 'unavailable'),
-      { enableHighAccuracy: true, maximumAge: 1000, timeout: 20_000 },
-    );
+    const onFix = (p: GeolocationPosition) => {
+      received.current = true;
+      accept(p.coords.latitude, p.coords.longitude, p.coords.accuracy, p.coords.heading, p.coords.speed);
+    };
+    const fail = (error: GeolocationPositionError, final: boolean) => {
+      if (error.code === error.PERMISSION_DENIED) {
+        setStatus('denied');
+        return true;
+      }
+      if (received.current) return false; // nuqta bor — vaqtinchalik xatoni e’tiborsiz qoldiramiz
+      if (final) setStatus(error.code === error.TIMEOUT ? 'timeout' : 'unavailable');
+      return false;
+    };
+    const watchWith = (high: boolean) => {
+      watch.current = navigator.geolocation.watchPosition(
+        onFix,
+        (error) => {
+          if (fail(error, !high)) return;
+          if (high && !received.current) {
+            // Yuqori aniqlik (GPS) ishlamadi — past aniqlikdagi (tarmoq) kuzatuvga o‘tamiz.
+            if (watch.current != null) navigator.geolocation.clearWatch(watch.current);
+            watchWith(false);
+          }
+        },
+        { enableHighAccuracy: high, maximumAge: high ? 1000 : 30_000, timeout: high ? 15_000 : 30_000 },
+      );
+    };
+    // Tezkor birinchi nuqta (brauzer ruxsat so‘rovi ham shu yerda chiqadi).
+    navigator.geolocation.getCurrentPosition(onFix, (error) => void fail(error, false), { enableHighAccuracy: false, maximumAge: 300_000, timeout: 10_000 });
+    watchWith(true);
   }, [accept, stop]);
 
   useEffect(() => {
     if (!enabled || sim) return;
     start();
-    return stop;
+    // Foydalanuvchi sozlamalarda ruxsat bersa, avtomatik qayta urinamiz.
+    let permission: PermissionStatus | null = null;
+    const onChange = () => {
+      if (permission?.state === 'granted') start();
+    };
+    void navigator.permissions
+      ?.query({ name: 'geolocation' as PermissionName })
+      .then((status) => {
+        permission = status;
+        status.addEventListener('change', onChange);
+      })
+      .catch(() => undefined);
+    return () => {
+      permission?.removeEventListener('change', onChange);
+      stop();
+    };
   }, [enabled, sim, start, stop]);
 
   // Taqlid: yo‘lning nuqtalari bo‘ylab ~15× tezlikda yuradi.

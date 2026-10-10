@@ -359,3 +359,10 @@ a.gm-otable__row:hover { background: var(--gm-color-surface-muted); color: inher
 .gm-dgrid--pair .gm-mini__icon { width: 46px; height: 46px; border-radius: 14px; }
 .gm-dgrid--pair .gm-mini__body strong { font-size: 26px; }
 .gm-dgrid--pair .gm-mini__body small { font-size: 13px; }
+
+/* Bosiladigan kartalar: hover va fokus ko'rinadi, havola matn rangi o'zgarmaydi */
+.gm-kpi--link, .gm-sc--link, .gm-mini--link { color: inherit; text-decoration: none; cursor: pointer; transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; }
+.gm-kpi--link:hover, .gm-sc--link:hover, .gm-mini--link:hover { transform: translateY(-2px); box-shadow: var(--gm-shadow-md); border-color: color-mix(in srgb, var(--gm-color-primary) 40%, var(--gm-color-border)); color: inherit; }
+.gm-kpi--link:focus-visible, .gm-sc--link:focus-visible, .gm-mini--link:focus-visible, .gm-ostat__link:focus-visible { outline: 2px solid var(--gm-focus-ring); outline-offset: 2px; }
+.gm-ostat__link { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 0; border-radius: 8px; color: inherit; font-size: 14.5px; text-decoration: none; }
+.gm-ostat__link:hover span { text-decoration: underline; }

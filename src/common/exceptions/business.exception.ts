@@ -129,6 +129,12 @@ export class PaymentNotRefundableException extends DomainException {
   }
 }
 
+export class PaymentRequiredException extends DomainException {
+  constructor() {
+    super(HttpStatus.CONFLICT, 'PAYMENT_REQUIRED', ERRORS.PAYMENT_REQUIRED);
+  }
+}
+
 export class OrderAlreadyPaidException extends DomainException {
   constructor() {
     super(HttpStatus.CONFLICT, 'ORDER_ALREADY_PAID', ERRORS.ORDER_ALREADY_PAID);

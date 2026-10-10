@@ -1,5 +1,6 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsIn, IsOptional, IsString, IsUUID, MaxLength, MinLength, ValidateIf } from 'class-validator';
+import { IsDate, IsEnum, IsIn, IsOptional, IsString, MaxLength, MinLength, ValidateIf } from 'class-validator';
 import { MasterVerificationStatus, VerificationDocumentType } from '@prisma/client';
 import { CursorQueryDto } from '../../../common/dto/cursor-query.dto';
 

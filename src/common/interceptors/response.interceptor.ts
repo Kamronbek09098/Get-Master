@@ -1,6 +1,7 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, map } from 'rxjs';
+import { decorateAvatars } from '../utils/avatar';
 import { RAW_RESPONSE_KEY } from '../decorators/raw-response.decorator';
 
 @Injectable()
@@ -12,6 +13,6 @@ export class ResponseInterceptor implements NestInterceptor {
     if (raw) return next.handle();
 
     const req = context.switchToHttp().getRequest();
-    return next.handle().pipe(map(data => ({ success: true, data, requestId: req.id ?? req.headers['x-request-id'] ?? null })));
+    return next.handle().pipe(map(data => ({ success: true, data: decorateAvatars(data), requestId: req.id ?? req.headers['x-request-id'] ?? null })));
   }
 }

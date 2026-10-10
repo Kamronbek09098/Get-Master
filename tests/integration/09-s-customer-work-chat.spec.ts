@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { bookOrder, bootHarness, createMaster, createUser, firstService, type Harness, MISSING_UUID, type TestMaster, type TestUser, uploadImage, waitFor, soon } from '../helpers/harness';
+import { bookOrder, bootHarness, createMaster, createUser, firstService, type Harness, MISSING_UUID, payOrder, type TestMaster, type TestUser, uploadImage, waitFor, soon } from '../helpers/harness';
 
 let h: Harness;
 let service: { id: string };
@@ -106,6 +106,13 @@ describe('S07 — work lifecycle, proofs, timeline', () => {
     expect((await h.post(`${O}/confirm-completion`, c.token)).status).toBe(409);
     expect((await h.post(`${O}/submit-completion`, master.token)).status).toBe(201);
     expect((await h.post(`${O}/confirm-completion`, master.token)).status).toBe(403);
+    // To'lov amalga oshmaguncha tasdiqlab bo'lmaydi; naqd to'lov usulini faqat tanlash ham yetarli emas.
+    const unpaid = await h.post(`${O}/confirm-completion`, c.token);
+    expect(unpaid.status).toBe(409);
+    expect(unpaid.body.code).toBe('PAYMENT_REQUIRED');
+    expect((await h.post('/payments', c.token, { orderId: order.orderId, provider: 'CASH' }, { idempotent: true })).status).toBe(201);
+    expect((await h.post(`${O}/confirm-completion`, c.token)).status).toBe(409);
+    await payOrder(h, c, order.orderId);
     expect((await h.post(`${O}/confirm-completion`, c.token)).status).toBe(201);
     expect((await h.post(`${O}/cancel`, c.token, { reason: 'too late' })).status).toBe(409);
 

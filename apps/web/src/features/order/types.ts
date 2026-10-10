@@ -28,6 +28,7 @@ export interface OrderParty {
   accountNumber?: number;
   firstName: string | null;
   lastName: string | null;
+  avatar?: string | null;
   profession?: string | null;
   /** Usta profili hozir ochiq (faol va tasdiqlangan) — faqat buyurtmalar ro‘yxatida keladi. */
   available?: boolean;

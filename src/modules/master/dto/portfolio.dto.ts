@@ -1,5 +1,6 @@
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { PartialType, OmitType } from '@nestjs/mapped-types';
-import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreatePortfolioDto {
   @IsUUID()

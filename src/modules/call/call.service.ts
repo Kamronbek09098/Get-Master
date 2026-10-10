@@ -92,7 +92,7 @@ export class CallService implements OnModuleDestroy {
         ],
       },
       orderBy: { createdAt: 'desc' },
-      include: { caller: { select: { id: true, firstName: true, lastName: true } }, callee: { select: { id: true, firstName: true, lastName: true } } },
+      include: { caller: { select: { id: true, firstName: true, lastName: true, avatarAssetId: true } }, callee: { select: { id: true, firstName: true, lastName: true } } },
     });
     if (!call) return null;
     const peer = call.callerId === userId ? call.callee : call.caller;
@@ -106,7 +106,7 @@ export class CallService implements OnModuleDestroy {
         id: true,
         type: true,
         order: { select: { status: true } },
-        participants: { select: { userId: true, roles: true, user: { select: { id: true, firstName: true, lastName: true, status: true } } } },
+        participants: { select: { userId: true, roles: true, user: { select: { id: true, firstName: true, lastName: true, avatarAssetId: true, status: true } } } },
       },
     });
     if (!conversation) throw new NotFoundException(ERRORS.CONVERSATION_NOT_FOUND);
@@ -241,7 +241,7 @@ export class CallService implements OnModuleDestroy {
       throw new ConflictException(ERRORS.CALL_INVALID_STATE);
     }
     this.clearRingTimer(call.id);
-    const updated = await this.db.call.findUniqueOrThrow({ where: { id: call.id }, include: { caller: { select: { id: true, firstName: true, lastName: true } } } });
+    const updated = await this.db.call.findUniqueOrThrow({ where: { id: call.id }, include: { caller: { select: { id: true, firstName: true, lastName: true, avatarAssetId: true } } } });
     await this.afterEnd(updated, updated.caller, reason, actorId);
     return { call: toView(updated) };
   }

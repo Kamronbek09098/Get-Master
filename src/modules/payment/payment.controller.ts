@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Headers, Param, ParseUUIDPipe, Post, Query, Req, UseInterceptors } from '@nestjs/common';
+import { ParseUUIDPipe } from '../../common/validators/any-uuid';
+import { Body, Controller, Get, Headers, Param, Post, Query, Req, UseInterceptors } from '@nestjs/common';
 import type { Request } from 'express';
 import { PaymentProvider, Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
