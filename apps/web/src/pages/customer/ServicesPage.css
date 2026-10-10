@@ -430,3 +430,31 @@
 .gm-svc__range::before { background: #dfe5f2; height: 4px; top: 10px; }
 .gm-svc__range::after { content: ''; position: absolute; top: 10px; height: 4px; border-radius: 4px; left: var(--lo, 0%); right: calc(100% - var(--hi, 100%)); background: var(--gm-color-primary); }
 .gm-svc__range input[type='range'] { z-index: 1; }
+.gm-svc__check--radio input[type='radio'] { appearance: auto; accent-color: var(--gm-color-primary); background: transparent; }
+
+/* ===== Yakuniy moslashuvchanlik (oxirida: oldingi keng ekran qoidalarini bosib o‘tadi) ===== */
+@media (max-width: 1279px) {
+  .gm-svc__layout { grid-template-columns: minmax(0, 1fr); }
+  .gm-svc__filterbtn { display: inline-flex; }
+}
+@media (max-width: 1099px) {
+  .gm-svc__hero { height: auto; aspect-ratio: auto; min-height: 0; padding: 20px; flex-direction: column; align-items: flex-start; container-type: normal; }
+  .gm-svc__hero > div:nth-of-type(1) { max-width: 100%; }
+  .gm-svc__hero h2 { white-space: normal; }
+  .gm-svc__hero ul { flex-wrap: wrap; }
+  .gm-svc__proof { position: static; margin-top: 4px; }
+  .gm-svc__tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .gm-svc__tiles button { aspect-ratio: auto; min-height: 88px; }
+  .gm-svc__bar { flex-wrap: wrap; }
+  .gm-svc__search { flex: 1 1 100%; }
+}
+@media (max-width: 760px) {
+  .gm-svc__tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .gm-svc__list { grid-template-columns: minmax(0, 1fr); }
+  .gm-svc__bar > .gm-svc__select, .gm-svc__bar .gm-region { flex: 1 1 calc(50% - 8px); }
+  .gm-svc__foot { justify-content: center; }
+  .gm-svc__panel { width: min(360px, 92vw); }
+}
+.gm-svc__panel .gm-svc__check--radio input[type='radio'] { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; border: 1.5px solid #b9c3d8; border-radius: 50%; background: var(--gm-color-surface); display: inline-grid; place-items: center; }
+.gm-svc__panel .gm-svc__check--radio input[type='radio']:checked { border-color: var(--gm-color-primary); }
+.gm-svc__panel .gm-svc__check--radio input[type='radio']:checked::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--gm-color-primary); }

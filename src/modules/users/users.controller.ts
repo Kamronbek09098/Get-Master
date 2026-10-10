@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { clientIpOf } from '../../common/utils/client-ip';
 import { panelOf } from '../../common/utils/panel';
@@ -19,6 +19,11 @@ export class UsersController {
   @Get('me')
   findMe(@CurrentUser('sub') userId: string) {
     return this.usersService.findMe(userId);
+  }
+
+  @Get('me/overview')
+  overview(@CurrentUser('sub') userId: string, @Query('days') days?: string) {
+    return this.usersService.overview(userId, Number(days) || 30);
   }
 
   @Patch('me/two-factor')

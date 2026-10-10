@@ -16,6 +16,43 @@ export class UsersService {
     private readonly otp: OtpService,
   ) {}
 
+  /** Mijoz profili sahifasi uchun aniq hisob-kitoblar: umumiy sonlar va tanlangan davr (oldingi davr bilan solishtirib). */
+  async overview(userId: string, daysInput: number) {
+    const days = [7, 30, 90].includes(daysInput) ? daysInput : 30;
+    const now = Date.now();
+    const from = new Date(now - days * 86_400_000);
+    const prevFrom = new Date(now - 2 * days * 86_400_000);
+    const requestWhere = { customerId: userId, status: { not: 'DRAFT' as const } };
+    const orderWhere = { customerId: userId };
+    const refundWhere = { customerId: userId, status: { in: ['REFUNDED' as const, 'PARTIALLY_REFUNDED' as const] } };
+    const range = (gte: Date, lt?: Date) => ({ gte, ...(lt ? { lt } : {}) });
+    const [requests, orders, masters, address, rCur, rPrev, oCur, oPrev, cCur, cPrev, fCur, fPrev] = await Promise.all([
+      this.db.problemRequest.count({ where: requestWhere }),
+      this.db.order.count({ where: orderWhere }),
+      this.db.order.findMany({ where: orderWhere, distinct: ['masterId'], select: { masterId: true } }),
+      this.db.address.findFirst({ where: { userId }, orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }], select: { city: true, district: true, addressLine: true } }),
+      this.db.problemRequest.count({ where: { ...requestWhere, createdAt: range(from) } }),
+      this.db.problemRequest.count({ where: { ...requestWhere, createdAt: range(prevFrom, from) } }),
+      this.db.order.count({ where: { ...orderWhere, createdAt: range(from) } }),
+      this.db.order.count({ where: { ...orderWhere, createdAt: range(prevFrom, from) } }),
+      this.db.order.count({ where: { ...orderWhere, status: 'CANCELLED', createdAt: range(from) } }),
+      this.db.order.count({ where: { ...orderWhere, status: 'CANCELLED', createdAt: range(prevFrom, from) } }),
+      this.db.payment.count({ where: { ...refundWhere, createdAt: range(from) } }),
+      this.db.payment.count({ where: { ...refundWhere, createdAt: range(prevFrom, from) } }),
+    ]);
+    return {
+      totals: { requests, orders, masters: masters.length },
+      address,
+      period: {
+        days,
+        requests: { value: rCur, previous: rPrev },
+        orders: { value: oCur, previous: oPrev },
+        cancelled: { value: cCur, previous: cPrev },
+        refunded: { value: fCur, previous: fPrev },
+      },
+    };
+  }
+
   async findMe(userId: string) {
     const user = await this.db.user.findUnique({
       where: { id: userId },

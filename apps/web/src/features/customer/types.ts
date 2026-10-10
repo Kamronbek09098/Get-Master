@@ -39,3 +39,15 @@ export interface AddressInput {
   longitude?: number;
   isDefault?: boolean;
 }
+
+export interface ProfileOverview {
+  totals: { requests: number; orders: number; masters: number };
+  address: { city: string | null; district: string | null; addressLine: string } | null;
+  period: {
+    days: number;
+    requests: { value: number; previous: number };
+    orders: { value: number; previous: number };
+    cancelled: { value: number; previous: number };
+    refunded: { value: number; previous: number };
+  };
+}

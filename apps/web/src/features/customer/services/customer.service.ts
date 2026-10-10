@@ -1,10 +1,13 @@
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '@/services/api.client';
 import type { PublicMaster } from '@/features/master/types';
-import type { Address, AddressInput, CustomerProfile, UpdateProfileInput } from '../types';
+import type { Address, AddressInput, CustomerProfile, ProfileOverview, UpdateProfileInput } from '../types';
 
 export const customerService = {
   badges(offersSince?: string) {
     return apiGet<{ offers: number; now: string }>(`/customers/me/badges${offersSince ? `?offersSince=${encodeURIComponent(offersSince)}` : ''}`);
+  },
+  overview(days: number) {
+    return apiGet<ProfileOverview>(`/users/me/overview?days=${days}`);
   },
   getProfile() {
     return apiGet<CustomerProfile>('/customers/me');

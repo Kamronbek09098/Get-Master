@@ -65,3 +65,16 @@ describe('public service catalog', () => {
     expect((await h.api('GET', '/public/services?limit=500')).status).toBe(400);
   });
 });
+
+describe('public service catalog – region', () => {
+  it('shows only services that have masters in the chosen region', async () => {
+    const regions = await h.api('GET', '/public/regions');
+    const withMasters = (regions.data as Array<{ key: string; masters: number }>).find((r) => r.masters > 0);
+    if (!withMasters) return;
+    const res = await h.api('GET', `/public/services?region=${withMasters.key}&limit=48`);
+    expect(res.status).toBe(200);
+    expect((res.data.items as Array<{ masters: number }>).every((i) => i.masters > 0)).toBe(true);
+    const empty = (regions.data as Array<{ key: string; masters: number }>).find((r) => r.masters === 0);
+    if (empty) expect((await h.api('GET', `/public/services?region=${empty.key}`)).data.total).toBe(0);
+  });
+});

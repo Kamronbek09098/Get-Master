@@ -163,6 +163,8 @@ export class PublicService {
 
     const q = query.q?.trim().toLowerCase();
     if (q) rows = rows.filter((row) => `${row.name} ${row.description ?? ''} ${row.category.name}`.toLowerCase().includes(q));
+    // Hudud tanlansa — faqat shu hududda ustasi bor xizmatlar ko‘rsatiladi.
+    if (query.region) rows = rows.filter((row) => row.masters > 0);
     const categoryIds = query.categories ? new Set(query.categories.split(',')) : null;
     const matches = {
       price: (row: Row) => (query.minPrice === undefined && query.maxPrice === undefined) || (row.minPrice !== null && row.minPrice >= (query.minPrice ?? 0) && row.minPrice <= (query.maxPrice ?? Number.MAX_SAFE_INTEGER)),
