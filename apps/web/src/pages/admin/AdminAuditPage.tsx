@@ -1,367 +1,399 @@
-import { Fragment, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import {
-  ArrowRight,
-  ChevronDown,
-  ChevronUp,
-  Bot,
-  ScrollText,
-  CreditCard,
-  FileCheck2,
-  LogIn,
-  MessageSquare,
-  MoreHorizontal,
-  Package,
-  Scale,
-  Search,
-  Send,
-  ShieldCheck,
-  Shield,
-  Star,
-  User,
-  Sparkles,
-  Truck,
-  UserCog,
-  UserRound,
-  Users,
-  Wrench,
-  X,
-} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Activity, Bot, CalendarDays, ChevronLeft, ChevronRight, CreditCard, Download, Eye, FileCheck2, Filter, LogIn, MessageSquare, MoreHorizontal, Package, RotateCcw, ScrollText, Scale, Search, Send, Shield, ShieldAlert, ShieldCheck, Star, Truck, UserCog, UserRound, Users, Wrench, Crown, Settings } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Dropdown } from '@/components/ui/Dropdown';
 import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
-import { cx, formatDate, formatDateTime, formatRelativeTime } from '@/lib/utils';
+import { cx, formatDate, formatDateTime, formatNumber, formatTime } from '@/lib/utils';
+import { useAppStore } from '@/store/app.store';
 import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
-import { AccountLink } from '@/features/admin/components/AccountLink';
-import { useAuditLogs, useAuditSummary } from '@/features/admin/hooks/useAdmin';
-import { AUDIT_ACTIONS, DOCUMENT_LABEL, FIELD_LABEL, GROUP_INFO, TARGET_LABEL, actionInfo, formatValue } from '@/features/admin/audit-labels';
+import { useAuditPage, useAuditStats, useAuditSummary } from '@/features/admin/hooks/useAdmin';
+import { adminService } from '@/features/admin/services/admin.service';
+import { AUDIT_ACTIONS, GROUP_INFO, TARGET_LABEL, actionInfo } from '@/features/admin/audit-labels';
 import type { AuditGroup } from '@/features/admin/audit-labels';
+import { AuditDrawer } from '@/features/admin/audit/AuditDrawer';
+import { OUTCOME, ROLE_NAME, auditSentence, targetPath } from '@/features/admin/audit/audit-ui';
+import { pageNumbers } from '@/features/admin/users/users-ui';
 import type { AuditActorRole, AuditFilters, AuditLog } from '@/features/admin/types';
+import './AdminUsersPage.css';
+import '@/features/admin/list-shared.css';
 import './AdminAuditPage.css';
 import { t } from '@/i18n';
 
 const GROUP_ICON: Record<AuditGroup, ReactNode> = {
-  auth: <LogIn size={18} />,
-  verification: <ShieldCheck size={18} />,
-  users: <Users size={18} />,
-  profile: <UserCog size={18} />,
-  catalog: <Wrench size={18} />,
-  requests: <Send size={18} />,
-  offers: <FileCheck2 size={18} />,
-  orderFlow: <Truck size={18} />,
-  orders: <Package size={18} />,
-  payments: <CreditCard size={18} />,
-  reviews: <Star size={18} />,
-  customer: <UserRound size={18} />,
-  disputes: <Scale size={18} />,
-  chat: <MessageSquare size={18} />,
-  other: <MoreHorizontal size={18} />,
+  auth: <LogIn size={16} />,
+  verification: <ShieldCheck size={16} />,
+  users: <Users size={16} />,
+  profile: <UserCog size={16} />,
+  catalog: <Wrench size={16} />,
+  requests: <Send size={16} />,
+  offers: <FileCheck2 size={16} />,
+  orderFlow: <Truck size={16} />,
+  orders: <Package size={16} />,
+  payments: <CreditCard size={16} />,
+  reviews: <Star size={16} />,
+  customer: <UserRound size={16} />,
+  disputes: <Scale size={16} />,
+  chat: <MessageSquare size={16} />,
+  subscriptions: <Crown size={16} />,
+  other: <Settings size={16} />,
 };
-const CATEGORY_CHIPS = (Object.keys(GROUP_INFO) as AuditGroup[]).filter((key) => GROUP_INFO[key].prefix);
-const ACTION_OPTIONS = Object.entries(AUDIT_ACTIONS).sort((a, b) => a[1].label.localeCompare(b[1].label));
-
-const ROLE_TABS: Array<{ value: AuditActorRole | ''; label: string; hint: string; icon: ReactNode }> = [
-  { value: '', label: t('Hammasi'), hint: t('Barcha amallar'), icon: <ScrollText size={18} /> },
-  { value: 'ADMIN', label: t('Adminlar'), hint: t('Administratorlar qilgan amallar'), icon: <Shield size={18} /> },
-  { value: 'MASTER', label: t('Ustalar'), hint: t('Ustalar qilgan amallar'), icon: <Wrench size={18} /> },
-  { value: 'CUSTOMER', label: t('Mijozlar'), hint: t('Mijozlar qilgan amallar'), icon: <User size={18} /> },
-  { value: 'SYSTEM', label: t('Tizim'), hint: t('Bajaruvchisiz (avtomatik) amallar'), icon: <Bot size={18} /> },
+const CATEGORY_OPTIONS = (Object.keys(GROUP_INFO) as AuditGroup[]).filter((key) => GROUP_INFO[key].prefix);
+const ACTION_OPTIONS = Object.entries(AUDIT_ACTIONS)
+  .filter(([code]) => code !== 'AUTH_REFRESH_ROTATED')
+  .sort((a, b) => a[1].label.localeCompare(b[1].label));
+type RoleTab = AuditActorRole | 'USERS' | '';
+const ROLE_TABS: Array<{ value: RoleTab; label: string }> = [
+  { value: '', label: t('Barcha') },
+  { value: 'ADMIN', label: t('Adminlar') },
+  { value: 'USERS', label: t('Foydalanuvchilar') },
+  { value: 'MASTER', label: t('Ustalar') },
+  { value: 'CUSTOMER', label: t('Mijozlar') },
+  { value: 'SYSTEM', label: t('Tizim') },
 ];
-const ROLE_NAME: Record<AuditActorRole, string> = { ADMIN: t('Admin'), MASTER: t('Usta'), CUSTOMER: t('Mijoz'), SYSTEM: t('Tizim') };
-
+const toneClass = (tone: string) => `gm-aud__chip--${tone}`;
+const isoDay = (offset: number) => new Date(Date.now() - offset * 86_400_000).toISOString().slice(0, 10);
 const dayStart = (value: string) => (value ? new Date(`${value}T00:00:00`).toISOString() : undefined);
 const dayEnd = (value: string) => (value ? new Date(`${value}T23:59:59.999`).toISOString() : undefined);
-const timeOf = (value: string) => formatDateTime(value).split(', ')[1] ?? '';
-const dayKey = (value: string) => new Date(value).toDateString();
-const isObject = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
+const csvCell = (value: string | number | null | undefined) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
-interface Change {
-  key: string;
-  from: unknown;
-  to: unknown;
-  hasFrom: boolean;
-  hasTo: boolean;
-}
-
-function changesOf(log: AuditLog): Change[] {
-  const before = isObject(log.before) ? log.before : {};
-  const after = isObject(log.after) ? log.after : {};
-  const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])];
-  return keys.map((key) => ({ key, from: before[key], to: after[key], hasFrom: key in before, hasTo: key in after }));
-}
-
-function Person({ user, fallback }: { user: { id: string; accountNumber: number; firstName: string | null; lastName: string | null; phone: string } | null | undefined; fallback: string }) {
-  if (!user) return <strong>{fallback}</strong>;
-  return (
-    <AccountLink accountNumber={user.accountNumber} className="gm-audit__person">
-      <ChatAvatar name={accountName(user)} seed={user.id} size="sm" />
-      <strong>{accountName(user)}</strong>
-      <small>ID {user.accountNumber}</small>
-    </AccountLink>
-  );
-}
-
-function Detail({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="gm-audit__detail">
-      <dt>{label}</dt>
-      <dd>{children}</dd>
-    </div>
-  );
-}
-
-function AuditEntry({ log }: { log: AuditLog }) {
-  const [open, setOpen] = useState(false);
-  const info = actionInfo(log.action);
-  const changes = changesOf(log);
-  const targetName = log.targetType ? (TARGET_LABEL[log.targetType] ?? log.targetType) : null;
-  const document = log.targetDocumentType ? (DOCUMENT_LABEL[log.targetDocumentType] ?? log.targetDocumentType) : null;
-  // Ro‘yxatdan o‘tish kabi amallarda aktor yozilmaydi: amal egasi obyektning o‘zi.
-  const actorUser = log.actor ?? (!log.actorId && info.group === 'auth' ? log.targetUser : null);
-  const selfAction = !!actorUser && !!log.targetUser && actorUser.id === log.targetUser.id;
-
-  return (
-    <li className={cx('gm-audit__item', `gm-audit__item--${info.tone}`)}>
-      <span className="gm-audit__icon" aria-hidden="true">
-        {GROUP_ICON[info.group]}
-      </span>
-      <article className="gm-audit__card">
-        <header className="gm-audit__head">
-          <div className="gm-audit__title">
-            <h3>{info.label}</h3>
-            <Badge tone={info.tone}>{GROUP_INFO[info.group].label}</Badge>
-            {log.actorRole && <span className={cx('gm-audit__by', `gm-audit__by--${log.actorRole.toLowerCase()}`)}>{ROLE_NAME[log.actorRole]}</span>}
-          </div>
-          <time dateTime={log.createdAt} title={formatDateTime(log.createdAt)}>
-            <strong>{timeOf(log.createdAt)}</strong>
-            <small>{formatRelativeTime(log.createdAt)}</small>
-          </time>
-        </header>
-
-        <p className="gm-audit__sentence">
-          <Person user={actorUser} fallback={log.actorId || info.group === 'auth' ? t('Noma’lum foydalanuvchi') : t('Tizim')} /> <span>{info.verb}</span>
-          {log.targetUser && !selfAction && (
-            <>
-              {' '}
-              <ArrowRight size={13} aria-hidden="true" className="gm-audit__arrow" /> <Person user={log.targetUser} fallback="" />
-            </>
-          )}
-          {document && <Badge tone="neutral">{document}</Badge>}
-        </p>
-
-        {log.reason && (
-          <blockquote className="gm-audit__reason">
-            <small>{t('Sabab')}</small>
-            {log.reason}
-          </blockquote>
-        )}
-
-        {changes.length > 0 && (
-          <ul className="gm-audit__changes" aria-label={t('O‘zgarishlar')}>
-            {changes.map((change) => (
-              <li key={change.key}>
-                <span className="gm-audit__field">{FIELD_LABEL[change.key] ?? change.key}</span>
-                {change.hasFrom && <span className="gm-audit__value gm-audit__value--old">{formatValue(change.key, change.from)}</span>}
-                {change.hasFrom && change.hasTo && <ArrowRight size={14} aria-hidden="true" />}
-                {change.hasTo && <span className="gm-audit__value gm-audit__value--new">{formatValue(change.key, change.to)}</span>}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <button type="button" className="gm-audit__toggle" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />} {open ? t('Yashirish') : t('Batafsil ma’lumot')}
-        </button>
-
-        {open && (
-          <dl className="gm-audit__details">
-            <Detail label={t('Aniq vaqt')}>{formatDateTime(log.createdAt)}</Detail>
-            <Detail label={t('Amal kodi')}>
-              <code>{log.action}</code>
-            </Detail>
-            {log.actor && (
-              <Detail label={t('Bajaruvchi')}>
-                <AccountLink accountNumber={log.actor.accountNumber} className="gm-audit__link">
-                  {accountName(log.actor)}
-                </AccountLink>{' '}{t('· ID {accountNumber} · {phone}', { accountNumber: log.actor.accountNumber, phone: log.actor.phone })}</Detail>
-            )}
-            {log.targetUser && (
-              <Detail label={t('Kimga nisbatan')}>
-                <AccountLink accountNumber={log.targetUser.accountNumber} className="gm-audit__link">
-                  {accountName(log.targetUser)}
-                </AccountLink>{' '}{t('· ID {accountNumber} · {phone}', { accountNumber: log.targetUser.accountNumber, phone: log.targetUser.phone })}</Detail>
-            )}
-            {targetName && !log.targetUser && <Detail label={t('Obyekt turi')}>{targetName}</Detail>}
-            {log.ipAddress && <Detail label={t('IP manzil')}>{log.ipAddress}</Detail>}
-            {log.device && <Detail label={t('Qurilma')}>{log.device}</Detail>}
-            {(log.before !== null && log.before !== undefined) || (log.after !== null && log.after !== undefined) ? (
-              <Detail label={t('Xom ma’lumot (JSON)')}>
-                <pre>{JSON.stringify({ oldin: log.before ?? null, keyin: log.after ?? null }, null, 2)}</pre>
-              </Detail>
-            ) : null}
-          </dl>
-        )}
-      </article>
-    </li>
-  );
+function Delta({ current, previous }: { current: number; previous: number | undefined }) {
+  if (previous === undefined || previous === 0) return null;
+  const change = Math.round(((current - previous) / previous) * 100);
+  if (change === 0) return null;
+  return <em className={change > 0 ? 'is-up' : 'is-down'}>{change > 0 ? '↑' : '↓'} {Math.abs(change)}%</em>;
 }
 
 export function AdminAuditPage() {
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const pushToast = useAppStore((state) => state.pushToast);
   const [search, setSearch] = useState('');
-  const [role, setRole] = useState<AuditActorRole | ''>('');
+  const [role, setRole] = useState<RoleTab>('');
   const [category, setCategory] = useState('');
   const [action, setAction] = useState('');
-  const [params] = useSearchParams();
+  const [outcome, setOutcome] = useState<'' | 'SUCCESS' | 'FAILED'>('');
+  const [securityOnly, setSecurityOnly] = useState(false);
+  const [technical, setTechnical] = useState(false);
   const [actorId, setActorId] = useState(params.get('actor') ?? '');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const [from, setFrom] = useState(isoDay(29));
+  const [to, setTo] = useState(isoDay(0));
+  const [dir, setDir] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [selected, setSelected] = useState<AuditLog | null>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [dateOpen, setDateOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+  const dateRef = useRef<HTMLDivElement>(null);
 
   const actorValid = /^\d{1,9}$/.test(actorId.trim());
-  const filters: AuditFilters = {
-    actorRole: role || undefined,
-    search: search.trim() || undefined,
-    category: action ? undefined : category || undefined,
-    action: action || undefined,
-    actorNumber: actorValid ? Number(actorId.trim()) : undefined,
-    from: dayStart(from),
-    to: dayEnd(to),
-  };
-  const logs = useAuditLogs(filters);
+  const filters = useMemo<AuditFilters>(
+    () => ({
+      actorRole: role || undefined,
+      search: search.trim() || undefined,
+      category: action ? undefined : category || undefined,
+      action: action || undefined,
+      outcome: outcome || undefined,
+      kind: securityOnly ? 'security' : undefined,
+      technical: technical ? 'true' : undefined,
+      actorNumber: actorValid ? Number(actorId.trim()) : undefined,
+      from: dayStart(from),
+      to: dayEnd(to),
+      dir,
+    }),
+    [role, search, category, action, outcome, securityOnly, technical, actorId, actorValid, from, to, dir],
+  );
+  const logs = useAuditPage(filters, page, pageSize);
+  const stats = useAuditStats(filters);
   const summary = useAuditSummary(filters);
-  const items = useMemo(() => logs.data?.pages.flatMap((page) => page.items) ?? [], [logs.data]);
-  const active = !!(role || search || category || action || actorId || from || to);
+  const data = logs.data;
+  const items = data?.items ?? [];
+  const cur = stats.data?.current;
+  const prev = stats.data?.previous ?? undefined;
+  const advanced = [category, securityOnly, technical, actorId].filter(Boolean).length;
+  const dirty = !!(search || role || category || action || outcome || securityOnly || technical || actorId || from !== isoDay(29) || to !== isoDay(0));
+
+  useEffect(() => setPage(1), [filters, pageSize]);
+  useEffect(() => {
+    if (!filtersOpen && !dateOpen) return;
+    const onDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (filterRef.current && !filterRef.current.contains(target)) setFiltersOpen(false);
+      if (dateRef.current && !dateRef.current.contains(target)) setDateOpen(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [filtersOpen, dateOpen]);
 
   const reset = () => {
-    setRole('');
     setSearch('');
+    setRole('');
     setCategory('');
     setAction('');
+    setOutcome('');
+    setSecurityOnly(false);
+    setTechnical(false);
     setActorId('');
-    setFrom('');
-    setTo('');
+    setFrom(isoDay(29));
+    setTo(isoDay(0));
   };
+  const count = (value: RoleTab) => (!summary.data ? undefined : value === '' ? summary.data.ALL : value === 'USERS' ? summary.data.MASTER + summary.data.CUSTOMER : summary.data[value]);
+  const dateLabel = from || to ? `${from ? formatDate(from) : '…'} – ${to ? formatDate(to) : '…'}` : t('Barcha vaqt');
+
+  /** Joriy filtrlarga mos BARCHA yozuvlarni CSV (Excel ochadi) qilib yuklaydi. */
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const rows: AuditLog[] = [];
+      for (let p = 1; p <= 100; p += 1) {
+        const chunk = await adminService.auditPage(filters, p, 100);
+        rows.push(...chunk.items);
+        if (p >= chunk.pages) break;
+      }
+      const head = [t('Hodisa ID'), t('Vaqt'), t('Amal turi'), t('Amal kodi'), t('Tavsif'), t('Bajaruvchi'), t('Bajaruvchi roli'), t('Obyekt'), t('Status'), t('IP manzil'), t('Sabab')];
+      const lines = rows.map((log) => {
+        const info = actionInfo(log.action);
+        return [log.code, formatDateTime(log.createdAt), info.label, log.action, auditSentence(log), log.actor ? accountName(log.actor) : t('Tizim'), log.actorRole ? ROLE_NAME[log.actorRole] : '', log.targetType ? (TARGET_LABEL[log.targetType] ?? log.targetType) : '', OUTCOME[log.outcome ?? 'SUCCESS'].label, log.ipAddress, log.reason].map(csvCell).join(',');
+      });
+      const blob = new Blob([`﻿${[head.map(csvCell).join(','), ...lines].join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `audit-jurnali-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      pushToast(t('{count} ta yozuv eksport qilindi', { count: rows.length }), 'success');
+    } catch (error) {
+      pushToast(getErrorMessage(error), 'error');
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const kpis: Array<{ key: string; label: string; icon: ReactNode; tone: string; value: number | undefined; previous: number | undefined; on: boolean; onClick: () => void }> = [
+    { key: 'total', label: t('Jami hodisalar'), icon: <ScrollText size={24} />, tone: 'blue', value: cur?.total, previous: prev?.total, on: !role && !securityOnly, onClick: () => { setRole(''); setSecurityOnly(false); } },
+    { key: 'users', label: t('Foydalanuvchilar'), icon: <Users size={24} />, tone: 'green', value: cur?.users, previous: prev?.users, on: role === 'USERS', onClick: () => { setRole('USERS'); setSecurityOnly(false); } },
+    { key: 'admins', label: t('Admin amallari'), icon: <Shield size={24} />, tone: 'violet', value: cur?.admins, previous: prev?.admins, on: role === 'ADMIN', onClick: () => { setRole('ADMIN'); setSecurityOnly(false); } },
+    { key: 'security', label: t('Xavfsizlik hodisalari'), icon: <ShieldAlert size={24} />, tone: 'red', value: cur?.security, previous: prev?.security, on: securityOnly, onClick: () => { setRole(''); setSecurityOnly(true); } },
+    { key: 'system', label: t('Tizim hodisalari'), icon: <Bot size={24} />, tone: 'amber', value: cur?.system, previous: prev?.system, on: role === 'SYSTEM', onClick: () => { setRole('SYSTEM'); setSecurityOnly(false); } },
+  ];
 
   return (
-    <div className="gm-audit">
-      <div className="gm-page-header">
+    <div className="gm-ul gm-aud">
+      <header className="gm-ul__head gm-adm2__head">
+        <span className="gm-adm2__logo"><ScrollText size={26} aria-hidden="true" /></span>
         <div>
           <h1>{t('Audit jurnali')}</h1>
-          <p className="gm-page-lead">{t('Tizimda kim, qachon va nima qilgani: har bir muhim amal, uning sababi va o‘zgarishlari bilan.')}</p>
+          <p>{t('Tizimda kim, qachon va nima qilgani: har bir muhim amal, uning sababi va o‘zgarishlari bilan.')}</p>
         </div>
+        <div className="gm-aud__tools gm-adm2__create">
+          <div className="gm-ord2__date" ref={dateRef}>
+            <Button variant="secondary" onClick={() => setDateOpen((open) => !open)} aria-expanded={dateOpen}>
+              <CalendarDays size={16} aria-hidden="true" /> {dateLabel}
+            </Button>
+            {dateOpen && (
+              <div className="gm-ul__pop gm-ord2__datepop">
+                <label><span>{t('Sanadan')}</span><input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} /></label>
+                <label><span>{t('Sanagacha')}</span><input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} /></label>
+                <div className="gm-aud__presets">
+                  <button type="button" onClick={() => { setFrom(isoDay(0)); setTo(isoDay(0)); }}>{t('Bugun')}</button>
+                  <button type="button" onClick={() => { setFrom(isoDay(6)); setTo(isoDay(0)); }}>{t('7 kun')}</button>
+                  <button type="button" onClick={() => { setFrom(isoDay(29)); setTo(isoDay(0)); }}>{t('30 kun')}</button>
+                  <button type="button" onClick={() => { setFrom(''); setTo(''); }}>{t('Barcha vaqt')}</button>
+                </div>
+              </div>
+            )}
+          </div>
+          <Button loading={exporting} onClick={() => void exportCsv()} disabled={!data || data.total === 0}>
+            <Download size={16} aria-hidden="true" /> {t('Export qilish')}
+          </Button>
+        </div>
+      </header>
+
+      <div className="gm-ul__kpis gm-ord2__kpis">
+        {kpis.map((kpi) => (
+          <button key={kpi.key} type="button" className={cx('gm-ukpi gm-ukpi--btn', kpi.on && 'is-on')} onClick={kpi.onClick} aria-pressed={kpi.on}>
+            <span className={`gm-ukpi__icon gm-aud__icon--${kpi.tone}`}>{kpi.icon}</span>
+            <div>
+              <small>{kpi.label}</small>
+              <strong>{kpi.value === undefined ? '…' : formatNumber(kpi.value)}{kpi.value !== undefined && <Delta current={kpi.value} previous={kpi.previous} />}</strong>
+              <span>{prev ? t('Oldingi davr: {count}', { count: formatNumber(kpi.previous ?? 0) }) : t('Oldingi davr bilan solishtirish uchun sana oralig‘ini tanlang')}</span>
+            </div>
+          </button>
+        ))}
       </div>
 
-      <section className="gm-audit__roles" role="tablist" aria-label={t('Amalni kim bajargani')}>
-        {ROLE_TABS.map((tab) => {
-          const count = tab.value ? summary.data?.[tab.value] : summary.data?.ALL;
-          const selected = role === tab.value;
-          return (
-            <button
-              key={tab.value || 'ALL'}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              title={tab.hint}
-              className={cx('gm-audit__role', tab.value && `gm-audit__role--${tab.value.toLowerCase()}`, selected && 'gm-audit__role--on')}
-              onClick={() => setRole(tab.value)}
-            >
-              <span className="gm-audit__role-icon" aria-hidden="true">
-                {tab.icon}
-              </span>
-              <span className="gm-audit__role-text">
-                <strong>{tab.label}</strong>
-                <small>{tab.hint}</small>
-              </span>
-              <span className="gm-audit__role-count">{count ?? '…'}</span>
-            </button>
-          );
-        })}
-      </section>
-
-      <section className="gm-audit__filters" aria-label={t('Filtrlar')}>
-        <div className="gm-audit__search">
-          <Search size={16} aria-hidden="true" />
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Amal yoki sabab bo‘yicha qidirish')} aria-label={t('Qidirish')} />
-        </div>
-        <div className="gm-audit__chips" role="group" aria-label={t('Bo‘lim')}>
-          <button type="button" aria-pressed={!category} className={cx('gm-otab', !category && 'gm-otab--active')} onClick={() => setCategory('')}>{t('Hammasi')}</button>
-          {CATEGORY_CHIPS.map((key) => (
-            <button
-              key={key}
-              type="button"
-              aria-pressed={category === GROUP_INFO[key].prefix}
-              className={cx('gm-otab', category === GROUP_INFO[key].prefix && 'gm-otab--active')}
-              onClick={() => {
-                setCategory(GROUP_INFO[key].prefix ?? '');
-                setAction('');
-              }}
-            >
-              {GROUP_INFO[key].label}
-            </button>
-          ))}
-        </div>
-        <div className="gm-audit__row">
-          <label>
-            <span>{t('Aniq amal')}</span>
+      <section className="gm-ul__panel">
+        <div className="gm-ul__toolbar">
+          <label className="gm-ul__search">
+            <Search size={17} aria-hidden="true" />
+            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Foydalanuvchi, telefon, IP, amal yoki sabab bo‘yicha qidirish...')} aria-label={t('Qidirish')} autoComplete="off" />
+          </label>
+          <label className="gm-ul__select">
+            <span>{t('Amal turi')}</span>
             <select value={action} onChange={(event) => setAction(event.target.value)}>
               <option value="">{t('Barcha amallar')}</option>
-              {ACTION_OPTIONS.map(([code, info]) => (
-                <option key={code} value={code}>
-                  {info.label}
-                </option>
-              ))}
+              {ACTION_OPTIONS.map(([code, info]) => <option key={code} value={code}>{info.label}</option>)}
             </select>
           </label>
-          <label>
-            <span>{t('Sanadan')}</span>
-            <input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} />
+          <label className="gm-ul__select">
+            <span>{t('Foydalanuvchi roli')}</span>
+            <select value={role} onChange={(event) => setRole(event.target.value as RoleTab)}>
+              {ROLE_TABS.map((tab) => <option key={tab.value} value={tab.value}>{tab.value ? tab.label : t('Barcha rollar')}</option>)}
+            </select>
           </label>
-          <label>
-            <span>{t('Sanagacha')}</span>
-            <input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} />
+          <label className="gm-ul__select">
+            <span>{t('Status')}</span>
+            <select value={outcome} onChange={(event) => setOutcome(event.target.value as '' | 'SUCCESS' | 'FAILED')}>
+              <option value="">{t('Barcha holatlar')}</option>
+              <option value="SUCCESS">{OUTCOME.SUCCESS.label}</option>
+              <option value="FAILED">{OUTCOME.FAILED.label}</option>
+            </select>
           </label>
-          <label className="gm-audit__grow">
-            <span>{t('Bajaruvchi ID (raqam)')}</span>
-            <input value={actorId} inputMode="numeric" onChange={(event) => setActorId(event.target.value.replace(/\D/g, ''))} placeholder={t('Masalan, 578')} aria-invalid={!!actorId && !actorValid} />
-          </label>
-          {active && (
-            <Button size="sm" variant="secondary" onClick={reset}>
-              <X size={14} />{' '}{t('Tozalash')}</Button>
-          )}
+          <div className="gm-ul__filters" ref={filterRef}>
+            <Button variant="secondary" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}>
+              <Filter size={16} aria-hidden="true" /> {t('Filtrlar')}{advanced > 0 && <span className="gm-ul__count">{advanced}</span>}
+            </Button>
+            {filtersOpen && (
+              <div className="gm-ul__pop">
+                <label>
+                  <span>{t('Bo‘lim')}</span>
+                  <select value={category} onChange={(event) => { setCategory(event.target.value); setAction(''); }}>
+                    <option value="">{t('Barcha bo‘limlar')}</option>
+                    {CATEGORY_OPTIONS.map((key) => <option key={key} value={GROUP_INFO[key].prefix}>{GROUP_INFO[key].label}</option>)}
+                  </select>
+                </label>
+                <label>
+                  <span>{t('Bajaruvchi ID (raqam)')}</span>
+                  <input value={actorId} inputMode="numeric" onChange={(event) => setActorId(event.target.value.replace(/\D/g, ''))} placeholder={t('Masalan, 578')} aria-invalid={!!actorId && !actorValid} />
+                </label>
+                <label className="gm-ord2__check"><input type="checkbox" checked={securityOnly} onChange={(event) => setSecurityOnly(event.target.checked)} /> {t('Faqat xavfsizlik hodisalari')}</label>
+                <label className="gm-ord2__check"><input type="checkbox" checked={technical} onChange={(event) => setTechnical(event.target.checked)} /> {t('Texnik yozuvlarni ham ko‘rsatish (sessiya yangilanishi)')}</label>
+              </div>
+            )}
+          </div>
+          <Button variant="ghost" onClick={reset} disabled={!dirty}>
+            <RotateCcw size={15} aria-hidden="true" /> {t('Tozalash')}
+          </Button>
         </div>
+
+        <div className="gm-aud__tabs" role="tablist" aria-label={t('Amalni kim bajargani')}>
+          {ROLE_TABS.map((tab) => {
+            const n = count(tab.value);
+            return (
+              <button key={tab.value || 'all'} type="button" role="tab" aria-selected={role === tab.value} className={cx(role === tab.value && 'is-on')} onClick={() => setRole(tab.value)}>
+                {tab.label}{n !== undefined && <span>{formatNumber(n)}</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        {logs.isLoading && <PageLoader label={t('Audit yozuvlari yuklanmoqda…')} />}
+        {logs.isError && <Alert tone="danger">{getErrorMessage(logs.error)}</Alert>}
+        {data && items.length === 0 && <EmptyState icon={<Activity size={26} />} title={t('Yozuvlar topilmadi')} description={dirty ? t('Filtrlarni o‘zgartirib ko‘ring.') : undefined} />}
+
+        {items.length > 0 && (
+          <div className={cx('gm-ul__table', logs.isFetching && 'is-loading')}>
+            <table>
+              <thead>
+                <tr>
+                  <th className="gm-ul__c-num">#</th>
+                  <th><button type="button" onClick={() => setDir(dir === 'desc' ? 'asc' : 'desc')}>{t('Vaqt')} {dir === 'desc' ? '↓' : '↑'}</button></th>
+                  <th>{t('Amal turi')}</th>
+                  <th className="gm-ul__c-phone">{t('Tavsif')}</th>
+                  <th>{t('Foydalanuvchi')}</th>
+                  <th className="gm-ul__c-last">{t('Obyekt')}</th>
+                  <th>{t('Status')}</th>
+                  <th className="gm-ul__c-orders">{t('IP manzil')}</th>
+                  <th className="gm-ul__c-act">{t('Batafsil')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((log, index) => {
+                  const info = actionInfo(log.action);
+                  const out = OUTCOME[log.outcome ?? 'SUCCESS'];
+                  const actorUser = log.actor ?? (!log.actorId && info.group === 'auth' ? log.targetUser : null);
+                  const path = targetPath(log);
+                  return (
+                    <tr key={log.id} className={cx(selected?.id === log.id && 'is-open')} onClick={() => setSelected(log)}>
+                      <td className="gm-ul__c-num">{(page - 1) * pageSize + index + 1}</td>
+                      <td><span className="gm-ul__date">{formatDate(log.createdAt)}<small>{formatTime(log.createdAt)}</small></span></td>
+                      <td><span className={cx('gm-aud__chip', toneClass(info.tone))}>{GROUP_ICON[info.group]} {info.label}</span></td>
+                      <td className="gm-ul__c-phone"><span className="gm-aud__desc" title={log.reason ? `${auditSentence(log)} — ${log.reason}` : auditSentence(log)}>{auditSentence(log)}</span></td>
+                      <td>
+                        {actorUser ? (
+                          <div className="gm-ul__user">
+                            <ChatAvatar name={accountName(actorUser)} seed={actorUser.id} size="md" />
+                            <div>
+                              <strong>{accountName(actorUser)}</strong>
+                              <small>{log.actorRole ? ROLE_NAME[log.actorRole] : ''}</small>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="gm-ul__user">
+                            <span className="gm-aud__sys"><Bot size={18} aria-hidden="true" /></span>
+                            <div>
+                              <strong>{t('Tizim')}</strong>
+                              <small>{t('Avtomatik')}</small>
+                            </div>
+                          </div>
+                        )}
+                      </td>
+                      <td className="gm-ul__c-last">{log.targetType ? (TARGET_LABEL[log.targetType] ?? log.targetType) : '—'}</td>
+                      <td><Badge tone={out.tone}>{out.label}</Badge></td>
+                      <td className="gm-ul__c-orders"><span className="gm-aud__ip">{log.ipAddress ?? '—'}</span></td>
+                      <td className="gm-ul__c-act" onClick={(event) => event.stopPropagation()}>
+                        <span className="gm-ul__acts">
+                          <button type="button" aria-label={t('Ko‘rish')} title={t('Ko‘rish')} onClick={() => setSelected(log)}><Eye size={16} /></button>
+                          <Dropdown
+                            triggerClassName="gm-ul__more"
+                            label={t('Boshqa amallar')}
+                            trigger={<MoreHorizontal size={17} />}
+                            items={[
+                              { label: t('Batafsil'), icon: <Eye size={16} />, onSelect: () => setSelected(log) },
+                              ...(actorUser ? [{ label: t('Shu bajaruvchi amallari'), icon: <UserRound size={16} />, onSelect: () => setActorId(String(actorUser.accountNumber)) }] : []),
+                              ...(path ? [{ label: t('Obyektni ochish'), icon: <ScrollText size={16} />, onSelect: () => navigate(path) }] : []),
+                            ]}
+                          />
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {data && data.total > 0 && (
+          <footer className="gm-ul__foot">
+            <span>{t('Jami: {total} ta hodisa, sahifa {page}/{pages}', { total: formatNumber(data.total), page: data.page, pages: formatNumber(data.pages) })}</span>
+            <nav className="gm-ul__pager" aria-label={t('Sahifalar')}>
+              <button type="button" onClick={() => setPage(page - 1)} disabled={page <= 1} aria-label={t('Oldingi sahifa')}><ChevronLeft size={16} /></button>
+              {pageNumbers(page, data.pages).map((entry) =>
+                typeof entry === 'number' ? (
+                  <button key={entry} type="button" className={cx(entry === page && 'is-on')} aria-current={entry === page ? 'page' : undefined} onClick={() => setPage(entry)}>{entry}</button>
+                ) : (
+                  <span key={entry}>…</span>
+                ),
+              )}
+              <button type="button" onClick={() => setPage(page + 1)} disabled={page >= data.pages} aria-label={t('Keyingi sahifa')}><ChevronRight size={16} /></button>
+              <select className="gm-adm2__size" value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))} aria-label={t('Sahifadagi soni')}>
+                {[10, 20, 50, 100].map((size) => <option key={size} value={size}>{t('{size} / sahifa', { size })}</option>)}
+              </select>
+            </nav>
+          </footer>
+        )}
       </section>
 
-      {logs.isLoading && <PageLoader />}
-      {logs.isError && <Alert tone="danger">{getErrorMessage(logs.error)}</Alert>}
-      {logs.data && items.length === 0 && <EmptyState icon={<Sparkles size={26} />} title={t('Yozuvlar topilmadi')} description={active ? t('Filtrlarni o‘zgartirib ko‘ring.') : undefined} />}
-
-      {items.length > 0 && (
-        <>
-          <p className="gm-audit__count">{t('{length} ta yozuv ko‘rsatilmoqda', { length: items.length })}{logs.hasNextPage ? t(' (yana bor)') : ''}
-          </p>
-          <ol className="gm-audit__timeline">
-            {items.map((log, index) => (
-              <Fragment key={log.id}>
-                {(index === 0 || dayKey(items[index - 1]!.createdAt) !== dayKey(log.createdAt)) && (
-                  <li className="gm-audit__day" aria-hidden="true">
-                    <span>{formatDate(log.createdAt)}</span>
-                  </li>
-                )}
-                <AuditEntry log={log} />
-              </Fragment>
-            ))}
-          </ol>
-          {logs.hasNextPage && (
-            <div className="gm-audit__more">
-              <Button variant="secondary" loading={logs.isFetchingNextPage} onClick={() => void logs.fetchNextPage()}>{t('Ko‘proq yuklash')}</Button>
-            </div>
-          )}
-        </>
-      )}
+      {selected && <AuditDrawer log={items.find((item) => item.id === selected.id) ?? selected} onClose={() => setSelected(null)} onFilterActor={(number) => setActorId(String(number))} />}
     </div>
   );
 }

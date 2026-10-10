@@ -319,6 +319,10 @@ export interface AuditLog {
   requestId: string | null;
   device?: string | null;
   createdAt: string;
+  /** Qisqa kod: AUD-XXXXXXXX. */
+  code?: string;
+  /** SUCCESS — oddiy bajarilgan; FAILED — rad etilgan yoki xato bilan tugagan. */
+  outcome?: 'SUCCESS' | 'FAILED';
   /** Amal kimga nisbatan bajarilgan (foydalanuvchi yoki usta hujjati egasi). */
   targetUser?: { id: string; accountNumber: number; firstName: string | null; lastName: string | null; phone: string } | null;
   targetDocumentType?: string | null;
@@ -399,8 +403,37 @@ export type AuditActorRole = 'ADMIN' | 'MASTER' | 'CUSTOMER' | 'SYSTEM';
 
 export type AuditSummary = Record<AuditActorRole | 'ALL', number>;
 
+export interface AuditPage {
+  items: AuditLog[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+export interface AuditStatsBucket {
+  total: number;
+  users: number;
+  admins: number;
+  system: number;
+  security: number;
+}
+
+export interface AuditStats {
+  current: AuditStatsBucket;
+  previous: AuditStatsBucket | null;
+}
+
+export interface AuditRelated {
+  items: Array<{ id: string; code: string; action: string; createdAt: string; reason: string | null; targetType: string | null; targetId: string | null; actor: { id: string; accountNumber: number; firstName: string | null; lastName: string | null; phone: string } | null }>;
+}
+
 export interface AuditFilters {
-  actorRole?: AuditActorRole;
+  actorRole?: AuditActorRole | 'USERS';
+  outcome?: 'SUCCESS' | 'FAILED';
+  kind?: 'security';
+  technical?: 'true';
+  dir?: 'asc' | 'desc';
   actorNumber?: number;
   actorId?: string;
   action?: string;
@@ -417,6 +450,10 @@ export interface AdminChatPerson {
   firstName: string | null;
   lastName: string | null;
   phone: string;
+  email?: string | null;
+  avatar?: string | null;
+  status?: string;
+  masterProfile?: { profession: string | null; ratingAvg: string; ratingCount: number } | null;
 }
 
 export interface AdminConversation {
@@ -425,11 +462,67 @@ export interface AdminConversation {
   orderId: string | null;
   updatedAt: string;
   participants: Array<{ roles: string[]; deletedAt: string | null; user: AdminChatPerson }>;
-  order: { id: string; status: string } | null;
-  lastMessage: { text: string | null; createdAt: string; deletedAt: string | null } | null;
+  order: { id: string; status: string; orderNumber: number; finalAmount: string; currency: string; casesCount: number; category: string | null } | null;
+  lastMessage: { text: string | null; createdAt: string; deletedAt: string | null; hasAttachments?: boolean } | null;
   messageCount: number;
   deletedCount: number;
   editedCount: number;
+}
+
+export interface AdminConversationDetail extends Omit<AdminConversation, 'order' | 'lastMessage' | 'messageCount' | 'deletedCount' | 'editedCount' | 'participants'> {
+  createdAt: string;
+  participants: Array<{ roles: string[]; deletedAt: string | null; lastReadAt: string | null; joinedAt: string; user: AdminChatPerson }>;
+  order: {
+    id: string;
+    status: string;
+    orderNumber: number;
+    finalAmount: string;
+    currency: string;
+    createdAt: string;
+    title: string;
+    category: string | null;
+    city: string | null;
+    district: string | null;
+    cases: Array<{ id: string; type: string; title: string; status: string; createdAt: string }>;
+    payment: { provider: string; status: string } | null;
+  } | null;
+}
+
+export interface AdminConversationStats {
+  total: number;
+  order: number;
+  direct: number;
+  support: number;
+  disputed: number;
+  withDeleted: number;
+  withEdited: number;
+  messages: number;
+}
+
+export interface AdminConversationFile {
+  mediaAssetId: string;
+  mimeType: string;
+  name: string;
+  messageId: string;
+  createdAt: string;
+  messageDeletedAt: string | null;
+  sender: AdminChatPerson;
+}
+
+export interface AdminConversationEvent {
+  id: string;
+  kind: 'created' | 'first_message' | 'deleted' | 'edited' | 'call' | 'order_status';
+  at: string;
+  actor: AdminChatPerson | null;
+  detail: Record<string, unknown>;
+}
+
+export interface AdminConversationFilters {
+  search?: string;
+  type?: string;
+  orderStatus?: string;
+  flag?: 'deleted' | 'edited' | 'files' | 'disputed';
+  sort?: 'recent' | 'oldest' | 'messages';
 }
 
 export interface AdminChatMessage {

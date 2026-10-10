@@ -2,7 +2,7 @@ import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClie
 import type { CaseStatus } from '@/features/dispute/types';
 import { adminService } from '../services/admin.service';
 import type { DateRange, ReportPaymentsParams } from '../services/admin.service';
-import type { AdminOrderFilters, AuditFilters, CreateAdminInput, DevOpsWindow, UserFilters, VerificationDecision } from '../types';
+import type { AdminConversationFilters, AdminOrderFilters, AuditFilters, CreateAdminInput, DevOpsWindow, UserFilters, VerificationDecision } from '../types';
 
 export function useDashboard(range: DateRange) {
   return useQuery({ queryKey: ['admin', 'dashboard', range], queryFn: () => adminService.dashboard(range) });
@@ -155,8 +155,26 @@ export function useReviewVerification() {
   });
 }
 
-export function useAdminConversations(filters: { search?: string; type?: string }) {
-  return useQuery({ queryKey: ['admin', 'conversations', filters], queryFn: () => adminService.conversations(filters) });
+export function useAdminConversations(filters: AdminConversationFilters) {
+  return useInfiniteQuery({
+    queryKey: ['admin', 'conversations', filters],
+    queryFn: ({ pageParam }: { pageParam?: string }) => adminService.conversations(filters, pageParam),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    refetchInterval: 30_000,
+  });
+}
+
+export function useAdminConversationStats() {
+  return useQuery({ queryKey: ['admin', 'conversations-stats'], queryFn: () => adminService.conversationStats(), refetchInterval: 30_000 });
+}
+
+export function useAdminConversationFiles(id: string | null, enabled: boolean) {
+  return useQuery({ queryKey: ['admin', 'conversation', id, 'files'], queryFn: () => adminService.conversationFiles(id ?? ''), enabled: !!id && enabled });
+}
+
+export function useAdminConversationTimeline(id: string | null, enabled: boolean) {
+  return useQuery({ queryKey: ['admin', 'conversation', id, 'timeline'], queryFn: () => adminService.conversationTimeline(id ?? ''), enabled: !!id && enabled });
 }
 
 export function useAdminConversation(id: string | null) {
@@ -269,6 +287,19 @@ export function useResolveOrder(id: string) {
     mutationFn: (input: { decision: 'COMPLETE' | 'CANCEL'; reason: string }) => adminService.resolveOrder(id, input.decision, input.reason),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin'] }),
   });
+}
+
+export function useAuditPage(filters: AuditFilters, page: number, limit: number) {
+  return useQuery({ queryKey: ['admin', 'audit', 'page', filters, page, limit], queryFn: () => adminService.auditPage(filters, page, limit), placeholderData: keepPreviousData, refetchInterval: 30_000 });
+}
+
+export function useAuditStats(filters: AuditFilters) {
+  const { actorRole: _ignored, ...rest } = filters;
+  return useQuery({ queryKey: ['admin', 'audit-stats', rest], queryFn: () => adminService.auditStats(rest), refetchInterval: 30_000 });
+}
+
+export function useAuditRelated(id: string | null) {
+  return useQuery({ queryKey: ['admin', 'audit-related', id], queryFn: () => adminService.auditRelated(id as string), enabled: !!id });
 }
 
 export function useAuditSummary(filters: AuditFilters) {

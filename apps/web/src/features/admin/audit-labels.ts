@@ -16,6 +16,7 @@ export type AuditGroup =
   | 'customer'
   | 'disputes'
   | 'chat'
+  | 'subscriptions'
   | 'other';
 
 export interface AuditActionInfo {
@@ -42,6 +43,7 @@ export const GROUP_INFO: Record<AuditGroup, { label: string; prefix?: string }> 
   customer: { label: t('Mijoz profili'), prefix: 'CUSTOMER_' },
   disputes: { label: t('Nizo va shikoyatlar'), prefix: 'DISPUTE_' },
   chat: { label: t('Chat moderatsiyasi'), prefix: 'CHAT_' },
+  subscriptions: { label: t('Obunalar'), prefix: 'SUBSCRIPTION_' },
   other: { label: t('Boshqa') },
 };
 
@@ -140,6 +142,32 @@ export const AUDIT_ACTIONS: Record<string, AuditActionInfo> = {
   CUSTOMER_ADDRESS_CREATED: { label: t('Manzil qo‘shildi'), verb: t('yangi manzil qo‘shdi'), group: 'customer', tone: 'primary' },
   CUSTOMER_ADDRESS_UPDATED: { label: t('Manzil yangilandi'), verb: t('manzilni yangiladi'), group: 'customer', tone: 'neutral' },
   CUSTOMER_ADDRESS_REMOVED: { label: t('Manzil o‘chirildi'), verb: t('manzilni o‘chirdi'), group: 'customer', tone: 'warning' },
+
+  ADMIN_CHAT_REPLY_ALLOWED: { label: t('Javob yozishga ruxsat berildi'), verb: t('foydalanuvchiga yordam suhbatida javob yozishga ruxsat berdi'), group: 'chat', tone: 'primary' },
+  ADMIN_CHAT_REPLY_DENIED: { label: t('Javob yozish taqiqlandi'), verb: t('foydalanuvchining javob yozishini taqiqladi'), group: 'chat', tone: 'warning' },
+  ADMIN_DELEGATION_CHANGED: { label: t('Admin yaratish vakolati o‘zgardi'), verb: t('adminning yangi admin yaratish vakolatini o‘zgartirdi'), group: 'users', tone: 'warning' },
+  ADMIN_AVATAR_PERMISSION_CHANGED: { label: t('Rasm qo‘yish ruxsati o‘zgardi'), verb: t('adminning profil rasmi qo‘yish ruxsatini o‘zgartirdi'), group: 'users', tone: 'neutral' },
+  ADMIN_USER_AVATAR_SET: { label: t('Profil rasmi qo‘yildi'), verb: t('foydalanuvchiga profil rasmi qo‘ydi'), group: 'users', tone: 'primary' },
+  ADMIN_USER_AVATAR_REMOVED: { label: t('Profil rasmi olib tashlandi'), verb: t('foydalanuvchining profil rasmini olib tashladi'), group: 'users', tone: 'warning' },
+  AUTH_GOOGLE_LINKED: { label: t('Google ulandi'), verb: t('akkauntiga Google’ni ulashdi'), group: 'auth', tone: 'primary' },
+  AUTH_GOOGLE_UNLINKED: { label: t('Google uzildi'), verb: t('akkauntidan Google’ni uzdi'), group: 'auth', tone: 'warning' },
+  USER_EMAIL_CHANGED: { label: t('Email o‘zgartirildi'), verb: t('email manzilini o‘zgartirdi'), group: 'auth', tone: 'neutral' },
+  USER_PASSWORD_SET: { label: t('Parol o‘rnatildi'), verb: t('parol o‘rnatdi'), group: 'auth', tone: 'warning' },
+  USER_PHONE_VERIFIED: { label: t('Telefon tasdiqlandi'), verb: t('telefon raqamini tasdiqladi'), group: 'auth', tone: 'success' },
+  USER_TWO_FACTOR_ENABLED: { label: t('Ikki bosqichli himoya yoqildi'), verb: t('ikki bosqichli himoyani yoqdi'), group: 'auth', tone: 'success' },
+  USER_TWO_FACTOR_DISABLED: { label: t('Ikki bosqichli himoya o‘chirildi'), verb: t('ikki bosqichli himoyani o‘chirdi'), group: 'auth', tone: 'warning' },
+  USER_SELF_DELETED: { label: t('Akkaunt o‘chirildi'), verb: t('o‘z akkauntini o‘chirdi'), group: 'auth', tone: 'danger' },
+  USER_ACTION_LIFTED: { label: t('Chora bekor qilindi'), verb: t('foydalanuvchidan chorani olib tashladi'), group: 'users', tone: 'success' },
+  SERVICE_CATEGORY_UPDATED: { label: t('Kategoriya yangilandi'), verb: t('xizmat kategoriyasini yangiladi'), group: 'catalog', tone: 'neutral' },
+  SERVICE_CATEGORY_DEACTIVATED: { label: t('Kategoriya o‘chirildi'), verb: t('xizmat kategoriyasini faolsizlantirdi'), group: 'catalog', tone: 'warning' },
+  SUBSCRIPTION_PAID: { label: t('Obuna to‘landi'), verb: t('obuna uchun to‘lov qildi'), group: 'subscriptions', tone: 'success' },
+  SUBSCRIPTION_APPROVED: { label: t('Obuna tasdiqlandi'), verb: t('obuna so‘rovini tasdiqladi'), group: 'subscriptions', tone: 'success' },
+  SUBSCRIPTION_GRANTED: { label: t('Obuna sovg‘a qilindi'), verb: t('foydalanuvchiga obuna sovg‘a qildi'), group: 'subscriptions', tone: 'primary' },
+  SUBSCRIPTION_REJECTED: { label: t('Obuna so‘rovi rad etildi'), verb: t('obuna so‘rovini rad etdi'), group: 'subscriptions', tone: 'danger' },
+  SUBSCRIPTION_REVOKED: { label: t('Obuna bekor qilindi'), verb: t('obunani bekor qildi'), group: 'subscriptions', tone: 'warning' },
+  SUBSCRIPTION_REFUNDED: { label: t('Obuna puli qaytarildi'), verb: t('obuna to‘lovini qaytardi'), group: 'subscriptions', tone: 'warning' },
+  WORK_POST_CREATED: { label: t('Ish lentasiga e’lon qo‘shildi'), verb: t('ish lentasiga e’lon qo‘shdi'), group: 'profile', tone: 'primary' },
+  WORK_POST_REMOVED: { label: t('Ish lentasidagi e’lon o‘chirildi'), verb: t('ish lentasidagi e’lonni o‘chirdi'), group: 'profile', tone: 'warning' },
 };
 
 const humanize = (code: string) => {
@@ -199,6 +227,8 @@ export const DOCUMENT_LABEL: Record<string, string> = {
 };
 
 export const FIELD_LABEL: Record<string, string> = {
+  avatar: t('Profil rasmi'),
+  adminAvatarAllowed: t('Rasm qo‘yish ruxsati'),
   status: t('Holat'),
   documentType: t('Hujjat turi'),
   reason: t('Sabab'),

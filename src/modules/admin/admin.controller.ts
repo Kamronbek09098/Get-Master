@@ -291,6 +291,24 @@ export class AdminController {
   }
 
   @RequiresPermission('CHATS')
+  @Get('conversations/stats')
+  conversationStats() {
+    return this.chats.stats();
+  }
+
+  @RequiresPermission('CHATS')
+  @Get('conversations/:id/files')
+  conversationFiles(@Param('id', ParseUUIDPipe) id: string) {
+    return this.chats.files(id);
+  }
+
+  @RequiresPermission('CHATS')
+  @Get('conversations/:id/timeline')
+  conversationTimeline(@Param('id', ParseUUIDPipe) id: string) {
+    return this.chats.timeline(id);
+  }
+
+  @RequiresPermission('CHATS')
   @Get('conversations/:id')
   findConversation(@Param('id', ParseUUIDPipe) id: string) {
     return this.chats.findOne(id);

@@ -1,4 +1,5 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { ParseUUIDPipe } from '../../common/validators/any-uuid';
 import { Role } from '@prisma/client';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RequiresPermission } from '../../common/decorators/permission.decorator';
@@ -14,6 +15,16 @@ export class AuditController {
   @Get('summary')
   summary(@Query() query: AuditQueryDto) {
     return this.auditService.summary(query);
+  }
+
+  @Get('stats')
+  stats(@Query() query: AuditQueryDto) {
+    return this.auditService.stats(query);
+  }
+
+  @Get(':id/related')
+  related(@Param('id', ParseUUIDPipe) id: string) {
+    return this.auditService.related(id);
   }
 
   @Get()

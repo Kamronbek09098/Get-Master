@@ -17,6 +17,9 @@ import type {
   AdminPortfolioItem,
   AdminVerification,
   AuditFilters,
+  AuditPage,
+  AuditRelated,
+  AuditStats,
   AuditSummary,
   AuditLog,
   Dashboard,
@@ -24,6 +27,11 @@ import type {
   ReportPaymentsPage,
   ReportsOverview,
   AdminAccountDetails,
+  AdminConversationDetail,
+  AdminConversationEvent,
+  AdminConversationFile,
+  AdminConversationFilters,
+  AdminConversationStats,
   AdminOrderFacets,
   AdminOrdersPage,
   AdminAccountsStats,
@@ -143,11 +151,20 @@ export const adminService = {
   reviewVerification(id: string, decision: VerificationDecision, reason?: string) {
     return apiPost<unknown>(`/trust/admin/verifications/${id}/review`, { decision, reason });
   },
-  conversations(filters: { search?: string; type?: string; cursor?: string }) {
-    return apiGet<CursorPage<AdminConversation>>(`/admin/conversations${qs({ limit: '30', ...filters })}`);
+  conversations(filters: AdminConversationFilters, cursor?: string) {
+    return apiGet<CursorPage<AdminConversation>>(`/admin/conversations${qs({ limit: '30', ...filters, cursor })}`);
+  },
+  conversationStats() {
+    return apiGet<AdminConversationStats>('/admin/conversations/stats');
   },
   conversation(id: string) {
-    return apiGet<AdminConversation>(`/admin/conversations/${id}`);
+    return apiGet<AdminConversationDetail>(`/admin/conversations/${id}`);
+  },
+  conversationFiles(id: string) {
+    return apiGet<{ items: AdminConversationFile[] }>(`/admin/conversations/${id}/files`);
+  },
+  conversationTimeline(id: string) {
+    return apiGet<{ items: AdminConversationEvent[] }>(`/admin/conversations/${id}/timeline`);
   },
   conversationMessages(id: string, cursor?: string) {
     return apiGet<CursorPage<AdminChatMessage>>(`/admin/conversations/${id}/messages${qs({ limit: '50', cursor })}`);
@@ -187,6 +204,15 @@ export const adminService = {
   },
   audit(filters: AuditFilters, cursor?: string) {
     return apiGet<CursorPage<AuditLog>>(`/audit-logs${qs({ limit: '30', ...filters, actorNumber: filters.actorNumber ? String(filters.actorNumber) : undefined, cursor })}`);
+  },
+  auditPage(filters: AuditFilters, page: number, limit = 20) {
+    return apiGet<AuditPage>(`/audit-logs${qs({ ...filters, page: String(page), limit: String(limit), actorNumber: filters.actorNumber ? String(filters.actorNumber) : undefined })}`);
+  },
+  auditStats(filters: AuditFilters) {
+    return apiGet<AuditStats>(`/audit-logs/stats${qs({ ...filters, actorRole: undefined, actorNumber: filters.actorNumber ? String(filters.actorNumber) : undefined })}`);
+  },
+  auditRelated(id: string) {
+    return apiGet<AuditRelated>(`/audit-logs/${id}/related`);
   },
   auditSummary(filters: AuditFilters) {
     return apiGet<AuditSummary>(`/audit-logs/summary${qs({ ...filters, actorRole: undefined, actorNumber: filters.actorNumber ? String(filters.actorNumber) : undefined })}`);
