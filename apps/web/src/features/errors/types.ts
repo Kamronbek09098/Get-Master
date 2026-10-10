@@ -87,3 +87,62 @@ export interface ErrorPage {
   page: number;
   limit: number;
 }
+
+export interface ErrorOverviewBucket {
+  total: number;
+  severe: number;
+  open: number;
+  affectedUsers: number;
+}
+
+export interface ErrorOverview {
+  from: string;
+  to: string;
+  current: ErrorOverviewBucket;
+  previous: ErrorOverviewBucket;
+  series: Array<{ day: string; errors: number; warnings: number }>;
+  categories: { client4xx: number; server5xx: number; ui: number; other: number };
+  codes: Array<{ status: number; count: number }>;
+}
+
+export interface ErrorGroupRow extends ErrorGroup {
+  panel: string | null;
+  platform: string | null;
+  resolved: boolean;
+}
+
+export interface ErrorGroupsPage {
+  items: ErrorGroupRow[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+export interface ErrorGroupDetail {
+  sample: ErrorLogItem & { user: (ErrorUser & { avatar?: string | null }) | null };
+  fingerprint: string;
+  count: number;
+  users: number;
+  openCount: number;
+  resolved: boolean;
+  firstSeenAt: string;
+  lastSeenAt: string;
+  resolvedAt: string | null;
+  daily: Array<{ day: string; count: number }>;
+  topUsers: Array<{ count: number; user: (ErrorUser & { avatar?: string | null }) | null }>;
+  recent: Array<{ id: string; createdAt: string; requestId: string | null; platform: string | null; panel: string | null; ipAddress: string | null; resolvedAt: string | null; user: { id: string; accountNumber: number; firstName: string | null; lastName: string | null } | null }>;
+}
+
+export interface ErrorGroupsPageFilters {
+  q?: string;
+  severity?: ErrorSeverity;
+  state?: 'open' | 'resolved';
+  source?: ErrorSource;
+  statusClass?: '4xx' | '5xx' | 'none';
+  status?: string;
+  from?: string;
+  to?: string;
+  sort?: 'last' | 'count' | 'users';
+  dir?: 'asc' | 'desc';
+}

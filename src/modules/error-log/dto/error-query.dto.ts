@@ -77,3 +77,54 @@ export class ResolveErrorsDto {
   @IsOptional()
   value?: boolean;
 }
+
+/** Xatolar sahifasi: sana oralig‘i bo‘yicha umumiy ko‘rinish (kartalar, grafik, kategoriyalar). */
+export class ErrorOverviewQueryDto {
+  @IsOptional() @IsDateString()
+  from?: string;
+
+  @IsOptional() @IsDateString()
+  to?: string;
+}
+
+/** Xatolar sahifasi: bir xil xatolar guruhlari (sahifalab, filtr va saralash bilan). */
+export class ErrorGroupsPageQueryDto {
+  @IsOptional() @IsString() @MaxLength(200)
+  q?: string;
+
+  @IsOptional() @IsIn(['ERROR', 'WARNING'])
+  severity?: 'ERROR' | 'WARNING';
+
+  @IsOptional() @IsIn(['open', 'resolved'])
+  state?: 'open' | 'resolved';
+
+  @IsOptional() @IsIn(['SERVER', 'CLIENT'])
+  source?: 'SERVER' | 'CLIENT';
+
+  @IsOptional() @IsIn(['CUSTOMER', 'MASTER', 'ADMIN'])
+  panel?: string;
+
+  @IsOptional() @IsIn(['4xx', '5xx', 'none'])
+  statusClass?: '4xx' | '5xx' | 'none';
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(599)
+  status?: number;
+
+  @IsOptional() @IsDateString()
+  from?: string;
+
+  @IsOptional() @IsDateString()
+  to?: string;
+
+  @IsOptional() @IsIn(['last', 'count', 'users'])
+  sort?: 'last' | 'count' | 'users';
+
+  @IsOptional() @IsIn(['asc', 'desc'])
+  dir?: 'asc' | 'desc';
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100000)
+  page?: number;
+
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100)
+  limit?: number;
+}

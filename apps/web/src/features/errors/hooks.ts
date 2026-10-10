@@ -3,7 +3,7 @@ import { getErrorMessage } from '@/lib/error-messages';
 import { useAppStore } from '@/store/app.store';
 import { t } from '@/i18n';
 import { errorLogService } from './service';
-import type { ErrorFilters } from './types';
+import type { ErrorFilters, ErrorGroupsPageFilters } from './types';
 
 export function useErrorSummary() {
   return useQuery({ queryKey: ['admin', 'errors', 'summary'], queryFn: () => errorLogService.summary(), refetchInterval: 30_000 });
@@ -28,6 +28,18 @@ export function useErrorList(filters: ErrorFilters, enabled: boolean) {
     enabled,
     refetchInterval: 30_000,
   });
+}
+
+export function useErrorOverview(range: { from?: string; to?: string }) {
+  return useQuery({ queryKey: ['admin', 'errors', 'overview', range], queryFn: () => errorLogService.overview(range), refetchInterval: 30_000, placeholderData: keepPreviousData });
+}
+
+export function useErrorGroupsPage(filters: ErrorGroupsPageFilters, page: number, limit: number) {
+  return useQuery({ queryKey: ['admin', 'errors', 'groups-page', filters, page, limit], queryFn: () => errorLogService.groupsPage(filters, page, limit), refetchInterval: 30_000, placeholderData: keepPreviousData });
+}
+
+export function useErrorGroupDetail(fingerprint: string | null) {
+  return useQuery({ queryKey: ['admin', 'errors', 'group-detail', fingerprint], queryFn: () => errorLogService.groupDetail(fingerprint as string), enabled: !!fingerprint });
 }
 
 /** `value: true` — hal qilindi deb belgilash, `false` — qayta ochish. */

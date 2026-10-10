@@ -134,6 +134,7 @@ export const AUDIT_ACTIONS: Record<string, AuditActionInfo> = {
 
   PAYMENT_CASH_CONFIRMED: { label: t('Naqd to‘lov tasdiqlandi'), verb: t('naqd to‘lovni tasdiqladi'), group: 'payments', tone: 'success' },
   PAYMENT_REFUNDED: { label: t('To‘lov qaytarildi'), verb: t('to‘lovni qaytardi'), group: 'payments', tone: 'warning' },
+  PAYMENT_REFUNDED_AMOUNT_RECONCILED: { label: t('Qaytarilgan summa tekshirildi'), verb: t('qaytarilgan summani to‘lovlar jurnali bilan solishtirib to‘g‘rilab qo‘ydi'), group: 'payments', tone: 'warning' },
   PAYMENT_WEBHOOK_MISMATCH: { label: t('To‘lov webhook’i mos kelmadi'), verb: t('to‘lov webhook’i mos kelmadi'), group: 'payments', tone: 'danger' },
 
   REVIEW_CREATED: { label: t('Sharh qoldirildi'), verb: t('ustaga sharh qoldirdi'), group: 'reviews', tone: 'primary' },

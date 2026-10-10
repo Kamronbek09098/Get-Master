@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, Post, Query, Req } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, NotFoundException, Param, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import { Role } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -6,7 +6,7 @@ import { Public } from '../../common/decorators/public.decorator';
 import { RateLimit } from '../../common/decorators/rate-limit.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ClientErrorDto } from './dto/client-error.dto';
-import { ErrorGroupsQueryDto, ErrorListQueryDto, ResolveErrorsDto } from './dto/error-query.dto';
+import { ErrorGroupsPageQueryDto, ErrorGroupsQueryDto, ErrorListQueryDto, ErrorOverviewQueryDto, ResolveErrorsDto } from './dto/error-query.dto';
 import { ErrorLogService } from './error-log.service';
 
 /** Veb va mobil ilova xatoliklarini qabul qiladi (kirmagan foydalanuvchilarda ham ishlaydi, tezligi cheklangan). */
@@ -46,6 +46,27 @@ export class AdminErrorController {
   async groups(@CurrentUser('sub') adminId: string, @Query() query: ErrorGroupsQueryDto) {
     await this.errors.assertSuperAdmin(adminId);
     return this.errors.groups(query);
+  }
+
+  @Get('overview')
+  async overview(@CurrentUser('sub') adminId: string, @Query() query: ErrorOverviewQueryDto) {
+    await this.errors.assertSuperAdmin(adminId);
+    return this.errors.overview(query);
+  }
+
+  @Get('groups/page')
+  async groupsPage(@CurrentUser('sub') adminId: string, @Query() query: ErrorGroupsPageQueryDto) {
+    await this.errors.assertSuperAdmin(adminId);
+    return this.errors.groupsPage(query);
+  }
+
+  @Get('groups/:fingerprint')
+  async groupDetail(@CurrentUser('sub') adminId: string, @Param('fingerprint') fingerprint: string) {
+    await this.errors.assertSuperAdmin(adminId);
+    if (!/^[0-9a-f]{40}$/i.test(fingerprint)) throw new BadRequestException();
+    const detail = await this.errors.groupDetail(fingerprint);
+    if (!detail) throw new NotFoundException();
+    return detail;
   }
 
   @Post('resolve')

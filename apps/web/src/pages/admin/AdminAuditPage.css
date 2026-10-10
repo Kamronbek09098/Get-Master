@@ -5,14 +5,6 @@
 .gm-aud__icon--red { background: #fde4e7; color: var(--gm-color-danger); }
 .gm-aud__icon--amber { background: #ffecd0; color: #e08a12; }
 .gm-aud .gm-ukpi__icon { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
-.gm-aud__presets { display: flex; flex-wrap: wrap; gap: 6px; }
-.gm-aud__presets button { padding: 5px 10px; border: 1px solid var(--gm-color-border); border-radius: 999px; background: var(--gm-color-surface); color: var(--gm-color-text); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
-.gm-aud__presets button:hover { border-color: var(--gm-color-primary); color: var(--gm-color-primary); }
-.gm-aud__tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 14px 0 12px; }
-.gm-aud__tabs button { display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 14px; border: 1px solid var(--gm-color-border); border-radius: 10px; background: var(--gm-color-surface); color: var(--gm-color-text-muted); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
-.gm-aud__tabs button span { padding: 1px 7px; border-radius: 999px; background: var(--gm-color-surface-muted); font-size: 11.5px; }
-.gm-aud__tabs button.is-on { background: var(--gm-color-primary); border-color: var(--gm-color-primary); color: #fff; }
-.gm-aud__tabs button.is-on span { background: rgba(255, 255, 255, 0.22); }
 .gm-aud__chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 12px; font-weight: 700; white-space: nowrap; background: var(--gm-color-surface-muted); }
 .gm-aud__chip--primary { background: var(--gm-color-primary-soft); color: var(--gm-color-primary); }
 .gm-aud__chip--success { background: var(--gm-color-success-bg); color: var(--gm-color-success); }
