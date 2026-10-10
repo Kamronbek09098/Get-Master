@@ -149,3 +149,64 @@
 .gm-cp-hero .gm-avedit__btn { width: 34px; height: 34px; bottom: 4px; right: 4px; }
 .gm-cp-hero__who { gap: clamp(18px, 2vw, 30px); }
 .gm-cp-info dt svg { flex: 0 0 auto; } @media (max-width: 767px) { .gm-cp-info dt { white-space: normal; } }
+
+/* Hero: rasmdagi nisbat — yengil fon, katta avatar, ixcham yozuvlar */
+.gm-cp-hero { padding: 26px 30px 26px 34px; min-height: 210px; background: radial-gradient(900px 260px at 78% 0%, #dfe9ff 0%, transparent 70%), linear-gradient(120deg, #e7efff, #f3f7ff 60%, #eaf1ff); }
+.gm-cp-hero .gm-chat-avatar--lg { width: clamp(104px, 8.2vw, 140px); height: clamp(104px, 8.2vw, 140px); border: 5px solid #fff; box-shadow: 0 14px 34px -16px rgba(40, 70, 150, 0.55); }
+.gm-cp-hero .gm-avedit__btn { width: 36px; height: 36px; right: 2px; bottom: 6px; border-width: 3px; }
+.gm-cp-hero__who { gap: clamp(20px, 2.2vw, 36px); }
+.gm-cp-hero__who h1 { font-size: clamp(21px, 1.75vw, 27px); margin-bottom: 4px; }
+.gm-cp-hero__phone { font-size: clamp(15px, 1.2vw, 18px); font-weight: 600; margin-bottom: 12px; }
+.gm-cp-pill { padding: 6px 14px; font-size: 12px; }
+.gm-cp-hero__stats { margin-top: 50px; padding: 16px 6px; border-radius: 14px; }
+.gm-cp-hero__stats > div { padding: 0 24px; }
+.gm-cp-hero__stats .gm-cp-ico { width: 34px; height: 34px; }
+.gm-cp-hero__stats dd { font-size: 21px; margin-top: 8px; }
+.gm-cp-hero__stats dt { font-size: 12.5px; }
+.gm-cp-hero__stats a { font-size: 12px; }
+.gm-cp-hero__joined dd { font-size: 16px; }
+:root[data-theme='dark'] .gm-cp-hero { background: radial-gradient(900px 260px at 78% 0%, #1d2f55 0%, transparent 70%), linear-gradient(120deg, #16233f, #131d34); }
+:root[data-theme='dark'] .gm-cp-hero .gm-chat-avatar--lg { border-color: #22304f; }
+
+/* Joylashuv va o‘lchamlar: rasmdagi nisbat */
+.gm-cp { gap: 20px; }
+.gm-cp-grid { gap: 20px; align-items: stretch; grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr) minmax(0, 1.08fr); }
+.gm-cp-a, .gm-cp-b { height: 100%; display: flex; flex-direction: column; }
+.gm-cp-a .gm-cp-progress { margin-top: auto; }
+.gm-cp-quick { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.gm-cp-c { gap: 20px; }
+.gm-cp-hero .gm-chat-avatar--lg { width: clamp(112px, 7.6vw, 150px); height: clamp(112px, 7.6vw, 150px); }
+.gm-cp-hero { min-height: 230px; }
+.gm-cp-hero__stats { margin-top: 62px; padding: 20px 8px; }
+.gm-cp-link { padding: 22px 20px; }
+.gm-cp-link b { font-size: 17px; }
+.gm-cp-card { padding: 22px; }
+.gm-cp-card h2 { font-size: 17px; }
+.gm-cp-info > div { padding: 14px 0; font-size: 14.5px; }
+.gm-cp-quick a { padding: 14px 0; }
+.gm-cp-quick b { font-size: 15px; }
+/* Statistika kataklari: ixcham — belgi va son bir qatorda */
+.gm-cp-tiles { gap: 12px; }
+.gm-cp-tile { display: grid; grid-template-columns: auto 1fr; column-gap: 12px; align-items: center; padding: 14px 16px; }
+.gm-cp-tile .gm-cp-ico { grid-row: 1 / span 2; margin: 0; width: 34px; height: 34px; }
+.gm-cp-tile b { font-size: 24px; align-self: end; }
+.gm-cp-tile small { grid-column: 2; align-self: start; }
+.gm-cp-tile .gm-cp-trend { grid-column: 2; margin-top: 2px; }
+@media (max-width: 1279px) { .gm-cp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 767px) { .gm-cp-grid { grid-template-columns: minmax(0, 1fr); } .gm-cp-hero { min-height: 0; } .gm-cp-hero__stats { margin-top: 0; } }
+
+/* Yakuniy sozlash: yozuvlar o‘lchami va kartalar balandligi rasmdagidek */
+.gm-cp-hero__who h1 { font-size: clamp(20px, 1.5vw, 25px); font-weight: 700; }
+.gm-cp-hero__phone { font-size: clamp(15px, 1.05vw, 17px); }
+.gm-cp-card { padding: 20px 22px; }
+.gm-cp-card > header { margin-bottom: 10px; }
+.gm-cp-card h2 { font-size: 15.5px; }
+.gm-cp-link b { font-size: 16px; }
+.gm-cp-info > div { padding: 12px 0; font-size: 14px; }
+.gm-cp-quick a { padding: 12px 0; }
+.gm-cp-quick b { font-size: 14.5px; }
+.gm-cp-tile { padding: 12px 14px; }
+.gm-cp-tile b { font-size: 22px; }
+.gm-cp-sec li { padding: 8px 0; }
+.gm-cp-c .gm-cp-card { padding-bottom: 16px; }
+.gm-cp-progress { padding: 12px 14px; }

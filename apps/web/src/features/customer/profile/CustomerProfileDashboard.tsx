@@ -100,10 +100,10 @@ export function CustomerProfileDashboard({ profile }: { profile: CustomerProfile
         <div className="gm-cp-hero__who">
           <AvatarEditor name={name} seed={profile.id} size="lg" src={avatar} canEdit={me.data?.canSetAvatar !== false} />
           <div>
-            <h1>{name}{profile.phoneVerified && <BadgeCheck size={22} className="gm-cp-hero__check" aria-label={t('Tasdiqlangan')} />}</h1>
+            <h1>{name}{profile.phoneVerified && <BadgeCheck size={24} fill="currentColor" stroke="#fff" className="gm-cp-hero__check" aria-label={t('Tasdiqlangan')} />}</h1>
             {profile.phone && <p className="gm-cp-hero__phone">{profile.phone}</p>}
             <span className={cx('gm-cp-pill', profile.phoneVerified ? 'is-ok' : 'is-warn')}>
-              <CheckCircle2 size={13} aria-hidden="true" /> {profile.phoneVerified ? t('Telefon tasdiqlangan') : t('Telefon tasdiqlanmagan')}
+              <CheckCircle2 size={14} fill="currentColor" stroke="#d7f3e3" aria-hidden="true" /> {profile.phoneVerified ? t('Telefon tasdiqlangan') : t('Telefon tasdiqlanmagan')}
             </span>
           </div>
         </div>
