@@ -1,5 +1,7 @@
+import { Type } from 'class-transformer';
 import { UserStatus } from '@prisma/client';
-import { IsEnum, IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsArray, IsDateString, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsUUID } from '../../../common/validators/any-uuid';
 import { CursorQueryDto } from '../../../common/dto/cursor-query.dto';
 
 export class UserQueryDto extends CursorQueryDto {
@@ -18,4 +20,48 @@ export class UserQueryDto extends CursorQueryDto {
   @IsString()
   @MaxLength(100)
   search?: string;
+
+  /** Sahifalab (raqamli) ko‘rsatish: berilsa, javobda jami son va sahifalar soni ham bo‘ladi (cursor ishlatilmaydi). */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100000)
+  page?: number;
+
+  @IsOptional()
+  @IsIn(['createdAt', 'lastLoginAt', 'name'])
+  sort?: 'createdAt' | 'lastLoginAt' | 'name';
+
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  dir?: 'asc' | 'desc';
+
+  /** Ro‘yxatdan o‘tgan sana oralig‘i. */
+  @IsOptional()
+  @IsDateString()
+  from?: string;
+
+  @IsOptional()
+  @IsDateString()
+  to?: string;
+
+  /** Obuna bo‘yicha: any — faol obunasi bor, none — yo‘q, yoki reja kodi. */
+  @IsOptional()
+  @IsIn(['any', 'none', 'CUSTOMER_PLUS', 'MASTER_PRO'])
+  subscription?: 'any' | 'none' | 'CUSTOMER_PLUS' | 'MASTER_PRO';
+}
+
+export class BulkUserStatusDto {
+  @IsArray()
+  @IsUUID('all', { each: true })
+  ids!: string[];
+
+  @IsIn(['ACTIVE', 'SUSPENDED', 'BLOCKED'])
+  status!: 'ACTIVE' | 'SUSPENDED' | 'BLOCKED';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string;
 }

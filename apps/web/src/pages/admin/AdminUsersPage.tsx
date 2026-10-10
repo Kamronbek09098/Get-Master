@@ -1,199 +1,469 @@
-import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Ban, CheckCircle2, Search, Snowflake, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { Ban, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Clock, Crown, Download, Eye, Filter, MoreHorizontal, Pencil, RotateCcw, Search, ShieldAlert, Snowflake, Star, Trash2, UserCheck, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
-import type { BadgeTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
+import { Dropdown } from '@/components/ui/Dropdown';
+import { Modal } from '@/components/ui/Modal';
+import { Textarea } from '@/components/ui/Textarea';
+import { accountName } from '@/lib/account-name';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatDateTime, initials } from '@/lib/utils';
+import { cx, formatDate, formatNumber, formatRelativeTime } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
-import { TrustBadge } from '@/features/trust/components/TrustBadge';
-import { useAdminUsers } from '@/features/admin/hooks/useAdmin';
+import { useAppStore } from '@/store/app.store';
+import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
+import { useAdminUserStats, useAdminUsersPage, useBulkUserStatus } from '@/features/admin/hooks/useAdmin';
+import { adminService } from '@/features/admin/services/admin.service';
 import { UserActionDialog } from '@/features/admin/components/UserActionDialog';
-import { displayName } from '@/features/admin/user-actions';
+import { UserDrawer } from '@/features/admin/users/UserDrawer';
+import { USER_STATUS, pageNumbers } from '@/features/admin/users/users-ui';
 import type { UserAction } from '@/features/admin/user-actions';
 import type { AdminUser, ManagedStatus, UserFilters } from '@/features/admin/types';
+import './AdminUsersPage.css';
 import { t } from '@/i18n';
 
-const STATUS: Record<ManagedStatus, { label: string; tone: BadgeTone }> = {
-  ACTIVE: { label: t('Akkaunt faol'), tone: 'success' },
-  PENDING: { label: t('Telefon tasdiqlanmagan'), tone: 'neutral' },
-  SUSPENDED: { label: t('Akkaunt muzlatilgan'), tone: 'warning' },
-  BLOCKED: { label: t('Akkaunt bloklangan'), tone: 'danger' },
-  DELETED: { label: t('O‘chirilgan'), tone: 'neutral' },
-};
+const PAGE_SIZE = 20;
+type RoleFilter = '' | 'CUSTOMER' | 'MASTER';
+type SubFilter = '' | NonNullable<UserFilters['subscription']>;
+const STATUSES: ManagedStatus[] = ['ACTIVE', 'PENDING', 'SUSPENDED', 'BLOCKED', 'DELETED'];
 
-const ROLE_TABS: Array<{ value: UserFilters['role'] | ''; label: string }> = [
-  { value: '', label: t('Hammasi') },
-  { value: 'CUSTOMER', label: t('Mijozlar') },
-  { value: 'MASTER', label: t('Ustalar') },
-];
-
-const STATUS_OPTIONS = [
-  { value: '', label: t('Barcha holatlar') },
-  ...(Object.keys(STATUS) as ManagedStatus[]).map((value) => ({ value, label: STATUS[value].label })),
-];
-
-function masterWorkState(user: AdminUser): { label: string; tone: BadgeTone } | null {
-  const profile = user.masterProfile;
-  if (!profile) return null;
-  if (user.status === 'SUSPENDED' || user.status === 'BLOCKED' || user.status === 'DELETED') return { label: t('Usta: cheklangan'), tone: 'danger' };
-  if (profile.verification !== 'VERIFIED') return { label: t('Usta: nofaol'), tone: 'neutral' };
-  if (profile.status === 'ACTIVE') return { label: t('Usta: faol'), tone: 'success' };
-  if (profile.status === 'BUSY') return { label: t('Usta: band'), tone: 'warning' };
-  if (profile.status === 'RESTRICTED' || profile.status === 'SUSPENDED') return { label: t('Usta: cheklangan'), tone: 'danger' };
-  return { label: t('Usta: nofaol'), tone: 'neutral' };
-}
-
-function UserCard({ user, onAction }: { user: AdminUser; onAction: (user: AdminUser, action: UserAction) => void }) {
-  const restricted = user.status === 'SUSPENDED' || user.status === 'BLOCKED';
-  const deleted = user.status === 'DELETED';
-  const isAdmin = user.roles.includes('ADMIN');
-  const workState = masterWorkState(user);
-  const navigate = useNavigate();
-  const profilePath = `/admin/foydalanuvchilar/${user.accountNumber}`;
-
+function roleBadges(user: AdminUser) {
   return (
-    <div
-      className="gm-card gm-card--clickable gm-user-card"
-      role="link"
-      tabIndex={0}
-      aria-label={t('{displayName} profilini ochish', { displayName: displayName(user) })}
-      onClick={() => navigate(profilePath)}
-      onKeyDown={(event) => {
-        if (event.target !== event.currentTarget || (event.key !== 'Enter' && event.key !== ' ')) return;
-        event.preventDefault();
-        navigate(profilePath);
-      }}
-    >
-      <div className="gm-user-card__main gm-user-card__link">
-        <span className="gm-avatar" aria-hidden="true">
-          {initials(displayName(user))}
-        </span>
-        <div className="gm-user-card__info">
-          <div className="gm-user-card__title">
-            <h3>{displayName(user)}</h3>
-            {user.roles.includes('CUSTOMER') && <Badge tone="primary">{t('Mijoz')}</Badge>}
-            {user.roles.includes('MASTER') && <Badge tone="primary">{t('Usta')}</Badge>}
-            {isAdmin && <Badge tone="warning">{t('Admin')}</Badge>}
-            <Badge tone={STATUS[user.status].tone}>{STATUS[user.status].label}</Badge>
-            {workState && <Badge tone={workState.tone}>{workState.label}</Badge>}
-          </div>
-          <p className="gm-card__meta">{t('ID {accountNumber} · {phone} {p} · Ro‘yxatdan o‘tgan: {dateTime}', { accountNumber: user.accountNumber, phone: user.phone, p: user.email && ` · ${user.email}`, dateTime: formatDateTime(user.createdAt) })}</p>
-          {user.masterProfile && (
-            <p className="gm-card__meta gm-user-card__master">
-              {user.masterProfile.profession ?? t('Kasb ko‘rsatilmagan')} ·{' '}
-              <TrustBadge verification={user.masterProfile.verification} />{' '}{t('· Reyting {toFixed} · {completedOrders} ta ish', { toFixed: Number(user.masterProfile.ratingAvg).toFixed(1), completedOrders: user.masterProfile.completedOrders })}</p>
-          )}
-        </div>
-      </div>
-
-      {isAdmin && (
-        <p className="gm-card__meta">{t('Admin akkauntlarni bu yerdan muzlatish, bloklash yoki o‘chirish mumkin emas.')}</p>
-      )}
-
-      {!deleted && !isAdmin && (
-        <div className="gm-action-row" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
-          {restricted ? (
-            <Button size="sm" onClick={() => onAction(user, 'ACTIVATE')}>
-              <CheckCircle2 size={16} />{' '}{t('Faollashtirish')}</Button>
-          ) : (
-            <>
-              <Button size="sm" variant="secondary" onClick={() => onAction(user, 'SUSPEND')}>
-                <Snowflake size={16} />{' '}{t('Muzlatish')}</Button>
-              <Button size="sm" variant="secondary" onClick={() => onAction(user, 'BLOCK')}>
-                <Ban size={16} />{' '}{t('Bloklash')}</Button>
-            </>
-          )}
-          <Button size="sm" variant="ghost" onClick={() => onAction(user, 'DELETE')}>
-            <Trash2 size={16} />{' '}{t('O‘chirish')}</Button>
-        </div>
-      )}
-    </div>
+    <>
+      {user.roles.includes('CUSTOMER') && <Badge tone="primary">{t('Mijoz')}</Badge>}
+      {user.roles.includes('MASTER') && <Badge tone="warning">{t('Usta')}</Badge>}
+    </>
   );
 }
 
-const VALID_ROLES = new Set(['CUSTOMER', 'MASTER']);
+function SubscriptionCell({ user }: { user: AdminUser }) {
+  if (!user.subscription) return <span className="gm-ul__free"><Crown size={14} aria-hidden="true" /> {t('Bepul')}</span>;
+  return (
+    <span className="gm-ul__sub">
+      <b><Crown size={14} aria-hidden="true" /> {user.subscription.planName}</b>
+      <small>{t('{days} kun qoldi', { days: user.subscription.daysLeft })}</small>
+    </span>
+  );
+}
+
+function RatingCell({ user }: { user: AdminUser }) {
+  const profile = user.masterProfile;
+  if (!profile || !profile.ratingCount) return <span className="gm-ul__muted">—</span>;
+  return (
+    <span className="gm-ul__rating">
+      <Star size={14} fill="currentColor" aria-hidden="true" /> <b>{Number(profile.ratingAvg).toFixed(1)}</b> <small>({profile.ratingCount})</small>
+    </span>
+  );
+}
+
+function BulkDialog({ ids, status, onClose, onDone }: { ids: string[]; status: 'ACTIVE' | 'SUSPENDED' | 'BLOCKED'; onClose: () => void; onDone: () => void }) {
+  const bulk = useBulkUserStatus();
+  const pushToast = useAppStore((state) => state.pushToast);
+  const [reason, setReason] = useState('');
+  const needsReason = status !== 'ACTIVE';
+  const title = status === 'ACTIVE' ? t('Tanlanganlarni faollashtirish') : status === 'SUSPENDED' ? t('Tanlanganlarni muzlatish') : t('Tanlanganlarni bloklash');
+  return (
+    <Modal
+      open
+      onClose={bulk.isPending ? () => undefined : onClose}
+      title={title}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={bulk.isPending}>{t('Bekor qilish')}</Button>
+          <Button
+            variant={status === 'BLOCKED' ? 'danger' : 'primary'}
+            loading={bulk.isPending}
+            disabled={needsReason && reason.trim().length < 3}
+            onClick={() =>
+              bulk.mutate(
+                { ids, status, reason: reason.trim() },
+                {
+                  onSuccess: (result) => {
+                    pushToast(result.failed.length ? t('{ok} ta yangilandi, {fail} ta bajarilmadi', { ok: result.updated, fail: result.failed.length }) : t('{ok} ta foydalanuvchi yangilandi', { ok: result.updated }), result.failed.length ? 'info' : 'success');
+                    onDone();
+                  },
+                },
+              )
+            }
+          >
+            {t('Tasdiqlash')}
+          </Button>
+        </>
+      }
+    >
+      <div className="gm-form">
+        <Alert tone="info">{t('{count} ta foydalanuvchi tanlangan. Har biri uchun alohida audit yozuvi yaratiladi.', { count: ids.length })}</Alert>
+        {bulk.isError && <Alert tone="danger">{getErrorMessage(bulk.error)}</Alert>}
+        {needsReason && <Textarea label={t('Sabab')} required rows={3} maxLength={500} value={reason} onChange={(event) => setReason(event.target.value)} hint={t('Kamida 3 ta belgi. Foydalanuvchilar ham, audit jurnali ham shu sababni ko‘radi.')} />}
+      </div>
+    </Modal>
+  );
+}
+
+const csvCell = (value: string | number | null | undefined) => `"${String(value ?? '').replace(/"/g, '""')}"`;
 
 export function AdminUsersPage() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const pushToast = useAppStore((state) => state.pushToast);
   const [searchParams] = useSearchParams();
   const initialRole = searchParams.get('role');
-  const [role, setRole] = useState<UserFilters['role'] | ''>(
-    initialRole && VALID_ROLES.has(initialRole) ? (initialRole as UserFilters['role']) : '',
-  );
-  const [status, setStatus] = useState<ManagedStatus | ''>(['ACTIVE', 'PENDING', 'SUSPENDED', 'BLOCKED', 'DELETED'].includes(searchParams.get('status') ?? '') ? (searchParams.get('status') as ManagedStatus) : '');
+  const [role, setRole] = useState<RoleFilter>(initialRole === 'CUSTOMER' || initialRole === 'MASTER' ? initialRole : '');
+  const [status, setStatus] = useState<ManagedStatus | ''>(STATUSES.includes(searchParams.get('status') as ManagedStatus) ? (searchParams.get('status') as ManagedStatus) : '');
   const [search, setSearch] = useState(searchParams.get('q') ?? '');
-  const debouncedSearch = useDebounce(search.trim(), 350);
+  const [subscription, setSubscription] = useState<SubFilter>('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [sort, setSort] = useState<NonNullable<UserFilters['sort']>>('createdAt');
+  const [dir, setDir] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [drawer, setDrawer] = useState<AdminUser | null>(null);
   const [dialog, setDialog] = useState<{ user: AdminUser; action: UserAction } | null>(null);
+  const [bulk, setBulk] = useState<'ACTIVE' | 'SUSPENDED' | 'BLOCKED' | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
+  const debouncedSearch = useDebounce(search.trim(), 350);
 
-  const users = useAdminUsers({
-    role: role || undefined,
-    status: status || undefined,
-    search: debouncedSearch || undefined,
-  });
-  const items = users.data?.pages.flatMap((page) => page.items) ?? [];
+  const filters = useMemo<UserFilters>(
+    () => ({ role: role || undefined, status: status || undefined, search: debouncedSearch || undefined, subscription: subscription || undefined, from: from || undefined, to: to || undefined, sort, dir }),
+    [role, status, debouncedSearch, subscription, from, to, sort, dir],
+  );
+  const stats = useAdminUserStats();
+  const users = useAdminUsersPage(filters, page);
+  const data = users.data;
+  const items = data?.items ?? [];
+
+  // Filtr o‘zgarganda 1-sahifaga qaytiladi va tanlov tozalanadi.
+  useEffect(() => {
+    setPage(1);
+    setSelected(new Set());
+  }, [filters]);
+  useEffect(() => setSelected(new Set()), [page]);
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const onDown = (event: PointerEvent) => {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) setFiltersOpen(false);
+    };
+    document.addEventListener('pointerdown', onDown);
+    return () => document.removeEventListener('pointerdown', onDown);
+  }, [filtersOpen]);
+
+  const advancedCount = [subscription, from, to].filter(Boolean).length;
+  const dirty = !!(role || status || search || advancedCount);
+  const reset = () => {
+    setRole('');
+    setStatus('');
+    setSearch('');
+    setSubscription('');
+    setFrom('');
+    setTo('');
+    setSort('createdAt');
+    setDir('desc');
+  };
+
+  const selectable = items.filter((user) => user.status !== 'DELETED' && !user.roles.includes('ADMIN'));
+  const allSelected = selectable.length > 0 && selectable.every((user) => selected.has(user.id));
+  const toggle = (id: string) =>
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const sortBy = (key: NonNullable<UserFilters['sort']>) => {
+    if (sort === key) setDir(dir === 'asc' ? 'desc' : 'asc');
+    else {
+      setSort(key);
+      setDir(key === 'name' ? 'asc' : 'desc');
+    }
+  };
+
+  /** Joriy filtrlarga mos BARCHA foydalanuvchilarni CSV (Excel ochadi) qilib yuklaydi. */
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const rows: AdminUser[] = [];
+      for (let p = 1; p <= 100; p += 1) {
+        const chunk = await adminService.usersPage(filters, p, 100);
+        rows.push(...chunk.items);
+        if (p >= chunk.pages) break;
+      }
+      const head = ['ID', t('Ism'), t('Rol'), t('Holat'), t('Telefon'), 'Email', t('Ro‘yxatdan o‘tgan'), t('Oxirgi faollik'), t('Buyurtmalar'), t('Reyting'), t('Obuna')];
+      const lines = rows.map((u) =>
+        [
+          u.accountNumber,
+          accountName(u),
+          u.roles.map((r) => (r === 'MASTER' ? t('Usta') : r === 'CUSTOMER' ? t('Mijoz') : t('Admin'))).join(' + '),
+          USER_STATUS[u.status].label,
+          u.phone,
+          u.email,
+          formatDate(u.createdAt),
+          u.lastLoginAt ? formatDate(u.lastLoginAt) : '',
+          u.ordersCount ?? 0,
+          u.masterProfile && u.masterProfile.ratingCount ? Number(u.masterProfile.ratingAvg).toFixed(1) : '',
+          u.subscription ? `${u.subscription.planName} (${formatDate(u.subscription.endsAt)})` : '',
+        ].map(csvCell).join(','),
+      );
+      const blob = new Blob([`﻿${[head.map(csvCell).join(','), ...lines].join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `foydalanuvchilar-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      pushToast(t('{count} ta foydalanuvchi eksport qilindi', { count: rows.length }), 'success');
+    } catch (error) {
+      pushToast(getErrorMessage(error), 'error');
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  const s = stats.data;
+  const growth = s?.total.growthPercent;
+  const sortMark = (key: string) => (sort === key ? (dir === 'asc' ? ' ↑' : ' ↓') : '');
 
   return (
-    <div>
-      <div className="gm-page-header">
-        <div>
-          <h1>{t('Foydalanuvchilar')}</h1>
-          <p className="gm-page-lead">{t('Mijozlar va ustalarni boshqaring.')}</p>
-        </div>
+    <div className="gm-ul">
+      <header className="gm-ul__head">
+        <h1>{t('Foydalanuvchilar')}</h1>
+        <p>{t('Mijozlar va ustalarni yagona boshqaruv markazidan nazorat qiling')}</p>
+      </header>
+
+      <div className="gm-ul__kpis">
+        <article className="gm-ukpi">
+          <span className="gm-ukpi__icon gm-ukpi__icon--blue"><Users size={24} aria-hidden="true" /></span>
+          <div>
+            <small>{t('Jami foydalanuvchilar')}</small>
+            <strong>{s ? formatNumber(s.total.all) : '…'}{growth !== null && growth !== undefined && <em className={growth >= 0 ? 'is-up' : 'is-down'} title={t('Oxirgi 30 kunda yangi: {count}', { count: s?.total.new30 ?? 0 })}>{growth >= 0 ? '↑' : '↓'} {Math.abs(growth)}%</em>}</strong>
+            <span>{t('Mijozlar: {c} | Ustalar: {m}', { c: s ? formatNumber(s.total.customers) : '…', m: s ? formatNumber(s.total.masters) : '…' })}</span>
+          </div>
+        </article>
+        <article className="gm-ukpi">
+          <span className="gm-ukpi__icon gm-ukpi__icon--green"><UserCheck size={24} aria-hidden="true" /></span>
+          <div>
+            <small>{t('Faol akkauntlar')}</small>
+            <strong>{s ? formatNumber(s.active.all) : '…'}</strong>
+            <span>{t('Mijozlar: {c} | Ustalar: {m}', { c: s ? formatNumber(s.active.customers) : '…', m: s ? formatNumber(s.active.masters) : '…' })}</span>
+          </div>
+        </article>
+        <article className="gm-ukpi">
+          <span className="gm-ukpi__icon gm-ukpi__icon--red"><Ban size={24} aria-hidden="true" /></span>
+          <div>
+            <small>{t('Bloklangan')}</small>
+            <strong>{s ? formatNumber(s.blocked.all) : '…'}</strong>
+            <span>{t('Mijozlar: {c} | Ustalar: {m}', { c: s ? formatNumber(s.blocked.customers) : '…', m: s ? formatNumber(s.blocked.masters) : '…' })}{s && s.blocked.suspended > 0 && ` · ${t('Muzlatilgan: {n}', { n: s.blocked.suspended })}`}</span>
+          </div>
+        </article>
+        <article className="gm-ukpi">
+          <span className="gm-ukpi__icon gm-ukpi__icon--amber"><Clock size={24} aria-hidden="true" /></span>
+          <div>
+            <small>{t('Tasdiqlanishi kutilmoqda')}</small>
+            <strong>{s ? formatNumber(s.pending.all) : '…'}</strong>
+            <span>{t('Mijozlar: {c} | Ustalar: {m}', { c: s ? formatNumber(s.pending.customers) : '…', m: s ? formatNumber(s.pending.masters) : '…' })}</span>
+          </div>
+        </article>
       </div>
 
-      <div className="gm-tabs" role="tablist" aria-label={t('Rol bo‘yicha')}>
-        {ROLE_TABS.map((tab) => (
-          <Button
-            key={tab.label}
-            size="sm"
-            role="tab"
-            aria-selected={role === tab.value}
-            variant={role === tab.value ? 'primary' : 'secondary'}
-            onClick={() => setRole(tab.value)}
-          >
-            {tab.label}
+      <section className="gm-ul__panel">
+        <div className="gm-ul__toolbar">
+          <div className="gm-ul__tabs" role="tablist" aria-label={t('Rol bo‘yicha')}>
+            {([['', t('Barchasi'), s?.total.all], ['CUSTOMER', t('Mijozlar'), s?.total.customers], ['MASTER', t('Ustalar'), s?.total.masters]] as Array<[RoleFilter, string, number | undefined]>).map(([value, label, count]) => (
+              <button key={value || 'all'} type="button" role="tab" aria-selected={role === value} className={cx(role === value && 'is-on')} onClick={() => setRole(value)}>
+                {label}{count !== undefined && ` (${formatNumber(count)})`}
+              </button>
+            ))}
+          </div>
+          <label className="gm-ul__search">
+            <Search size={17} aria-hidden="true" />
+            <input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t('Ism, telefon, ID yoki email bo‘yicha qidirish...')} aria-label={t('Qidirish')} autoComplete="off" />
+          </label>
+          <label className="gm-ul__select">
+            <span>{t('Holat')}</span>
+            <select value={status} onChange={(event) => setStatus(event.target.value as ManagedStatus | '')}>
+              <option value="">{t('Barcha holatlar')}</option>
+              {STATUSES.map((value) => (
+                <option key={value} value={value}>{USER_STATUS[value].label}</option>
+              ))}
+            </select>
+          </label>
+          <div className="gm-ul__filters" ref={filterRef}>
+            <Button variant="secondary" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}>
+              <Filter size={16} aria-hidden="true" /> {t('Filtrlar')}{advancedCount > 0 && <span className="gm-ul__count">{advancedCount}</span>}
+            </Button>
+            {filtersOpen && (
+              <div className="gm-ul__pop">
+                <label>
+                  <span>{t('Obuna')}</span>
+                  <select value={subscription} onChange={(event) => setSubscription(event.target.value as SubFilter)}>
+                    <option value="">{t('Barchasi')}</option>
+                    <option value="any">{t('Faol obunasi bor')}</option>
+                    <option value="none">{t('Obunasiz (bepul)')}</option>
+                    <option value="CUSTOMER_PLUS">{t('Mijoz · Plus')}</option>
+                    <option value="MASTER_PRO">{t('Usta · Pro')}</option>
+                  </select>
+                </label>
+                <label>
+                  <span><CalendarDays size={13} aria-hidden="true" /> {t('Ro‘yxatdan o‘tgan (dan)')}</span>
+                  <input type="date" value={from} max={to || undefined} onChange={(event) => setFrom(event.target.value)} />
+                </label>
+                <label>
+                  <span><CalendarDays size={13} aria-hidden="true" /> {t('Ro‘yxatdan o‘tgan (gacha)')}</span>
+                  <input type="date" value={to} min={from || undefined} onChange={(event) => setTo(event.target.value)} />
+                </label>
+              </div>
+            )}
+          </div>
+          <Button variant="ghost" onClick={reset} disabled={!dirty}>
+            <RotateCcw size={15} aria-hidden="true" /> {t('Tozalash')}
           </Button>
-        ))}
-      </div>
+        </div>
 
-      <div className="gm-toolbar">
-        <div style={{ flex: '1 1 260px' }}>
-          <Input
-            label={t('Qidirish')}
-            placeholder={t('Ism, familiya, telefon yoki ID')}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            autoComplete="off"
+        <div className="gm-ul__bulk">
+          <label className="gm-ul__check">
+            <input type="checkbox" checked={allSelected} onChange={() => setSelected(allSelected ? new Set() : new Set(selectable.map((user) => user.id)))} disabled={selectable.length === 0} />
+            <span>{selected.size > 0 ? t('Tanlandi: {count}', { count: selected.size }) : t('Barchasini tanlash')}</span>
+          </label>
+          <Dropdown
+            triggerClassName="gm-ul__menu-btn"
+            label={t('Ommaviy amal')}
+            trigger={<>{t('Ommaviy amal')} <ChevronDown size={15} aria-hidden="true" /></>}
+            items={[
+              { label: t('Faollashtirish'), icon: <UserCheck size={16} />, onSelect: () => selected.size > 0 && setBulk('ACTIVE') },
+              { label: t('Muzlatish'), icon: <Snowflake size={16} />, onSelect: () => selected.size > 0 && setBulk('SUSPENDED') },
+              { label: t('Bloklash'), icon: <Ban size={16} />, onSelect: () => selected.size > 0 && setBulk('BLOCKED'), danger: true },
+            ]}
           />
+          <Button variant="secondary" size="sm" loading={exporting} onClick={() => void exportCsv()} disabled={!data || data.total === 0}>
+            <Download size={15} aria-hidden="true" /> {t('Eksport (CSV)')}
+          </Button>
+          {selected.size === 0 && <small className="gm-ul__hint">{t('Ommaviy amal uchun avval foydalanuvchilarni belgilang.')}</small>}
         </div>
-        <Select label={t('Holat')} options={STATUS_OPTIONS} value={status} onChange={(event) => setStatus(event.target.value as ManagedStatus | '')} />
-      </div>
 
-      {users.isLoading && <PageLoader label={t('Foydalanuvchilar yuklanmoqda…')} />}
-      {users.isError && <Alert tone="danger">{getErrorMessage(users.error)}</Alert>}
-      {users.data && items.length === 0 && (
-        <EmptyState icon={<Search size={28} />} title={t('Foydalanuvchi topilmadi')} description={t('Qidiruv yoki filtrni o‘zgartirib ko‘ring.')} />
-      )}
+        {users.isLoading && <PageLoader label={t('Foydalanuvchilar yuklanmoqda…')} />}
+        {users.isError && <Alert tone="danger">{getErrorMessage(users.error)}</Alert>}
+        {data && items.length === 0 && <EmptyState icon={<Search size={28} />} title={t('Foydalanuvchi topilmadi')} description={t('Qidiruv yoki filtrni o‘zgartirib ko‘ring.')} />}
 
-      <div className="gm-list">
-        {items.map((user) => (
-          <UserCard key={user.id} user={user} onAction={(target, action) => setDialog({ user: target, action })} />
-        ))}
-      </div>
+        {items.length > 0 && (
+          <div className={cx('gm-ul__table', users.isFetching && 'is-loading')}>
+            <table>
+              <thead>
+                <tr>
+                  <th className="gm-ul__c-check" />
+                  <th className="gm-ul__c-num">#</th>
+                  <th><button type="button" onClick={() => sortBy('name')}>{t('Foydalanuvchi')}{sortMark('name')}</button></th>
+                  <th>{t('Rol')}</th>
+                  <th>{t('Holat')}</th>
+                  <th className="gm-ul__c-phone">{t('Telefon')}</th>
+                  <th className="gm-ul__c-id">ID</th>
+                  <th><button type="button" onClick={() => sortBy('createdAt')}>{t('Ro‘yxatdan o‘tgan')}{sortMark('createdAt')}</button></th>
+                  <th className="gm-ul__c-last"><button type="button" onClick={() => sortBy('lastLoginAt')}>{t('Oxirgi faollik')}{sortMark('lastLoginAt')}</button></th>
+                  <th className="gm-ul__c-orders">{t('Buyurtmalar')}</th>
+                  <th className="gm-ul__c-rating">{t('Reyting')}</th>
+                  <th className="gm-ul__c-sub">{t('Obuna')}</th>
+                  <th className="gm-ul__c-act">{t('Amallar')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((user, index) => {
+                  const st = USER_STATUS[user.status];
+                  const locked = user.status === 'DELETED' || user.roles.includes('ADMIN');
+                  const restricted = user.status === 'SUSPENDED' || user.status === 'BLOCKED';
+                  const name = accountName(user);
+                  return (
+                    <tr key={user.id} className={cx(drawer?.id === user.id && 'is-open', selected.has(user.id) && 'is-selected')} onClick={() => setDrawer(user)}>
+                      <td className="gm-ul__c-check" onClick={(event) => event.stopPropagation()}>
+                        <input type="checkbox" checked={selected.has(user.id)} disabled={locked} onChange={() => toggle(user.id)} aria-label={t('{name} ni tanlash', { name })} />
+                      </td>
+                      <td className="gm-ul__c-num">{(page - 1) * PAGE_SIZE + index + 1}</td>
+                      <td>
+                        <div className="gm-ul__user">
+                          <ChatAvatar name={name} seed={user.id} size="md" src={user.avatar} />
+                          <div>
+                            <strong>{name}</strong>
+                            <small>{user.email ?? user.masterProfile?.profession ?? '—'}</small>
+                          </div>
+                        </div>
+                      </td>
+                      <td><span className="gm-ul__roles">{roleBadges(user)}</span></td>
+                      <td><Badge tone={st.tone}>{st.label}</Badge></td>
+                      <td className="gm-ul__c-phone">{user.phone}</td>
+                      <td className="gm-ul__c-id">{user.accountNumber}</td>
+                      <td>
+                        <span className="gm-ul__date">{formatDate(user.createdAt)}<small>({formatRelativeTime(user.createdAt)})</small></span>
+                      </td>
+                      <td className="gm-ul__c-last">{user.lastLoginAt ? <span className="gm-ul__date">{formatRelativeTime(user.lastLoginAt)}</span> : <span className="gm-ul__muted">{t('Hali kirmagan')}</span>}</td>
+                      <td className="gm-ul__c-orders"><b>{user.ordersCount ?? 0}</b></td>
+                      <td className="gm-ul__c-rating"><RatingCell user={user} /></td>
+                      <td className="gm-ul__c-sub"><SubscriptionCell user={user} /></td>
+                      <td className="gm-ul__c-act" onClick={(event) => event.stopPropagation()}>
+                        <span className="gm-ul__acts">
+                          <button type="button" aria-label={t('Tezkor ko‘rish')} title={t('Tezkor ko‘rish')} onClick={() => setDrawer(user)}><Eye size={16} /></button>
+                          <button type="button" aria-label={t('Profilni ochish')} title={t('Profilni ochish')} onClick={() => navigate(`/admin/foydalanuvchilar/${user.accountNumber}`)}><Pencil size={15} /></button>
+                          {!locked && (
+                            <Dropdown
+                              triggerClassName="gm-ul__more"
+                              label={t('Boshqa amallar')}
+                              trigger={<MoreHorizontal size={17} />}
+                              items={[
+                                ...(restricted
+                                  ? [{ label: t('Faollashtirish'), icon: <UserCheck size={16} />, onSelect: () => setDialog({ user, action: 'ACTIVATE' }) }]
+                                  : [
+                                      { label: t('Muzlatish'), icon: <Snowflake size={16} />, onSelect: () => setDialog({ user, action: 'SUSPEND' }) },
+                                      { label: t('Bloklash'), icon: <ShieldAlert size={16} />, onSelect: () => setDialog({ user, action: 'BLOCK' }) },
+                                    ]),
+                                { label: t('O‘chirish'), icon: <Trash2 size={16} />, onSelect: () => setDialog({ user, action: 'DELETE' }), danger: true },
+                              ]}
+                            />
+                          )}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-      {users.hasNextPage && (
-        <div style={{ marginTop: 'var(--gm-space-4)', textAlign: 'center' }}>
-          <Button variant="secondary" loading={users.isFetchingNextPage} onClick={() => void users.fetchNextPage()}>{t('Yana yuklash')}</Button>
-        </div>
-      )}
+        {data && data.total > 0 && (
+          <footer className="gm-ul__foot">
+            <span>{t('Jami {total} ta foydalanuvchi, sahifa {page}/{pages}', { total: formatNumber(data.total), page: data.page, pages: formatNumber(data.pages) })}</span>
+            <nav className="gm-ul__pager" aria-label={t('Sahifalar')}>
+              <button type="button" onClick={() => setPage(page - 1)} disabled={page <= 1} aria-label={t('Oldingi sahifa')}><ChevronLeft size={16} /></button>
+              {pageNumbers(page, data.pages).map((entry) =>
+                typeof entry === 'number' ? (
+                  <button key={entry} type="button" className={cx(entry === page && 'is-on')} aria-current={entry === page ? 'page' : undefined} onClick={() => setPage(entry)}>{entry}</button>
+                ) : (
+                  <span key={entry}>…</span>
+                ),
+              )}
+              <button type="button" onClick={() => setPage(page + 1)} disabled={page >= data.pages} aria-label={t('Keyingi sahifa')}><ChevronRight size={16} /></button>
+            </nav>
+          </footer>
+        )}
+      </section>
 
+      {drawer && <UserDrawer user={items.find((item) => item.id === drawer.id) ?? drawer} onClose={() => setDrawer(null)} />}
       {dialog && <UserActionDialog user={dialog.user} action={dialog.action} onClose={() => setDialog(null)} />}
+      {bulk && (
+        <BulkDialog
+          ids={[...selected]}
+          status={bulk}
+          onClose={() => setBulk(null)}
+          onDone={() => {
+            setBulk(null);
+            setSelected(new Set());
+            void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+          }}
+        />
+      )}
     </div>
   );
 }

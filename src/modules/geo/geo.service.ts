@@ -73,10 +73,13 @@ export class GeoService implements OnModuleInit {
   /** Tashqi chaqiruvni breaker va metrikalar bilan o‘raydi; breaker ochiq bo‘lsa, 503 qaytaradi. */
   private async guarded<T>(provider: string, breaker: CircuitBreaker, message: string, call: () => Promise<T>): Promise<T> {
     const stat = this.stats[provider]!;
+    const started = Date.now();
     try {
       const value = await breaker.execute(call);
       this.metrics.providerCall(provider, 'success');
       stat.success += 1;
+      stat.lastLatencyMs = Date.now() - started;
+      stat.latencyTotalMs += stat.lastLatencyMs;
       stat.lastOkAt = new Date().toISOString();
       return value;
     } catch (error) {
@@ -94,8 +97,8 @@ export class GeoService implements OnModuleInit {
   }
 
   private readonly stats: Record<string, ProviderStat> = {
-    geocoder: { success: 0, failure: 0, circuitOpen: 0, lastOkAt: null, lastFailureAt: null, lastError: null },
-    osrm: { success: 0, failure: 0, circuitOpen: 0, lastOkAt: null, lastFailureAt: null, lastError: null },
+    geocoder: { success: 0, failure: 0, circuitOpen: 0, lastOkAt: null, lastFailureAt: null, lastError: null, lastLatencyMs: null, latencyTotalMs: 0 },
+    osrm: { success: 0, failure: 0, circuitOpen: 0, lastOkAt: null, lastFailureAt: null, lastError: null, lastLatencyMs: null, latencyTotalMs: 0 },
   };
 
   /** Admin «DevOps» sahifasi uchun: tashqi xarita xizmatlarining holati (jarayon ishga tushgandan beri). */
@@ -366,6 +369,8 @@ export interface ProviderStat {
   lastOkAt: string | null;
   lastFailureAt: string | null;
   lastError: string | null;
+  lastLatencyMs: number | null;
+  latencyTotalMs: number;
 }
 
 interface YandexGeoObject {

@@ -9,7 +9,8 @@ import { TelegramAlertService } from '../../infrastructure/telegram/telegram-ale
 import { DeleteUserDto, RegistrationBlockDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
 import { CreateAdminDto, SetAdminDelegationDto, SetAdminPermissionsDto } from './dto/admin-account.dto';
 import { ADMIN_PERMISSIONS } from '../../common/constants/admin-permissions';
-import { UserQueryDto } from './dto/user-query.dto';
+import { BulkUserStatusDto, UserQueryDto } from './dto/user-query.dto';
+import { planByCode } from '../subscription/plans.config';
 
 const USER_SELECT = {
   id: true,
@@ -42,6 +43,30 @@ function present({ userRoles, ...user }: UserRow) {
   return { ...user, phone: user.phone ? user.phone.replace(TOMBSTONE, '') : null, roles: userRoles.map((item) => item.role) };
 }
 
+const LIST_SELECT = {
+  ...USER_SELECT,
+  lastLoginAt: true,
+  email: true,
+  phoneVerifiedAt: true,
+  masterProfile: {
+    select: { id: true, profession: true, status: true, verification: true, ratingAvg: true, ratingCount: true, completedOrders: true, _count: { select: { orders: true } } },
+  },
+  _count: { select: { ordersAsCustomer: true } },
+} satisfies Prisma.UserSelect;
+
+type ListRow = Prisma.UserGetPayload<{ select: typeof LIST_SELECT }>;
+
+function presentListRow({ userRoles, _count, masterProfile, ...user }: ListRow, subscription: { planCode: string; planName: string; endsAt: Date; daysLeft: number } | null) {
+  return {
+    ...user,
+    phone: user.phone ? user.phone.replace(TOMBSTONE, '') : null,
+    roles: userRoles.map((item) => item.role),
+    masterProfile: masterProfile ? (({ _count: counts, ...profile }) => profile)(masterProfile) : null,
+    ordersCount: _count.ordersAsCustomer + (masterProfile?._count.orders ?? 0),
+    subscription,
+  };
+}
+
 @Injectable()
 export class AdminUsersService {
   constructor(
@@ -49,7 +74,8 @@ export class AdminUsersService {
     private readonly telegram: TelegramAlertService,
   ) {}
 
-  async findAll(query: UserQueryDto) {
+  /** Ro‘yxat filtrlaridan `where` yasaydi (cursor va sahifalab ko‘rsatish uchun umumiy). */
+  private async listWhere(query: UserQueryDto): Promise<Prisma.UserWhereInput> {
     // ID (accountNumber) bo‘yicha qidirilganda admin akkauntlar ham qidiruv doirasiga kiradi —
     // oddiy ism/telefon qidiruvi va filtrsiz ro‘yxat avvalgidek faqat mijoz/ustalar bilan cheklanadi.
     const isIdSearch = !!query.search && /^\d{1,9}$/.test(query.search);
@@ -59,6 +85,7 @@ export class AdminUsersService {
       status: query.status,
       deletedAt: query.status === UserStatus.DELETED ? { not: null } : null,
     };
+    const and: Prisma.UserWhereInput[] = [];
     if (query.search) {
       // accountNumber — Int ustun, Prisma uni matn sifatida qisman (contains) solishtira olmaydi,
       // shuning uchun mos keladigan raqamlarni kichik raw so‘rov bilan topib, natijani OR ga qo‘shamiz.
@@ -67,21 +94,131 @@ export class AdminUsersService {
             SELECT "account_number" AS "accountNumber" FROM users WHERE "account_number"::text LIKE ${`%${query.search}%`} LIMIT 50
           `
         : [];
-      where.OR = [
-        { phone: { contains: query.search } },
-        { firstName: { contains: query.search, mode: 'insensitive' } },
-        { lastName: { contains: query.search, mode: 'insensitive' } },
-        ...(matchingAccountNumbers.length ? [{ accountNumber: { in: matchingAccountNumbers.map((row) => row.accountNumber) } }] : []),
-      ];
+      const words = query.search.trim().split(/\s+/).filter(Boolean);
+      and.push({
+        OR: [
+          { phone: { contains: query.search } },
+          { email: { contains: query.search, mode: 'insensitive' } },
+          { firstName: { contains: query.search, mode: 'insensitive' } },
+          { lastName: { contains: query.search, mode: 'insensitive' } },
+          // «Ism Familiya» ko‘rinishidagi qidiruv: har bir so‘z ism yoki familiyadan biriga mos kelishi kerak.
+          ...(words.length > 1
+            ? [{ AND: words.map((word) => ({ OR: [{ firstName: { contains: word, mode: 'insensitive' as const } }, { lastName: { contains: word, mode: 'insensitive' as const } }] })) }]
+            : []),
+          ...(matchingAccountNumbers.length ? [{ accountNumber: { in: matchingAccountNumbers.map((row) => row.accountNumber) } }] : []),
+        ],
+      });
     }
-    const rows = await this.db.user.findMany({
-      where,
-      select: USER_SELECT,
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      ...cursorArgs(query),
+    if (query.from || query.to) {
+      where.createdAt = { ...(query.from ? { gte: new Date(query.from) } : {}), ...(query.to ? { lte: new Date(query.to.length <= 10 ? `${query.to}T23:59:59.999Z` : query.to) } : {}) };
+    }
+    if (query.subscription) {
+      const now = new Date();
+      const active: Prisma.SubscriptionWhereInput = {
+        status: 'ACTIVE',
+        startsAt: { lte: now },
+        endsAt: { gt: now },
+        ...(query.subscription === 'CUSTOMER_PLUS' || query.subscription === 'MASTER_PRO' ? { planCode: query.subscription } : {}),
+      };
+      and.push(query.subscription === 'none' ? { subscriptions: { none: active } } : { subscriptions: { some: active } });
+    }
+    if (and.length) where.AND = and;
+    return where;
+  }
+
+  /** Faol obunalar (bir nechta foydalanuvchi uchun) — ro‘yxat va panel uchun. */
+  private async activeSubscriptions(userIds: string[]) {
+    if (userIds.length === 0) return new Map<string, { planCode: string; planName: string; endsAt: Date; daysLeft: number }>();
+    const now = new Date();
+    const rows = await this.db.subscription.findMany({
+      where: { userId: { in: userIds }, status: 'ACTIVE', startsAt: { lte: now }, endsAt: { gt: now } },
+      orderBy: { endsAt: 'desc' },
+      select: { userId: true, planCode: true, endsAt: true },
     });
+    const map = new Map<string, { planCode: string; planName: string; endsAt: Date; daysLeft: number }>();
+    for (const row of rows) {
+      if (map.has(row.userId) || !row.endsAt) continue;
+      map.set(row.userId, { planCode: row.planCode, planName: planByCode(row.planCode)?.name ?? row.planCode, endsAt: row.endsAt, daysLeft: Math.max(0, Math.ceil((row.endsAt.getTime() - now.getTime()) / 86_400_000)) });
+    }
+    return map;
+  }
+
+  async findAll(query: UserQueryDto) {
+    const where = await this.listWhere(query);
+    const dir = query.dir ?? 'desc';
+    const orderBy: Prisma.UserOrderByWithRelationInput[] =
+      query.sort === 'lastLoginAt' ? [{ lastLoginAt: { sort: dir, nulls: 'last' } }, { id: 'desc' }] : query.sort === 'name' ? [{ firstName: dir }, { lastName: dir }, { id: 'desc' }] : [{ createdAt: dir }, { id: 'desc' }];
+
+    if (query.page) {
+      const limit = query.limit ?? 20;
+      const [total, rows] = await Promise.all([
+        this.db.user.count({ where }),
+        this.db.user.findMany({ where, select: LIST_SELECT, orderBy, skip: (query.page - 1) * limit, take: limit }),
+      ]);
+      const subscriptions = await this.activeSubscriptions(rows.map((row) => row.id));
+      return {
+        items: rows.map((row) => presentListRow(row, subscriptions.get(row.id) ?? null)),
+        total,
+        page: query.page,
+        limit,
+        pages: Math.max(1, Math.ceil(total / limit)),
+      };
+    }
+
+    const rows = await this.db.user.findMany({ where, select: LIST_SELECT, orderBy, ...cursorArgs(query) });
     const page = toCursorPage(rows, query);
-    return { items: page.items.map(present), nextCursor: page.nextCursor };
+    const subscriptions = await this.activeSubscriptions(page.items.map((row) => row.id));
+    return { items: page.items.map((row) => presentListRow(row, subscriptions.get(row.id) ?? null)), nextCursor: page.nextCursor };
+  }
+
+  /** Foydalanuvchilar sahifasidagi kartalar: jami, faol, bloklangan, tasdiq kutayotgan (mijoz/usta bo‘yicha) va 30 kunlik o‘sish. */
+  async stats() {
+    const base: Prisma.UserWhereInput = { deletedAt: null };
+    const roleWhere = (role: Role): Prisma.UserWhereInput => ({ ...base, userRoles: { some: { role } } });
+    const anyRole: Prisma.UserWhereInput = { ...base, userRoles: { some: { role: { in: [Role.CUSTOMER, Role.MASTER] } } } };
+    const count = (where: Prisma.UserWhereInput, status?: UserStatus | UserStatus[]) =>
+      this.db.user.count({ where: { ...where, ...(status ? { status: Array.isArray(status) ? { in: status } : status } : {}) } });
+    const day = 86_400_000;
+    const now = Date.now();
+    const [total, customers, masters, active, activeC, activeM, blocked, blockedC, blockedM, suspended, pending, pendingC, pendingM, last30, prev30] = await Promise.all([
+      count(anyRole),
+      count(roleWhere(Role.CUSTOMER)),
+      count(roleWhere(Role.MASTER)),
+      count(anyRole, UserStatus.ACTIVE),
+      count(roleWhere(Role.CUSTOMER), UserStatus.ACTIVE),
+      count(roleWhere(Role.MASTER), UserStatus.ACTIVE),
+      count(anyRole, UserStatus.BLOCKED),
+      count(roleWhere(Role.CUSTOMER), UserStatus.BLOCKED),
+      count(roleWhere(Role.MASTER), UserStatus.BLOCKED),
+      count(anyRole, UserStatus.SUSPENDED),
+      count(anyRole, UserStatus.PENDING),
+      count(roleWhere(Role.CUSTOMER), UserStatus.PENDING),
+      count(roleWhere(Role.MASTER), UserStatus.PENDING),
+      this.db.user.count({ where: { ...anyRole, createdAt: { gte: new Date(now - 30 * day) } } }),
+      this.db.user.count({ where: { ...anyRole, createdAt: { gte: new Date(now - 60 * day), lt: new Date(now - 30 * day) } } }),
+    ]);
+    return {
+      total: { all: total, customers, masters, new30: last30, growthPercent: prev30 > 0 ? Math.round(((last30 - prev30) / prev30) * 100) : null },
+      active: { all: active, customers: activeC, masters: activeM },
+      blocked: { all: blocked, customers: blockedC, masters: blockedM, suspended },
+      pending: { all: pending, customers: pendingC, masters: pendingM },
+    };
+  }
+
+  /** Bir nechta foydalanuvchining holatini birdan o‘zgartiradi; har biri uchun alohida audit yoziladi, xatolari alohida qaytariladi. */
+  async bulkStatus(adminId: string, dto: BulkUserStatusDto, req: Request) {
+    const ids = [...new Set(dto.ids)].slice(0, 100);
+    const failed: Array<{ id: string; message: string }> = [];
+    let updated = 0;
+    for (const id of ids) {
+      try {
+        await this.setStatus(adminId, id, { status: dto.status, reason: dto.reason }, req);
+        updated += 1;
+      } catch (error) {
+        failed.push({ id, message: error instanceof Error ? error.message : String(error) });
+      }
+    }
+    return { updated, failed };
   }
 
   /** Raqamli ID (akkaunt raqami) bo‘yicha foydalanuvchini topadi. */
@@ -90,7 +227,7 @@ export class AdminUsersService {
     if (!user) throw new NotFoundException(ERRORS.USER_NOT_FOUND);
     const base = await this.findOne(user.id);
     // Admin profil sahifasi uchun qo‘shimcha ma’lumotlar: manzillar, oxirgi buyurtmalar, usta ko‘rsatkichlari va xizmatlari.
-    const [addresses, orders, master] = await Promise.all([
+    const [addresses, orders, master, activeSubs, subHistory] = await Promise.all([
       this.db.address.findMany({
         where: { userId: user.id },
         orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
@@ -118,9 +255,18 @@ export class AdminUsersService {
             },
           })
         : null,
+      this.activeSubscriptions([user.id]),
+      this.db.subscription.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: { id: true, planCode: true, months: true, amount: true, currency: true, status: true, source: true, startsAt: true, endsAt: true, createdAt: true },
+      }),
     ]);
     return {
       ...base,
+      subscription: activeSubs.get(user.id) ?? null,
+      subscriptionHistory: subHistory.map((row) => ({ ...row, planName: planByCode(row.planCode)?.name ?? row.planCode })),
       addresses,
       recentOrders: orders.map(({ customerId, ...order }) => ({ ...order, side: customerId === user.id ? 'CUSTOMER' : 'MASTER' })),
       masterExtra: master

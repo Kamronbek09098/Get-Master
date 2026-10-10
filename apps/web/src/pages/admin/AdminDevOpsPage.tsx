@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Bell, Database, Plug, GitCommit, RefreshCw, Server, Tag, Timer } from 'lucide-react';
+import { Activity, ArrowDown, ArrowUp, Bell, Boxes, Cpu, Database, GitCommit, HardDrive, MemoryStick, RefreshCw, Route, Server, ShieldCheck, Tag, Timer, TriangleAlert, Workflow } from 'lucide-react';
 import { PageLoader } from '@/components/common/PageLoader';
 import { Alert } from '@/components/ui/Alert';
 import { Badge } from '@/components/ui/Badge';
 import type { BadgeTone } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { getErrorMessage } from '@/lib/error-messages';
-import { formatDateTime, formatNumber } from '@/lib/utils';
+import { cx, formatDateTime, formatNumber } from '@/lib/utils';
 import { useDevOps } from '@/features/admin/hooks/useAdmin';
-import { TrafficChart } from '@/features/admin/components/TrafficChart';
-import type { DevOpsWindow } from '@/features/admin/types';
+import { OpenStreetMapIcon, OsrmIcon, TelegramIcon, YandexMapsIcon } from '@/features/admin/components/BrandIcons';
+import { Sparkline, TrafficChart } from '@/features/admin/components/DevOpsCharts';
+import type { SparkTone } from '@/features/admin/components/DevOpsCharts';
+import type { DevOpsSnapshot, DevOpsWindow } from '@/features/admin/types';
 import './AdminDevOpsPage.css';
 import { t } from '@/i18n';
 
@@ -18,29 +20,18 @@ const WINDOW_TABS: Array<{ value: DevOpsWindow; label: string }> = [
   { value: '1h', label: t('1 soat') },
   { value: '24h', label: t('24 soat') },
   { value: '7d', label: t('7 kun') },
+  { value: '30d', label: t('30 kun') },
 ];
 
-function usageTone(percent: number): 'good' | 'warning' | 'danger' {
-  if (percent >= 90) return 'danger';
-  if (percent >= 70) return 'warning';
-  return 'good';
-}
+type Level = 'good' | 'warning' | 'danger';
+const LEVEL_BADGE: Record<Level, { tone: BadgeTone; label: string }> = {
+  good: { tone: 'success', label: t('Normal') },
+  warning: { tone: 'warning', label: t('Diqqat') },
+  danger: { tone: 'danger', label: t('Kritik') },
+};
+const LEVEL_SPARK: Record<Level, SparkTone> = { good: 'success', warning: 'warning', danger: 'danger' };
 
-function UsageBar({ label, percent, hint }: { label: string; percent: number; hint: string }) {
-  const tone = usageTone(percent);
-  return (
-    <div className="gm-usage">
-      <div className="gm-usage__head">
-        <span>{label}</span>
-        <strong>{percent}%</strong>
-      </div>
-      <div className="gm-usage__track">
-        <span className={`gm-usage__fill gm-usage__fill--${tone}`} style={{ width: `${Math.min(100, Math.max(2, percent))}%` }} />
-      </div>
-      <p className="gm-card__meta">{hint}</p>
-    </div>
-  );
-}
+const usageLevel = (percent: number): Level => (percent >= 90 ? 'danger' : percent >= 70 ? 'warning' : 'good');
 
 function formatDuration(totalSeconds: number): string {
   const days = Math.floor(totalSeconds / 86_400);
@@ -48,29 +39,72 @@ function formatDuration(totalSeconds: number): string {
   const minutes = Math.floor((totalSeconds % 3_600) / 60);
   if (days > 0) return t('{days} kun {hours} soat', { days, hours });
   if (hours > 0) return t('{hours} soat {minutes} daq', { hours, minutes });
-  return `${minutes} daq`;
+  return t('{minutes} daq', { minutes });
 }
 
-function PingBadge({ label, ok, latencyMs }: { label: string; ok: boolean; latencyMs: number | null }) {
-  const tone: BadgeTone = ok ? 'success' : 'danger';
+function Kpi({ icon, label, level, value, sub, footer, children }: { icon: ReactNode; label: string; level: Level; value: ReactNode; sub: ReactNode; footer?: ReactNode; children?: ReactNode }) {
+  const badge = LEVEL_BADGE[level];
   return (
-    <div className="gm-devops-row">
-      <span className="gm-devops-row__label">{label}</span>
-      <Badge tone={tone}>{ok ? t('Ulangan{p}', { p: latencyMs !== null ? ` · ${latencyMs} ms` : '' }) : t('Ulanmagan')}</Badge>
-    </div>
+    <article className="gm-dkpi">
+      <header>
+        <span className="gm-dkpi__icon">{icon}</span>
+        <h2>{label}</h2>
+        <Badge tone={badge.tone}>{badge.label}</Badge>
+      </header>
+      <p className="gm-dkpi__value">{value}</p>
+      <p className="gm-dkpi__sub">{sub}</p>
+      {children}
+      {footer && <p className="gm-dkpi__foot">{footer}</p>}
+    </article>
   );
 }
 
-function InfoRow({ label, value, icon }: { label: string; value: ReactNode; icon?: ReactNode }) {
+function Panel({ icon, title, badge, children, className }: { icon: ReactNode; title: string; badge?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <div className="gm-devops-row">
-      <span className="gm-devops-row__label">
+    <section className={cx('gm-dpanel', className)}>
+      <header>
+        <span className="gm-dpanel__icon">{icon}</span>
+        <h2>{title}</h2>
+        {badge}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function Row({ label, value, icon }: { label: string; value: ReactNode; icon?: ReactNode }) {
+  return (
+    <div className="gm-drow">
+      <span>
         {icon}
         {label}
       </span>
-      <strong className="gm-devops-row__value">{value}</strong>
+      <strong>{value}</strong>
     </div>
   );
+}
+
+function Delta({ current, previous, lowerIsBetter = false, suffix = '%' }: { current: number; previous: number | null | undefined; lowerIsBetter?: boolean; suffix?: string }) {
+  if (previous === null || previous === undefined || previous === 0) return <small className="gm-dstat__delta" title={t('Oldingi davr bilan solishtirib bo‘lmaydi')}>{t('Solishtirish: ma’lumot yetarli emas')}</small>;
+  const change = Math.round(((current - previous) / previous) * 100);
+  if (change === 0) return <small className="gm-dstat__delta">{t('O‘zgarishsiz')}</small>;
+  const good = lowerIsBetter ? change < 0 : change > 0;
+  const Icon = change > 0 ? ArrowUp : ArrowDown;
+  return (
+    <small className={cx('gm-dstat__delta', good ? 'is-good' : 'is-bad')}>
+      <Icon size={12} aria-hidden="true" /> {Math.abs(change)}
+      {suffix}
+    </small>
+  );
+}
+
+function externalServices(data: DevOpsSnapshot) {
+    const names: Record<string, string> = { geocoder: t('Manzil qidiruvi (geokoder)'), osrm: t('Marshrut serveri (OSRM)') };
+  return data.providers.map((item) => {
+    const used = item.success + item.failure > 0;
+    const level: Level = item.state === 'OPEN' ? 'danger' : item.state === 'HALF_OPEN' || (item.successRate !== null && item.successRate < 90) ? 'warning' : 'good';
+    return { key: item.key, icon: item.key === 'osrm' ? <OsrmIcon /> : item.provider === 'yandex' ? <YandexMapsIcon /> : item.provider === 'osm' ? <OpenStreetMapIcon /> : <Server size={22} />, name: names[item.key] ?? item.label, provider: item.provider, level, state: item.state, used, item };
+  });
 }
 
 export function AdminDevOpsPage() {
@@ -78,173 +112,242 @@ export function AdminDevOpsPage() {
   const devops = useDevOps(window);
   const data = devops.data;
 
+  const dangerCount = data?.issues.filter((issue) => issue.level === 'danger').length ?? 0;
+
   return (
-    <div>
-      <div className="gm-page-header">
-        <div>
+    <div className="gm-devops">
+      <header className="gm-devops__head">
+        <span className="gm-devops__logo">
+          <Boxes size={26} aria-hidden="true" />
+        </span>
+        <div className="gm-devops__title">
           <h1>DevOps</h1>
-          {data && <p className="gm-page-lead">{t('Tekshirildi:')}{' '}{formatDateTime(data.checkedAt)}</p>}
+          <p>{t('Server monitoring va tizim holati')}</p>
         </div>
-        <Button variant="secondary" size="sm" loading={devops.isFetching} onClick={() => void devops.refetch()}>
-          <RefreshCw size={16} />{' '}{t('Yangilash')}</Button>
-      </div>
+        <div className="gm-devops__tools">
+          {data && (
+            <span className={cx('gm-devops__status', data.issues.length === 0 ? 'is-ok' : dangerCount > 0 ? 'is-bad' : 'is-warn')}>
+              <i aria-hidden="true" />
+              {data.issues.length === 0 ? t('Tizim normal') : t('{count} ta muammo', { count: data.issues.length })}
+            </span>
+          )}
+          <div className="gm-devops__tabs" role="tablist" aria-label={t('Vaqt oralig‘i')}>
+            {WINDOW_TABS.map((tab) => (
+              <button key={tab.value} type="button" role="tab" aria-selected={window === tab.value} className={cx(window === tab.value && 'is-on')} onClick={() => setWindow(tab.value)}>
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <Button variant="secondary" size="sm" loading={devops.isFetching} onClick={() => void devops.refetch()}>
+            <RefreshCw size={15} aria-hidden="true" /> {t('Yangilash')}
+          </Button>
+        </div>
+      </header>
 
       {devops.isLoading && <PageLoader label={t('Tizim holati yuklanmoqda…')} />}
       {devops.isError && <Alert tone="danger">{getErrorMessage(devops.error)}</Alert>}
 
       {data && (
         <>
-          {data.issues.length > 0 ? (
-            <Alert tone={data.issues.some((issue) => issue.level === 'danger') ? 'danger' : 'warning'} title={t('Muammolar bor')}>
+          {data.issues.length > 0 && (
+            <Alert tone={dangerCount > 0 ? 'danger' : 'warning'} title={t('Muammolar bor')}>
               <ul className="gm-devops-issues">
                 {data.issues.map((issue) => (
                   <li key={issue.message}>{issue.message}</li>
                 ))}
               </ul>
             </Alert>
-          ) : (
-            <Alert tone="success" title={t('Hammasi joyida')}>{t('Muammo topilmadi.')}</Alert>
           )}
 
-          <div className="gm-devops-grid">
-            <div className="gm-card">
-              <UsageBar label="CPU" percent={data.system.cpuPercent} hint={t('Yuklama {join} · {cpuCount} yadro', { join: data.system.loadAvg.join(' · '), cpuCount: data.system.cpuCount })} />
-            </div>
-            <div className="gm-card">
-              <UsageBar
-                label={t('Xotira (RAM)')}
-                percent={data.system.usedMemPercent}
-                hint={t('{toLocaleString} MB bo‘sh / {toLocaleString2} MB', { toLocaleString: formatNumber(data.system.freeMemMB), toLocaleString2: formatNumber(data.system.totalMemMB) })}
-              />
-            </div>
-            <div className="gm-card">
-              {data.system.disk ? (
-                <UsageBar
-                  label={t('Disk')}
-                  percent={data.system.disk.usedPercent}
-                  hint={t('{freeGB} GB bo‘sh / {totalGB} GB', { freeGB: data.system.disk.freeGB, totalGB: data.system.disk.totalGB })}
-                />
-              ) : (
-                <>
-                  <div className="gm-usage__head">
-                    <span>{t('Disk')}</span>
-                  </div>
-                  <p className="gm-card__meta">{t('Disk ma’lumoti o‘qib bo‘lmadi.')}</p>
-                </>
-              )}
-            </div>
-            <div className="gm-card">
-              <div className="gm-usage__head">
-                <span>
-                  <Timer size={14} />{' '}{t('Server ishlash vaqti')}</span>
-              </div>
-              <p className="gm-devops-big">{formatDuration(data.system.uptimeSeconds)}</p>
-              <p className="gm-card__meta">{data.system.hostname}</p>
-            </div>
+          <div className="gm-devops__kpis">
+            <Kpi
+              icon={<Cpu size={20} />}
+              label="CPU"
+              level={usageLevel(data.system.cpuPercent)}
+              value={`${data.system.cpuPercent}%`}
+              sub={t('Yuklama')}
+              footer={t('Yuklama {join} · {cpuCount} yadro', { join: data.system.loadAvg.join(' · '), cpuCount: data.system.cpuCount })}
+            >
+              <Sparkline values={data.history.map((p) => p.cpu)} tone={LEVEL_SPARK[usageLevel(data.system.cpuPercent)]} max={100} />
+            </Kpi>
+            <Kpi
+              icon={<MemoryStick size={20} />}
+              label={t('Xotira (RAM)')}
+              level={usageLevel(data.system.usedMemPercent)}
+              value={`${data.system.usedMemPercent}%`}
+              sub={`${((data.system.totalMemMB - data.system.freeMemMB) / 1024).toFixed(2)} GB / ${(data.system.totalMemMB / 1024).toFixed(2)} GB`}
+            >
+              <Sparkline values={data.history.map((p) => p.mem)} tone={LEVEL_SPARK[usageLevel(data.system.usedMemPercent)]} max={100} />
+            </Kpi>
+            <Kpi
+              icon={<HardDrive size={20} />}
+              label={t('Disk')}
+              level={data.system.disk ? usageLevel(data.system.disk.usedPercent) : 'warning'}
+              value={data.system.disk ? `${data.system.disk.usedPercent}%` : '—'}
+              sub={data.system.disk ? `${formatNumber(data.system.disk.usedGB)} GB / ${formatNumber(data.system.disk.totalGB)} GB` : t('Disk ma’lumoti o‘qib bo‘lmadi.')}
+            >
+              <Sparkline values={data.history.map((p) => p.disk).filter((v): v is number => v !== null)} tone="violet" max={100} />
+            </Kpi>
+            <Kpi
+              icon={<Timer size={20} />}
+              label={t('Server ishlash vaqti')}
+              level="good"
+              value={formatDuration(data.system.uptimeSeconds)}
+              sub={data.system.hostname}
+              footer={t('Ishga tushgan: {at}', { at: formatDateTime(new Date(Date.now() - data.system.uptimeSeconds * 1000).toISOString()) })}
+            />
+            <Kpi
+              icon={<TriangleAlert size={20} />}
+              label={t('Server xatolari')}
+              level={data.errors.last24h === 0 ? 'good' : data.errors.last24h < 20 ? 'warning' : 'danger'}
+              value={`${data.errors.last24h} / ${data.errors.logged24h}`}
+              sub={t('Oxirgi 24 soat')}
+              footer={t('Oxirgi soatda: {count}', { count: data.errors.lastHour })}
+            >
+              <Sparkline values={data.errors.series.map((p) => p.count)} tone={data.errors.last24h === 0 ? 'success' : 'danger'} />
+            </Kpi>
           </div>
 
-          <div className="gm-devops-cols">
-            <section className="gm-detail-section">
-              <h2>
-                <Server size={18} />{' '}{t('Node jarayoni')}</h2>
-              <div className="gm-devops-rows">
-                <div className="gm-devops-row">
-                  <span className="gm-devops-row__label">{t('Holat')}</span>
-                  <Badge tone="success">online</Badge>
-                </div>
-                <InfoRow label="PID" value={data.process.pid} />
-                <InfoRow label={t('Jarayon ishlash vaqti')} value={formatDuration(data.process.uptimeSeconds)} />
-                <InfoRow label={t('Xotira (RSS)')} value={`${data.process.rssMB} MB`} />
-                <InfoRow label={t('Heap')} value={`${data.process.heapUsedMB} / ${data.process.heapTotalMB} MB`} />
-                <InfoRow label={t('CPU vaqti')} value={`${data.process.cpuUserMs} ms user · ${data.process.cpuSystemMs} ms sys`} />
-              </div>
-              <p className="gm-devops-note">
-                <strong>{t('Nazoratchi:')}</strong>{' '}
-                {{ pm2: t('PM2 boshqaradi.'), systemd: t('systemd boshqaradi.'), docker: t('Docker konteynerida ishlayapti.'), none: t('yo‘q — to‘g‘ridan-to‘g‘ri jarayon sifatida ishlaydi (PM2/systemd/Docker aniqlanmadi).') }[data.process.supervisor]}
-              </p>
-            </section>
-
-            <section className="gm-detail-section">
-              <h2>
-                <Tag size={18} />{' '}{t('Versiya va bog‘liqliklar')}</h2>
-              <div className="gm-devops-rows">
-                <InfoRow icon={<GitCommit size={14} />} label={t('Commit')} value={data.version.commit ?? '—'} />
-                <InfoRow label={t('Versiya')} value={`v${data.version.appVersion} · ${data.version.environment}`} />
-                <InfoRow label={t('Ishga tushgan')} value={formatDateTime(data.version.startedAt)} />
-                <InfoRow label="Node.js" value={data.version.nodeVersion} />
-                <InfoRow label={t('Tizim')} value={data.system.platform} />
-                <PingBadge label={t('Ma’lumotlar bazasi')} ok={data.dependencies.database.ok} latencyMs={data.dependencies.database.latencyMs} />
-                <PingBadge label={t('Redis')} ok={data.dependencies.redis.ok} latencyMs={data.dependencies.redis.latencyMs} />
-                <div className="gm-devops-row">
-                  <span className="gm-devops-row__label">
-                    <Bell size={14} />{' '}{t('Telegram ogohlantirish')}</span>
-                  <Badge tone={data.dependencies.telegramAlerting ? 'success' : 'neutral'}>
-                    {data.dependencies.telegramAlerting ? t('Sozlangan') : t('Sozlanmagan')}
+          <div className="gm-devops__cols">
+            <Panel icon={<Workflow size={18} />} title={t('Node jarayoni')} badge={<Badge tone="success">Online</Badge>}>
+              <Row label={t('Holat')} value={<span className="gm-drow__ok">{t('Ishlayapti')}</span>} />
+              <Row label="PID" value={data.process.pid} />
+              <Row label={t('Jarayon ishlash vaqti')} value={formatDuration(data.process.uptimeSeconds)} />
+              <Row label={t('Xotira (RSS)')} value={`${data.process.rssMB} MB`} />
+              <div className="gm-drow gm-drow--heap">
+                <span>{t('Heap')}</span>
+                <div className="gm-drow__heap">
+                  <Sparkline values={data.history.map((p) => p.heapMB)} tone="primary" />
+                  <Badge tone={usageLevel(Math.round((data.process.heapUsedMB / data.process.heapLimitMB) * 100)) === 'good' ? 'success' : 'warning'}>
+                    {data.process.heapUsedMB} / {data.process.heapLimitMB} MB ({Math.round((data.process.heapUsedMB / data.process.heapLimitMB) * 100)}%)
                   </Badge>
                 </div>
               </div>
-            </section>
+              <Row label={t('CPU vaqti')} value={`${formatNumber(data.process.cpuUserMs)} ms user · ${formatNumber(data.process.cpuSystemMs)} ms sys`} />
+              <Row
+                label={t('Nazoratchi')}
+                value={{ pm2: 'PM2', systemd: 'systemd', docker: 'Docker', none: t('yo‘q (oddiy jarayon)') }[data.process.supervisor]}
+              />
+            </Panel>
+
+            <Panel
+              icon={<Tag size={18} />}
+              title={t('Versiya va bog‘liqliklar')}
+              badge={<Badge tone={data.dependencies.database.ok && data.dependencies.redis.ok ? 'success' : 'danger'}>{data.dependencies.database.ok && data.dependencies.redis.ok ? t('Tayyor') : t('Muammo')}</Badge>}
+            >
+              <Row icon={<GitCommit size={14} aria-hidden="true" />} label={t('Commit')} value={data.version.commit ?? '—'} />
+              <Row label={t('Versiya')} value={`v${data.version.appVersion} · ${data.version.environment}`} />
+              <Row label={t('Ishga tushgan')} value={formatDateTime(data.version.startedAt)} />
+              <Row label="Node.js" value={data.version.nodeVersion} />
+              <Row label={t('Tizim')} value={data.system.platform} />
+              <Row label={t('Ma’lumotlar bazasi')} value={<Ping ping={data.dependencies.database} />} />
+              <Row label="Redis" value={<Ping ping={data.dependencies.redis} />} />
+              <Row
+                icon={<Bell size={14} aria-hidden="true" />}
+                label={t('Telegram ogohlantirish')}
+                value={<Badge tone={data.dependencies.telegramAlerting ? 'success' : 'warning'}>{data.dependencies.telegramAlerting ? t('Sozlangan') : t('Sozlanmagan')}</Badge>}
+              />
+            </Panel>
+
+            <Panel
+              icon={<Database size={18} />}
+              title={t('Zaxira nusxa')}
+              badge={<Badge tone={!data.backup.configured ? 'warning' : data.backup.stale ? 'danger' : 'success'}>{!data.backup.configured ? t('Sozlanmagan') : data.backup.stale ? t('Eskirgan') : t('Muvaffaqiyatli')}</Badge>}
+            >
+              <div className={cx('gm-dbackup', !data.backup.configured ? 'is-warn' : data.backup.stale ? 'is-bad' : 'is-ok')}>
+                <ShieldCheck size={20} aria-hidden="true" />
+                <div>
+                  <strong>{data.backup.configured ? t('Oxirgi zaxira: {at}', { at: formatDateTime(data.backup.lastAt) }) : t('Zaxira nusxa topilmadi')}</strong>
+                  <span>{data.backup.configured ? data.backup.file : data.backup.message}</span>
+                </div>
+              </div>
+              {data.backup.configured && (
+                <>
+                  <Row label={t('Oxirgi zaxira')} value={data.backup.ageHours !== null ? t('{hours} soat oldin', { hours: data.backup.ageHours }) : '—'} />
+                  <Row label={t('Hajmi')} value={data.backup.sizeMB !== null ? `${data.backup.sizeMB} MB` : '—'} />
+                  <Row label={t('Saqlangan nusxalar')} value={`${data.backup.count} / ${data.backup.keepDaily}`} />
+                </>
+              )}
+            </Panel>
           </div>
 
-          <div className="gm-devops-cols">
-            <section className="gm-detail-section">
-              <h2>
-                <Database size={18} />{' '}{t('Zaxira nusxa')}</h2>
-              <Alert tone={!data.backup.configured ? 'warning' : data.backup.stale ? 'danger' : 'success'}>{data.backup.message}</Alert>
-              {data.backup.configured && (
-                <div className="gm-devops-rows">
-                  <InfoRow label={t('Oxirgi zaxira')} value={data.backup.lastAt ? formatDateTime(data.backup.lastAt) : '—'} />
-                  <InfoRow label={t('Hajmi')} value={data.backup.sizeMB != null ? `${data.backup.sizeMB} MB` : '—'} />
-                  <InfoRow label={t('Saqlangan nusxalar')} value={data.backup.count} />
-                </div>
-              )}
-            </section>
-
-            <section className="gm-detail-section">
-              <h2>
-                <Plug size={18} />{' '}{t('Tashqi xizmatlar')}</h2>
-              <div className="gm-devops-rows">
-                {data.providers.map((item) => (
-                  <div key={item.key} className="gm-devops-prov">
-                    <div className="gm-devops-row">
-                      <span className="gm-devops-row__label">{item.label} · {item.provider}</span>
-                      <Badge tone={item.state === 'OPEN' ? 'danger' : item.state === 'HALF_OPEN' ? 'warning' : 'success'}>
-                        {item.state === 'OPEN' ? t('O‘chirilgan') : item.state === 'HALF_OPEN' ? t('Tekshirilmoqda') : t('Ishlayapti')}
-                      </Badge>
+          <div className="gm-devops__cols gm-devops__cols--wide">
+            <Panel icon={<Route size={18} />} title={t('Tashqi xizmatlar')}>
+              <div className="gm-dsvc">
+                {externalServices(data).map((svc) => (
+                  <div key={svc.key} className="gm-dsvc__item">
+                    <span className="gm-dsvc__icon">{svc.icon}</span>
+                    <div>
+                      <strong>{svc.name}</strong>
+                      <small>
+                        {svc.used
+                          ? [
+                              svc.item.avgLatencyMs !== null && `${t('Murojaat')}: ${svc.item.avgLatencyMs} ms`,
+                              svc.item.successRate !== null && `${t('Muvaffaqiyat')}: ${svc.item.successRate}%`,
+                              svc.item.lastOkAt && `${t('Oxirgi')}: ${formatDateTime(svc.item.lastOkAt)}`,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')
+                          : t('Ishga tushgandan beri hali so‘rov bo‘lmagan')}
+                        {svc.item.lastError && <em> · {svc.item.lastError}</em>}
+                      </small>
                     </div>
-                    <p className="gm-card__meta">
-                      {t('Muvaffaqiyatli: {ok} · xato: {fail} · to‘xtatilgan: {open}', { ok: item.success, fail: item.failure, open: item.circuitOpen })}
-                      {item.lastError && ` · ${t('oxirgi xato')}: ${item.lastError}`}
-                    </p>
+                    <Badge tone={LEVEL_BADGE[svc.level].tone}>{svc.state === 'OPEN' ? t('O‘chirilgan') : svc.state === 'HALF_OPEN' ? t('Tekshirilmoqda') : t('Ishlayapti')}</Badge>
                   </div>
                 ))}
-                <InfoRow label={t('Server xatolari (1 soat / 24 soat)')} value={`${data.errors.lastHour} / ${data.errors.last24h}`} />
+                <div className="gm-dsvc__item">
+                  <span className="gm-dsvc__icon">
+                    <TelegramIcon />
+                  </span>
+                  <div>
+                    <strong>{t('Telegram (bildirishnomalar)')}</strong>
+                    <small>{data.dependencies.telegramAlerting ? t('Ogohlantirishlar yuboriladi') : t('Bot tokeni va chat sozlanmagan')}</small>
+                  </div>
+                  <Badge tone={data.dependencies.telegramAlerting ? 'success' : 'warning'}>{data.dependencies.telegramAlerting ? t('Sozlangan') : t('Sozlanmagan')}</Badge>
+                </div>
               </div>
-            </section>
-          </div>
+            </Panel>
 
-          <section className="gm-detail-section">
-            <div className="gm-devops-traffic-head">
-              <h2>{t('API trafigi')}</h2>
-              <div className="gm-tabs" role="tablist" aria-label={t('Vaqt oralig‘i')}>
-                {WINDOW_TABS.map((tab) => (
-                  <Button
-                    key={tab.value}
-                    size="sm"
-                    role="tab"
-                    aria-selected={window === tab.value}
-                    variant={window === tab.value ? 'primary' : 'secondary'}
-                    onClick={() => setWindow(tab.value)}
-                  >
-                    {tab.label}
-                  </Button>
+            <Panel icon={<Activity size={18} />} title={t('API trafik')}>
+              <TrafficChart data={data.traffic} window={window} />
+              <div className="gm-dstats">
+                <div className="gm-dstat">
+                  <span>{t('So‘rovlar/min')}</span>
+                  <strong>{formatNumber(data.trafficSummary.perMinute)}</strong>
+                  <Delta current={data.trafficSummary.perMinute} previous={data.trafficSummary.previous?.perMinute} />
+                </div>
+                <div className="gm-dstat">
+                  <span>{t('P95 javob vaqti')}</span>
+                  <strong>{data.trafficSummary.p95Ms !== null ? `${data.trafficSummary.p95Ms} ms` : '—'}</strong>
+                  {data.trafficSummary.p95Ms !== null && <Delta current={data.trafficSummary.p95Ms} previous={data.trafficSummary.previous?.p95Ms} lowerIsBetter />}
+                </div>
+                <div className="gm-dstat">
+                  <span>{t('Xatolar')}</span>
+                  <strong>{data.trafficSummary.errorRate}%</strong>
+                  <Delta current={data.trafficSummary.errorRate} previous={data.trafficSummary.previous?.errorRate} lowerIsBetter />
+                </div>
+              </div>
+              <div className="gm-dtop">
+                <h3>{t('Top endpointlar')}</h3>
+                {data.topEndpoints.length === 0 && <p className="gm-dtop__empty">{t('Hali so‘rov qayd etilmagan.')}</p>}
+                {data.topEndpoints.map((item) => (
+                  <div key={item.route} className="gm-dtop__row">
+                    <span>{item.route}</span>
+                    <i>
+                      <b style={{ width: `${Math.max(3, item.percent)}%` }} />
+                    </i>
+                    <strong>{item.percent}%</strong>
+                  </div>
                 ))}
               </div>
-            </div>
-            <TrafficChart data={data.traffic} window={window} />
-          </section>
+            </Panel>
+          </div>
         </>
       )}
     </div>
   );
+}
+
+function Ping({ ping }: { ping: { ok: boolean; latencyMs: number | null } }) {
+  return <Badge tone={ping.ok ? 'success' : 'danger'}>{ping.ok ? `${t('Ulangan')}${ping.latencyMs !== null ? ` · ${ping.latencyMs} ms` : ''}` : t('Ulanmagan')}</Badge>;
 }

@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { tmpdir } from 'node:os';
 
 /** Mahalliy .env dagi (git'ga tushmaydigan) haqiqiy parollarni o‘qiydi; standart parollar endi ishlamaydi. */
 function localEnv(): Record<string, string> {
@@ -18,6 +19,7 @@ const localDatabaseBase = /^(postgres(?:ql)?:\/\/[^/]+)\//.exec(LOCAL.DATABASE_U
 export const TEST_ENV = {
   NODE_ENV: 'test',
   PORT: '3999',
+  METRICS_DIR: resolve(tmpdir(), 'getmaster-test-metrics'),
   DATABASE_BASE_URL: process.env.TEST_DATABASE_BASE_URL || localDatabaseBase || 'postgresql://getmaster:getmaster_dev_only@localhost:55432',
   DATABASE_NAME: process.env.TEST_DATABASE_NAME || 'getmaster_test',
   REDIS_URL: process.env.TEST_REDIS_URL || 'redis://localhost:56379/15',

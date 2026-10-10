@@ -2,7 +2,7 @@ import type { CaseStatus } from '@/features/dispute/types';
 import type { MasterVerificationStatus } from '@/features/master/types';
 import type { PaymentProvider, PaymentStatus } from '@/types/common';
 
-export type DevOpsWindow = '1h' | '24h' | '7d';
+export type DevOpsWindow = '1h' | '24h' | '7d' | '30d';
 
 export interface DevOpsIssue {
   level: 'warning' | 'danger';
@@ -12,6 +12,13 @@ export interface DevOpsIssue {
 export interface DevOpsPing {
   ok: boolean;
   latencyMs: number | null;
+}
+
+export interface DevOpsTrafficPoint {
+  at: string;
+  count: number;
+  errors: number;
+  p95Ms: number | null;
 }
 
 export interface DevOpsSnapshot {
@@ -37,6 +44,7 @@ export interface DevOpsSnapshot {
     rssMB: number;
     heapUsedMB: number;
     heapTotalMB: number;
+    heapLimitMB: number;
     cpuUserMs: number;
     cpuSystemMs: number;
   };
@@ -52,10 +60,20 @@ export interface DevOpsSnapshot {
     redis: DevOpsPing;
     telegramAlerting: boolean;
   };
-  backup: { configured: boolean; message: string; stale: boolean; ageHours: number | null; lastAt: string | null; sizeMB: number | null; file: string | null; count: number };
-  providers: Array<{ key: string; label: string; provider: string; state: 'CLOSED' | 'OPEN' | 'HALF_OPEN'; success: number; failure: number; circuitOpen: number; lastOkAt: string | null; lastFailureAt: string | null; lastError: string | null }>;
-  errors: { lastHour: number; last24h: number };
-  traffic: Array<{ at: string; count: number }>;
+  backup: { configured: boolean; message: string; stale: boolean; ageHours: number | null; lastAt: string | null; sizeMB: number | null; file: string | null; count: number; keepDaily: number };
+  providers: Array<{ key: string; label: string; provider: string; state: 'CLOSED' | 'OPEN' | 'HALF_OPEN'; success: number; failure: number; circuitOpen: number; lastOkAt: string | null; lastFailureAt: string | null; lastError: string | null; avgLatencyMs: number | null; lastLatencyMs: number | null; successRate: number | null }>;
+  errors: { lastHour: number; last24h: number; logged24h: number; series: Array<{ at: string; count: number }> };
+  history: Array<{ at: string; cpu: number; mem: number; disk: number | null; heapMB: number }>;
+  traffic: DevOpsTrafficPoint[];
+  trafficSummary: {
+    requests: number;
+    perMinute: number;
+    errors: number;
+    errorRate: number;
+    p95Ms: number | null;
+    previous: { perMinute: number; errorRate: number; p95Ms: number | null } | null;
+  };
+  topEndpoints: Array<{ route: string; count: number; percent: number }>;
 }
 
 export interface SubscriptionAudienceStats {
@@ -177,6 +195,13 @@ export interface RevenueRow {
 
 export type ManagedStatus = 'ACTIVE' | 'PENDING' | 'SUSPENDED' | 'BLOCKED' | 'DELETED';
 
+export interface AdminUserSubscription {
+  planCode: string;
+  planName: string;
+  endsAt: string;
+  daysLeft: number;
+}
+
 export interface AdminUser {
   id: string;
   accountNumber: number;
@@ -184,9 +209,16 @@ export interface AdminUser {
   email: string | null;
   firstName: string | null;
   lastName: string | null;
+  /** Profil rasmi manzili (yuklangan rasm yoki Google rasmi). */
+  avatar?: string | null;
   status: ManagedStatus;
   createdAt: string;
   deletedAt: string | null;
+  lastLoginAt?: string | null;
+  phoneVerifiedAt?: string | null;
+  /** Mijoz va usta sifatidagi barcha buyurtmalar soni. */
+  ordersCount?: number;
+  subscription?: AdminUserSubscription | null;
   roles: Array<'CUSTOMER' | 'MASTER' | 'ADMIN'>;
   masterProfile: {
     id: string;
@@ -194,14 +226,35 @@ export interface AdminUser {
     status: string;
     verification: MasterVerificationStatus;
     ratingAvg: string;
+    ratingCount?: number;
     completedOrders: number;
   } | null;
+}
+
+export interface AdminUsersPage {
+  items: AdminUser[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+export interface AdminUserStats {
+  total: { all: number; customers: number; masters: number; new30: number; growthPercent: number | null };
+  active: { all: number; customers: number; masters: number };
+  blocked: { all: number; customers: number; masters: number; suspended: number };
+  pending: { all: number; customers: number; masters: number };
 }
 
 export interface UserFilters {
   role?: 'CUSTOMER' | 'MASTER' | 'ADMIN';
   status?: ManagedStatus;
   search?: string;
+  sort?: 'createdAt' | 'lastLoginAt' | 'name';
+  dir?: 'asc' | 'desc';
+  from?: string;
+  to?: string;
+  subscription?: 'any' | 'none' | 'CUSTOMER_PLUS' | 'MASTER_PRO';
 }
 
 export interface AdminActor {
@@ -302,6 +355,8 @@ export interface AdminUserDetail {
   } | null;
   stats: { orders: number; requests: number; messages: number; reviews: number; activeDevices: number };
   lastSession: { lastSeenAt: string; ipAddress: string | null; userAgent: string | null; panel: string | null } | null;
+  subscription?: AdminUserSubscription | null;
+  subscriptionHistory?: Array<{ id: string; planCode: string; planName: string; months: number; amount: string; currency: string; status: string; source: string; startsAt: string | null; endsAt: string | null; createdAt: string }>;
   recentActivity: Array<{ id: string; action: string; reason: string | null; actorId: string | null; actor?: { accountNumber: number } | null; createdAt: string }>;
   addresses?: Array<{ id: string; title: string | null; addressLine: string; city: string | null; district: string | null; isDefault: boolean }>;
   recentOrders?: Array<{ id: string; orderNumber: number; status: string; finalAmount: string; currency: string; createdAt: string; side: 'CUSTOMER' | 'MASTER' }>;

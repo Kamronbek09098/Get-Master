@@ -1,8 +1,7 @@
 import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { PageLoader } from '@/components/common/PageLoader';
-import { Header } from './Header';
-import { AdminHeader } from './AdminHeader';
+import { PanelHeader } from './PanelHeader';
 import { Sidebar } from './Sidebar';
 import { MobileNavigation } from './MobileNavigation';
 import { Footer } from './Footer';
@@ -31,7 +30,7 @@ export function AppLayout() {
         {t('Asosiy kontentga o‘tish')}
       </a>
       <OfflineBanner />
-      {role === 'ADMIN' ? <AdminHeader /> : <Header />}
+      <PanelHeader role={role} />
       <div className="gm-app-layout__body">
         <Sidebar />
         <main id="gm-main-content" className="gm-app-layout__content">

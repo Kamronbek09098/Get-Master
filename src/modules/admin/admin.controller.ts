@@ -18,7 +18,7 @@ import { AdminConversationQueryDto } from './dto/chat-query.dto';
 import { CursorQueryDto } from '../../common/dto/cursor-query.dto';
 import { PortfolioQueryDto, ReviewPortfolioDto } from './dto/portfolio-review.dto';
 import { DeleteUserDto, RegistrationBlockDto, SetUserPasswordDto, SetUserStatusDto } from './dto/user-action.dto';
-import { UserQueryDto } from './dto/user-query.dto';
+import { BulkUserStatusDto, UserQueryDto } from './dto/user-query.dto';
 import { CreateAdminDto, SetAdminDelegationDto, SetAdminPermissionsDto, SetSuperAdminDto, SetTwoFactorValueDto } from './dto/admin-account.dto';
 import { AdminService } from './admin.service';
 import { DashboardQueryDto } from './dto/dashboard-query.dto';
@@ -120,6 +120,18 @@ export class AdminController {
   @Get('users')
   findAllUsers(@Query() query: UserQueryDto) {
     return this.users.findAll(query);
+  }
+
+  @RequiresPermission('USERS')
+  @Get('users/stats')
+  userStats() {
+    return this.users.stats();
+  }
+
+  @RequiresPermission('USERS')
+  @Post('users/bulk-status')
+  bulkUserStatus(@CurrentUser('sub') adminId: string, @Body() dto: BulkUserStatusDto, @Req() req: Request) {
+    return this.users.bulkStatus(adminId, dto, req);
   }
 
   @RequiresPermission('USERS')

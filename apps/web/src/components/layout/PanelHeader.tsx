@@ -8,14 +8,19 @@ import { ChatAvatar } from '@/features/communication/components/ChatAvatar';
 import { useUnreadCount } from '@/features/notification/hooks/useNotifications';
 import { useMe } from '@/features/session/hooks/useMe';
 import { accountName } from '@/lib/account-name';
+import { env } from '@/lib/env';
+import { PANEL_LABEL } from '@/lib/panel';
+import type { Role } from '@/types/common';
+import { getNavItems } from './nav-items';
 import { getThemeMode, setThemeMode } from '@/lib/theme';
 import type { ThemeMode } from '@/lib/theme';
 import { cx } from '@/lib/utils';
 import { LANGUAGES, lang, setLanguage, t } from '@/i18n';
-import './AdminHeader.css';
+import './Header.css';
+import './PanelHeader.css';
 
 /** Admin va superadmin panelining yuqori paneli: bo‘lim, foydalanuvchi va buyurtma bo‘yicha qidiruv (Ctrl+K), til, mavzu, bildirishnomalar va profil menyusi. */
-export function AdminHeader() {
+export function PanelHeader({ role }: { role: Role | null }) {
   const navigate = useNavigate();
   const me = useMe();
   const unread = useUnreadCount();
@@ -26,9 +31,12 @@ export function AdminHeader() {
   const user = me.data;
   const isSuper = !!user?.isSuperAdmin;
   const name = accountName(user);
-  const roleText = isSuper ? t('Superadmin') : t('Administrator');
+  const panelRole: Role = role ?? env.appRole ?? 'CUSTOMER';
+  const isAdmin = panelRole === 'ADMIN';
+  const roleText = isAdmin ? (isSuper ? t('Superadmin') : t('Administrator')) : panelRole === 'MASTER' ? t('Usta') : t('Mijoz');
   const count = unread.data?.count ?? 0;
-  const home = '/admin';
+  const home = getNavItems(panelRole, { superAdmin: true })[0]?.to ?? '/';
+  const profilePath = isAdmin ? '/sozlamalar' : panelRole === 'MASTER' ? '/usta/profil' : '/mijoz/profil';
 
   const setTheme = (next: ThemeMode) => {
     setThemeMode(next);
@@ -42,8 +50,8 @@ export function AdminHeader() {
           <Logo />
         </Link>
         <span className="gm-aheader__panel">
-          <ShieldCheck size={13} strokeWidth={2.4} aria-hidden="true" />
-          {isSuper ? t('Superadmin paneli') : t('Admin paneli')}
+          {isAdmin && <ShieldCheck size={13} strokeWidth={2.4} aria-hidden="true" />}
+          {isAdmin ? (isSuper ? t('Superadmin paneli') : t('Admin paneli')) : PANEL_LABEL[panelRole]}
         </span>
         <span className="gm-aheader__divider" aria-hidden="true" />
 
@@ -88,7 +96,7 @@ export function AdminHeader() {
             trigger={
               <>
                 <span className="gm-aheader__avatar">
-                  <ChatAvatar name={name} seed={user?.id ?? 'admin'} size="sm" src={user?.avatar} />
+                  <ChatAvatar name={name} seed={user?.id ?? 'user'} size="sm" src={user?.avatar} />
                   <i aria-hidden="true" />
                 </span>
                 <span className="gm-aheader__who">
@@ -99,7 +107,7 @@ export function AdminHeader() {
               </>
             }
             items={[
-              { label: t('Profilim'), icon: <UserRound size={17} />, onSelect: () => navigate('/sozlamalar') },
+              { label: t('Profilim'), icon: <UserRound size={17} />, onSelect: () => navigate(profilePath) },
               { label: t('Xavfsizlik'), icon: <ShieldCheck size={17} />, onSelect: () => navigate('/sozlamalar/xavfsizlik') },
               { label: t('Sozlamalar'), icon: <Settings size={17} />, onSelect: () => navigate('/sozlamalar/korinish') },
               {

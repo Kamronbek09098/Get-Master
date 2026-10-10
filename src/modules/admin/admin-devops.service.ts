@@ -8,7 +8,9 @@ import { promisify } from 'node:util';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import { RedisService } from '../../infrastructure/redis/redis.service';
 import { GeoService } from '../geo/geo.service';
+import * as v8 from 'node:v8';
 import { RequestRateService, TrafficWindow } from '../../infrastructure/metrics/request-rate.service';
+import { SystemMetricsService } from '../../infrastructure/metrics/system-metrics.service';
 
 const execFileAsync = promisify(execFile);
 
@@ -35,6 +37,7 @@ export class AdminDevopsService {
     private readonly config: ConfigService,
     private readonly requestRate: RequestRateService,
     private readonly geo: GeoService,
+    private readonly system: SystemMetricsService,
   ) {}
 
   async snapshot(window: TrafficWindow) {
@@ -65,7 +68,13 @@ export class AdminDevopsService {
       this.db.errorLog.count({ where: { severity: 'ERROR', createdAt: { gte: since(3_600_000) } } }).catch(() => 0),
       this.db.errorLog.count({ where: { severity: 'ERROR', createdAt: { gte: since(86_400_000) } } }).catch(() => 0),
     ]);
-    const providers = this.geo.health();
+    const providers = this.geo.health().map(({ latencyTotalMs, ...item }) => ({
+      ...item,
+      avgLatencyMs: item.success > 0 ? Math.round(latencyTotalMs / item.success) : null,
+      successRate: item.success + item.failure > 0 ? Math.round((item.success / (item.success + item.failure)) * 1000) / 10 : null,
+    }));
+    const errorSeries = await this.errorSeries(window);
+    const total24h = await this.db.errorLog.count({ where: { createdAt: { gte: since(86_400_000) } } }).catch(() => 0);
 
     const issues: Array<{ level: 'warning' | 'danger'; message: string }> = [];
     if (usedMemPercent >= 90) issues.push({ level: 'warning', message: `Xotira (RAM) ${usedMemPercent}% band` });
@@ -105,6 +114,7 @@ export class AdminDevopsService {
         rssMB: Math.round(mem.rss / 1024 / 1024),
         heapUsedMB: Math.round(mem.heapUsed / 1024 / 1024),
         heapTotalMB: Math.round(mem.heapTotal / 1024 / 1024),
+        heapLimitMB: Math.round(v8.getHeapStatistics().heap_size_limit / 1024 / 1024),
         cpuUserMs: Math.round(cpuUsage.user / 1000),
         cpuSystemMs: Math.round(cpuUsage.system / 1000),
       },
@@ -122,13 +132,30 @@ export class AdminDevopsService {
       },
       backup,
       providers,
-      errors: { lastHour: errors1h, last24h: errors24h },
+      errors: { lastHour: errors1h, last24h: errors24h, logged24h: total24h, series: errorSeries },
+      history: this.system.history(window),
       traffic: this.requestRate.series(window),
+      trafficSummary: this.requestRate.summary(window),
+      topEndpoints: this.requestRate.topEndpoints(window),
     };
   }
 
+  /** Tanlangan oyna bo‘yicha server (ERROR) xatolari soni — bazadagi haqiqiy jurnaldan, ~24 ta ustunga bo‘lingan. */
+  private async errorSeries(window: TrafficWindow): Promise<Array<{ at: string; count: number }>> {
+    const windowMs = { '1h': 3_600_000, '24h': 86_400_000, '7d': 7 * 86_400_000, '30d': 30 * 86_400_000 }[window];
+    const steps = window === '1h' ? 12 : window === '24h' ? 24 : window === '7d' ? 28 : 30;
+    const stepMs = windowMs / steps;
+    const from = Date.now() - windowMs;
+    const rows = await this.db.errorLog
+      .findMany({ where: { severity: 'ERROR', createdAt: { gte: new Date(from) } }, select: { createdAt: true }, take: 20_000 })
+      .catch(() => []);
+    const counts = new Array<number>(steps).fill(0);
+    for (const row of rows) counts[Math.min(steps - 1, Math.floor((row.createdAt.getTime() - from) / stepMs))]! += 1;
+    return counts.map((count, i) => ({ at: new Date(from + i * stepMs).toISOString(), count }));
+  }
+
   /** `infrastructure/backup/backup.sh` yaratgan eng yangi `getmaster-*.dump` faylini topadi (BACKUP_DIR, standart ./backups). */
-  private backupStatus(): { configured: boolean; message: string; stale: boolean; ageHours: number | null; lastAt: string | null; sizeMB: number | null; file: string | null; count: number } {
+  private backupStatus(): { configured: boolean; message: string; stale: boolean; ageHours: number | null; lastAt: string | null; sizeMB: number | null; file: string | null; count: number; keepDaily: number } {
     const dir = process.env.BACKUP_DIR?.trim() || path.join(process.cwd(), 'backups');
     try {
       const files = fs
@@ -148,10 +175,11 @@ export class AdminDevopsService {
         sizeMB: Math.round((latest.stat.size / 1024 / 1024) * 10) / 10,
         file: latest.name,
         count: files.length,
+        keepDaily: Number(process.env.KEEP_DAILY) || 14,
         message: stale ? `Oxirgi zaxira ${ageHours} soat oldin olingan — kunlik zaxira ishlamayotgan bo‘lishi mumkin.` : `Oxirgi zaxira ${ageHours} soat oldin olingan (${latest.name}).`,
       };
     } catch {
-      return { configured: false, stale: false, ageHours: null, lastAt: null, sizeMB: null, file: null, count: 0, message: 'Avtomatik zaxira nusxa topilmadi. infrastructure/backup/backup.sh ni cron orqali kuniga bir marta ishga tushiring (docs/runbooks/backup-restore.md).' };
+      return { configured: false, stale: false, ageHours: null, lastAt: null, sizeMB: null, file: null, count: 0, keepDaily: Number(process.env.KEEP_DAILY) || 14, message: 'Avtomatik zaxira nusxa topilmadi. infrastructure/backup/backup.sh ni cron orqali kuniga bir marta ishga tushiring (docs/runbooks/backup-restore.md).' };
     }
   }
 

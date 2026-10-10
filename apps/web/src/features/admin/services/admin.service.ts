@@ -23,6 +23,8 @@ import type {
   OrdersSeries,
   ReportPaymentsPage,
   ReportsOverview,
+  AdminUserStats,
+  AdminUsersPage,
   DevOpsSnapshot,
   DevOpsWindow,
   RevenueRow,
@@ -74,6 +76,15 @@ export const adminService = {
   },
   users(filters: UserFilters, cursor?: string) {
     return apiGet<CursorPage<AdminUser>>(`/admin/users${qs({ ...filters, cursor, limit: '20' })}`);
+  },
+  usersPage(filters: UserFilters, page: number, limit = 20) {
+    return apiGet<AdminUsersPage>(`/admin/users${qs({ ...filters, page: String(page), limit: String(limit) })}`);
+  },
+  userStats() {
+    return apiGet<AdminUserStats>('/admin/users/stats');
+  },
+  bulkUserStatus(ids: string[], status: 'ACTIVE' | 'SUSPENDED' | 'BLOCKED', reason?: string) {
+    return apiPost<{ updated: number; failed: Array<{ id: string; message: string }> }>('/admin/users/bulk-status', { ids, status, reason: reason || undefined });
   },
   setUserStatus(id: string, status: 'ACTIVE' | 'SUSPENDED' | 'BLOCKED', reason?: string) {
     return apiPatch<AdminUser>(`/admin/users/${id}/status`, { status, reason });

@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CaseStatus } from '@/features/dispute/types';
 import { adminService } from '../services/admin.service';
 import type { DateRange, ReportPaymentsParams } from '../services/admin.service';
@@ -41,12 +41,34 @@ export function useAdminUsers(filters: UserFilters) {
   });
 }
 
+export function useAdminUsersPage(filters: UserFilters, page: number) {
+  return useQuery({ queryKey: ['admin', 'users', 'page', filters, page], queryFn: () => adminService.usersPage(filters, page), placeholderData: keepPreviousData });
+}
+
+export function useAdminUserStats() {
+  return useQuery({ queryKey: ['admin', 'users', 'stats'], queryFn: () => adminService.userStats(), staleTime: 15_000 });
+}
+
+export function useBulkUserStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ids, status, reason }: { ids: string[]; status: 'ACTIVE' | 'SUSPENDED' | 'BLOCKED'; reason?: string }) => adminService.bulkUserStatus(ids, status, reason),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'user-number'] });
+    },
+  });
+}
+
 export function useSetUserStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, status, reason }: { id: string; status: 'ACTIVE' | 'SUSPENDED' | 'BLOCKED'; reason?: string }) =>
       adminService.setUserStatus(id, status, reason),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'user-number'] });
+    },
   });
 }
 
@@ -79,7 +101,10 @@ export function useDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) => adminService.deleteUser(id, reason),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'users'] }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'user-number'] });
+    },
   });
 }
 
