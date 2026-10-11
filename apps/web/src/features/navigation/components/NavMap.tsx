@@ -5,6 +5,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import type { LatLon } from '../geometry';
 import type { ReactNode } from 'react';
 import type { LivePosition } from '../useLiveLocation';
+import { env } from '@/lib/env';
 import { t } from '@/i18n';
 import './navigation.css';
 
@@ -43,7 +44,11 @@ export interface NavMapProps {
 }
 
 /** OpenFreeMap (bepul, kalitsiz, OpenStreetMap ma’lumoti): vektor xarita — burilganda yozuvlar to‘g‘ri o‘qiladi. */
-const STYLE = { light: 'https://tiles.openfreemap.org/styles/bright', dark: 'https://tiles.openfreemap.org/styles/fiord' } as const;
+const OFM = 'https://tiles.openfreemap.org';
+/** Xarita fayllari ilovaning o‘z API manzili orqali olinadi (telefon tarmog‘ida tashqi xarita serveri ochilmasligi mumkin); ishlamasa — to‘g‘ridan-to‘g‘ri. */
+const PROXY = `${env.apiBaseUrl}/geo/map`;
+const STYLE = { light: `${PROXY}/styles/bright`, dark: `${PROXY}/styles/fiord` } as const;
+const DIRECT = { light: `${OFM}/styles/bright`, dark: `${OFM}/styles/fiord` } as const;
 const FOLLOW_PITCH = 55;
 
 const empty = (): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: [] });
@@ -117,6 +122,15 @@ export function NavMap({ route, passed, alternatives, position, destination, fol
     });
     instance.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
     instance.on('style.load', addLayers);
+    // Uslub 10 soniyada yuklanmasa (proksi ishlamasa) — to‘g‘ridan-to‘g‘ri manbaga o‘tamiz; u ham bo‘lmasa, qayta urinib turamiz.
+    let fellBack = false;
+    const rescue = window.setTimeout(() => {
+      if (!ready.current && !fellBack) {
+        fellBack = true;
+        instance.setStyle(DIRECT[resolveTheme(themePref.current)]);
+      }
+    }, 10_000);
+    void instance.once('style.load', () => window.clearTimeout(rescue));
     // Atribut (litsenziya talabi) ixcham: bosilganda ochiladi.
     void instance.once('load', () => holder.current?.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show'));
     instance.on('rotate', () => bearingCb.current?.(instance.getBearing()));

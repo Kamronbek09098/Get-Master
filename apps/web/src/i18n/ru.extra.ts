@@ -1,5 +1,9 @@
 /** Автогенерация: переводы 2-го этапа (ru). Ключ — исходный узбекский текст. */
 export const ruExtra: Record<string, string> = {
+  "Qurilmada GPS (joylashuv) o‘chiq. Yetib kelganingizni belgilash uchun uni yoqing.": "На устройстве выключена геолокация (GPS). Включите её, чтобы отметить прибытие.",
+  "GPS ni yoqish": "Включить GPS",
+  "Qurilmada GPS o‘chiq": "На устройстве выключен GPS",
+  "Marshrut tuzish uchun telefonda «Joylashuv» (GPS) xizmatini yoqing. Yoqqaningizdan so‘ng bu sahifaga qaytsangiz, navigator o‘zi davom etadi.": "Включите «Местоположение» (GPS) на телефоне, чтобы построить маршрут. Когда вернётесь на эту страницу, навигация продолжится сама.",
   "Oxirgi marta {count} daqiqa oldin yangilangan": "Обновлено {count} мин. назад",
   "Siz manzildasiz — yetib kelganingizni belgilashingiz mumkin.": "Вы на месте — можно отметить прибытие.",
   "Manzilgacha taxminan {distance} qoldi. Manzilga yetib borgach tugma faollashadi.": "До адреса примерно {distance}. Кнопка станет активной, когда вы приедете.",

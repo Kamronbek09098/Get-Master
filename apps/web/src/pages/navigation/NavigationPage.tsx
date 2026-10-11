@@ -16,6 +16,7 @@ import { Choice, MANEUVER_ICON, ManeuverSign, RoundBtn, RouteBar, SOUND_OPTIONS,
 import { formatDistance, formatDuration, maneuverOf, progressOn } from '@/features/navigation/geometry';
 import type { LatLon, Maneuver } from '@/features/navigation/geometry';
 import { maneuverText } from '@/features/navigation/instructions';
+import { openGpsSettings } from '@/features/navigation/device-gps';
 import { useLiveLocation } from '@/features/navigation/useLiveLocation';
 import { useDeviceHeading } from '@/features/navigation/useDeviceHeading';
 import { useNavSettings, VOLUME_GAIN } from '@/features/navigation/settings';
@@ -256,7 +257,7 @@ export function NavigationPage() {
       </div>
     );
 
-  const gpsProblem = !position && (live.status === 'denied' || live.status === 'unavailable' || live.status === 'timeout' || live.status === 'insecure');
+  const gpsProblem = !position && (live.status === 'denied' || live.status === 'unavailable' || live.status === 'timeout' || live.status === 'insecure' || live.status === 'gpsoff');
   const native = typeof window !== 'undefined' && !!(window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
   const routeProblem = !!origin && routes.isError;
   const total = route?.distanceM ?? 0;
@@ -362,9 +363,11 @@ export function NavigationPage() {
         <div className="gn-fail">
           <FailCard
             icon={<MapPinOff size={30} />}
-            title={live.status === 'denied' ? t('Joylashuvga ruxsat berilmagan') : live.status === 'insecure' ? t('Joylashuv faqat xavfsiz (HTTPS) ulanishda ishlaydi') : t('Joylashuv aniqlanmadi')}
+            title={live.status === 'gpsoff' ? t('Qurilmada GPS o‘chiq') : live.status === 'denied' ? t('Joylashuvga ruxsat berilmagan') : live.status === 'insecure' ? t('Joylashuv faqat xavfsiz (HTTPS) ulanishda ishlaydi') : t('Joylashuv aniqlanmadi')}
             text={
-              live.status === 'denied'
+              live.status === 'gpsoff'
+                ? t('Marshrut tuzish uchun telefonda «Joylashuv» (GPS) xizmatini yoqing. Yoqqaningizdan so‘ng bu sahifaga qaytsangiz, navigator o‘zi davom etadi.')
+                : live.status === 'denied'
                 ? native
                   ? t('Telefon sozlamalari → Ilovalar → GetMaster → Ruxsatlar → Joylashuv bo‘limida «Ilova ishlatilayotganda ruxsat berish»ni tanlang, so‘ng bu yerga qaytib «Qayta urinish»ni bosing.')
                   : t('Brauzer manzil satridagi qulf belgisini bosing → «Joylashuv» → «Ruxsat berish», so‘ng «Qayta urinish»ni bosing.')
@@ -376,7 +379,8 @@ export function NavigationPage() {
             }
             actions={
               <>
-                <Button onClick={live.retry}>{t('Qayta urinish')}</Button>
+                {live.status === 'gpsoff' && <Button onClick={() => void openGpsSettings()}>{t('GPS ni yoqish')}</Button>}
+                <Button variant={live.status === 'gpsoff' ? 'secondary' : undefined} onClick={live.retry}>{t('Qayta urinish')}</Button>
                 {externalLinks(dest).map((link) => (
                   <a key={link.name} className="gm-button gm-button--secondary" href={link.href} target="_blank" rel="noreferrer">
                     <ExternalLink size={16} aria-hidden="true" /> {link.name}

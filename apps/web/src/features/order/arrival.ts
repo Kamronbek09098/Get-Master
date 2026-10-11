@@ -9,7 +9,7 @@ export const ARRIVE_RADIUS_M = 60;
 /** GPS nuqtasi shundan eski bo‘lsa, joylashuv «hozirgi» hisoblanmaydi. */
 export const FIX_MAX_AGE_MS = 20_000;
 
-export type ArrivalState = 'idle' | 'locating' | 'denied' | 'unavailable' | 'far' | 'near';
+export type ArrivalState = 'idle' | 'locating' | 'denied' | 'unavailable' | 'gpsoff' | 'far' | 'near';
 
 export interface ArrivalCheck {
   state: ArrivalState;
@@ -35,6 +35,7 @@ export function useArrivalCheck(dest: LatLon | null, enabled: boolean): ArrivalC
   const position = live.position;
   if (!enabled || !dest) return { state: 'idle', distanceM: null, coords: null, retry: live.retry };
   if (!position || Date.now() - position.at > FIX_MAX_AGE_MS) {
+    if (live.status === 'gpsoff') return { state: 'gpsoff', distanceM: null, coords: null, retry: live.retry };
     const blocked = live.status === 'denied' || live.status === 'insecure';
     const broken = live.status === 'unavailable' || live.status === 'timeout';
     return { state: blocked ? 'denied' : broken ? 'unavailable' : 'locating', distanceM: null, coords: null, retry: live.retry };

@@ -1,5 +1,9 @@
 /** Автогенерация: переводы 2-го этапа (en). Ключ — исходный узбекский текст. */
 export const enExtra: Record<string, string> = {
+  "Qurilmada GPS (joylashuv) o‘chiq. Yetib kelganingizni belgilash uchun uni yoqing.": "Location (GPS) is off on your device. Turn it on to mark that you have arrived.",
+  "GPS ni yoqish": "Turn on GPS",
+  "Qurilmada GPS o‘chiq": "GPS is off on your device",
+  "Marshrut tuzish uchun telefonda «Joylashuv» (GPS) xizmatini yoqing. Yoqqaningizdan so‘ng bu sahifaga qaytsangiz, navigator o‘zi davom etadi.": "Turn on Location (GPS) on your phone to build a route. When you come back to this page, navigation continues automatically.",
   "Oxirgi marta {count} daqiqa oldin yangilangan": "Last updated {count} minutes ago",
   "Siz manzildasiz — yetib kelganingizni belgilashingiz mumkin.": "You are at the address — you can mark that you have arrived.",
   "Manzilgacha taxminan {distance} qoldi. Manzilga yetib borgach tugma faollashadi.": "About {distance} left to the address. The button becomes active once you arrive.",

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { bearing, distanceM } from './geometry';
 import type { LatLon } from './geometry';
+import { isDeviceGpsOn } from './device-gps';
 
-export type LocationStatus = 'idle' | 'locating' | 'ok' | 'denied' | 'unavailable' | 'timeout' | 'insecure';
+export type LocationStatus = 'idle' | 'locating' | 'ok' | 'denied' | 'unavailable' | 'timeout' | 'insecure' | 'gpsoff';
 
 export interface LivePosition extends LatLon {
   accuracy: number;
@@ -41,6 +42,7 @@ export function useLiveLocation(enabled: boolean, sim?: Array<[number, number]> 
   }, []);
 
   const received = useRef(false);
+  const gpsOff = useRef(false);
 
   /**
    * Joylashuvni ishonchli olish: avval tezkor (Wi‑Fi/tarmoq) joylashuv — birinchi nuqta darhol chiqadi; so‘ng aniq GPS kuzatuvi.
@@ -68,7 +70,7 @@ export function useLiveLocation(enabled: boolean, sim?: Array<[number, number]> 
         return true;
       }
       if (received.current) return false; // nuqta bor — vaqtinchalik xatoni e’tiborsiz qoldiramiz
-      if (final) setStatus(error.code === error.TIMEOUT ? 'timeout' : 'unavailable');
+      if (final) setStatus(gpsOff.current ? 'gpsoff' : error.code === error.TIMEOUT ? 'timeout' : 'unavailable');
       return false;
     };
     const watchWith = (high: boolean) => {
@@ -88,7 +90,31 @@ export function useLiveLocation(enabled: boolean, sim?: Array<[number, number]> 
     // Tezkor birinchi nuqta (brauzer ruxsat so‘rovi ham shu yerda chiqadi).
     navigator.geolocation.getCurrentPosition(onFix, (error) => void fail(error, false), { enableHighAccuracy: false, maximumAge: 5_000, timeout: 10_000 });
     watchWith(true);
+    // Ruxsat so‘rovi bilan birga: qurilmada GPS (joylashuv xizmati) o‘chiq bo‘lsa — yoqishni taklif qilamiz.
+    void isDeviceGpsOn().then((on) => {
+      gpsOff.current = !on;
+      if (!on && !received.current) setStatus('gpsoff');
+    });
   }, [accept, stop]);
+
+  // GPS o‘chiq bo‘lsa: foydalanuvchi sozlamalardan yoqib qaytganda (yoki har 2 soniyada) tekshirib, avtomatik davom etamiz.
+  useEffect(() => {
+    if (status !== 'gpsoff') return;
+    const check = () => {
+      void isDeviceGpsOn().then((on) => {
+        if (on) {
+          gpsOff.current = false;
+          start();
+        }
+      });
+    };
+    const timer = window.setInterval(check, 2_000);
+    document.addEventListener('visibilitychange', check);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', check);
+    };
+  }, [status, start]);
 
   useEffect(() => {
     if (!enabled || sim) return;
