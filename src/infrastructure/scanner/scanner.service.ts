@@ -24,7 +24,9 @@ export class ScannerService implements OnModuleInit {
 
     if (!host) {
       this.logger.warn(
-        'CLAMAV_HOST sozlanmagan — virus tekshiruvi O‘CHIRILGAN. Tekshiruv talab qiladigan fayllar FAILED holatiga o‘tadi. Haqiqiy tekshiruv uchun CLAMAV_HOST ni sozlang.',
+        this.allowUnscanned()
+          ? 'CLAMAV_HOST sozlanmagan, CLAMAV_ALLOW_UNSCANNED=true — fayllar virus tekshiruvisiz qabul qilinadi.'
+          : 'CLAMAV_HOST sozlanmagan — virus tekshiruvi O‘CHIRILGAN. Tekshiruv talab qiladigan fayllar FAILED holatiga o‘tadi. Haqiqiy tekshiruv uchun CLAMAV_HOST ni sozlang.',
       );
       return;
     }
@@ -45,8 +47,13 @@ export class ScannerService implements OnModuleInit {
     return this.configured;
   }
 
+  private allowUnscanned(): boolean {
+    return this.config.get<boolean>('scanner.allowUnscanned') === true;
+  }
+
   async scan(buffer: Buffer): Promise<ScanResult> {
     if (!this.configured) {
+      if (this.allowUnscanned()) return { clean: true, detail: 'SKIPPED:SCANNER_DISABLED' };
       throw new Error(ERRORS.SCANNER_NOT_CONFIGURED);
     }
 
