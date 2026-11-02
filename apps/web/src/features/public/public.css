@@ -33,7 +33,7 @@
 .gm-pub__count { margin: 0; font-size: 0.86rem; color: var(--gm-color-text-muted); }
 
 .gm-pub__grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
-.gm-pub__master { display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 20px; border: 1px solid var(--gm-color-border); background: var(--gm-color-surface); box-shadow: var(--gm-shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
+.gm-pub__master { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding: 18px; border-radius: 20px; border: 1px solid var(--gm-color-border); background: var(--gm-color-surface); box-shadow: var(--gm-shadow-sm); transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; }
 .gm-pub__master:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(20, 30, 60, 0.1); border-color: color-mix(in srgb, var(--gm-color-primary) 30%, var(--gm-color-border)); }
 @media (prefers-reduced-motion: reduce) { .gm-pub__master { transition: none; } .gm-pub__master:hover { transform: none; } }
 .gm-pub__master--pro { border-color: color-mix(in srgb, var(--gm-color-accent) 55%, var(--gm-color-border)); }
@@ -178,8 +178,8 @@
 .gm-pub__bar-in { padding-bottom: 4px; }
 
 /* Usta kartasidagi xizmat narxlari (nuqtali chiziq bilan) */
-.gm-pub__svc { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.gm-pub__svc li { display: flex; align-items: baseline; gap: 8px; font-size: 0.84rem; }
+.gm-pub__svc { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; min-width: 0; }
+.gm-pub__svc li { display: flex; align-items: baseline; gap: 8px; min-width: 0; font-size: 0.84rem; }
 .gm-pub__svc li span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gm-pub__svc li i { flex: 1; min-width: 12px; border-bottom: 1px dotted var(--gm-color-border-strong); transform: translateY(-3px); }
 .gm-pub__svc li b { flex: none; font-weight: 700; color: var(--gm-color-text-muted); white-space: nowrap; }
@@ -217,6 +217,8 @@
 .gm-pub__pricecard:hover { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(20, 30, 60, 0.1); border-color: color-mix(in srgb, var(--gm-color-primary) 30%, var(--gm-color-border)); }
 .gm-pub__pricecard li { padding: 11px 14px; border-radius: 12px; line-height: 1.35; }
 .gm-pub__pricecard li span { min-width: 0; overflow-wrap: anywhere; }
+.gm-pub__pricecard { min-width: 0; }
+.gm-pub__pricecard ul { grid-template-columns: minmax(0, 1fr); }
 .gm-pub__pricecard-actions { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; padding-top: 4px; }
 .gm-pub__pricecard-actions .gm-pub__btn, .gm-pub__pricecard-actions .gm-pub__cta { min-height: 46px; padding: 10px 14px; font-size: 0.9rem; text-align: center; line-height: 1.25; }
 .gm-pub__btn:focus-visible, .gm-pub__cta:focus-visible { outline: 2px solid var(--gm-color-primary); outline-offset: 2px; }

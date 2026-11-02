@@ -35,7 +35,7 @@ export function MasterTile({ master }: { master: PublicMaster }) {
         <ul className="gm-pub__svc">
           {master.services.map((service) => (
             <li key={service.name}>
-              <span>{service.name}</span>
+              <span title={service.name}>{service.name}</span>
               <i aria-hidden="true" />
               <b>{service.price != null ? t('{price} dan', { price: formatMoney(service.price) }) : t('Kelishiladi')}</b>
             </li>
